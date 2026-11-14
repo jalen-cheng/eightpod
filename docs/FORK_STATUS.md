@@ -3,14 +3,30 @@
 What this fork (`jalen-cheng/free-sleep`) changes from upstream Free Sleep, how it compares with
 Eight Sleep's own app, and what is left to do. The fork targets a Pod 5.
 
-Everything listed as done is merged to `main`. None of it has run on a Pod yet; it was checked
-with unit tests and the demo UI only.
+Everything listed as done is merged to `main`. It was checked with unit tests and the demo UI.
+What has been confirmed on the Pod itself is listed under
+[Confirmed on the Pod so far](#confirmed-on-the-pod-so-far); nothing else has run on one yet.
 
+- [Confirmed on the Pod so far](#confirmed-on-the-pod-so-far)
 - [Changes by pull request](#changes-by-pull-request)
 - [Compared with the Eight Sleep app](#compared-with-the-eight-sleep-app)
 - [Checklist for the first day on the Pod](#checklist-for-the-first-day-on-the-pod)
 - [Upstream issues that touch this fork](#upstream-issues-that-touch-this-fork)
 - [Later](#later)
+
+## Confirmed on the Pod so far
+
+Pod 5, control board 830-00067-00 REV-17. Last updated 2026-11-14.
+
+- [x] **The bootloader is not locked.** `Hit any key to stop autoboot` appeared and Ctrl+C stopped it.
+- [x] **The serial header is J7**, the lower of the two pad grids on the board's right edge.
+- [x] `current_slot=a`.
+- [x] Root shell, file system remounted writable, `root` and `rewt` passwords set, clean reboot, login as `root`.
+- [x] Eight Sleep system version at login: `4b7552d5a9aed31997ff22cf193240800056ef6a`.
+- [ ] Everything from disabling the updater onward (Part 3 of the walkthrough) is still to do.
+
+Seen along the way: the serial line drops the odd character, password prompts show nothing while
+typing, and the clock is unset before Wi-Fi (`password changed in future`).
 
 ## Changes by pull request
 
@@ -37,7 +53,12 @@ with unit tests and the demo UI only.
 | [#5](https://github.com/jalen-cheng/free-sleep/pull/5) | Feature | Tap settings reduced to one set of controls for both sides: a temperature step, what the third gesture does during an alarm, and what it does otherwise. Fixes labels breaking mid-word. |
 | [#6](https://github.com/jalen-cheng/free-sleep/pull/6) | Feature | Level (-10 to +10) as a display unit next to °F and °C, everywhere a temperature is shown or picked. Fixes the schedule chart axis in °C. |
 | [#7](https://github.com/jalen-cheng/free-sleep/pull/7) | Tooling | `collect_temperature_calibration.py`, which measures the real temperature at each level. First version of this file. |
+| [#8](https://github.com/jalen-cheng/free-sleep/pull/8) | Docs | This file reorganised: changes by pull request, comparison with the Eight Sleep app, first-day checklist. |
+| [#9](https://github.com/jalen-cheng/free-sleep/pull/9) | Docs, tooling | `POD5_FIRST_DAY.md` walkthrough. `GET /api/deviceStatus/raw` returns the firmware's unparsed status text, for seeing what a Pod reports beyond what Free Sleep reads. |
+| [#10](https://github.com/jalen-cheng/free-sleep/pull/10) | Fix, docs | The internet block allows DNS to any resolver, so time servers can be found on networks with public DNS servers. Upstream issues that touch this fork are recorded here. |
+| [#11](https://github.com/jalen-cheng/free-sleep/pull/11) | Docs | Findings from the project's Discord and other Pod 5 owners, with sources. |
 | [#12](https://github.com/jalen-cheng/free-sleep/pull/12) | Feature | Pod 5 side buttons. A monitor follows the firmware's log, where a Pod 5 reports each press, and runs the same settings the tap gestures use. Holding the middle button two seconds switches the side on or off. Settings name the buttons on a Pod 5. |
+| [#13](https://github.com/jalen-cheng/free-sleep/pull/13) | Docs | Walkthrough corrections from the first real install steps: the J7 header, versions from the boot log, serial quirks, checking the clock before the HTTPS download, and installing Biometrics before the block. |
 
 ## Compared with the Eight Sleep app
 
@@ -65,18 +86,22 @@ The full walkthrough, with every command and what to expect, is in [POD5_FIRST_D
 ### Before opening it
 - [ ] Pod 5 is already set up in the Eight Sleep app (required before install).
 - [ ] Tools from [INSTALLATION.md](../INSTALLATION.md#tools-required) are on hand.
-- [ ] Note the current firmware version shown in the Eight Sleep app.
+- [x] ~~Note the firmware version in the Eight Sleep app.~~ The app does not show one; it is taken from the boot log.
 
 ### Install
 - [ ] Follow [INSTALLATION.md](../INSTALLATION.md) steps 1 to 12 as written (board access, root access, disable software updates, Wi-Fi).
+- [ ] After joining Wi-Fi, confirm the Pod has an address and `date` is correct before installing. The download uses HTTPS, which fails while the clock is wrong.
 - [ ] Step 13, install from this fork: set `FREE_SLEEP_REPO=jalen-cheng/free-sleep` and `FREE_SLEEP_BRANCH=main` first, as the note in that step describes.
 - [ ] Steps 14 to 18: open the UI at the Pod's address, reboot once and confirm the UI comes back, set up SSH.
-- [ ] Reconnect the cover and confirm a temperature change is felt on each side.
+- [ ] Reconnect the cover (if it was disconnected) and confirm a temperature change is felt on each side.
+- [ ] Install Biometrics with `sh /home/dac/free-sleep/scripts/enable_biometrics.sh` while the internet is open. The button probe and the calibration script need its Python environment.
 
 ### Buttons (do this before blocking the internet, while nothing else is changing)
+- [ ] Watch the firmware log: `journalctl -u frank -f -o cat | grep -iE "button|TTC|tap"`.
 - [ ] Run `/home/dac/venv/bin/python /home/dac/free-sleep/scripts/probe_nats_taps.py`.
 - [ ] Press +, -, and the middle button once each, on each side, a few seconds apart. Note what prints for each.
-- [ ] In a second session, compare `curl -s localhost:3000/api/deviceStatus` before and after each press: do `doubleTap`, `tripleTap` or `quadTap` change?
+- [ ] In another session, compare `curl -s localhost:3000/api/deviceStatus/raw` before and after each press: do `doubleTap`, `tripleTap` or `quadTap` change?
+- [ ] Check the fork's button reader: + and - move the target, a two-second hold of the middle button switches the side, and the Free Sleep log has a `Button press:` line per press.
 - [ ] Try a long press and a double press of the middle button and note any difference.
 
 ### Internet block
