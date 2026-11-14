@@ -29,7 +29,7 @@ so paste the actual output rather than a summary.
 ## Part 0: before you start
 
 1. **The Pod is set up in the Eight Sleep app.** This is required for Pod 5 before installing.
-2. **Record the firmware version** shown in the Eight Sleep app.
+2. The Eight Sleep app does not show a firmware version. It is recorded from the boot log in Part 2.
 3. **Tools on the desk:** Torx set, TC2070-IDC tag-connect cable, FTDI FT232RL adapter, Dupont
    wires, a towel, your Mac.
 4. **Install the serial terminal** on the Mac:
@@ -48,13 +48,17 @@ so paste the actual output rather than a summary.
 ## Part 1: open the hub
 
 1. Turn the Pod off in the Eight Sleep app and **unplug it from the wall**.
-2. Disconnect the cover's hose and move the hub to a table with a towel on it. Keep it upright;
-   it has water in it.
+2. Move the hub somewhere you can work on it, on a towel, and keep it upright; it has water in
+   it. The cover's hose can stay connected if it has enough slack not to pull on the hub.
+   The install guide only says the cover is not needed for the serial steps.
 3. Follow the [Pod 4 written steps](pod_4_teardown/instructions.md): four Torx screws under the
    rubber feet, lift the hub off the base holding both side panels, then slide each side panel
    and the front grille down about half an inch and off.
 4. Find the control board and the tag-connect footprint: a small grid of bare gold pads with
    alignment holes beside it. On the Pod 4 it is here: [photo](pod_4_teardown/2_circuit_board.png).
+   The Pod 5 board (CONTROL BOARD 830-00067-00) has two such grids on its right edge. Use the
+   lower one, labelled **J7**, level with the end of the long socket the blue module plugs into.
+   Leave J10, just above it, alone.
 5. **Photograph the board** before connecting anything.
 
 If the Pod 5 does not come apart the way the Pod 4 steps describe, stop forcing it and look for
@@ -65,6 +69,7 @@ hidden screws. Nothing here needs more force than a firm slide.
 The Pod stays unplugged until step 4.
 
 1. Press the tag-connect cable onto the footprint. It only fits one way; the alignment pins hold it.
+   It does not latch, so it has to be held or clipped in place for the whole session.
 2. Plug the FTDI adapter into the Mac and find it:
    ```bash
    ls /dev/tty.usbserial-*
@@ -85,6 +90,11 @@ The Pod stays unplugged until step 4.
    - Nothing printed at all: transmit and receive are probably swapped. Unplug the Pod, swap
      those two wires, retry.
    - Garbage characters: the speed is wrong. It must be 921600.
+   Once stopped, scroll back and record the `U-Boot 2022.04 ... (date)` line.
+
+   **The serial line drops characters now and then.** Type slowly and read each line before
+   pressing Enter, from here until SSH is set up. A command that comes back as `command not found`
+   with its first letter missing just needs typing again.
 5. At the boot prompt:
    ```
    printenv current_slot
@@ -104,6 +114,9 @@ The Pod stays unplugged until step 4.
    mount -t tmpfs tmpfs /run
    mount -o remount,rw /
    ```
+   `mount: /dev: devtmpfs already mounted` is harmless. The last command should print an
+   `EXT4-fs ... re-mounted` line. Lines about `GPT` and `GNU Parted` during boot are normal;
+   do not try to correct the disk.
 8. Set both passwords, then save and reboot. **Do not interrupt the boot this time.**
    ```
    passwd root
@@ -111,7 +124,11 @@ The Pod stays unplugged until step 4.
    sync
    reboot -f
    ```
-9. Wait for the login prompt and log in as `root`.
+   Password prompts show nothing as you type, not even dots. If the two entries do not match,
+   run the command again. `account root has password changed in future` is harmless; the clock
+   is not set yet. Each `passwd` must end by saying the password was updated before you `sync`.
+9. Wait for the login prompt and log in as `root`. Record the version line shown at login;
+   this is Eight Sleep's own system, which stays underneath Free Sleep.
 
 ## Part 3: install this fork (INSTALLATION.md steps 11 to 18)
 
@@ -128,6 +145,14 @@ The Pod stays unplugged until step 4.
    sed -i 's/uuid=.*/uuid=700a7a76-2105-4f46-b1b4-c9f3c791c440/' /persistent/system-connections/*.nmconnection
    nmcli connection reload
    ```
+   Wait until the Pod has an address and its clock is right. The download in the next step
+   uses HTTPS, which fails with a certificate error while the clock is wrong.
+   ```
+   nmcli -g ip4.address device show wlan0
+   date
+   ```
+   If there is no address after a minute, recheck the Wi-Fi name and password in the command above.
+   If `date` is still wrong after a minute, run `systemctl restart systemd-timesyncd` and check again.
 3. **Install from this fork.** The first line is what makes every later update come from the fork too.
    ```
    export FREE_SLEEP_REPO=jalen-cheng/free-sleep FREE_SLEEP_BRANCH=main
@@ -162,13 +187,25 @@ The Pod stays unplugged until step 4.
 11. **Feel test.** Set one side to the highest temperature and the other to the lowest. After
     ten minutes the two sides should feel clearly different.
 
+12. **Install Biometrics.** This downloads the Python environment that the button probe (Part 4)
+    and the calibration (Part 8) run in, so do it while the internet is still open:
+    ```
+    sh /home/dac/free-sleep/scripts/enable_biometrics.sh
+    ```
+    It takes a few minutes. Confirm with:
+    ```
+    ls /home/dac/venv/bin/python
+    ```
+    If you would rather not, skip the probe in Part 4 (the firmware log and the status file are
+    enough) and skip Part 8.
+
 Use SSH from here on. Everything below is typed in an SSH session on the Pod unless it says "on the Mac".
 
 ## Part 4: the button check
 
 Do this before blocking the internet, so only one thing is changing at a time.
 
-1. Session one, start the probe:
+1. Session one, start the probe (needs Biometrics installed, Part 3 step 12):
    ```
    /home/dac/venv/bin/python /home/dac/free-sleep/scripts/probe_nats_taps.py
    ```
@@ -176,7 +213,7 @@ Do this before blocking the internet, so only one thing is changing at a time.
    ```
    curl -s localhost:3000/api/deviceStatus/raw > /tmp/status_0.txt; cat /tmp/status_0.txt
    ```
-   Look for `doubleTap`, `tripleTap` and `quadTap` lines. Those are the only inputs the code reads today.
+   Look for `doubleTap`, `tripleTap` and `quadTap` lines. Those are the Pod 4 style tap counters.
 3. Session three, watch the firmware's own log. Other Pod 5 owners see button presses here:
    ```
    journalctl -u frank -f -o cat | grep -iE "button|TTC|tap"
@@ -200,11 +237,11 @@ What the result means:
 
 | What you see | Meaning |
 |---|---|
-| `doubleTap`, `tripleTap` or `quadTap` goes up by one per press, a different one per button | The buttons already work. The settings only need renaming. |
-| Some other status line changes, or the probe prints a new line per press | The buttons are reported elsewhere. Needs new code to read them. |
-| The firmware log prints a line per press, nothing else changes | What other owners report. Free Sleep needs a reader for that log; the lines you recorded are its test data. |
-| Nothing changes anywhere | Free Sleep currently sees nothing from the buttons. Keep the status files and stop here. |
-| Hold or double press looks different from a single press | Holds can be given their own action. |
+| The firmware log prints a line per press in the expected shape | What other owners report, and what this fork's button reader is written for. |
+| The firmware log prints a line per press in a different shape | The reader will miss them. The lines you recorded are what is needed to fix it. |
+| A tap counter in the status also goes up per press | The press is reported twice. Note which counter; the reader guards against acting twice on the middle button only. |
+| Some other status line changes, or only the probe prints something | The buttons are reported somewhere the reader does not look. Keep the files. |
+| Nothing changes anywhere | Nothing sees the buttons. Keep the status files and stop this part here. |
 
 Then check the fork's button reader. With the UI open on your phone:
 
@@ -284,8 +321,9 @@ From the UI on your phone.
      ```
    - Run it again with alarms on both sides: does dismissing one side stop the other?
    - Run it once more: does turning the side off stop the vibration?
-6. **Alarm from the bed.** Only if Part 4 showed the buttons reach Free Sleep: press the button
-   that mapped to the third counter while the alarm vibrates.
+6. **Alarm from the bed.** Only if Part 4 showed `Button press:` lines: press the middle button
+   while the alarm vibrates. Record whether the vibration stops, and whether pressing + or -
+   also stops it (other owners say the firmware stops an alarm on any press by itself).
 
 ## Part 7: running cost and updates
 
@@ -342,7 +380,7 @@ iptables -m owner --help | tail -5
 ## What to bring back
 
 - Photos of the open Pod 5 and its board.
-- The firmware version from Part 0.
+- The U-Boot line and the login version line from Part 2.
 - The button table from Part 4: for each of the eight presses, what the probe printed and the status diff. Copy `/tmp/status_*.txt` off the Pod.
 - The `ss -tunp` output from Part 5 and the six post-reboot results.
 - Answers to the alarm questions in Part 6.
