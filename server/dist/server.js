@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="4f53117c-eb0b-5c5d-a398-f076dab3f4bd")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="5befa9c5-4d1b-5d93-9be0-de120865d820")}catch(e){}}();
 import './instrument.js';
 import express from 'express';
 import schedule from 'node-schedule';
@@ -94,9 +94,9 @@ const initFrankenMonitor = () => {
     serverStatus.status.frankenMonitor.status = 'started';
     frankenMonitor = new FrankenMonitor();
     void frankenMonitor.start();
-    // Pod 5 buttons are read from the firmware log; on other Pods this starts nothing
+    // Pod 5 buttons are read from the firmware log; it only begins once a Pod 5 cover is attached
     buttonMonitor = new ButtonMonitor();
-    buttonMonitor.start().catch(error => logger.error(error));
+    buttonMonitor.start();
     logger.info('Frank monitor started!');
 };
 // Main startup function
@@ -145,4 +145,4 @@ startServer().catch((err) => {
     process.exit(1);
 });
 //# sourceMappingURL=server.js.map
-//# debugId=4f53117c-eb0b-5c5d-a398-f076dab3f4bd
+//# debugId=5befa9c5-4d1b-5d93-9be0-de120865d820

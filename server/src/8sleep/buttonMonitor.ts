@@ -14,6 +14,8 @@ import { runSideGestures, setSidePower } from './gestureActions.js';
 const PRESS_BATCH_MS = 400;
 // Pause before reopening the firmware log if following it stops
 const RESTART_WAIT_MS = 5_000;
+// How often to look for a Pod 5 cover while none is attached
+const COVER_CHECK_INTERVAL_MS = 30_000;
 
 // Follows the firmware's log on a Pod 5 and runs the configured action for each button press.
 // The Pod 5's buttons do not show up in the tap counters that FrankenMonitor polls.
@@ -24,24 +26,45 @@ export class ButtonMonitor {
   private batchTimer?: NodeJS.Timeout;
   // Batches run one after another, so two never read and change the same target at once
   private batchQueue: Promise<void> = Promise.resolve();
+  private coverCheckTimer?: NodeJS.Timeout;
+  private lastCoverVersion?: string;
 
-  public async start() {
+  // Starts following the firmware log as soon as a Pod 5 cover is attached. The cover may be
+  // plugged in (or swapped) long after the server starts, so this keeps checking until then.
+  public start() {
     if (this.isRunning) return;
-    const franken = await connectFranken();
-    const { coverVersion } = await franken.getDeviceStatus(false, true);
-    if (coverVersion !== Version.Pod5) {
-      logger.debug(`Button monitor not needed for ${coverVersion}`);
-      return;
-    }
     this.isRunning = true;
-    this.followFirmwareLog();
-    logger.info('Button monitor started');
+    void this.startWhenPod5CoverAttached();
   }
 
   public stop() {
     this.isRunning = false;
     if (this.batchTimer) clearTimeout(this.batchTimer);
+    if (this.coverCheckTimer) clearTimeout(this.coverCheckTimer);
     this.logFollower?.kill();
+  }
+
+  private async startWhenPod5CoverAttached() {
+    if (!this.isRunning) return;
+    let coverVersion: string = Version.NotFound;
+    try {
+      const franken = await connectFranken();
+      coverVersion = (await franken.getDeviceStatus(false, true)).coverVersion;
+    } catch (error) {
+      logger.debug(`Button monitor could not read the cover version: ${error instanceof Error ? error.message : String(error)}`);
+    }
+    if (!this.isRunning) return;
+    if (coverVersion === Version.Pod5) {
+      this.followFirmwareLog();
+      logger.info('Button monitor started');
+      return;
+    }
+    // Logged once per change, so a Pod without a Pod 5 cover does not fill the log
+    if (coverVersion !== this.lastCoverVersion) {
+      logger.debug(`Button monitor waiting for a Pod 5 cover (cover: ${coverVersion})`);
+      this.lastCoverVersion = coverVersion;
+    }
+    this.coverCheckTimer = setTimeout(() => void this.startWhenPod5CoverAttached(), COVER_CHECK_INTERVAL_MS);
   }
 
   // Streams new lines of the firmware's journal. Starting at the end (`-n 0`) means presses made

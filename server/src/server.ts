@@ -104,9 +104,9 @@ const initFrankenMonitor = () => {
   serverStatus.status.frankenMonitor.status = 'started';
   frankenMonitor = new FrankenMonitor();
   void frankenMonitor.start();
-  // Pod 5 buttons are read from the firmware log; on other Pods this starts nothing
+  // Pod 5 buttons are read from the firmware log; it only begins once a Pod 5 cover is attached
   buttonMonitor = new ButtonMonitor();
-  buttonMonitor.start().catch(error => logger.error(error));
+  buttonMonitor.start();
   logger.info('Frank monitor started!');
 };
 
