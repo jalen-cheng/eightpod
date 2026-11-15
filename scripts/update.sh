@@ -38,9 +38,9 @@ for service_name in free-sleep-stream free-sleep; do
 done
 
 if [ -f /persistent/free-sleep-data/free-sleep.db ]; then
-  python3 "$APP_DIR/scripts/sqlite_maintenance.py" backup \
+  sh "$APP_DIR/scripts/backup_database.sh" \
     /persistent/free-sleep-data/free-sleep.db \
-    /persistent/free-sleep-data/free-sleep-copy.db --checkpoint
+    /persistent/free-sleep-data/free-sleep-copy.db
 fi
 
 systemctl disable free-sleep

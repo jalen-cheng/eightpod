@@ -28,6 +28,7 @@ export class ButtonMonitor {
   private batchQueue: Promise<void> = Promise.resolve();
   private coverCheckTimer?: NodeJS.Timeout;
   private lastCoverVersion?: string;
+  private hasWarnedAboutLog = false;
 
   // Starts following the firmware log as soon as a Pod 5 cover is attached. The cover may be
   // plugged in (or swapped) long after the server starts, so this keeps checking until then.
@@ -77,13 +78,19 @@ export class ButtonMonitor {
     this.logFollower = logFollower;
 
     createInterface({ input: logFollower.stdout! }).on('line', (line) => {
+      this.hasWarnedAboutLog = false;
       const press = parseLine(line);
       if (press) this.addPress(press);
     });
     logFollower.on('error', error => logger.error(`Button monitor could not read the firmware log: ${error.message}`));
-    logFollower.on('close', () => {
+    logFollower.on('close', (exitCode) => {
       if (!this.isRunning) return;
-      logger.warn('Button monitor lost the firmware log, reopening...');
+      // Logged once per run of failures: a server that may not read the journal fails every time
+      if (!this.hasWarnedAboutLog) {
+        logger.warn(`Button monitor cannot follow the firmware log (journalctl exited with ${exitCode}). `
+          + 'The server user needs the systemd-journal group; reinstalling Free Sleep sets it. Retrying quietly...');
+        this.hasWarnedAboutLog = true;
+      }
       setTimeout(() => {
         if (this.isRunning) this.followFirmwareLog();
       }, RESTART_WAIT_MS);
@@ -91,7 +98,7 @@ export class ButtonMonitor {
   }
 
   private addPress(press: ButtonPress) {
-    logger.debug(`Button press: ${press.side} ${press.button}${press.heldMs === undefined ? '' : ` held ${press.heldMs}ms`}`);
+    logger.debug(`Button press: ${press.side} ${press.button} x${press.count}${press.heldMs === undefined ? '' : ` held ${press.heldMs}ms`}`);
     this.pendingPresses[press.side].push(press);
     if (this.batchTimer) clearTimeout(this.batchTimer);
     this.batchTimer = setTimeout(() => {

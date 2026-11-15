@@ -24,9 +24,16 @@ for service_name in free-sleep-stream free-sleep; do
 done
 
 if [ -f /persistent/free-sleep-data/free-sleep.db ]; then
-  python3 "$MAINTENANCE_SCRIPT_DIR/sqlite_maintenance.py" backup \
-    /persistent/free-sleep-data/free-sleep.db \
-    /persistent/free-sleep-data/free-sleep-copy.db --checkpoint
+  # Older installs copied only sqlite_maintenance.py here; fall back to it until the next install
+  if [ -f "$MAINTENANCE_SCRIPT_DIR/backup_database.sh" ]; then
+    sh "$MAINTENANCE_SCRIPT_DIR/backup_database.sh" \
+      /persistent/free-sleep-data/free-sleep.db \
+      /persistent/free-sleep-data/free-sleep-copy.db
+  else
+    python3 "$MAINTENANCE_SCRIPT_DIR/sqlite_maintenance.py" backup \
+      /persistent/free-sleep-data/free-sleep.db \
+      /persistent/free-sleep-data/free-sleep-copy.db --checkpoint
+  fi
 fi
 
 sh /home/dac/free-sleep/scripts/update.sh

@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="fbe549b4-94a2-5673-a103-3e37d9c7b088")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="e8c1ee92-bb31-520e-8695-3d5938527d9c")}catch(e){}}();
 import { spawn } from 'child_process';
 import { createInterface } from 'readline';
 import logger from '../logger.js';
@@ -27,6 +27,7 @@ export class ButtonMonitor {
     batchQueue = Promise.resolve();
     coverCheckTimer;
     lastCoverVersion;
+    hasWarnedAboutLog = false;
     // Starts following the firmware log as soon as a Pod 5 cover is attached. The cover may be
     // plugged in (or swapped) long after the server starts, so this keeps checking until then.
     start() {
@@ -77,15 +78,21 @@ export class ButtonMonitor {
         });
         this.logFollower = logFollower;
         createInterface({ input: logFollower.stdout }).on('line', (line) => {
+            this.hasWarnedAboutLog = false;
             const press = parseLine(line);
             if (press)
                 this.addPress(press);
         });
         logFollower.on('error', error => logger.error(`Button monitor could not read the firmware log: ${error.message}`));
-        logFollower.on('close', () => {
+        logFollower.on('close', (exitCode) => {
             if (!this.isRunning)
                 return;
-            logger.warn('Button monitor lost the firmware log, reopening...');
+            // Logged once per run of failures: a server that may not read the journal fails every time
+            if (!this.hasWarnedAboutLog) {
+                logger.warn(`Button monitor cannot follow the firmware log (journalctl exited with ${exitCode}). `
+                    + 'The server user needs the systemd-journal group; reinstalling Free Sleep sets it. Retrying quietly...');
+                this.hasWarnedAboutLog = true;
+            }
             setTimeout(() => {
                 if (this.isRunning)
                     this.followFirmwareLog();
@@ -93,7 +100,7 @@ export class ButtonMonitor {
         });
     }
     addPress(press) {
-        logger.debug(`Button press: ${press.side} ${press.button}${press.heldMs === undefined ? '' : ` held ${press.heldMs}ms`}`);
+        logger.debug(`Button press: ${press.side} ${press.button} x${press.count}${press.heldMs === undefined ? '' : ` held ${press.heldMs}ms`}`);
         this.pendingPresses[press.side].push(press);
         if (this.batchTimer)
             clearTimeout(this.batchTimer);
@@ -131,4 +138,4 @@ export class ButtonMonitor {
     }
 }
 //# sourceMappingURL=buttonMonitor.js.map
-//# debugId=fbe549b4-94a2-5673-a103-3e37d9c7b088
+//# debugId=e8c1ee92-bb31-520e-8695-3d5938527d9c

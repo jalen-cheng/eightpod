@@ -2,9 +2,13 @@
 // Keep this file free of runtime imports so tests can load it without a Pod environment.
 //
 // A Pod 5 cover has three buttons per side. The firmware does not report them through the tap
-// counters in its status reply; it writes each press to its own log, for example:
-//   ... [buttons] middle button held for 2140ms
-//   ... DBG:1234 ... [TTC] processing [button] side left { button: middle, type: short ...
+// counters in its status reply; it writes each press to its own log. From a real Pod 5:
+//   ... [buttons] middle button held for 2944ms
+//   ... [buttons] middle button held for 48ms
+//   ... [TTC] processing [button] side right { button: middle, type: short, count: 2 }
+// The firmware waits about half a second after the last release and then reports the whole run
+// of presses as one line with a count. A long hold followed by a brush of the button arrives as
+// "short, count: 2", so the hold has to be recognised from the "held for" lines before it.
 // The line formats were first worked out in github.com/seanpasino/free-sleep.
 import type { SideSettings } from '../db/settingsSchema.js';
 
@@ -15,12 +19,14 @@ export type Button = 'top' | 'bottom' | 'middle';
 export type ButtonPress = {
   side: Side;
   button: Button;
-  // Only known for the middle button, and only when the firmware reported it just before the press
+  // How many presses the firmware counted in this run (it reports quick presses together)
+  count: number;
+  // The longest hold in this run. Only tracked for the middle button.
   heldMs?: number;
 };
 
-const PRESS_PATTERN = /\[TTC\] processing \[button\] side (left|right) \{ button: (top|bottom|middle)\b/;
-// Reported on its own line, without a side, just before the middle press it belongs to
+const PRESS_PATTERN = /\[TTC\] processing \[button\] side (left|right) \{ button: (top|bottom|middle)\b(?:.*?\bcount: (\d+))?/;
+// Reported on its own line, without a side, once per press, before the line for the whole run
 const MIDDLE_HELD_PATTERN = /\[buttons\] middle button held for (\d+)ms/;
 // A hold duration older than this belongs to some earlier press
 const HELD_LINE_MAX_AGE_MS = 4_000;
@@ -37,26 +43,33 @@ export const BUTTON_GESTURES: Record<Button, Gesture> = {
 };
 
 // Returns a function that is fed the firmware log one line at a time and returns a press when a
-// line completes one. It keeps the last "held for" duration to attach to the next middle press.
+// line completes one. It keeps the longest recent "held for" duration to attach to the next
+// middle press.
 export function createButtonLineParser(getNowMs: () => number = Date.now) {
-  let lastHeldMs: number | undefined;
+  let longestHeldMs: number | undefined;
   let lastHeldAtMs = 0;
 
   return (line: string): ButtonPress | null => {
     const heldMatch = MIDDLE_HELD_PATTERN.exec(line);
     if (heldMatch) {
-      lastHeldMs = Number(heldMatch[1]);
+      const isRunStale = getNowMs() - lastHeldAtMs > HELD_LINE_MAX_AGE_MS;
+      const heldMs = Number(heldMatch[1]);
+      longestHeldMs = isRunStale || longestHeldMs === undefined ? heldMs : Math.max(longestHeldMs, heldMs);
       lastHeldAtMs = getNowMs();
       return null;
     }
 
     const pressMatch = PRESS_PATTERN.exec(line);
     if (!pressMatch) return null;
-    const press: ButtonPress = { side: pressMatch[1] as Side, button: pressMatch[2] as Button };
+    const press: ButtonPress = {
+      side: pressMatch[1] as Side,
+      button: pressMatch[2] as Button,
+      count: Math.max(1, Number(pressMatch[3] ?? 1)),
+    };
     if (press.button === 'middle') {
-      const isHeldFresh = lastHeldMs !== undefined && getNowMs() - lastHeldAtMs <= HELD_LINE_MAX_AGE_MS;
-      if (isHeldFresh) press.heldMs = lastHeldMs;
-      lastHeldMs = undefined;
+      const isHeldFresh = longestHeldMs !== undefined && getNowMs() - lastHeldAtMs <= HELD_LINE_MAX_AGE_MS;
+      if (isHeldFresh) press.heldMs = longestHeldMs;
+      longestHeldMs = undefined;
     }
     return press;
   };
@@ -74,7 +87,7 @@ export function countPressesAsGestures(presses: ButtonPress[]): Partial<Record<G
   for (const press of presses) {
     if (isPowerHold(press)) continue;
     const gesture = BUTTON_GESTURES[press.button];
-    gestureCounts[gesture] = (gestureCounts[gesture] ?? 0) + 1;
+    gestureCounts[gesture] = (gestureCounts[gesture] ?? 0) + press.count;
   }
   return gestureCounts;
 }
