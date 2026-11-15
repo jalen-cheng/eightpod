@@ -60,11 +60,11 @@ export const executeAlarm = async (
 
     logger.debug(`Executing alarm... ${JSON.stringify(alarmPayload)}`);
     await executeFunction(command, hexPayload);
-    // eslint-disable-next-line no-use-before-define
     // Later stretches use full pulses: "rise" would drop back to a feeble start every few minutes
     const continuation: AlarmJob | undefined = remainingDuration > 0
       ? { vibrationIntensity, duration: remainingDuration, vibrationPattern: 'double', side, force, turnOffAfterDismiss }
       : undefined;
+    // eslint-disable-next-line no-use-before-define
     await alarmSession.alarmStarted(
       { vibrationIntensity, duration, vibrationPattern, side, force, turnOffAfterDismiss },
       min10Duration,

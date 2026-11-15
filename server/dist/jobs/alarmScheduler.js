@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="5fee9f13-53c7-5994-a681-c00ccecca9b8")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="88fb444f-bafe-58ea-ac4b-b3878be2e543")}catch(e){}}();
 import schedule from 'node-schedule';
 import cbor from 'cbor';
 import moment from 'moment-timezone';
@@ -50,11 +50,11 @@ export const executeAlarm = async ({ vibrationIntensity, duration, vibrationPatt
         const command = side === 'left' ? 'ALARM_LEFT' : 'ALARM_RIGHT';
         logger.debug(`Executing alarm... ${JSON.stringify(alarmPayload)}`);
         await executeFunction(command, hexPayload);
-        // eslint-disable-next-line no-use-before-define
         // Later stretches use full pulses: "rise" would drop back to a feeble start every few minutes
         const continuation = remainingDuration > 0
             ? { vibrationIntensity, duration: remainingDuration, vibrationPattern: 'double', side, force, turnOffAfterDismiss }
             : undefined;
+        // eslint-disable-next-line no-use-before-define
         await alarmSession.alarmStarted({ vibrationIntensity, duration, vibrationPattern, side, force, turnOffAfterDismiss }, min10Duration, { continuation, isContinuation });
         serverStatus.status.alarmSchedule.status = 'healthy';
         serverStatus.status.alarmSchedule.message = '';
@@ -202,4 +202,4 @@ export const scheduleAlarmPreWarm = (settingsData, side, day, dailySchedule) => 
     });
 };
 //# sourceMappingURL=alarmScheduler.js.map
-//# debugId=5fee9f13-53c7-5994-a681-c00ccecca9b8
+//# debugId=88fb444f-bafe-58ea-ac4b-b3878be2e543
