@@ -96,7 +96,7 @@ export default function AlarmOptionsDialog({ open, onClose }: AlarmOptionsDialog
           </TextField>
         </OptionRow>
 
-        <OptionRow label="Warm up before" hint="Overrides the schedule until the alarm">
+        <OptionRow label="Warm the bed before" hint="Pick a time, then the temperature">
           <TextField
             select
             size="small"
@@ -111,14 +111,15 @@ export default function AlarmOptionsDialog({ open, onClose }: AlarmOptionsDialog
           </TextField>
         </OptionRow>
 
-        <OptionRow label="Warm up to">
-          <TemperatureSelect
-            label="Warm up temperature"
-            value={ alarm.alarmTemperature }
-            onChange={ (alarmTemperature) => updateAlarm({ alarmTemperature }) }
-            disabled={ preWarmMinutes === 0 }
-          />
-        </OptionRow>
+        { preWarmMinutes > 0 && (
+          <OptionRow label="Warm up to">
+            <TemperatureSelect
+              label="Warm up temperature"
+              value={ alarm.alarmTemperature }
+              onChange={ (alarmTemperature) => updateAlarm({ alarmTemperature }) }
+            />
+          </OptionRow>
+        ) }
 
         <OptionRow label="Turn this side off when dismissed">
           <Switch
