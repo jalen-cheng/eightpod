@@ -9,14 +9,18 @@ MAX_LEVEL = 100
 NEUTRAL_TEMP_F = 82.5
 DEGREES_F_PER_LEVEL = 27.5 / 100
 
-# Sensor readings look like hundredths of a degree Celsius (e.g. 1975 for a 19.75°C room).
-# That unit is inferred from sample records, not documented, so raw values are kept in the output.
+# Sensor readings are hundredths of a degree Celsius. Confirmed on a Pod 5: with the firmware
+# aiming for 42.0°C the water sensors read about 4210. Raw values are kept in the output anyway.
 RAW_UNITS_PER_DEGREE_C = 100
 
 
 def level_to_assumed_temp_f(level: float) -> float:
     """The °F that Free Sleep currently shows for a Pod level."""
     return NEUTRAL_TEMP_F + level * DEGREES_F_PER_LEVEL
+
+
+def celsius_to_fahrenheit(temp_c: float) -> float:
+    return temp_c * 9 / 5 + 32
 
 
 def raw_to_fahrenheit(raw_value: float) -> float:

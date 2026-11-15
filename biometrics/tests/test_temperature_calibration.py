@@ -8,6 +8,7 @@ calibration_path = Path(__file__).resolve().parents[1] / 'temperature_calibratio
 sys.path.insert(0, str(calibration_path))
 
 from calibration_math import (
+    celsius_to_fahrenheit,
     fit_line,
     level_to_assumed_temp_f,
     parse_levels,
@@ -25,6 +26,10 @@ class TemperatureCalibrationMathTest(unittest.TestCase):
     def test_raw_readings_are_hundredths_of_a_degree_celsius(self):
         self.assertAlmostEqual(raw_to_fahrenheit(2000), 68.0)
         self.assertAlmostEqual(raw_to_fahrenheit(0), 32.0)
+
+    def test_celsius_targets_convert_to_fahrenheit(self):
+        self.assertAlmostEqual(celsius_to_fahrenheit(42.0), 107.6)
+        self.assertAlmostEqual(celsius_to_fahrenheit(0), 32.0)
 
     def test_summary_reports_mean_and_spread(self):
         summary = summarize_readings([1900, 2000, 2100])
