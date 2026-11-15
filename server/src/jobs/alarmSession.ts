@@ -12,7 +12,8 @@ type SideAlarmState = {
 
 export type AlarmSessionDeps = {
   // Sends the alarm to the Pod. It must report back through alarmStarted once vibration begins.
-  startAlarm: (alarmJob: AlarmJob) => Promise<void>;
+  // `isContinuation` marks a further stretch of an alarm that is already going off.
+  startAlarm: (alarmJob: AlarmJob, options?: { isContinuation: boolean }) => Promise<void>;
   // Persists the "alarm is vibrating" flag the app reads
   setAlarmVibrating: (side: Side, isAlarmVibrating: boolean) => Promise<void>;
   logDebug: (message: string) => void;
@@ -36,16 +37,34 @@ export function createAlarmSession({ startAlarm, setAlarmVibrating, logDebug }: 
 
   // Call when an alarm has been sent to the Pod. Replaces the previous end-of-vibration timer,
   // so an older alarm's timer cannot clear the flag while this one is still vibrating.
-  const alarmStarted = async (alarmJob: AlarmJob, durationSeconds: number) => {
+  //
+  // The firmware only vibrates for a few minutes per request. For a longer alarm, pass the rest
+  // of it as `continuation`: when this stretch ends it is started, and the alarm counts as
+  // vibrating throughout. Dismissing or snoozing cancels the timer, which ends the chain.
+  const alarmStarted = async (
+    alarmJob: AlarmJob,
+    durationSeconds: number,
+    { continuation, isContinuation = false }: { continuation?: AlarmJob; isContinuation?: boolean } = {},
+  ) => {
     const { side } = alarmJob;
     cancelVibrationEndTimer(side);
     cancelSnooze(side);
-    sideStates[side].lastAlarm = alarmJob;
+    // A snooze re-runs the whole alarm, so later stretches must not replace it
+    if (!isContinuation) sideStates[side].lastAlarm = alarmJob;
     await setAlarmVibrating(side, true);
-    sideStates[side].vibrationEndTimer = setTimeout(() => {
+    const stretchTimer = setTimeout(() => {
       sideStates[side].vibrationEndTimer = undefined;
-      void setAlarmVibrating(side, false);
+      if (!continuation) {
+        void setAlarmVibrating(side, false);
+        return;
+      }
+      void startAlarm(continuation, { isContinuation: true }).then(() => {
+        // The next stretch reports back through alarmStarted. If it did not start (the side
+        // was switched off, say), nothing is vibrating any more.
+        if (sideStates[side].vibrationEndTimer === undefined) void setAlarmVibrating(side, false);
+      });
     }, durationSeconds * 1_000);
+    sideStates[side].vibrationEndTimer = stretchTimer;
   };
 
   // Call when the alarm was stopped on the Pod (dismissed from the app or by a tap).

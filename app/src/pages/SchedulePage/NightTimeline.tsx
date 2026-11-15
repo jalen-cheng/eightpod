@@ -1,0 +1,224 @@
+/* eslint-disable react/no-multi-comp */
+import { Box, Button, IconButton, Paper, Switch, Typography } from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
+import CloseIcon from '@mui/icons-material/Close';
+import TuneIcon from '@mui/icons-material/Tune';
+import moment from 'moment-timezone';
+import { PropsWithChildren, ReactNode, useState } from 'react';
+import { DailySchedule, Time } from '@api/schedulesSchema.ts';
+import { useAppStore } from '@state/appStore.tsx';
+import { describeTemperature } from '@lib/temperatureConversions.ts';
+import { useTemperatureFormat } from '@lib/useTemperatureFormat.ts';
+import { useScheduleStore } from './scheduleStore.tsx';
+import { TemperatureSelect, TimeField } from './ScheduleFields.tsx';
+import AlarmOptionsDialog, { DEFAULT_ALARM_SECONDS, PATTERN_NAMES } from './AlarmOptionsDialog.tsx';
+import { isPowerScheduleDurationValid } from './scheduleValidation.ts';
+
+const COOL_COLOR = '#2196f3';
+const WARM_COLOR = '#db5858';
+const SECONDS_PER_MINUTE = 60;
+const NEW_CHANGE_TEMPERATURE_F = 70;
+
+type TimelineRowProps = PropsWithChildren<{
+  title: string;
+  subtitle?: string;
+  // The dot's colour; the night's main events get a larger, hollow dot
+  color: string;
+  isMainEvent?: boolean;
+  // Shown at the end of the title line, e.g. an on/off switch
+  headerAction?: ReactNode;
+}>;
+
+// One event of the night: a dot on the line, what it is, and its controls underneath.
+// Stacked rather than side by side so the label never has to wrap on a phone.
+const TimelineRow = ({ title, subtitle, color, isMainEvent, headerAction, children }: TimelineRowProps) => {
+  const dotSize = isMainEvent ? 16 : 10;
+  return (
+    <Box sx={ { position: 'relative', display: 'flex', flexDirection: 'column', gap: 0.75 } }>
+      <Box
+        sx={ {
+          position: 'absolute', left: -25 - dotSize / 2, top: 4, width: dotSize, height: dotSize, borderRadius: '50%',
+          bgcolor: isMainEvent ? 'background.paper' : color, border: isMainEvent ? `2px solid ${color}` : 'none',
+        } }
+      />
+      <Box sx={ { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, minHeight: 24 } }>
+        <Box sx={ { minWidth: 0 } }>
+          <Typography variant="body2" sx={ { fontWeight: isMainEvent ? 500 : 400, color: isMainEvent ? 'text.primary' : 'text.secondary' } }>
+            { title }
+          </Typography>
+          { subtitle && <Typography variant="caption" sx={ { color: 'text.secondary', display: 'block' } }>{ subtitle }</Typography> }
+        </Box>
+        { headerAction }
+      </Box>
+      { children && <Box sx={ { display: 'flex', alignItems: 'center', gap: 0.75 } }>{ children }</Box> }
+    </Box>
+  );
+};
+
+// "45 s" for a short alarm, "10 min" otherwise
+const formatAlarmLength = (seconds: number) => (
+  seconds < SECONDS_PER_MINUTE ? `${seconds} s` : `${Math.round(seconds / SECONDS_PER_MINUTE)} min`
+);
+
+// Minutes from bedtime to a time later that night (past midnight counts as later)
+const minutesAfterBedtime = (time: Time, bedtime: Time) => {
+  const difference = moment(time, 'HH:mm').diff(moment(bedtime, 'HH:mm'), 'minutes');
+  return difference < 0 ? difference + 24 * 60 : difference;
+};
+
+// True when a time falls between bedtime and the time the bed turns off
+const isDuringNight = (time: Time, { power }: DailySchedule) => {
+  return minutesAfterBedtime(time, power.on) <= minutesAfterBedtime(power.off, power.on);
+};
+
+// One night, top to bottom in the order it happens: bedtime, temperature changes, the alarm
+// (with its warm-up), and when the bed turns off.
+export default function NightTimeline() {
+  const { isUpdating } = useAppStore();
+  const { selectedSchedule, updateSelectedSchedule, updateSelectedTemperatures, setValidations } = useScheduleStore();
+  const temperatureFormat = useTemperatureFormat();
+  const [areAlarmOptionsOpen, setAreAlarmOptionsOpen] = useState(false);
+  if (!selectedSchedule) return null;
+
+  const { power, alarm, temperatures } = selectedSchedule;
+  const disabled = isUpdating || !power.enabled;
+  const changes = Object.entries(temperatures)
+    .sort(([timeA], [timeB]) => minutesAfterBedtime(timeA, power.on) - minutesAfterBedtime(timeB, power.on));
+  const isAlarmTimeValid = isDuringNight(alarm.time, selectedSchedule);
+  const preWarmMinutes = alarm.preWarmMinutes ?? 0;
+
+  const replaceChange = (oldTime: Time, newTime: Time, temperatureF: number) => {
+    const nextTemperatures = { ...temperatures };
+    delete nextTemperatures[oldTime];
+    nextTemperatures[newTime] = temperatureF;
+    updateSelectedTemperatures(nextTemperatures);
+  };
+
+  const removeChange = (time: Time) => {
+    const nextTemperatures = { ...temperatures };
+    delete nextTemperatures[time];
+    updateSelectedTemperatures(nextTemperatures);
+  };
+
+  // A new change goes an hour after the last one (or after bedtime), if that time is free
+  const addChange = () => {
+    const lastTime = changes.length > 0 ? changes[changes.length - 1][0] : power.on;
+    const nextTime = moment(lastTime, 'HH:mm').add(1, 'hour').format('HH:mm');
+    if (nextTime in temperatures) return;
+    updateSelectedTemperatures({ ...temperatures, [nextTime]: NEW_CHANGE_TEMPERATURE_F });
+  };
+
+  const setAlarmTime = (time: Time) => {
+    setValidations({ alarmTimeIsValid: isDuringNight(time, selectedSchedule) });
+    updateSelectedSchedule({ alarm: { time } });
+  };
+
+  // Switching the alarm on gives it sensible settings if it has never been set up:
+  // a gentle ramp-up that keeps going until dismissed
+  const setAlarmEnabled = (enabled: boolean) => {
+    const needsDefaults = enabled && alarm.duration < DEFAULT_ALARM_SECONDS;
+    setValidations({ alarmTimeIsValid: !enabled || isDuringNight(alarm.time, selectedSchedule) });
+    updateSelectedSchedule({
+      alarm: needsDefaults ? { enabled, duration: DEFAULT_ALARM_SECONDS, vibrationPattern: 'rise' } : { enabled },
+    });
+  };
+
+  const alarmSummary = [
+    `${PATTERN_NAMES[alarm.vibrationPattern]}, up to ${formatAlarmLength(alarm.duration)}`,
+    preWarmMinutes > 0 && `warms to ${describeTemperature(alarm.alarmTemperature, temperatureFormat)} ${preWarmMinutes} min before`,
+    alarm.turnOffAfterDismiss && 'bed off when dismissed',
+  ].filter(Boolean).join(' · ');
+
+  return (
+    <Paper sx={ { p: { xs: 2, sm: 2.5 }, width: '100%' } }>
+      <Box sx={ { borderLeft: '2px solid', borderColor: 'divider', ml: 1, pl: 3, display: 'flex', flexDirection: 'column', gap: 1.5 } }>
+        <TimelineRow title="Bedtime" subtitle="Bed turns on" color={ COOL_COLOR } isMainEvent>
+          <TimeField label="Bedtime" value={ power.on } onChange={ (on) => updateSelectedSchedule({ power: { on } }) } disabled={ disabled }/>
+          <TemperatureSelect
+            label="Bedtime temperature"
+            value={ power.onTemperature }
+            onChange={ (onTemperature) => updateSelectedSchedule({ power: { onTemperature } }) }
+            disabled={ disabled }
+          />
+        </TimelineRow>
+
+        { changes.map(([time, temperatureF]) => (
+          <TimelineRow
+            key={ time }
+            title="Then change to"
+            subtitle={ isDuringNight(time, selectedSchedule) ? undefined : 'Outside this night' }
+            color={ COOL_COLOR }
+          >
+            <TimeField
+              label="Change time"
+              value={ time }
+              onChange={ (newTime) => replaceChange(time, newTime, temperatureF) }
+              disabled={ disabled }
+              error={ !isDuringNight(time, selectedSchedule) }
+            />
+            <TemperatureSelect
+              label="Change temperature"
+              value={ temperatureF }
+              onChange={ (newTemperatureF) => replaceChange(time, time, newTemperatureF) }
+              disabled={ disabled }
+            />
+            <IconButton size="small" onClick={ () => removeChange(time) } disabled={ disabled } aria-label="Remove this change">
+              <CloseIcon fontSize="small"/>
+            </IconButton>
+          </TimelineRow>
+        )) }
+
+        <Box>
+          <Button size="small" startIcon={ <AddIcon/> } onClick={ addChange } disabled={ disabled }>
+            Add a temperature change
+          </Button>
+        </Box>
+
+        <TimelineRow
+          title="Alarm"
+          subtitle={ !alarm.enabled ? 'Off' : isAlarmTimeValid ? alarmSummary : 'Must be before the bed turns off' }
+          color={ WARM_COLOR }
+          isMainEvent
+          headerAction={
+            <Switch
+              checked={ alarm.enabled }
+              onChange={ (event) => setAlarmEnabled(event.target.checked) }
+              disabled={ disabled }
+              slotProps={ { input: { 'aria-label': 'Alarm' } } }
+            />
+          }
+        >
+          { alarm.enabled && (
+            <>
+              <TimeField label="Alarm time" value={ alarm.time } onChange={ setAlarmTime } disabled={ disabled } error={ !isAlarmTimeValid }/>
+              <Button
+                size="small"
+                variant="outlined"
+                startIcon={ <TuneIcon fontSize="small"/> }
+                onClick={ () => setAreAlarmOptionsOpen(true) }
+                disabled={ disabled }
+              >
+                Options
+              </Button>
+            </>
+          ) }
+        </TimelineRow>
+
+        <TimelineRow
+          title="Bed turns off"
+          subtitle={ isPowerScheduleDurationValid(power.on, power.off) ? undefined : 'Must differ from bedtime' }
+          color="text.disabled"
+        >
+          <TimeField
+            label="Bed turns off"
+            value={ power.off }
+            onChange={ (off) => updateSelectedSchedule({ power: { off } }) }
+            disabled={ disabled }
+            error={ !isPowerScheduleDurationValid(power.on, power.off) }
+          />
+        </TimelineRow>
+      </Box>
+      <AlarmOptionsDialog open={ areAlarmOptionsOpen } onClose={ () => setAreAlarmOptionsOpen(false) }/>
+    </Paper>
+  );
+}

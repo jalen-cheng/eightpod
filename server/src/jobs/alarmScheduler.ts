@@ -7,7 +7,7 @@ import memoryDB from '../db/memoryDB.js';
 import serverStatus from '../serverStatus.js';
 import schedulesDB from '../db/schedules.js';
 import settingsDB from '../db/settings.js';
-import { AlarmJob, DailySchedule, DayOfWeek, Side } from '../db/schedulesSchema.js';
+import { AlarmJob, DailySchedule, DayOfWeek, MAX_FIRMWARE_ALARM_SECONDS, Side } from '../db/schedulesSchema.js';
 import { executeFunction } from '../8sleep/deviceApi.js';
 import { getDayIndexForSchedule, logJob, subtractMinutesFromTime } from './utils.js';
 import { startPreWarm } from './preWarmState.js';
@@ -17,11 +17,16 @@ import { Settings } from '../db/settingsSchema.js';
 import { createAlarmSession } from './alarmSession.js';
 
 
-export const executeAlarm = async ({
-  vibrationIntensity, duration, vibrationPattern, side, force=false, turnOffAfterDismiss,
-}: AlarmJob) => {
+// Sends an alarm to the Pod. An alarm longer than the firmware allows is sent as a first stretch
+// here, with the rest handed to the alarm session to start when this stretch ends.
+export const executeAlarm = async (
+  { vibrationIntensity, duration, vibrationPattern, side, force=false, turnOffAfterDismiss }: AlarmJob,
+  { isContinuation }: { isContinuation: boolean } = { isContinuation: false },
+) => {
   try {
-    const min10Duration = Math.max(10, duration);
+    const totalDuration = Math.max(10, duration);
+    const min10Duration = Math.min(MAX_FIRMWARE_ALARM_SECONDS, totalDuration);
+    const remainingDuration = totalDuration - min10Duration;
     // Exit is side is in away mode
     await settingsDB.read();
     if (settingsDB.data[side].awayMode && !force) {
@@ -56,9 +61,14 @@ export const executeAlarm = async ({
     logger.debug(`Executing alarm... ${JSON.stringify(alarmPayload)}`);
     await executeFunction(command, hexPayload);
     // eslint-disable-next-line no-use-before-define
+    // Later stretches use full pulses: "rise" would drop back to a feeble start every few minutes
+    const continuation: AlarmJob | undefined = remainingDuration > 0
+      ? { vibrationIntensity, duration: remainingDuration, vibrationPattern: 'double', side, force, turnOffAfterDismiss }
+      : undefined;
     await alarmSession.alarmStarted(
       { vibrationIntensity, duration, vibrationPattern, side, force, turnOffAfterDismiss },
       min10Duration,
+      { continuation, isContinuation },
     );
     serverStatus.status.alarmSchedule.status = 'healthy';
     serverStatus.status.alarmSchedule.message = '';

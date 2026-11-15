@@ -7,6 +7,7 @@ import { useDrawingArea } from '@mui/x-charts/hooks';
 
 import { useScheduleStore } from './scheduleStore.tsx';
 import { DailySchedule, Time } from '../../../../server/src/db/schedulesSchema.ts';
+import { subtractMinutesFromTime } from '../../../../server/src/jobs/scheduleTiming.ts';
 import {
   TemperatureFormat,
   formatDisplayValue,
@@ -50,6 +51,11 @@ function buildSeriesData(selectedSchedule: DailySchedule, yMin: number, yMax: nu
   const end = todayAt(power.off, wraps ? 1 : 0);
 
   const entries = Object.entries(temperatures) as [Time, number][];
+  // The warm-up before an alarm is a temperature change like any other, drawn where it starts
+  const preWarmMinutes = selectedSchedule.alarm.preWarmMinutes ?? 0;
+  if (selectedSchedule.alarm.enabled && preWarmMinutes > 0) {
+    entries.push([subtractMinutesFromTime(selectedSchedule.alarm.time, preWarmMinutes), selectedSchedule.alarm.alarmTemperature]);
+  }
   const day0: [Date, number][] = [];
   const day1: [Date, number][] = [];
 
@@ -216,12 +222,12 @@ export default function TemperatureScheduleChart() {
           scaleType: 'time',
           data: xData,
           valueFormatter: (v) =>
-            new Date(v as number).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }),
+            new Date(v as number).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }).replace(/\s?[AP]M$/i, ''),
           min: xData[0],
           max: xData[xData.length - 1],
-          tickMinStep: 60 * 60 * 1000,
-          tickNumber: 4,
-          label: getTemperatureUnitLabel(temperatureFormat),
+          // One tick per event of the night (bedtime, each change, the warm-up, bed off),
+          // so the axis lines up with the list below instead of with round hours
+          tickInterval: xData,
           tickLabelStyle: { fill: axisColor },
         }] }
         yAxis={ [{

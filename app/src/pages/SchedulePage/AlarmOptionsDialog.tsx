@@ -1,0 +1,136 @@
+import {
+  Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem, Slider, Switch, TextField,
+  ToggleButton, ToggleButtonGroup, Typography,
+} from '@mui/material';
+import _ from 'lodash';
+import { PropsWithChildren } from 'react';
+import { AlarmSchedule } from '@api/schedulesSchema.ts';
+import { useScheduleStore } from './scheduleStore.tsx';
+import { TemperatureSelect } from './ScheduleFields.tsx';
+
+const SECONDS_PER_MINUTE = 60;
+// An alarm keeps going until it is dismissed, up to this long
+export const ALARM_LENGTH_MINUTES = [10, 15, 20, 30];
+export const DEFAULT_ALARM_SECONDS = ALARM_LENGTH_MINUTES[0] * SECONDS_PER_MINUTE;
+// 0 means no warm-up
+const WARM_UP_MINUTES = [0, 15, 30, 45];
+
+export const PATTERN_NAMES: Record<AlarmSchedule['vibrationPattern'], string> = {
+  rise: 'Ramp up',
+  double: 'Pulses',
+};
+
+// One labelled line of the options: the label on the left, its control on the right
+const OptionRow = ({ label, hint, children }: PropsWithChildren<{ label: string; hint?: string }>) => (
+  <Box sx={ { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, minHeight: 44 } }>
+    <Box sx={ { minWidth: 0 } }>
+      <Typography variant="body2" sx={ { fontWeight: 500 } }>{ label }</Typography>
+      { hint && <Typography variant="caption" sx={ { color: 'text.secondary' } }>{ hint }</Typography> }
+    </Box>
+    <Box sx={ { flexShrink: 0 } }>{ children }</Box>
+  </Box>
+);
+
+type AlarmOptionsDialogProps = {
+  open: boolean;
+  onClose: () => void;
+};
+
+// Everything about the alarm except its time: how it vibrates, how long for, the warm-up before
+// it, and whether dismissing it turns the side off. Changes go into the schedule being edited
+// and are saved with it.
+// eslint-disable-next-line react/no-multi-comp
+export default function AlarmOptionsDialog({ open, onClose }: AlarmOptionsDialogProps) {
+  const { selectedSchedule, updateSelectedSchedule } = useScheduleStore();
+  if (!selectedSchedule) return null;
+
+  const { alarm } = selectedSchedule;
+  const updateAlarm = (changes: Partial<AlarmSchedule>) => updateSelectedSchedule({ alarm: changes });
+  const preWarmMinutes = alarm.preWarmMinutes ?? 0;
+  const lengthMinutes = Math.round(alarm.duration / SECONDS_PER_MINUTE);
+  // An alarm saved with some other length keeps it until a new one is picked
+  const lengthOptions = _.sortBy(_.union(ALARM_LENGTH_MINUTES, [lengthMinutes]));
+
+  return (
+    <Dialog open={ open } onClose={ onClose } fullWidth maxWidth="xs">
+      <DialogTitle>Alarm options</DialogTitle>
+      <DialogContent sx={ { display: 'flex', flexDirection: 'column', gap: 1.5 } }>
+        <OptionRow label="Vibration" hint="Ramp up starts gently and builds">
+          <ToggleButtonGroup
+            exclusive
+            size="small"
+            value={ alarm.vibrationPattern }
+            onChange={ (_event, vibrationPattern: AlarmSchedule['vibrationPattern'] | null) => {
+              if (vibrationPattern !== null) updateAlarm({ vibrationPattern });
+            } }
+            aria-label="Vibration"
+          >
+            <ToggleButton value="rise" sx={ { whiteSpace: 'nowrap' } }>{ PATTERN_NAMES.rise }</ToggleButton>
+            <ToggleButton value="double" sx={ { whiteSpace: 'nowrap' } }>{ PATTERN_NAMES.double }</ToggleButton>
+          </ToggleButtonGroup>
+        </OptionRow>
+
+        <Box>
+          <Typography variant="body2" sx={ { fontWeight: 500 } }>Strength { alarm.vibrationIntensity }%</Typography>
+          <Slider
+            value={ alarm.vibrationIntensity }
+            min={ 1 }
+            max={ 100 }
+            onChange={ (_event, vibrationIntensity) => updateAlarm({ vibrationIntensity: vibrationIntensity as number }) }
+            aria-label="Vibration strength"
+          />
+        </Box>
+
+        <OptionRow label="Keeps going for" hint="Until you dismiss it">
+          <TextField
+            select
+            size="small"
+            value={ lengthMinutes }
+            onChange={ (event) => updateAlarm({ duration: Number(event.target.value) * SECONDS_PER_MINUTE }) }
+            sx={ { width: 112 } }
+            slotProps={ { htmlInput: { 'aria-label': 'Alarm length' } } }
+          >
+            { lengthOptions.map(minutes => (
+              <MenuItem key={ minutes } value={ minutes }>{ minutes < 1 ? 'Under a minute' : `${minutes} min` }</MenuItem>
+            )) }
+          </TextField>
+        </OptionRow>
+
+        <OptionRow label="Warm up before" hint="Overrides the schedule until the alarm">
+          <TextField
+            select
+            size="small"
+            value={ preWarmMinutes }
+            onChange={ (event) => updateAlarm({ preWarmMinutes: Number(event.target.value) }) }
+            sx={ { width: 112 } }
+            slotProps={ { htmlInput: { 'aria-label': 'Warm up before the alarm' } } }
+          >
+            { WARM_UP_MINUTES.map(minutes => (
+              <MenuItem key={ minutes } value={ minutes }>{ minutes === 0 ? 'Off' : `${minutes} min` }</MenuItem>
+            )) }
+          </TextField>
+        </OptionRow>
+
+        <OptionRow label="Warm up to">
+          <TemperatureSelect
+            label="Warm up temperature"
+            value={ alarm.alarmTemperature }
+            onChange={ (alarmTemperature) => updateAlarm({ alarmTemperature }) }
+            disabled={ preWarmMinutes === 0 }
+          />
+        </OptionRow>
+
+        <OptionRow label="Turn this side off when dismissed">
+          <Switch
+            checked={ alarm.turnOffAfterDismiss ?? false }
+            onChange={ (event) => updateAlarm({ turnOffAfterDismiss: event.target.checked }) }
+            slotProps={ { input: { 'aria-label': 'Turn this side off when the alarm is dismissed' } } }
+          />
+        </OptionRow>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={ onClose }>Done</Button>
+      </DialogActions>
+    </Dialog>
+  );
+}

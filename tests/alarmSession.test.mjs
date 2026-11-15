@@ -159,3 +159,35 @@ test('clearing reports the alarm only when one was actually vibrating', async ()
   // Already cleared: a second clear is not a second dismissal
   assert.equal(await session.alarmCleared('left'), undefined);
 });
+
+test('a long alarm carries on in stretches until it is dismissed', async () => {
+  mock.timers.reset();
+  mock.timers.enable({ apis: ['setTimeout'] });
+  const started = [];
+  const flags = [];
+  let session;
+  session = createAlarmSession({
+    // Stands in for the scheduler: every stretch reports back, the last one has no continuation
+    startAlarm: async (alarmJob, options) => {
+      started.push([alarmJob.duration, options?.isContinuation]);
+      await session.alarmStarted(alarmJob, 180, { isContinuation: true });
+    },
+    setAlarmVibrating: async (side, isAlarmVibrating) => { flags.push(isAlarmVibrating); },
+    logDebug: () => {},
+  });
+  const alarmJob = { side: 'left', vibrationIntensity: 100, vibrationPattern: 'rise', duration: 600 };
+  const continuation = { ...alarmJob, duration: 420, vibrationPattern: 'double' };
+
+  await session.alarmStarted(alarmJob, 180, { continuation });
+  mock.timers.tick(180_000);
+  await new Promise(resolve => setImmediate(resolve));
+  assert.deepEqual(started, [[420, true]]);
+  // Still vibrating across the hand-over, and a snooze would re-run the original alarm
+  assert.equal(flags.includes(false), false);
+  assert.deepEqual(await session.alarmCleared('left'), alarmJob);
+
+  // Dismissed: the chain stops
+  mock.timers.tick(600_000);
+  assert.equal(started.length, 1);
+  mock.timers.reset();
+});
