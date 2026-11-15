@@ -6,7 +6,9 @@ import settingsDB from '../db/settings.js';
 import { Side } from '../db/schedulesSchema.js';
 import { Version } from '../routes/deviceStatus/deviceStatusSchema.js';
 import { connectFranken } from './frankenServer.js';
-import { ButtonPress, countPressesAsGestures, createButtonLineParser, isPowerHold } from './buttonEvents.js';
+import {
+  ButtonPress, countPressesAsGestures, createButtonLineParser, hasTemperaturePress, isPowerHold,
+} from './buttonEvents.js';
 import { noteAlarmGestureHandled, runSideGestures, setSidePower } from './gestureActions.js';
 
 // Presses are collected for this long before acting, so a quick run of "+" presses becomes one
@@ -128,6 +130,13 @@ export class ButtonMonitor {
           // The firmware can follow a long hold with a second, shorter middle event. Without
           // this it would be taken as a new press and switch the side straight back.
           noteAlarmGestureHandled(side);
+          continue;
+        }
+        // + or - on a side that is off switches it on at its current target. During an alarm
+        // the press belongs to the alarm instead.
+        if (!deviceStatus[side].isOn && !deviceStatus[side].isAlarmVibrating && hasTemperaturePress(sidePresses)) {
+          logger.debug(`Temperature button pressed on ${side} while off, switching on`);
+          await setSidePower(side, true);
           continue;
         }
         const recentTarget = this.recentTargets[side];
