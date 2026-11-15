@@ -49,10 +49,14 @@ export function createAlarmSession({ startAlarm, setAlarmVibrating, logDebug }: 
   };
 
   // Call when the alarm was stopped on the Pod (dismissed from the app or by a tap).
-  const alarmCleared = async (side: Side) => {
+  // Returns the alarm that was vibrating, or undefined if none was, so the caller can tell a
+  // real dismissal from a clear sent when nothing was going off.
+  const alarmCleared = async (side: Side): Promise<AlarmJob | undefined> => {
+    const wasVibrating = sideStates[side].vibrationEndTimer !== undefined;
     cancelVibrationEndTimer(side);
     cancelSnooze(side);
     await setAlarmVibrating(side, false);
+    return wasVibrating ? sideStates[side].lastAlarm : undefined;
   };
 
   // Re-runs the last alarm of a side after snoozeSeconds. Returns false when there is nothing to snooze.

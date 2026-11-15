@@ -7,11 +7,26 @@ import { executeFunction } from '../../8sleep/deviceApi.js';
 import logger from '../../logger.js';
 import settingsDB from '../../db/settings.js';
 import { alarmSession } from '../../jobs/alarmScheduler.js';
+import { cancelPreWarm } from '../../jobs/preWarmState.js';
 import { INVERTED_SETTINGS_KEY_MAPPING } from '../../8sleep/loadDeviceStatus.js';
 
 const calculateLevelFromF = (temperatureF: number) => {
   const level = (temperatureF - 82.5) / 27.5 * 100;
   return Math.round(level).toString();
+};
+
+// Stops a side's alarm. If that alarm was set to switch the side off when dismissed, does that
+// too, unless `allowPowerOff` is false (a snooze stops the vibration but keeps the bed on).
+export const dismissAlarm = async (side: 'left' | 'right', { allowPowerOff }: { allowPowerOff: boolean }) => {
+  // ALARM_CLEAR takes no side, it may stop the alarm on both sides
+  logger.debug(`Clearing alarm, requested by ${side} side`);
+  await executeFunction('ALARM_CLEAR', 'empty');
+  const dismissedAlarm = await alarmSession.alarmCleared(side);
+  if (allowPowerOff && dismissedAlarm?.turnOffAfterDismiss) {
+    logger.debug(`Alarm dismissed, switching ${side} side off`);
+    await executeFunction(side === 'left' ? 'LEFT_TEMP_DURATION' : 'RIGHT_TEMP_DURATION', '0');
+    cancelPreWarm(side);
+  }
 };
 
 const updateSide = async (side: 'left' | 'right', sideStatus: DeepPartial<SideStatus>) => {
@@ -56,18 +71,17 @@ const updateSide = async (side: 'left' | 'right', sideStatus: DeepPartial<SideSt
 
   // A pending snooze must not re-start the alarm on a side that was just turned off
   if (isOn === false) {
-    if (updateLeft) alarmSession.cancelSnooze('left');
-    if (updateRight) alarmSession.cancelSnooze('right');
+    if (updateLeft) { alarmSession.cancelSnooze('left'); cancelPreWarm('left'); }
+    if (updateRight) { alarmSession.cancelSnooze('right'); cancelPreWarm('right'); }
   }
 
   if (isAlarmVibrating !== undefined) {
     logger.debug('Can only set isAlarmVibrating to false for now...');
     if (!isAlarmVibrating) {
-      // ALARM_CLEAR takes no side, it may stop the alarm on both sides
-      logger.debug(`Clearing alarm, requested by ${side} side`);
-      await executeFunction('ALARM_CLEAR', 'empty');
+      await dismissAlarm(side, { allowPowerOff: true });
+    } else {
+      await alarmSession.alarmCleared(side);
     }
-    await alarmSession.alarmCleared(side);
   }
 };
 

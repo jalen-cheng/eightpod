@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="e04ed3df-4335-5b56-b872-dbdcff97d46a")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="1e316307-e2e9-5426-8429-51f3ad2dc1a3")}catch(e){}}();
 import path from 'path';
 import chokidar from 'chokidar';
 import moment from 'moment-timezone';
@@ -10,7 +10,7 @@ import schedulesDB from '../db/schedules.js';
 import serverStatus from '../serverStatus.js';
 import settingsDB from '../db/settings.js';
 import { isSystemDateValid } from './isSystemDateValid.js';
-import { scheduleAlarm, scheduleAlarmOverride } from './alarmScheduler.js';
+import { scheduleAlarm, scheduleAlarmOverride, scheduleAlarmPreWarm } from './alarmScheduler.js';
 import { schedulePowerOffAndSleepAnalysis, schedulePowerOn } from './powerScheduler.js';
 import { schedulePrimingRebootAndCalibration } from './primeScheduler.js';
 import { scheduleTemperatures } from './temperatureScheduler.js';
@@ -41,6 +41,7 @@ async function setupJobs() {
                 schedulePowerOffAndSleepAnalysis(settingsData, side, day, schedule.power);
                 scheduleTemperatures(settingsData, side, day, schedule);
                 scheduleAlarm(settingsData, side, day, schedule);
+                scheduleAlarmPreWarm(settingsData, side, day, schedule);
             });
         });
         schedulePrimingRebootAndCalibration(settingsData);
@@ -102,4 +103,4 @@ chokidar.watch(config.lowDbFolder).on('change', (changedPath) => {
 // Initial job setup
 waitForValidDateAndSetupJobs();
 //# sourceMappingURL=jobScheduler.js.map
-//# debugId=e04ed3df-4335-5b56-b872-dbdcff97d46a
+//# debugId=1e316307-e2e9-5426-8429-51f3ad2dc1a3

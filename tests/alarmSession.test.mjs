@@ -149,3 +149,13 @@ test('snooze falls back to dismiss when no alarm is known', async () => {
   assert.equal(await handleAlarmGesture(snoozeTap, deps), 'dismissed');
   assert.equal(testSession.session.hasPendingSnooze('left'), false);
 });
+
+test('clearing reports the alarm only when one was actually vibrating', async () => {
+  const session = createAlarmSession({ startAlarm: async () => {}, setAlarmVibrating: async () => {}, logDebug: () => {} });
+  assert.equal(await session.alarmCleared('left'), undefined);
+  const alarmJob = { side: 'left', vibrationIntensity: 50, vibrationPattern: 'rise', duration: 30, turnOffAfterDismiss: true };
+  await session.alarmStarted(alarmJob, 30);
+  assert.deepEqual(await session.alarmCleared('left'), alarmJob);
+  // Already cleared: a second clear is not a second dismissal
+  assert.equal(await session.alarmCleared('left'), undefined);
+});

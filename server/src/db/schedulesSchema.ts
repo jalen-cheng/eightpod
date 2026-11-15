@@ -19,12 +19,18 @@ export const AlarmSchema = z.object({
 export const AlarmJobSchema = AlarmSchema.extend({
   side: SideSchema,
   force: z.boolean().optional(),
+  // Switch the side off when this alarm is dismissed (not when it is snoozed or runs out)
+  turnOffAfterDismiss: z.boolean().optional(),
 }).strict();
 
 export const AlarmScheduleSchema = AlarmSchema.extend({
   time: TimeSchema,
   enabled: z.boolean(),
   alarmTemperature: TemperatureSchema,
+  // Minutes before the alarm to start warming the side to alarmTemperature. 0 or missing: no warm-up.
+  // Optional so schedules saved before this existed stay valid.
+  preWarmMinutes: z.number().int().min(0).max(60).optional(),
+  turnOffAfterDismiss: z.boolean().optional(),
 }).strict();
 
 

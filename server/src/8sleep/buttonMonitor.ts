@@ -136,7 +136,7 @@ export class ButtonMonitor {
         }
         // The gesture code works on counters, so presses are passed as a count starting from zero
         const targetTemperatureF = await runSideGestures(side, deviceStatus, { doubleTap: 0, tripleTap: 0, quadTap: 0 }, {
-          doubleTap: 0, tripleTap: 0, quadTap: 0, ...countPressesAsGestures(sidePresses),
+          doubleTap: 0, tripleTap: 0, quadTap: 0, ...countPressesAsGestures(sidePresses, deviceStatus[side].isAlarmVibrating),
         });
         if (targetTemperatureF !== undefined) {
           this.recentTargets[side] = { temperatureF: targetTemperatureF, setAtMs: Date.now() };

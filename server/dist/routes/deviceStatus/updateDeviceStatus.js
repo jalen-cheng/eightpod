@@ -1,15 +1,29 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="5712b5f2-fa35-5cf4-9d3d-526472352383")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="6e9f8b65-0f80-51cb-ab94-fc4e5e952737")}catch(e){}}();
 import _ from 'lodash';
 import cbor from 'cbor';
 import { executeFunction } from '../../8sleep/deviceApi.js';
 import logger from '../../logger.js';
 import settingsDB from '../../db/settings.js';
 import { alarmSession } from '../../jobs/alarmScheduler.js';
+import { cancelPreWarm } from '../../jobs/preWarmState.js';
 import { INVERTED_SETTINGS_KEY_MAPPING } from '../../8sleep/loadDeviceStatus.js';
 const calculateLevelFromF = (temperatureF) => {
     const level = (temperatureF - 82.5) / 27.5 * 100;
     return Math.round(level).toString();
+};
+// Stops a side's alarm. If that alarm was set to switch the side off when dismissed, does that
+// too, unless `allowPowerOff` is false (a snooze stops the vibration but keeps the bed on).
+export const dismissAlarm = async (side, { allowPowerOff }) => {
+    // ALARM_CLEAR takes no side, it may stop the alarm on both sides
+    logger.debug(`Clearing alarm, requested by ${side} side`);
+    await executeFunction('ALARM_CLEAR', 'empty');
+    const dismissedAlarm = await alarmSession.alarmCleared(side);
+    if (allowPowerOff && dismissedAlarm?.turnOffAfterDismiss) {
+        logger.debug(`Alarm dismissed, switching ${side} side off`);
+        await executeFunction(side === 'left' ? 'LEFT_TEMP_DURATION' : 'RIGHT_TEMP_DURATION', '0');
+        cancelPreWarm(side);
+    }
 };
 const updateSide = async (side, sideStatus) => {
     await settingsDB.read();
@@ -54,19 +68,23 @@ const updateSide = async (side, sideStatus) => {
     }
     // A pending snooze must not re-start the alarm on a side that was just turned off
     if (isOn === false) {
-        if (updateLeft)
+        if (updateLeft) {
             alarmSession.cancelSnooze('left');
-        if (updateRight)
+            cancelPreWarm('left');
+        }
+        if (updateRight) {
             alarmSession.cancelSnooze('right');
+            cancelPreWarm('right');
+        }
     }
     if (isAlarmVibrating !== undefined) {
         logger.debug('Can only set isAlarmVibrating to false for now...');
         if (!isAlarmVibrating) {
-            // ALARM_CLEAR takes no side, it may stop the alarm on both sides
-            logger.debug(`Clearing alarm, requested by ${side} side`);
-            await executeFunction('ALARM_CLEAR', 'empty');
+            await dismissAlarm(side, { allowPowerOff: true });
         }
-        await alarmSession.alarmCleared(side);
+        else {
+            await alarmSession.alarmCleared(side);
+        }
     }
 };
 const updateSettings = async (settings) => {
@@ -88,4 +106,4 @@ export const updateDeviceStatus = async (deviceStatus) => {
     logger.info('Finished updating device status');
 };
 //# sourceMappingURL=updateDeviceStatus.js.map
-//# debugId=5712b5f2-fa35-5cf4-9d3d-526472352383
+//# debugId=6e9f8b65-0f80-51cb-ab94-fc4e5e952737

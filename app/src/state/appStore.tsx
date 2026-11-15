@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { create } from 'zustand';
 import moment from 'moment-timezone';
 
-import { useSettings } from '@api/settings.ts';
+import { postSettings, useSettings } from '@api/settings.ts';
 import { useServices } from '@api/services.ts';
 import { closeSentry, initSentryTags } from '../sentry.tsx';
 import { useDeviceStatus } from '@api/deviceStatus.ts';
@@ -14,14 +14,15 @@ type AppState = {
   setIsUpdating: (isUpdating: boolean) => void;
   side: Side;
   setSide: (side: Side) => void;
-  // When true, temperature, power and schedule changes apply to both sides.
-  // Remembered per browser, like the selected side.
+  // When true, temperature, power and schedule changes apply to both sides. Saved in the Pod's
+  // settings, so every device and the buttons at the bed agree on it.
   linkSides: boolean;
   setLinkSides: (linkSides: boolean) => void;
+  // Takes the value from the Pod's settings without writing it back
+  syncLinkSides: (linkSides: boolean) => void;
 };
 
 const SIDE_KEY = 'side';
-const LINK_SIDES_KEY = 'link_sides';
 export const USER_ID_KEY = 'user_id';
 export const HUB_VERSION_KEY = 'pod_version';
 export const COVER_VERSION_KEY = 'cover_version';
@@ -35,11 +36,12 @@ export const useAppStore = create<AppState>((set) => ({
     set({ side });
     localStorage.setItem(SIDE_KEY, side);
   },
-  linkSides: localStorage.getItem(LINK_SIDES_KEY) === 'true',
+  linkSides: false,
   setLinkSides: (linkSides: boolean) => {
     set({ linkSides });
-    localStorage.setItem(LINK_SIDES_KEY, String(linkSides));
+    postSettings({ linkSides }).catch(error => console.error(error));
   },
+  syncLinkSides: (linkSides: boolean) => set({ linkSides }),
 }));
 
 // AppStoreProvider to sync Zustand with react-query's isFetching
@@ -48,10 +50,12 @@ export function AppStoreProvider({ children }: React.PropsWithChildren) {
   const { data: services } = useServices();
   const { data: deviceStatus } = useDeviceStatus();
 
+  const syncLinkSides = useAppStore(state => state.syncLinkSides);
   useEffect(() => {
     if (!settings) return;
     moment.tz.setDefault(settings.timeZone);
-  }, [settings]);
+    syncLinkSides(settings.linkSides);
+  }, [settings, syncLinkSides]);
 
   useEffect(() => {
     if (!settings || !deviceStatus || !services) return;

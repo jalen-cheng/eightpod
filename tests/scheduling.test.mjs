@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { test } from 'node:test';
 import { isPowerScheduleDurationValid } from '../app/src/pages/SchedulePage/scheduleValidation.ts';
-import { DAYS_OF_WEEK, getDayIndexForSchedule } from '../server/src/jobs/scheduleTiming.ts';
+import { DAYS_OF_WEEK, getDayIndexForSchedule, subtractMinutesFromTime } from '../server/src/jobs/scheduleTiming.ts';
 
 const requireServer = createRequire(new URL('../server/package.json', import.meta.url));
 const { RecurrenceRule } = requireServer('node-schedule');
@@ -78,4 +78,18 @@ test('14-hour schedules recur at the configured local time across DST and week r
     rule.tz = 'America/Los_Angeles';
     assert.equal(rule.nextInvocationDate(new Date(start)).toISOString(), expected);
   }
+});
+
+test('alarm warm-up times are counted back from the alarm, wrapping past midnight', () => {
+  assert.equal(subtractMinutesFromTime('07:00', 30), '06:30');
+  assert.equal(subtractMinutesFromTime('07:10', 15), '06:55');
+  assert.equal(subtractMinutesFromTime('00:10', 30), '23:40');
+  assert.equal(subtractMinutesFromTime('06:45', 0), '06:45');
+});
+
+test('a warm-up before an early alarm lands on the morning after power-on', () => {
+  // Power on Sunday night, alarm Monday 00:10, warm-up 23:40 is still Sunday night
+  const warmUpTime = subtractMinutesFromTime('00:10', 30);
+  assert.equal(DAYS_OF_WEEK[getDayIndexForSchedule('sunday', warmUpTime, '22:00')], 'sunday');
+  assert.equal(DAYS_OF_WEEK[getDayIndexForSchedule('sunday', '00:10', '22:00')], 'monday');
 });

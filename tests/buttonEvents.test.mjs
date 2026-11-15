@@ -99,12 +99,24 @@ test('only a long middle hold counts as a power hold', () => {
   assert.equal(isPowerHold({ side: 'left', button: 'top', count: 1, heldMs: 5_000 }), false);
 });
 
-test('presses are counted as the matching tap gestures', () => {
-  const presses = [
-    { side: 'left', button: 'top', count: 2 },
-    { side: 'left', button: 'bottom', count: 1 },
-    { side: 'left', button: 'middle', count: 1, heldMs: 120 },
-    { side: 'left', button: 'middle', count: 1, heldMs: POWER_HOLD_MS + 500 },
-  ];
-  assert.deepEqual(countPressesAsGestures(presses), { tripleTap: 2, doubleTap: 1, quadTap: 1 });
+const mixedPresses = [
+  { side: 'left', button: 'top', count: 2 },
+  { side: 'left', button: 'bottom', count: 1 },
+  { side: 'left', button: 'middle', count: 1, heldMs: 120 },
+];
+
+test('with no alarm, + and - step the temperature and a short middle press does nothing', () => {
+  assert.deepEqual(countPressesAsGestures(mixedPresses, false), { tripleTap: 2, doubleTap: 1 });
+  assert.deepEqual(countPressesAsGestures([{ side: 'left', button: 'middle', count: 1, heldMs: 120 }], false), {});
+});
+
+test('during an alarm any press is one alarm gesture and never a temperature change', () => {
+  assert.deepEqual(countPressesAsGestures(mixedPresses, true), { quadTap: 1 });
+  assert.deepEqual(countPressesAsGestures([{ side: 'left', button: 'top', count: 3 }], true), { quadTap: 1 });
+});
+
+test('a power hold is never counted as a gesture', () => {
+  const hold = [{ side: 'left', button: 'middle', count: 1, heldMs: POWER_HOLD_MS + 500 }];
+  assert.deepEqual(countPressesAsGestures(hold, false), {});
+  assert.deepEqual(countPressesAsGestures(hold, true), {});
 });

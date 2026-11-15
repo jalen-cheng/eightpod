@@ -82,10 +82,21 @@ export function isPowerHold(press: ButtonPress): boolean {
 
 // Counts one side's presses per gesture, in the shape the tap gesture code already works with.
 // Power holds are left out; the caller handles those separately.
-export function countPressesAsGestures(presses: ButtonPress[]): Partial<Record<Gesture, number>> {
+// - While an alarm is vibrating, any press only deals with the alarm: it must not also change
+//   the temperature. (The firmware stops the vibration itself on any press.)
+// - With no alarm, a short middle press does nothing. Power is the long hold, so a brush of the
+//   middle button cannot switch the bed off.
+export function countPressesAsGestures(
+  presses: ButtonPress[],
+  isAlarmVibrating: boolean,
+): Partial<Record<Gesture, number>> {
+  const shortPresses = presses.filter(press => !isPowerHold(press));
+  if (shortPresses.length === 0) return {};
+  if (isAlarmVibrating) return { [BUTTON_GESTURES.middle]: 1 };
+
   const gestureCounts: Partial<Record<Gesture, number>> = {};
-  for (const press of presses) {
-    if (isPowerHold(press)) continue;
+  for (const press of shortPresses) {
+    if (press.button === 'middle') continue;
     const gesture = BUTTON_GESTURES[press.button];
     gestureCounts[gesture] = (gestureCounts[gesture] ?? 0) + press.count;
   }

@@ -59,6 +59,8 @@ export const SettingsSchema = z.object({
   }),
   temperatureFormat: Temperatures,
   rebootDaily: z.boolean(),
+  // When true, temperature and power changes made for one side (in the app or at the bed) apply to both
+  linkSides: z.boolean(),
 }).strict();
 
 export type SideSettings = z.infer<typeof SideSettingsSchema>;

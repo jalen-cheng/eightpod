@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="a88bec02-fe01-5b30-9340-8f94e3d3b249")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="3179338f-6414-5565-9e8f-2129e3b718e7")}catch(e){}}();
 import { z } from 'zod';
 import { TIME_ZONES } from './timeZones.js';
 import { TimeSchema } from './schedulesSchema.js';
@@ -53,6 +53,8 @@ export const SettingsSchema = z.object({
     }),
     temperatureFormat: Temperatures,
     rebootDaily: z.boolean(),
+    // When true, temperature and power changes made for one side (in the app or at the bed) apply to both
+    linkSides: z.boolean(),
 }).strict();
 //# sourceMappingURL=settingsSchema.js.map
-//# debugId=a88bec02-fe01-5b30-9340-8f94e3d3b249
+//# debugId=3179338f-6414-5565-9e8f-2129e3b718e7

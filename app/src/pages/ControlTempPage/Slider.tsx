@@ -11,7 +11,7 @@ import { useResizeDetector } from 'react-resize-detector';
 import { useSettings } from '@api/settings.ts';
 import { useTemperatureFormat } from '@lib/useTemperatureFormat.ts';
 import {
-  MAX_TEMP_F, MIN_TEMP_F, formatTemperature, getTemperatureColor,
+  MAX_TEMP_F, MIN_TEMP_F, formatTemperature, getDirectionColor,
 } from '@lib/temperatureConversions.ts';
 
 type SliderProps = {
@@ -36,7 +36,7 @@ export default function Slider({ isOn, currentTargetTemp, refetch, currentTemper
   const theme = useTheme();
   const sideStatus = deviceStatus?.[side];
   const targetTemperatureF = sideStatus?.targetTemperatureF ?? currentTargetTemp;
-  const sliderColor = getTemperatureColor(sideStatus?.targetTemperatureF);
+  const sliderColor = getDirectionColor(sideStatus?.currentTemperatureF, sideStatus?.targetTemperatureF);
   const arcBackgroundColor = theme.palette.divider;
 
   // The arc is drawn between the bed's current temperature and the target, so the dial has two
