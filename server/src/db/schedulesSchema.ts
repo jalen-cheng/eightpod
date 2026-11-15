@@ -10,10 +10,15 @@ export const TimeSchema = z.string().regex(timeRegexFormat, 'Invalid time format
 export const TemperatureSchema = z.number().int().min(55).max(110);
 
 
+// The longest alarm that can be asked for. The firmware runs at most MAX_FIRMWARE_ALARM_SECONDS
+// at a time, so a longer alarm is sent as several stretches (see alarmSession).
+export const MAX_ALARM_SECONDS = 1800;
+export const MAX_FIRMWARE_ALARM_SECONDS = 180;
+
 export const AlarmSchema = z.object({
   vibrationIntensity: z.number().int().min(1).max(100),
   vibrationPattern: z.enum(['double', 'rise']),
-  duration: z.number().int().positive().min(0).max(180),
+  duration: z.number().int().positive().min(0).max(MAX_ALARM_SECONDS),
 }).strict();
 
 export const AlarmJobSchema = AlarmSchema.extend({

@@ -1,7 +1,7 @@
 // Creates the alarm state tracker. The Pod cannot tell us whether an alarm is vibrating,
 // so this is the single owner of that knowledge and of every timer attached to it.
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="c74f9b11-c620-55cd-bbe5-0d11ad6e3ccc")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="129b00f2-104e-5d2a-a913-c91cfcfe5673")}catch(e){}}();
 export function createAlarmSession({ startAlarm, setAlarmVibrating, logDebug }) {
     const sideStates = { left: {}, right: {} };
     const cancelVibrationEndTimer = (side) => {
@@ -16,16 +16,32 @@ export function createAlarmSession({ startAlarm, setAlarmVibrating, logDebug }) 
     };
     // Call when an alarm has been sent to the Pod. Replaces the previous end-of-vibration timer,
     // so an older alarm's timer cannot clear the flag while this one is still vibrating.
-    const alarmStarted = async (alarmJob, durationSeconds) => {
+    //
+    // The firmware only vibrates for a few minutes per request. For a longer alarm, pass the rest
+    // of it as `continuation`: when this stretch ends it is started, and the alarm counts as
+    // vibrating throughout. Dismissing or snoozing cancels the timer, which ends the chain.
+    const alarmStarted = async (alarmJob, durationSeconds, { continuation, isContinuation = false } = {}) => {
         const { side } = alarmJob;
         cancelVibrationEndTimer(side);
         cancelSnooze(side);
-        sideStates[side].lastAlarm = alarmJob;
+        // A snooze re-runs the whole alarm, so later stretches must not replace it
+        if (!isContinuation)
+            sideStates[side].lastAlarm = alarmJob;
         await setAlarmVibrating(side, true);
-        sideStates[side].vibrationEndTimer = setTimeout(() => {
+        const stretchTimer = setTimeout(() => {
             sideStates[side].vibrationEndTimer = undefined;
-            void setAlarmVibrating(side, false);
+            if (!continuation) {
+                void setAlarmVibrating(side, false);
+                return;
+            }
+            void startAlarm(continuation, { isContinuation: true }).then(() => {
+                // The next stretch reports back through alarmStarted. If it did not start (the side
+                // was switched off, say), nothing is vibrating any more.
+                if (sideStates[side].vibrationEndTimer === undefined)
+                    void setAlarmVibrating(side, false);
+            });
         }, durationSeconds * 1_000);
+        sideStates[side].vibrationEndTimer = stretchTimer;
     };
     // Call when the alarm was stopped on the Pod (dismissed from the app or by a tap).
     // Returns the alarm that was vibrating, or undefined if none was, so the caller can tell a
@@ -70,4 +86,4 @@ export async function handleAlarmGesture(tapConfig, deps) {
     return 'none';
 }
 //# sourceMappingURL=alarmSession.js.map
-//# debugId=c74f9b11-c620-55cd-bbe5-0d11ad6e3ccc
+//# debugId=129b00f2-104e-5d2a-a913-c91cfcfe5673

@@ -1,72 +1,54 @@
-import _ from 'lodash';
 import { useEffect } from 'react';
-import { Box } from '@mui/material';
+import { Box, Button, FormControlLabel, Switch, Typography } from '@mui/material';
 import { DeepPartial } from 'ts-essentials';
 import moment from 'moment-timezone';
 
-import AlarmAccordion from './AlarmSection/AlarmAccordion.tsx';
-import ApplyToOtherDaysAccordion from './ApplyToOtherDaysAccordion.tsx';
-import DayTabs from './DayTabs.tsx';
-import EnabledSwitch from './EnabledSwitch.tsx';
+import DayChips from './DayChips.tsx';
+import NightTimeline from './NightTimeline.tsx';
 import PageContainer from '../PageContainer.tsx';
-import SaveButton from './SaveButton.tsx';
 import SideControl from '../../components/SideControl.tsx';
-import PowerScheduleSection from './PowerScheduleSection.tsx';
-import TemperatureAdjustmentsAccordion from './TemperatureAdjustmentsAccordion.tsx';
 import { DayOfWeek, Schedules } from '@api/schedulesSchema.ts';
 import { postSchedules } from '@api/schedules';
 import { useAppStore } from '@state/appStore.tsx';
 import { useSchedules } from '@api/schedules';
 import { useScheduleStore } from './scheduleStore.tsx';
-import { useTemperatureFormat } from '@lib/useTemperatureFormat.ts';
 import { LOWERCASE_DAYS } from './days.ts';
+import { describeDays } from './scheduleDays.ts';
 import TemperatureScheduleChart from './ScheduleChart.tsx';
 import ErrorBoundary from '@components/ErrorBoundary.tsx';
 import PageHeader from '@components/PageHeader.tsx';
 import { buildSidesPayload, getControlledSides } from '@lib/sides.ts';
 
+// The Pod takes a moment to write a schedule before it can be read back
+const SAVE_SETTLE_MS = 1_000;
 
+// A night belongs to the day it starts on, so before noon "tonight's schedule" is yesterday's
 const getAdjustedDayOfWeek = (): DayOfWeek => {
-  // Get the current moment in the specified timezone
   const now = moment();
-  // Extract the hour of the day in 24-hour format
-  const currentHour = now.hour();
-
-  // Determine if it's before noon (12:00 PM)
-  if (currentHour < 12) {
-    return now.subtract(1, 'day').format('dddd').toLocaleLowerCase() as DayOfWeek;
-  } else {
-    return now.format('dddd').toLocaleLowerCase() as DayOfWeek;
-  }
+  const scheduleDay = now.hour() < 12 ? now.subtract(1, 'day') : now;
+  return scheduleDay.format('dddd').toLocaleLowerCase() as DayOfWeek;
 };
 
-
+// The weekly schedule: pick the days, then edit one night as a sequence of events
 export default function SchedulePage() {
-  const { setIsUpdating, side, linkSides } = useAppStore();
+  const { isUpdating, setIsUpdating, side, linkSides } = useAppStore();
   const { data: schedules, refetch } = useSchedules();
   const {
     selectedSchedule,
     setOriginalSchedules,
-    selectedDays,
-    selectedDay,
     reloadScheduleData,
     checkForChanges,
-    selectDay
+    selectDay,
+    getSaveDays,
+    changesPresent,
+    isValid,
+    updateSelectedSchedule,
   } = useScheduleStore();
-  const temperatureFormat = useTemperatureFormat();
-  // TODO: Add changes lost notification using changesPresent when user tries to switch tab before saving
-
-  useEffect(() => {
-    const day = getAdjustedDayOfWeek();
-    selectDay(LOWERCASE_DAYS.indexOf(day));
-  }, []);
 
   useEffect(() => {
     if (!schedules) return;
     setOriginalSchedules(schedules);
-    const day = getAdjustedDayOfWeek();
-    selectDay(LOWERCASE_DAYS.indexOf(day));
-    reloadScheduleData();
+    selectDay(LOWERCASE_DAYS.indexOf(getAdjustedDayOfWeek()));
   }, [schedules]);
 
   useEffect(() => {
@@ -78,53 +60,51 @@ export default function SchedulePage() {
     checkForChanges();
   }, [linkSides]);
 
+  const saveDays = getSaveDays();
+
   const handleSave = async () => {
     setIsUpdating(true);
-
-    const daysList: DayOfWeek[] = _.uniq(_.keys(_.pickBy(selectedDays, value => value))) as DayOfWeek[];
-    daysList.push(selectedDay);
-    const daySchedules = Object.fromEntries(daysList.map(day => [day, selectedSchedule]));
+    const daySchedules = Object.fromEntries(saveDays.map(day => [day, selectedSchedule]));
     const payload: DeepPartial<Schedules> = buildSidesPayload(getControlledSides(side, linkSides), daySchedules);
 
     await postSchedules(payload)
-      .then(() => {
-        // Wait 1 second before refreshing the schedules
-        return new Promise((resolve) => setTimeout(resolve, 1_000));
-      })
+      .then(() => new Promise(resolve => setTimeout(resolve, SAVE_SETTLE_MS)))
       .then(() => refetch())
-      .catch(error => {
-        console.error(error);
-      })
-      .finally(() => {
-        setIsUpdating(false);
-      });
+      .catch(error => console.error(error))
+      .finally(() => setIsUpdating(false));
   };
 
   return (
-    <PageContainer
-      sx={ {
-        width: '100%',
-        mx: 'auto',
-        maxWidth: 800,
-      } }
-    >
+    <PageContainer sx={ { width: '100%', mx: 'auto', maxWidth: 800 } }>
       <PageHeader title="Schedules"/>
       <SideControl linkedHint="Sides linked: saving applies this schedule to both."/>
+      <DayChips/>
 
-      <DayTabs/>
-      <ErrorBoundary componentName='Scheduling chart'>
-        <TemperatureScheduleChart />
+      <ErrorBoundary componentName="Scheduling chart">
+        <TemperatureScheduleChart/>
       </ErrorBoundary>
 
-      <PowerScheduleSection temperatureFormat={ temperatureFormat }/>
-      <TemperatureAdjustmentsAccordion temperatureFormat={ temperatureFormat }/>
-      <AlarmAccordion/>
-      <ApplyToOtherDaysAccordion/>
-      <Box sx={ { display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', minHeight: 40 } }>
-        <EnabledSwitch/>
-        <SaveButton onSave={ handleSave }/>
-      </Box>
+      <NightTimeline/>
 
+      <Box sx={ { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, width: '100%', minHeight: 40 } }>
+        <FormControlLabel
+          label="Schedule on"
+          control={
+            <Switch
+              checked={ selectedSchedule?.power.enabled || false }
+              onChange={ (event) => updateSelectedSchedule({ power: { enabled: event.target.checked } }) }
+              disabled={ isUpdating }
+            />
+          }
+        />
+        { changesPresent ? (
+          <Button variant="contained" onClick={ handleSave } disabled={ isUpdating || !isValid() }>
+            Save for { describeDays(saveDays) }{ linkSides ? ', both sides' : '' }
+          </Button>
+        ) : (
+          <Typography variant="caption" sx={ { color: 'text.secondary' } }>Saved</Typography>
+        ) }
+      </Box>
     </PageContainer>
   );
 }

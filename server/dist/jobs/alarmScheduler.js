@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="19bf5606-9113-51d9-8b43-f3e51ac70bba")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="5fee9f13-53c7-5994-a681-c00ccecca9b8")}catch(e){}}();
 import schedule from 'node-schedule';
 import cbor from 'cbor';
 import moment from 'moment-timezone';
@@ -8,15 +8,20 @@ import memoryDB from '../db/memoryDB.js';
 import serverStatus from '../serverStatus.js';
 import schedulesDB from '../db/schedules.js';
 import settingsDB from '../db/settings.js';
+import { MAX_FIRMWARE_ALARM_SECONDS } from '../db/schedulesSchema.js';
 import { executeFunction } from '../8sleep/deviceApi.js';
 import { getDayIndexForSchedule, logJob, subtractMinutesFromTime } from './utils.js';
 import { startPreWarm } from './preWarmState.js';
 import { updateDeviceStatus } from '../routes/deviceStatus/updateDeviceStatus.js';
 import { connectFranken } from '../8sleep/frankenServer.js';
 import { createAlarmSession } from './alarmSession.js';
-export const executeAlarm = async ({ vibrationIntensity, duration, vibrationPattern, side, force = false, turnOffAfterDismiss, }) => {
+// Sends an alarm to the Pod. An alarm longer than the firmware allows is sent as a first stretch
+// here, with the rest handed to the alarm session to start when this stretch ends.
+export const executeAlarm = async ({ vibrationIntensity, duration, vibrationPattern, side, force = false, turnOffAfterDismiss }, { isContinuation } = { isContinuation: false }) => {
     try {
-        const min10Duration = Math.max(10, duration);
+        const totalDuration = Math.max(10, duration);
+        const min10Duration = Math.min(MAX_FIRMWARE_ALARM_SECONDS, totalDuration);
+        const remainingDuration = totalDuration - min10Duration;
         // Exit is side is in away mode
         await settingsDB.read();
         if (settingsDB.data[side].awayMode && !force) {
@@ -46,7 +51,11 @@ export const executeAlarm = async ({ vibrationIntensity, duration, vibrationPatt
         logger.debug(`Executing alarm... ${JSON.stringify(alarmPayload)}`);
         await executeFunction(command, hexPayload);
         // eslint-disable-next-line no-use-before-define
-        await alarmSession.alarmStarted({ vibrationIntensity, duration, vibrationPattern, side, force, turnOffAfterDismiss }, min10Duration);
+        // Later stretches use full pulses: "rise" would drop back to a feeble start every few minutes
+        const continuation = remainingDuration > 0
+            ? { vibrationIntensity, duration: remainingDuration, vibrationPattern: 'double', side, force, turnOffAfterDismiss }
+            : undefined;
+        await alarmSession.alarmStarted({ vibrationIntensity, duration, vibrationPattern, side, force, turnOffAfterDismiss }, min10Duration, { continuation, isContinuation });
         serverStatus.status.alarmSchedule.status = 'healthy';
         serverStatus.status.alarmSchedule.message = '';
     }
@@ -193,4 +202,4 @@ export const scheduleAlarmPreWarm = (settingsData, side, day, dailySchedule) => 
     });
 };
 //# sourceMappingURL=alarmScheduler.js.map
-//# debugId=19bf5606-9113-51d9-8b43-f3e51ac70bba
+//# debugId=5fee9f13-53c7-5994-a681-c00ccecca9b8

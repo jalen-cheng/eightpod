@@ -1,16 +1,20 @@
 // WARNING! - Any changes here MUST be the same between app/src/api & server/src/db/
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="7e755e12-279d-5ffe-b6fd-e10cc7cc17d0")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="a2bf272c-d78d-568c-b1c9-ecda4b6ceb4a")}catch(e){}}();
 import { z } from 'zod';
 const timeRegexFormat = /^([01]\d|2[0-3]):([0-5]\d)$/;
 export const SideSchema = z.enum(['right', 'left']);
 // Reusable Zod type for time
 export const TimeSchema = z.string().regex(timeRegexFormat, 'Invalid time format, must be HH:mm');
 export const TemperatureSchema = z.number().int().min(55).max(110);
+// The longest alarm that can be asked for. The firmware runs at most MAX_FIRMWARE_ALARM_SECONDS
+// at a time, so a longer alarm is sent as several stretches (see alarmSession).
+export const MAX_ALARM_SECONDS = 1800;
+export const MAX_FIRMWARE_ALARM_SECONDS = 180;
 export const AlarmSchema = z.object({
     vibrationIntensity: z.number().int().min(1).max(100),
     vibrationPattern: z.enum(['double', 'rise']),
-    duration: z.number().int().positive().min(0).max(180),
+    duration: z.number().int().positive().min(0).max(MAX_ALARM_SECONDS),
 }).strict();
 export const AlarmJobSchema = AlarmSchema.extend({
     side: SideSchema,
@@ -53,4 +57,4 @@ export const SchedulesSchema = z.object({
     right: SideScheduleSchema,
 }).strict();
 //# sourceMappingURL=schedulesSchema.js.map
-//# debugId=7e755e12-279d-5ffe-b6fd-e10cc7cc17d0
+//# debugId=a2bf272c-d78d-568c-b1c9-ecda4b6ceb4a

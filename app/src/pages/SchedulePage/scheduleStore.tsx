@@ -2,19 +2,15 @@ import _ from 'lodash';
 import { create } from 'zustand';
 import { DailySchedule, DayOfWeek, Schedules } from '@api/schedulesSchema.ts';
 import { DeepPartial } from 'ts-essentials';
-import { AccordionExpanded } from './SchedulePage.types.ts';
 import { DaysSelected } from './SchedulePage.types.ts';
 import { useAppStore } from '@state/appStore.tsx';
 import { LOWERCASE_DAYS } from './days';
 import { isPowerScheduleDurationValid } from './scheduleValidation';
 import { getOtherSide } from '@lib/sides.ts';
-
-
+import { findDaysWithSameSchedule } from './scheduleDays.ts';
 
 type Validations = {
   alarmTimeIsValid: boolean;
-  // TODO: Validate temperature adjustments
-  // temperatureAdjustmentsValid: boolean,
 };
 
 export const DEFAULT_DAYS_SELECTED: DaysSelected = {
@@ -29,19 +25,26 @@ export const DEFAULT_DAYS_SELECTED: DaysSelected = {
 
 const DEFAULT_VALIDATIONS: Validations = {
   alarmTimeIsValid: true,
-  // temperatureAdjustmentsValid: true,
 };
 
 type ScheduleStore = {
+  // The day whose schedule is loaded for editing
   selectedDay: DayOfWeek;
   selectedDayIndex: number;
   selectDay: (selectedDayIndex: number) => void;
   reloadScheduleData: () => void;
 
-  changesPresent: boolean,
+  // The days a save writes to: the selected day plus every day marked here. Days that already
+  // share the selected day's schedule start out marked, so editing "Monday" edits the weekdays
+  // when they are all the same.
+  selectedDays: Record<DayOfWeek, boolean>;
+  getSaveDays: () => DayOfWeek[];
+  // A tap on a day chip. With nothing unsaved it opens that day; with unsaved changes it adds
+  // the day to (or removes it from) the days the changes are saved to.
+  tapDay: (day: DayOfWeek) => void;
+
+  changesPresent: boolean;
   checkForChanges: () => void;
-  setAccordionExpanded: (accordion: AccordionExpanded) => void;
-  accordionExpanded: AccordionExpanded;
 
   validations: Validations;
   setValidations: (newValidations: DeepPartial<Validations>) => void;
@@ -51,12 +54,9 @@ type ScheduleStore = {
   updateSelectedSchedule: (dailySchedule: DeepPartial<DailySchedule>) => void;
   updateSelectedTemperatures: (temperatures: DailySchedule['temperatures']) => void;
 
-  // Keep a copy of the original schedules
+  // The schedules as last loaded from the Pod
   originalSchedules: Schedules | undefined;
   setOriginalSchedules: (originalSchedules: Schedules) => void;
-
-  selectedDays: Record<DayOfWeek, boolean>;
-  toggleSelectedDay: (day: DayOfWeek) => void;
 };
 
 export const useScheduleStore = create<ScheduleStore>((set, get) => ({
@@ -68,11 +68,12 @@ export const useScheduleStore = create<ScheduleStore>((set, get) => ({
     const { side } = useAppStore.getState();
     const { originalSchedules, selectedDay } = get();
     if (!originalSchedules) return;
-    const selectedSchedule = originalSchedules[side][selectedDay];
+    const selectedSchedule = _.cloneDeep(originalSchedules[side][selectedDay]);
+    const selectedDays = { ...DEFAULT_DAYS_SELECTED };
+    findDaysWithSameSchedule(originalSchedules[side], selectedDay).forEach((day) => { selectedDays[day] = true; });
 
     set({
-      selectedDays: { ...DEFAULT_DAYS_SELECTED },
-      accordionExpanded: undefined,
+      selectedDays,
       validations: { ...DEFAULT_VALIDATIONS },
       selectedSchedule,
       changesPresent: false,
@@ -89,18 +90,26 @@ export const useScheduleStore = create<ScheduleStore>((set, get) => ({
     reloadScheduleData();
   },
 
-  accordionExpanded: undefined,
-  setAccordionExpanded: (accordionExpanded) => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-    get().accordionExpanded === accordionExpanded ? set({ accordionExpanded: undefined }) : set({ accordionExpanded });
+  selectedDays: { ...DEFAULT_DAYS_SELECTED },
+  getSaveDays: () => {
+    const { selectedDay, selectedDays } = get();
+    return LOWERCASE_DAYS.filter(day => day === selectedDay || selectedDays[day]);
+  },
+  tapDay: (day) => {
+    const { selectedDay, selectedDays, changesPresent, selectDay, checkForChanges } = get();
+    if (day === selectedDay) return;
+    if (!changesPresent) {
+      selectDay(LOWERCASE_DAYS.indexOf(day));
+      return;
+    }
+    set({ selectedDays: { ...selectedDays, [day]: !selectedDays[day] } });
+    checkForChanges();
   },
 
-  validations: {
-    alarmTimeIsValid: true,
-  },
+  validations: { ...DEFAULT_VALIDATIONS },
   setValidations: (newValidations) => {
     const { validations } = get();
-    set({ validations: _.merge(validations, newValidations) });
+    set({ validations: _.merge({}, validations, newValidations) });
   },
   isValid: () => {
     const { validations, selectedSchedule } = get();
@@ -108,21 +117,21 @@ export const useScheduleStore = create<ScheduleStore>((set, get) => ({
       && !!selectedSchedule
       && isPowerScheduleDurationValid(selectedSchedule.power.on, selectedSchedule.power.off);
   },
+
   changesPresent: false,
+  // There is something to save when any day the save would write to (on this side, or on the
+  // other side too when the sides are linked) does not already hold the schedule on screen.
   checkForChanges: () => {
-    const { selectedDay, selectedSchedule, originalSchedules, selectedDays } = get();
+    const { selectedSchedule, originalSchedules, getSaveDays } = get();
     if (!originalSchedules) return;
     const { side, linkSides } = useAppStore.getState();
-    // When the sides are linked, saving also copies this schedule to the other side
-    const otherSideDiffers = linkSides && !_.isEqual(originalSchedules[getOtherSide(side)][selectedDay], selectedSchedule);
-    const changesPresent = !_.isEqual(originalSchedules[side][selectedDay], selectedSchedule)
-      || _.some(selectedDays, value => value === true)
-      || otherSideDiffers;
-
+    const sides = linkSides ? [side, getOtherSide(side)] : [side];
+    const changesPresent = sides.some(saveSide => (
+      getSaveDays().some(day => !_.isEqual(originalSchedules[saveSide][day], selectedSchedule))
+    ));
     set({ changesPresent });
   },
 
-  // Updating schedules
   updateSelectedSchedule: (newSelectedSchedule) => {
     const { selectedSchedule, checkForChanges } = get();
     const selectedScheduleCopy = _.cloneDeep(selectedSchedule);
@@ -131,30 +140,11 @@ export const useScheduleStore = create<ScheduleStore>((set, get) => ({
     set({ selectedSchedule: selectedScheduleCopy });
     checkForChanges();
   },
-  // Updating schedules - (Temperatures) - needs to replace the entire temperatures field instead of merging it
+  // The temperature changes are replaced as a whole: merging would keep times that were removed
   updateSelectedTemperatures: (temperatures) => {
     const { selectedSchedule, checkForChanges } = get();
-    const selectedScheduleCopy = _.cloneDeep(selectedSchedule);
     if (!selectedSchedule) return;
-    set({
-      // @ts-ignore
-      selectedSchedule: {
-        ...selectedScheduleCopy,
-        temperatures,
-      },
-    });
-    checkForChanges();
-  },
-
-  selectedDays: { ...DEFAULT_DAYS_SELECTED },
-  toggleSelectedDay: (day) => {
-    const { selectedDays, checkForChanges } = get();
-    set({
-      selectedDays: {
-        ...selectedDays,
-        [day]: !selectedDays[day],
-      }
-    });
+    set({ selectedSchedule: { ..._.cloneDeep(selectedSchedule), temperatures } });
     checkForChanges();
   },
 
