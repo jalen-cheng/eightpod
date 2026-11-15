@@ -311,8 +311,20 @@ sh /home/dac/free-sleep/scripts/unblock_internet_access.sh
 ```
 then record `iptables -S` and `journalctl -u free-sleep-firewall --no-pager | tail -30` before trying again.
 
-Once this part passes, the serial cable can come off and the hub can be closed. Reassemble in
-reverse; the front grille's tabs must sit in the slots of the top and bottom panels.
+Once this part passes, the serial cable can come off and the hub can be closed. Shut the Pod
+down first, from the SSH or serial session, then unplug it once the session drops:
+```
+poweroff
+```
+Reassemble in reverse; the front grille's tabs must sit in the slots of the top and bottom panels.
+
+After it is plugged back in, give it three minutes to boot. SSH needs no cable, only the same
+Wi-Fi. On the Mac:
+```bash
+ssh root@<pod-ip> -p 8822
+```
+Type the Pod's address in place of `<pod-ip>`, without the angle brackets. If the address has
+changed, your router's device list shows the new one.
 
 ## Part 6: controls
 
@@ -361,13 +373,21 @@ From the UI on your phone.
    df -h /persistent
    ls /persistent/*.RAW 2>/dev/null | wc -l
    ```
-3. Run an update and confirm the block survives it:
+3. Run an update and confirm the block survives it. `fs-update` is how new versions of this fork
+   get onto the Pod: it lifts the internet block, downloads the latest `main` of the fork,
+   reinstalls Free Sleep keeping your settings and schedules, and puts the block back. It always
+   ends with the block on, even if it was off before.
    ```
    fs-update
    cat /etc/free-sleep/update_source.conf
    curl -m 5 https://example.com
    ```
    Expected: the update finishes, the file still names this fork, and the curl fails.
+
+   **Known problem on this Pod 5:** `fs-update` stops at its first step with
+   `No module named '_sqlite3'`. It backs up the database with the Pod's built-in Python, which
+   has no SQLite support here. Nothing is changed when it fails and Free Sleep keeps running.
+   Skip this step until the fork's update scripts are fixed.
 
 ## Part 8: calibration
 
