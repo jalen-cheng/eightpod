@@ -80,6 +80,12 @@ export function isPowerHold(press: ButtonPress): boolean {
   return press.button === 'middle' && (press.heldMs ?? 0) >= POWER_HOLD_MS;
 }
 
+// True when the presses include a short press of + or -. On a side that is off, that press
+// switches the side on instead of changing a temperature nobody can feel.
+export function hasTemperaturePress(presses: ButtonPress[]): boolean {
+  return presses.some(press => press.button !== 'middle' && !isPowerHold(press));
+}
+
 // Counts one side's presses per gesture, in the shape the tap gesture code already works with.
 // Power holds are left out; the caller handles those separately.
 // - While an alarm is vibrating, any press only deals with the alarm: it must not also change

@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="d111ab74-3991-5eff-a32f-3703d4794adc")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="e6929c3f-91a0-509a-a3a7-54c92dcddec6")}catch(e){}}();
 import { spawn } from 'child_process';
 import { createInterface } from 'readline';
 import logger from '../logger.js';
@@ -7,7 +7,7 @@ import config from '../config.js';
 import settingsDB from '../db/settings.js';
 import { Version } from '../routes/deviceStatus/deviceStatusSchema.js';
 import { connectFranken } from './frankenServer.js';
-import { countPressesAsGestures, createButtonLineParser, isPowerHold } from './buttonEvents.js';
+import { countPressesAsGestures, createButtonLineParser, hasTemperaturePress, isPowerHold, } from './buttonEvents.js';
 import { noteAlarmGestureHandled, runSideGestures, setSidePower } from './gestureActions.js';
 // Presses are collected for this long before acting, so a quick run of "+" presses becomes one
 // temperature change from one reading of the current target
@@ -133,6 +133,13 @@ export class ButtonMonitor {
                     noteAlarmGestureHandled(side);
                     continue;
                 }
+                // + or - on a side that is off switches it on at its current target. During an alarm
+                // the press belongs to the alarm instead.
+                if (!deviceStatus[side].isOn && !deviceStatus[side].isAlarmVibrating && hasTemperaturePress(sidePresses)) {
+                    logger.debug(`Temperature button pressed on ${side} while off, switching on`);
+                    await setSidePower(side, true);
+                    continue;
+                }
                 const recentTarget = this.recentTargets[side];
                 if (recentTarget && Date.now() - recentTarget.setAtMs < RECENT_TARGET_MS) {
                     deviceStatus[side].targetTemperatureF = recentTarget.temperatureF;
@@ -152,4 +159,4 @@ export class ButtonMonitor {
     }
 }
 //# sourceMappingURL=buttonMonitor.js.map
-//# debugId=d111ab74-3991-5eff-a32f-3703d4794adc
+//# debugId=e6929c3f-91a0-509a-a3a7-54c92dcddec6

@@ -5,6 +5,7 @@ import {
   POWER_HOLD_MS,
   countPressesAsGestures,
   createButtonLineParser,
+  hasTemperaturePress,
   isPowerHold,
 } from '../server/src/8sleep/buttonEvents.ts';
 
@@ -119,4 +120,12 @@ test('a power hold is never counted as a gesture', () => {
   const hold = [{ side: 'left', button: 'middle', count: 1, heldMs: POWER_HOLD_MS + 500 }];
   assert.deepEqual(countPressesAsGestures(hold, false), {});
   assert.deepEqual(countPressesAsGestures(hold, true), {});
+});
+
+test('only a short + or - press counts as a temperature press', () => {
+  assert.equal(hasTemperaturePress([{ side: 'left', button: 'top', count: 1 }]), true);
+  assert.equal(hasTemperaturePress([{ side: 'left', button: 'bottom', count: 2 }]), true);
+  assert.equal(hasTemperaturePress([{ side: 'left', button: 'middle', count: 1, heldMs: 100 }]), false);
+  assert.equal(hasTemperaturePress([{ side: 'left', button: 'middle', count: 1, heldMs: POWER_HOLD_MS }]), false);
+  assert.equal(hasTemperaturePress([]), false);
 });

@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="ab4397c2-ddd3-5033-8d08-37d95a75999e")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="35a1ba2b-9064-512b-bc3a-9ddc4e6b5b45")}catch(e){}}();
 const PRESS_PATTERN = /\[TTC\] processing \[button\] side (left|right) \{ button: (top|bottom|middle)\b(?:.*?\bcount: (\d+))?/;
 // Reported on its own line, without a side, once per press, before the line for the whole run
 const MIDDLE_HELD_PATTERN = /\[buttons\] middle button held for (\d+)ms/;
@@ -50,6 +50,11 @@ export function createButtonLineParser(getNowMs = Date.now) {
 export function isPowerHold(press) {
     return press.button === 'middle' && (press.heldMs ?? 0) >= POWER_HOLD_MS;
 }
+// True when the presses include a short press of + or -. On a side that is off, that press
+// switches the side on instead of changing a temperature nobody can feel.
+export function hasTemperaturePress(presses) {
+    return presses.some(press => press.button !== 'middle' && !isPowerHold(press));
+}
 // Counts one side's presses per gesture, in the shape the tap gesture code already works with.
 // Power holds are left out; the caller handles those separately.
 // - While an alarm is vibrating, any press only deals with the alarm: it must not also change
@@ -72,4 +77,4 @@ export function countPressesAsGestures(presses, isAlarmVibrating) {
     return gestureCounts;
 }
 //# sourceMappingURL=buttonEvents.js.map
-//# debugId=ab4397c2-ddd3-5033-8d08-37d95a75999e
+//# debugId=35a1ba2b-9064-512b-bc3a-9ddc4e6b5b45
