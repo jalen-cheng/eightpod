@@ -28,7 +28,12 @@ Pod 5, control board 830-00067-00 REV-17. Last updated 2026-11-14.
 - [x] **The install guide's Wi-Fi step breaks a Pod 5.** The Pod already had a `customer-wifi` profile from app setup. Adding another and running the guide's `sed` gave every profile the same ID, and the Pod did not rejoin Wi-Fi after a reboot. Fixed by keeping only `customer-wifi`. The walkthrough now checks for an existing connection first.
 - [x] The hub reports hardware revision G45, which Free Sleep labels "Pod 4"; its Pod 5 cutoff of G53 is a guess from upstream.
 - [x] The firmware's status also carries a `dismissAlarm` counter and blanket sensor state, which Free Sleep does not read.
-- [ ] Reboot test, cover connected, and everything from the button check onward are still to do.
+- [x] Reboot test passed with the internet block on; cover connected and identified as Pod 5 (J55).
+- [x] **Buttons work through the firmware log.** + and - step the temperature and a long middle hold switches the side; three faults found in the first tests were fixed.
+- [x] **Sensor readings arrive on `rawmem.*`, not `raw.*`.** The `raw` stream that upstream's sleep analysis reads is empty on this firmware, so biometrics cannot work here as written. Temperatures are hundredths of a degree Celsius.
+- [x] **The firmware reports its own target water temperature** (`rawmem.frz.therm`, in °C). At level +100 it aims for 42.0°C (107.6°F), where Free Sleep shows 110°F.
+- [x] "Rise" vibration is too weak to feel at the start; "double" is felt clearly.
+- [ ] Still to do: the calibration run, alarms end to end (ramp-up, long alarms, dismiss, auto-off), the redesigned schedule page, and the update path.
 
 Seen along the way: the serial line drops the odd character, password prompts show nothing while
 typing, and the clock is unset before Wi-Fi (`password changed in future`).

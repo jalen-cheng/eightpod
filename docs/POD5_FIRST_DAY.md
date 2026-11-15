@@ -391,21 +391,30 @@ From the UI on your phone.
 
 ## Part 8: calibration
 
-Needs both sides free for about two hours, bedding as you normally sleep, and no schedule due to fire.
+The firmware reports the water temperature it aims for at each level, so the table of what each
+level means can be read directly. This takes about ten minutes and the bed does not need to be empty,
+though it will swing from cold to hot while it runs:
 
 ```
 cd /home/dac/free-sleep/biometrics/temperature_calibration && /home/dac/venv/bin/python collect_temperature_calibration.py
 ```
 
-It prints one line per side for each of five levels and restores your settings at the end.
-Ctrl+C stops it early and keeps what it has measured. Copy the result off the Pod, on the Mac:
+It prints one line per side for each of 21 levels and restores your settings at the end.
+Ctrl+C stops it early and keeps what it has. To see what the sensors report without changing
+anything, add `--dry-run`.
+
+Optionally, to check that the water really reaches what the firmware aims for, add `--measure`.
+That waits for each level to settle, so use fewer levels and leave the bed empty (about two hours):
+
+```
+cd /home/dac/free-sleep/biometrics/temperature_calibration && /home/dac/venv/bin/python collect_temperature_calibration.py --measure --levels=-100,-50,0,50,100
+```
+
+Copy the result off the Pod, on the Mac:
 
 ```bash
 scp -P 8822 root@<pod-ip>:/persistent/free-sleep-data/temperature_calibration.json .
 ```
-
-If it reports "no water temperature records", record that and the output of
-`ls /persistent/*.RAW | head` and `ss -ltnp | grep 4222`.
 
 ## Part 9: read-only checks for remote access
 
