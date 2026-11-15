@@ -97,7 +97,7 @@ export const alarmSession = createAlarmSession({
  * Next occurrence of HH:mm in tz (today or tomorrow depending on 'now').
  * If the HH:mm is already passed for 'now', schedule for tomorrow.
  */
-function nextOccurrenceHhMm(tz: string, hhmm: string) {
+export function nextOccurrenceHhMm(tz: string, hhmm: string) {
   const now = moment.tz(tz);
   const [h, m] = hhmm.split(':').map(Number);
 

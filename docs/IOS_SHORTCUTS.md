@@ -43,20 +43,28 @@ Notes:
 
 ## Change your alarm time
 
-`POST http://<pod-ip>:3000/api/alarm/time` moves the alarm without opening the app.
+`POST http://<pod-ip>:3000/api/alarm/time` sets an alarm without opening the app.
+
+**By default it is a one-off:** the alarm goes off the next time the clock shows that time, tonight
+or tomorrow, whichever comes first, and your weekly schedule is left alone. Run it at 11 PM with
+`06:30` and it fires at 6:30 tomorrow morning; run it at 11 PM with `01:00` and it fires at 1 AM tonight.
 
 | What it does | JSON body |
 | --- | --- |
-| Alarm at 6:30 every day, left side | `{"side": "left", "time": "06:30"}` |
-| Alarm at 6:30 every day, both sides | `{"side": "both", "time": "06:30"}` |
-| Alarm at 8:00 on the weekend only | `{"side": "left", "time": "08:00", "days": ["saturday", "sunday"]}` |
-| Switch the alarm off (the time is still required) | `{"side": "left", "time": "06:30", "enabled": false}` |
+| One-off alarm at the next 6:30, left side | `{"side": "left", "time": "06:30"}` |
+| One-off alarm at the next 6:30, both sides | `{"side": "both", "time": "06:30"}` |
+| Change the weekly alarm to 8:00 on the weekend | `{"side": "left", "time": "08:00", "days": ["saturday", "sunday"]}` |
+| Switch the weekly alarm off on Mondays | `{"side": "left", "time": "06:30", "days": ["monday"], "enabled": false}` |
 
-- `time` is 24-hour `HH:mm`, a Text field.
-- `side` is `left`, `right` or `both`, a Text field.
-- `days` is optional (an Array of Text); leave it out for every day.
-- Only the time and the on/off state change. Vibration, length, warm-up and the rest stay as set in the app.
-- The alarm still only fires if that day's schedule is on and the side is on at that time.
+- `time` is 24-hour `HH:mm`, a Text field. `side` is `left`, `right` or `both`, a Text field.
+- Adding `days` (an Array of Text) changes the weekly schedule for those days instead of setting a one-off.
+- The reply says what was set, including `firesAt` for a one-off.
+
+Things to know about a one-off:
+- The side has to be on at that time, or the alarm is skipped.
+- It uses that day's vibration settings from the schedule, but not its warm-up.
+- A scheduled alarm that would have gone off before it is skipped. One scheduled for later that same
+  morning still goes off.
 
 A shortcut that asks for the time each time you run it:
 
@@ -65,9 +73,6 @@ A shortcut that asks for the time each time you run it:
 3. Add **Get Contents of URL** with the URL above, Method `POST`, Request Body `JSON`.
 4. Add a Text field `side` with your side, and a Text field `time` whose value is the **Formatted Date** from step 2.
 5. Name it "Set bed alarm". You can then say "Hey Siri, set bed alarm" and answer with a time.
-
-To keep it in step with your phone's alarm, make it an Automation instead: Shortcuts → Automation →
-**Alarm** (or **Sleep** → Wind Down Begins) → run the shortcut with a fixed time.
 
 ## Reading the current state
 

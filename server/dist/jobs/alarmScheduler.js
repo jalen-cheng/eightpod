@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="88fb444f-bafe-58ea-ac4b-b3878be2e543")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="33ea2caa-332d-5e7c-9656-bff3b4c5218d")}catch(e){}}();
 import schedule from 'node-schedule';
 import cbor from 'cbor';
 import moment from 'moment-timezone';
@@ -80,7 +80,7 @@ export const alarmSession = createAlarmSession({
  * Next occurrence of HH:mm in tz (today or tomorrow depending on 'now').
  * If the HH:mm is already passed for 'now', schedule for tomorrow.
  */
-function nextOccurrenceHhMm(tz, hhmm) {
+export function nextOccurrenceHhMm(tz, hhmm) {
     const now = moment.tz(tz);
     const [h, m] = hhmm.split(':').map(Number);
     const candidate = now.clone().hour(h).minute(m).second(0).millisecond(0);
@@ -202,4 +202,4 @@ export const scheduleAlarmPreWarm = (settingsData, side, day, dailySchedule) => 
     });
 };
 //# sourceMappingURL=alarmScheduler.js.map
-//# debugId=88fb444f-bafe-58ea-ac4b-b3878be2e543
+//# debugId=33ea2caa-332d-5e7c-9656-bff3b4c5218d
