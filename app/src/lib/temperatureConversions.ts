@@ -122,3 +122,15 @@ export function getTemperatureColor(tempF: number | undefined) {
   if (tempF <= 95) return '#db5858';
   return '#d32f2f';
 }
+
+const COOLING_COLOR = '#2196f3';
+const WARMING_COLOR = '#db5858';
+
+// The colour for a change in progress: blue when the target is below the bed's current
+// temperature, red when above. With nothing to do, falls back to the colour for the temperature.
+export function getDirectionColor(currentTempF: number | undefined, targetTempF: number | undefined) {
+  if (currentTempF === undefined || targetTempF === undefined) return getTemperatureColor(targetTempF);
+  if (targetTempF < currentTempF) return COOLING_COLOR;
+  if (targetTempF > currentTempF) return WARMING_COLOR;
+  return getTemperatureColor(targetTempF);
+}

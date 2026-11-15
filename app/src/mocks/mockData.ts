@@ -198,6 +198,7 @@ const createSettings = (): Settings => ({
   id: 'demo-user',
   timeZone: 'America/Los_Angeles',
   temperatureFormat: 'fahrenheit',
+  linkSides: false,
   rebootDaily: true,
   left: {
     name: 'Left side',

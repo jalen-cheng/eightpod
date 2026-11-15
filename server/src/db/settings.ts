@@ -45,6 +45,7 @@ const defaultData: Settings = {
   timeZone: 'UTC',
   temperatureFormat: 'fahrenheit',
   rebootDaily: true,
+  linkSides: false,
   left: {
     ..._.cloneDeep(defaultSideSettings),
     name: 'Left',

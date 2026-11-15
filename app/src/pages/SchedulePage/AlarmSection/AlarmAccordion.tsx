@@ -16,6 +16,7 @@ import AlarmPattern from './AlarmPattern.tsx';
 import React from 'react';
 import AlarmIcon from '@mui/icons-material/Alarm';
 import AlarmTest from './AlarmTest.tsx';
+import AlarmWarmUp from './AlarmWarmUp.tsx';
 
 const ACCORDION_NAME: AccordionExpanded = 'alarm';
 
@@ -74,6 +75,7 @@ export default function AlarmAccordion() {
                 <AlarmVibrationSlider/>
 
               </Row>
+              <AlarmWarmUp/>
               <AlarmTest />
             </>
           )

@@ -37,7 +37,7 @@ const TAP_LABELS = {
 const BUTTON_LABELS: typeof TAP_LABELS = {
   title: 'Side buttons',
   temperature: '− button / + button',
-  duringAlarm: 'Middle button during an alarm',
+  duringAlarm: 'Any button during an alarm',
   otherwise: 'Middle button at other times',
 };
 
@@ -78,7 +78,10 @@ export default function TapGesturesSection({ settings, updateSettings }: TapGest
           </TextField>
         </TapSettingRow>
         <Divider/>
-        <TapSettingRow gesture={ labels.duringAlarm } action="Stops the alarm, or snoozes it">
+        <TapSettingRow
+          gesture={ labels.duringAlarm }
+          action={ hasButtons ? 'Any button stops the alarm, or snoozes it' : 'Stops the alarm, or snoozes it' }
+        >
           <ToggleButtonGroup
             disabled={ isUpdating }
             size="small"
@@ -109,30 +112,35 @@ export default function TapGesturesSection({ settings, updateSettings }: TapGest
             </TextField>
           ) }
         </TapSettingRow>
-        <Divider/>
-        <TapSettingRow
-          gesture={ labels.otherwise }
-          action={ hasButtons ? 'A short press, when no alarm is going off' : 'When no alarm is going off' }
-        >
-          <ToggleButtonGroup
-            disabled={ isUpdating }
-            size="small"
-            value={ tapSettings.inactiveAlarmBehavior }
-            exclusive
-            onChange={ (_event, inactiveAlarmBehavior: SharedTapSettings['inactiveAlarmBehavior'] | null) => {
-              if (inactiveAlarmBehavior !== null) saveTapSettings({ inactiveAlarmBehavior });
-            } }
-            aria-label={ labels.otherwise }
-            sx={ { ...toggleGroupSx, flex: 1 } }
+        { !hasButtons && <Divider/> }
+        { !hasButtons && (
+          <TapSettingRow
+            gesture={ labels.otherwise }
+            action="When no alarm is going off"
           >
-            <ToggleButton value="power">Turn side on / off</ToggleButton>
-            <ToggleButton value="none">Do nothing</ToggleButton>
-          </ToggleButtonGroup>
-        </TapSettingRow>
+            <ToggleButtonGroup
+              disabled={ isUpdating }
+              size="small"
+              value={ tapSettings.inactiveAlarmBehavior }
+              exclusive
+              onChange={ (_event, inactiveAlarmBehavior: SharedTapSettings['inactiveAlarmBehavior'] | null) => {
+                if (inactiveAlarmBehavior !== null) saveTapSettings({ inactiveAlarmBehavior });
+              } }
+              aria-label={ labels.otherwise }
+              sx={ { ...toggleGroupSx, flex: 1 } }
+            >
+              <ToggleButton value="power">Turn side on / off</ToggleButton>
+              <ToggleButton value="none">Do nothing</ToggleButton>
+            </ToggleButtonGroup>
+          </TapSettingRow>
+        ) }
         { hasButtons && (
           <>
             <Divider/>
-            <TapSettingRow gesture="Hold the middle button" action="Two seconds or more turns that side on or off"/>
+            <TapSettingRow
+              gesture="Hold the middle button"
+              action="Two seconds or more turns that side on or off (both sides when linked)"
+            />
           </>
         ) }
       </Box>

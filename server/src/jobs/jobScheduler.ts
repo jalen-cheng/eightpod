@@ -10,7 +10,7 @@ import serverStatus from '../serverStatus.js';
 import settingsDB from '../db/settings.js';
 import { DayOfWeek, Side } from '../db/schedulesSchema.js';
 import { isSystemDateValid } from './isSystemDateValid.js';
-import { scheduleAlarm, scheduleAlarmOverride } from './alarmScheduler.js';
+import { scheduleAlarm, scheduleAlarmOverride, scheduleAlarmPreWarm } from './alarmScheduler.js';
 import { schedulePowerOffAndSleepAnalysis, schedulePowerOn } from './powerScheduler.js';
 import { schedulePrimingRebootAndCalibration } from './primeScheduler.js';
 import { scheduleTemperatures } from './temperatureScheduler.js';
@@ -49,6 +49,7 @@ async function setupJobs() {
         schedulePowerOffAndSleepAnalysis(settingsData, side as Side, day as DayOfWeek, schedule.power);
         scheduleTemperatures(settingsData, side as Side, day as DayOfWeek, schedule);
         scheduleAlarm(settingsData, side as Side, day as DayOfWeek, schedule);
+        scheduleAlarmPreWarm(settingsData, side as Side, day as DayOfWeek, schedule);
       });
     });
     schedulePrimingRebootAndCalibration(settingsData);

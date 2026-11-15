@@ -1,6 +1,6 @@
 // LowDB, stores the schedules in /persistent/free-sleep-data/lowdb/settingsDB.json
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="3abe3420-793f-5f0f-9e3b-adec5590b8b6")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="7d4bff43-4012-514a-bba3-dbd586c97b02")}catch(e){}}();
 import _ from 'lodash';
 import { Low } from 'lowdb';
 import { JSONFile } from 'lowdb/node';
@@ -43,6 +43,7 @@ const defaultData = {
     timeZone: 'UTC',
     temperatureFormat: 'fahrenheit',
     rebootDaily: true,
+    linkSides: false,
     left: {
         ..._.cloneDeep(defaultSideSettings),
         name: 'Left',
@@ -64,4 +65,4 @@ settingsDB.data = _.merge({}, defaultData, settingsDB.data);
 await settingsDB.write();
 export default settingsDB;
 //# sourceMappingURL=settings.js.map
-//# debugId=3abe3420-793f-5f0f-9e3b-adec5590b8b6
+//# debugId=7d4bff43-4012-514a-bba3-dbd586c97b02

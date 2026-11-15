@@ -1,7 +1,7 @@
 // Creates the alarm state tracker. The Pod cannot tell us whether an alarm is vibrating,
 // so this is the single owner of that knowledge and of every timer attached to it.
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="dbfbe8bc-875f-51e8-954e-1d269c9936cc")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="c74f9b11-c620-55cd-bbe5-0d11ad6e3ccc")}catch(e){}}();
 export function createAlarmSession({ startAlarm, setAlarmVibrating, logDebug }) {
     const sideStates = { left: {}, right: {} };
     const cancelVibrationEndTimer = (side) => {
@@ -28,10 +28,14 @@ export function createAlarmSession({ startAlarm, setAlarmVibrating, logDebug }) 
         }, durationSeconds * 1_000);
     };
     // Call when the alarm was stopped on the Pod (dismissed from the app or by a tap).
+    // Returns the alarm that was vibrating, or undefined if none was, so the caller can tell a
+    // real dismissal from a clear sent when nothing was going off.
     const alarmCleared = async (side) => {
+        const wasVibrating = sideStates[side].vibrationEndTimer !== undefined;
         cancelVibrationEndTimer(side);
         cancelSnooze(side);
         await setAlarmVibrating(side, false);
+        return wasVibrating ? sideStates[side].lastAlarm : undefined;
     };
     // Re-runs the last alarm of a side after snoozeSeconds. Returns false when there is nothing to snooze.
     const snooze = (side, snoozeSeconds) => {
@@ -66,4 +70,4 @@ export async function handleAlarmGesture(tapConfig, deps) {
     return 'none';
 }
 //# sourceMappingURL=alarmSession.js.map
-//# debugId=dbfbe8bc-875f-51e8-954e-1d269c9936cc
+//# debugId=c74f9b11-c620-55cd-bbe5-0d11ad6e3ccc

@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="f6fd4546-c313-5c2e-9727-77901687c685")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="d111ab74-3991-5eff-a32f-3703d4794adc")}catch(e){}}();
 import { spawn } from 'child_process';
 import { createInterface } from 'readline';
 import logger from '../logger.js';
@@ -139,7 +139,7 @@ export class ButtonMonitor {
                 }
                 // The gesture code works on counters, so presses are passed as a count starting from zero
                 const targetTemperatureF = await runSideGestures(side, deviceStatus, { doubleTap: 0, tripleTap: 0, quadTap: 0 }, {
-                    doubleTap: 0, tripleTap: 0, quadTap: 0, ...countPressesAsGestures(sidePresses),
+                    doubleTap: 0, tripleTap: 0, quadTap: 0, ...countPressesAsGestures(sidePresses, deviceStatus[side].isAlarmVibrating),
                 });
                 if (targetTemperatureF !== undefined) {
                     this.recentTargets[side] = { temperatureF: targetTemperatureF, setAtMs: Date.now() };
@@ -152,4 +152,4 @@ export class ButtonMonitor {
     }
 }
 //# sourceMappingURL=buttonMonitor.js.map
-//# debugId=f6fd4546-c313-5c2e-9727-77901687c685
+//# debugId=d111ab74-3991-5eff-a32f-3703d4794adc

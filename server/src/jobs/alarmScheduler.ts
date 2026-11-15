@@ -9,13 +9,17 @@ import schedulesDB from '../db/schedules.js';
 import settingsDB from '../db/settings.js';
 import { AlarmJob, DailySchedule, DayOfWeek, Side } from '../db/schedulesSchema.js';
 import { executeFunction } from '../8sleep/deviceApi.js';
-import { getDayIndexForSchedule, logJob } from './utils.js';
+import { getDayIndexForSchedule, logJob, subtractMinutesFromTime } from './utils.js';
+import { startPreWarm } from './preWarmState.js';
+import { updateDeviceStatus } from '../routes/deviceStatus/updateDeviceStatus.js';
 import { connectFranken } from '../8sleep/frankenServer.js';
 import { Settings } from '../db/settingsSchema.js';
 import { createAlarmSession } from './alarmSession.js';
 
 
-export const executeAlarm = async ({ vibrationIntensity, duration, vibrationPattern, side, force=false }: AlarmJob) => {
+export const executeAlarm = async ({
+  vibrationIntensity, duration, vibrationPattern, side, force=false, turnOffAfterDismiss,
+}: AlarmJob) => {
   try {
     const min10Duration = Math.max(10, duration);
     // Exit is side is in away mode
@@ -52,7 +56,10 @@ export const executeAlarm = async ({ vibrationIntensity, duration, vibrationPatt
     logger.debug(`Executing alarm... ${JSON.stringify(alarmPayload)}`);
     await executeFunction(command, hexPayload);
     // eslint-disable-next-line no-use-before-define
-    await alarmSession.alarmStarted({ vibrationIntensity, duration, vibrationPattern, side, force }, min10Duration);
+    await alarmSession.alarmStarted(
+      { vibrationIntensity, duration, vibrationPattern, side, force, turnOffAfterDismiss },
+      min10Duration,
+    );
     serverStatus.status.alarmSchedule.status = 'healthy';
     serverStatus.status.alarmSchedule.message = '';
   } catch (error: unknown) {
@@ -107,10 +114,11 @@ export function scheduleAlarmOverride(settingsData: Settings, side: Side) {
     const dayKey = next.tz(settingsData.timeZone).format('dddd').toLowerCase() as DayOfWeek;
     const daySchedule = schedulesDB.data?.[side]?.[dayKey];
 
-    const { vibrationIntensity, duration, vibrationPattern } = daySchedule?.alarm ?? {
+    const { vibrationIntensity, duration, vibrationPattern, turnOffAfterDismiss } = daySchedule?.alarm ?? {
       vibrationIntensity: 100,
       duration: 60,
       vibrationPattern: 'rise',
+      turnOffAfterDismiss: undefined,
     };
 
     await executeAlarm({
@@ -118,6 +126,7 @@ export function scheduleAlarmOverride(settingsData: Settings, side: Side) {
       vibrationIntensity,
       duration,
       vibrationPattern,
+      turnOffAfterDismiss,
     });
   });
 }
@@ -161,6 +170,7 @@ export const scheduleAlarm = (settingsData: Settings, side: Side, day: DayOfWeek
         vibrationIntensity: dailySchedule.alarm.vibrationIntensity,
         duration: dailySchedule.alarm.duration,
         vibrationPattern: dailySchedule.alarm.vibrationPattern,
+        turnOffAfterDismiss: dailySchedule.alarm.turnOffAfterDismiss,
       });
     } catch (error: unknown) {
       serverStatus.status.alarmSchedule.status = 'failed';
@@ -171,3 +181,39 @@ export const scheduleAlarm = (settingsData: Settings, side: Side, day: DayOfWeek
   });
 };
 
+
+
+// Warms a side to its alarm temperature a set number of minutes before the alarm, whatever the
+// temperature schedule says. Scheduled temperature changes are skipped until the alarm time.
+export const scheduleAlarmPreWarm = (settingsData: Settings, side: Side, day: DayOfWeek, dailySchedule: DailySchedule) => {
+  const preWarmMinutes = dailySchedule.alarm.preWarmMinutes ?? 0;
+  if (!dailySchedule.power.enabled || !dailySchedule.alarm.enabled || preWarmMinutes <= 0) return;
+  if (settingsData[side].awayMode) return;
+  if (settingsData.timeZone === null) return;
+
+  const preWarmTime = subtractMinutesFromTime(dailySchedule.alarm.time, preWarmMinutes);
+  const dayIndex = getDayIndexForSchedule(day, preWarmTime, dailySchedule.power.on);
+  const [preWarmHour, preWarmMinute] = preWarmTime.split(':').map(Number);
+  const preWarmRule = new schedule.RecurrenceRule();
+  preWarmRule.dayOfWeek = dayIndex;
+  preWarmRule.hour = preWarmHour;
+  preWarmRule.minute = preWarmMinute;
+  preWarmRule.tz = settingsData.timeZone;
+
+  logJob('Scheduling alarm warm-up job', side, day, dayIndex, preWarmTime);
+  schedule.scheduleJob(`${side}-${day}-${preWarmTime}-alarm-pre-warm`, preWarmRule, async () => {
+    try {
+      const franken = await connectFranken();
+      const deviceStatus = await franken.getDeviceStatus();
+      if (!deviceStatus[side].isOn) {
+        logger.debug(`Not warming up ${side} for its alarm, side is off`);
+        return;
+      }
+      logJob('Executing alarm warm-up job', side, day, dayIndex, preWarmTime);
+      startPreWarm(side, preWarmMinutes);
+      await updateDeviceStatus({ [side]: { targetTemperatureF: dailySchedule.alarm.alarmTemperature } });
+    } catch (error: unknown) {
+      logger.error(error);
+    }
+  });
+};

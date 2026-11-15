@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="668f5390-ccd6-5734-b6db-68e156d4969a")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="ab4397c2-ddd3-5033-8d08-37d95a75999e")}catch(e){}}();
 const PRESS_PATTERN = /\[TTC\] processing \[button\] side (left|right) \{ button: (top|bottom|middle)\b(?:.*?\bcount: (\d+))?/;
 // Reported on its own line, without a side, once per press, before the line for the whole run
 const MIDDLE_HELD_PATTERN = /\[buttons\] middle button held for (\d+)ms/;
@@ -52,10 +52,19 @@ export function isPowerHold(press) {
 }
 // Counts one side's presses per gesture, in the shape the tap gesture code already works with.
 // Power holds are left out; the caller handles those separately.
-export function countPressesAsGestures(presses) {
+// - While an alarm is vibrating, any press only deals with the alarm: it must not also change
+//   the temperature. (The firmware stops the vibration itself on any press.)
+// - With no alarm, a short middle press does nothing. Power is the long hold, so a brush of the
+//   middle button cannot switch the bed off.
+export function countPressesAsGestures(presses, isAlarmVibrating) {
+    const shortPresses = presses.filter(press => !isPowerHold(press));
+    if (shortPresses.length === 0)
+        return {};
+    if (isAlarmVibrating)
+        return { [BUTTON_GESTURES.middle]: 1 };
     const gestureCounts = {};
-    for (const press of presses) {
-        if (isPowerHold(press))
+    for (const press of shortPresses) {
+        if (press.button === 'middle')
             continue;
         const gesture = BUTTON_GESTURES[press.button];
         gestureCounts[gesture] = (gestureCounts[gesture] ?? 0) + press.count;
@@ -63,4 +72,4 @@ export function countPressesAsGestures(presses) {
     return gestureCounts;
 }
 //# sourceMappingURL=buttonEvents.js.map
-//# debugId=668f5390-ccd6-5734-b6db-68e156d4969a
+//# debugId=ab4397c2-ddd3-5033-8d08-37d95a75999e

@@ -7,6 +7,7 @@ import { TimeZone } from '../db/timeZones.js';
 import { updateDeviceStatus } from '../routes/deviceStatus/updateDeviceStatus.js';
 import serverStatus from '../serverStatus.js';
 import logger from '../logger.js';
+import { isPreWarmActive } from './preWarmState.js';
 
 
 const scheduleAdjustment = (timeZone: TimeZone, side: Side, day: DayOfWeek, time: Time, temperature: number, powerOnTime: Time) => {
@@ -24,6 +25,10 @@ const scheduleAdjustment = (timeZone: TimeZone, side: Side, day: DayOfWeek, time
   schedule.scheduleJob(`${side}-${day}-${time}-${temperature}-temperature-adjustment`, onRule, async () => {
     try {
 
+      if (isPreWarmActive(side)) {
+        logJob('Skipping temperature adjustment job, warming up for the alarm', side, day, dayOfWeekIndex, time);
+        return;
+      }
       logJob('Executing temperature adjustment job', side, day, dayOfWeekIndex, time);
       await updateDeviceStatus({
         [side]: {

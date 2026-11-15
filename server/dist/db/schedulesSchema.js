@@ -1,6 +1,6 @@
 // WARNING! - Any changes here MUST be the same between app/src/api & server/src/db/
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="404daa21-2bac-56ff-86f7-99a4d95e38c4")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="7e755e12-279d-5ffe-b6fd-e10cc7cc17d0")}catch(e){}}();
 import { z } from 'zod';
 const timeRegexFormat = /^([01]\d|2[0-3]):([0-5]\d)$/;
 export const SideSchema = z.enum(['right', 'left']);
@@ -15,11 +15,17 @@ export const AlarmSchema = z.object({
 export const AlarmJobSchema = AlarmSchema.extend({
     side: SideSchema,
     force: z.boolean().optional(),
+    // Switch the side off when this alarm is dismissed (not when it is snoozed or runs out)
+    turnOffAfterDismiss: z.boolean().optional(),
 }).strict();
 export const AlarmScheduleSchema = AlarmSchema.extend({
     time: TimeSchema,
     enabled: z.boolean(),
     alarmTemperature: TemperatureSchema,
+    // Minutes before the alarm to start warming the side to alarmTemperature. 0 or missing: no warm-up.
+    // Optional so schedules saved before this existed stay valid.
+    preWarmMinutes: z.number().int().min(0).max(60).optional(),
+    turnOffAfterDismiss: z.boolean().optional(),
 }).strict();
 export const DailyScheduleSchema = z.object({
     temperatures: z.record(TimeSchema, TemperatureSchema),
@@ -47,4 +53,4 @@ export const SchedulesSchema = z.object({
     right: SideScheduleSchema,
 }).strict();
 //# sourceMappingURL=schedulesSchema.js.map
-//# debugId=404daa21-2bac-56ff-86f7-99a4d95e38c4
+//# debugId=7e755e12-279d-5ffe-b6fd-e10cc7cc17d0
