@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="e73128fd-0599-5161-9d5a-8f296c24df51")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="19b62015-3714-5d3d-85ef-4c5fd18e85af")}catch(e){}}();
 import logger from '../logger.js';
 import settingsDB from '../db/settings.js';
 import { MAX_TARGET_TEMPERATURE_F, MIN_TARGET_TEMPERATURE_F, } from '../routes/deviceStatus/deviceStatusSchema.js';
@@ -7,20 +7,26 @@ import { updateDeviceStatus } from '../routes/deviceStatus/updateDeviceStatus.js
 import { handleAlarmGesture } from '../jobs/alarmSession.js';
 import { alarmSession } from '../jobs/alarmScheduler.js';
 import { processSideGestures } from './gestures.js';
-// One press can reach us twice: through the tap counters and through the Pod 5 button log.
-// Running an alarm gesture twice would undo it (a power toggle flips back), so a second one
-// for the same side within this window is dropped.
-const ALARM_GESTURE_REPEAT_WINDOW_MS = 1_500;
+// One press can reach us twice: through the tap counters and through the Pod 5 button log, or as
+// a long hold that the firmware follows with a second, shorter event. Running an alarm or power
+// gesture twice would undo it (a power toggle flips back), so a second one for the same side
+// within this window is dropped.
+const ALARM_GESTURE_REPEAT_WINDOW_MS = 3_000;
 const lastAlarmGestureAtMs = { left: 0, right: 0 };
+// Records that a power or alarm action was just taken for a side by some other path
+export const noteAlarmGestureHandled = (side) => {
+    lastAlarmGestureAtMs[side] = Date.now();
+};
 export const setSidePower = (side, isOn) => {
     return updateDeviceStatus({ [side]: { isOn } });
 };
 // Runs a side's configured actions for the gestures made between two sets of counts.
 // Shared by the tap counter monitor and the Pod 5 button monitor, so both behave the same.
 // `settingsDB` must have been read by the caller.
+// Returns the side's target temperature after the gestures, or undefined if they failed.
 export async function runSideGestures(side, deviceStatus, previousTaps, nextTaps) {
     try {
-        await processSideGestures({
+        return await processSideGestures({
             previousTaps,
             nextTaps,
             tapSettings: settingsDB.data[side].taps,
@@ -52,7 +58,8 @@ export async function runSideGestures(side, deviceStatus, previousTaps, nextTaps
     }
     catch (error) {
         logger.error(error);
+        return undefined;
     }
 }
 //# sourceMappingURL=gestureActions.js.map
-//# debugId=e73128fd-0599-5161-9d5a-8f296c24df51
+//# debugId=19b62015-3714-5d3d-85ef-4c5fd18e85af

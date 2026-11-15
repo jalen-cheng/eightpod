@@ -7,11 +7,14 @@ import { Side } from '../db/schedulesSchema.js';
 import { Version } from '../routes/deviceStatus/deviceStatusSchema.js';
 import { connectFranken } from './frankenServer.js';
 import { ButtonPress, countPressesAsGestures, createButtonLineParser, isPowerHold } from './buttonEvents.js';
-import { runSideGestures, setSidePower } from './gestureActions.js';
+import { noteAlarmGestureHandled, runSideGestures, setSidePower } from './gestureActions.js';
 
 // Presses are collected for this long before acting, so a quick run of "+" presses becomes one
 // temperature change from one reading of the current target
 const PRESS_BATCH_MS = 400;
+// The firmware takes a moment to report a target it was just given. A press that follows
+// within this time builds on the target we last set instead of the stale reported one.
+const RECENT_TARGET_MS = 5_000;
 // Pause before reopening the firmware log if following it stops
 const RESTART_WAIT_MS = 5_000;
 // How often to look for a Pod 5 cover while none is attached
@@ -29,6 +32,7 @@ export class ButtonMonitor {
   private coverCheckTimer?: NodeJS.Timeout;
   private lastCoverVersion?: string;
   private hasWarnedAboutLog = false;
+  private recentTargets: Partial<Record<Side, { temperatureF: number; setAtMs: number }>> = {};
 
   // Starts following the firmware log as soon as a Pod 5 cover is attached. The cover may be
   // plugged in (or swapped) long after the server starts, so this keeps checking until then.
@@ -121,12 +125,22 @@ export class ButtonMonitor {
         if (sidePresses.some(isPowerHold)) {
           logger.debug(`Middle button held on ${side}, switching power`);
           await setSidePower(side, !deviceStatus[side].isOn);
+          // The firmware can follow a long hold with a second, shorter middle event. Without
+          // this it would be taken as a new press and switch the side straight back.
+          noteAlarmGestureHandled(side);
           continue;
         }
+        const recentTarget = this.recentTargets[side];
+        if (recentTarget && Date.now() - recentTarget.setAtMs < RECENT_TARGET_MS) {
+          deviceStatus[side].targetTemperatureF = recentTarget.temperatureF;
+        }
         // The gesture code works on counters, so presses are passed as a count starting from zero
-        await runSideGestures(side, deviceStatus, { doubleTap: 0, tripleTap: 0, quadTap: 0 }, {
+        const targetTemperatureF = await runSideGestures(side, deviceStatus, { doubleTap: 0, tripleTap: 0, quadTap: 0 }, {
           doubleTap: 0, tripleTap: 0, quadTap: 0, ...countPressesAsGestures(sidePresses),
         });
+        if (targetTemperatureF !== undefined) {
+          this.recentTargets[side] = { temperatureF: targetTemperatureF, setAtMs: Date.now() };
+        }
       }
     } catch (error) {
       logger.error(error);
