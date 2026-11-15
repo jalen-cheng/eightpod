@@ -110,7 +110,10 @@ export default function TapGesturesSection({ settings, updateSettings }: TapGest
           ) }
         </TapSettingRow>
         <Divider/>
-        <TapSettingRow gesture={ labels.otherwise } action={ hasButtons ? 'A short press, when no alarm is going off' : 'When no alarm is going off' }>
+        <TapSettingRow
+          gesture={ labels.otherwise }
+          action={ hasButtons ? 'A short press, when no alarm is going off' : 'When no alarm is going off' }
+        >
           <ToggleButtonGroup
             disabled={ isUpdating }
             size="small"

@@ -14,7 +14,8 @@ export const useDeviceStatus = () => useQuery<DeviceStatus>({
     const response = await getDeviceStatus();
     return response.data;
   },
-  refetchInterval: 30_000,
+  // Often enough that a change made at the bed (a button press) shows up while you watch
+  refetchInterval: 5_000,
 });
 
 

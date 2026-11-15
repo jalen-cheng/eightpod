@@ -12,11 +12,17 @@ import { handleAlarmGesture } from '../jobs/alarmSession.js';
 import { alarmSession } from '../jobs/alarmScheduler.js';
 import { TapCounts, processSideGestures } from './gestures.js';
 
-// One press can reach us twice: through the tap counters and through the Pod 5 button log.
-// Running an alarm gesture twice would undo it (a power toggle flips back), so a second one
-// for the same side within this window is dropped.
-const ALARM_GESTURE_REPEAT_WINDOW_MS = 1_500;
+// One press can reach us twice: through the tap counters and through the Pod 5 button log, or as
+// a long hold that the firmware follows with a second, shorter event. Running an alarm or power
+// gesture twice would undo it (a power toggle flips back), so a second one for the same side
+// within this window is dropped.
+const ALARM_GESTURE_REPEAT_WINDOW_MS = 3_000;
 const lastAlarmGestureAtMs: Record<Side, number> = { left: 0, right: 0 };
+
+// Records that a power or alarm action was just taken for a side by some other path
+export const noteAlarmGestureHandled = (side: Side) => {
+  lastAlarmGestureAtMs[side] = Date.now();
+};
 
 export const setSidePower = (side: Side, isOn: boolean) => {
   return updateDeviceStatus({ [side]: { isOn } } as DeepPartial<DeviceStatus>);
@@ -25,14 +31,15 @@ export const setSidePower = (side: Side, isOn: boolean) => {
 // Runs a side's configured actions for the gestures made between two sets of counts.
 // Shared by the tap counter monitor and the Pod 5 button monitor, so both behave the same.
 // `settingsDB` must have been read by the caller.
+// Returns the side's target temperature after the gestures, or undefined if they failed.
 export async function runSideGestures(
   side: Side,
   deviceStatus: DeviceStatus,
   previousTaps: TapCounts | undefined,
   nextTaps: TapCounts | undefined,
-) {
+): Promise<number | undefined> {
   try {
-    await processSideGestures({
+    return await processSideGestures({
       previousTaps,
       nextTaps,
       tapSettings: settingsDB.data[side].taps,
@@ -63,5 +70,6 @@ export async function runSideGestures(
     });
   } catch (error) {
     logger.error(error);
+    return undefined;
   }
 }
