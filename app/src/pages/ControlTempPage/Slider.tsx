@@ -21,8 +21,9 @@ type SliderProps = {
   refetch: () => Promise<unknown>;
 }
 
-// Labels for the two ends of the dial, placed just under where the arc stops
-const rangeLabelSx = { position: 'absolute', top: '72%', color: 'text.secondary', pointerEvents: 'none' };
+// Labels for the two ends of the dial. They sit below where the arc stops, clear of the handle
+// when the target is at either limit.
+const rangeLabelSx = { position: 'absolute', top: '79%', color: 'text.secondary', pointerEvents: 'none' };
 
 export default function Slider({ isOn, currentTargetTemp, refetch, currentTemperatureF }: SliderProps) {
   const deviceStatus = useControlTempStore(state => state.deviceStatus);

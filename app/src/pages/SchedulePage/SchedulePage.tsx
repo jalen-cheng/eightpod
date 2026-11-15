@@ -3,7 +3,7 @@ import { Box, Button, FormControlLabel, Switch, Typography } from '@mui/material
 import { DeepPartial } from 'ts-essentials';
 import moment from 'moment-timezone';
 
-import DayChips from './DayChips.tsx';
+import DayPicker from './DayPicker.tsx';
 import NightTimeline from './NightTimeline.tsx';
 import PageContainer from '../PageContainer.tsx';
 import SideControl from '../../components/SideControl.tsx';
@@ -41,6 +41,7 @@ export default function SchedulePage() {
     selectDay,
     getSaveDays,
     changesPresent,
+    hasEdits,
     isValid,
     updateSelectedSchedule,
   } = useScheduleStore();
@@ -78,7 +79,7 @@ export default function SchedulePage() {
     <PageContainer sx={ { width: '100%', mx: 'auto', maxWidth: 800 } }>
       <PageHeader title="Schedules"/>
       <SideControl linkedHint="Sides linked: saving applies this schedule to both."/>
-      <DayChips/>
+      <DayPicker/>
 
       <ErrorBoundary componentName="Scheduling chart">
         <TemperatureScheduleChart/>
@@ -98,9 +99,12 @@ export default function SchedulePage() {
           }
         />
         { changesPresent ? (
-          <Button variant="contained" onClick={ handleSave } disabled={ isUpdating || !isValid() }>
-            Save for { describeDays(saveDays) }{ linkSides ? ', both sides' : '' }
-          </Button>
+          <Box sx={ { display: 'flex', gap: 1 } }>
+            { hasEdits && <Button onClick={ reloadScheduleData } disabled={ isUpdating }>Discard</Button> }
+            <Button variant="contained" onClick={ handleSave } disabled={ isUpdating || !isValid() }>
+              Save for { describeDays(saveDays) }{ linkSides ? ', both sides' : '' }
+            </Button>
+          </Box>
         ) : (
           <Typography variant="caption" sx={ { color: 'text.secondary' } }>Saved</Typography>
         ) }
