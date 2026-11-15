@@ -23,7 +23,12 @@ Pod 5, control board 830-00067-00 REV-17. Last updated 2026-11-14.
 - [x] `current_slot=a`.
 - [x] Root shell, file system remounted writable, `root` and `rewt` passwords set, clean reboot, login as `root`.
 - [x] Eight Sleep system version at login: `4b7552d5a9aed31997ff22cf193240800056ef6a`.
-- [ ] Everything from disabling the updater onward (Part 3 of the walkthrough) is still to do.
+- [x] Eight Sleep's updater disabled, Free Sleep installed from this fork (3.0.3, `main`), UI and SSH reachable, all services healthy.
+- [x] **The firmware connects at `/persistent/deviceinfo/dac.sock`.** There is no `frank.sh` on this Pod, so the installer could not find it and it was set by hand. The installer now reads it from the `frank` service.
+- [x] **The install guide's Wi-Fi step breaks a Pod 5.** The Pod already had a `customer-wifi` profile from app setup. Adding another and running the guide's `sed` gave every profile the same ID, and the Pod did not rejoin Wi-Fi after a reboot. Fixed by keeping only `customer-wifi`. The walkthrough now checks for an existing connection first.
+- [x] The hub reports hardware revision G45, which Free Sleep labels "Pod 4"; its Pod 5 cutoff of G53 is a guess from upstream.
+- [x] The firmware's status also carries a `dismissAlarm` counter and blanket sensor state, which Free Sleep does not read.
+- [ ] Reboot test, cover connected, and everything from the button check onward are still to do.
 
 Seen along the way: the serial line drops the odd character, password prompts show nothing while
 typing, and the clock is unset before Wi-Fi (`password changed in future`).

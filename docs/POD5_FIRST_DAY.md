@@ -139,11 +139,31 @@ The Pod stays unplugged until step 4.
    systemctl mask swupdate-progress swupdate defibrillator eight-kernel telegraf vector frankenfirmware dac swupdate.socket
    ```
    Do this before joining Wi-Fi, so the Pod cannot update itself in between.
-2. **Join Wi-Fi.** Replace `WIFI_NAME` (twice) and `PASSWORD`:
+2. **Wi-Fi: check before adding anything.** A Pod 5 was set up in the Eight Sleep app, so it
+   already has a profile for your network, called `customer-wifi`. See whether it is connected:
+   ```
+   nmcli -g ip4.address device show wlan0
+   ```
+   **If that prints an address, skip the rest of this step.** Do not run the install guide's
+   `nmcli connection add` and `sed` lines: the `sed` gives every saved profile the same ID, and
+   with more than one profile the Pod then fails to rejoin Wi-Fi after a reboot. That happened on
+   this Pod.
+
+   Only if there is no address, add your network, replacing `WIFI_NAME` (twice) and `PASSWORD`
+   with the real values:
    ```
    nmcli connection add type wifi con-name WIFI_NAME ifname wlan0 ssid WIFI_NAME wifi-sec.key-mgmt wpa-psk wifi-sec.psk "PASSWORD" ipv4.method auto ipv6.method auto
-   sed -i 's/uuid=.*/uuid=700a7a76-2105-4f46-b1b4-c9f3c791c440/' /persistent/system-connections/*.nmconnection
-   nmcli connection reload
+   ```
+
+   **If the Pod drops off Wi-Fi after a reboot**, log in on the serial console and look at the
+   saved profiles:
+   ```
+   ls /persistent/system-connections/
+   ```
+   If there is more than `customer-wifi.nmconnection`, move the others aside and reconnect.
+   Adjust the names to match what is listed:
+   ```
+   mkdir -p /persistent/wifi-backup && cd /persistent/system-connections && mv goon* WIFI* 8S* /persistent/wifi-backup/ && nmcli connection reload && nmcli connection up customer-wifi
    ```
    Wait until the Pod has an address and its clock is right. The download in the next step
    uses HTTPS, which fails with a certificate error while the clock is wrong.
@@ -151,7 +171,7 @@ The Pod stays unplugged until step 4.
    nmcli -g ip4.address device show wlan0
    date
    ```
-   If there is no address after a minute, recheck the Wi-Fi name and password in the command above.
+   If there is no address after a minute, recheck the Wi-Fi step above.
    If `date` is still wrong after a minute, run `systemctl restart systemd-timesyncd` and check again.
 3. **Install from this fork.** The first line is what makes every later update come from the fork too.
    ```
@@ -177,7 +197,8 @@ The Pod stays unplugged until step 4.
    ssh root@<pod-ip> -p 8822
    ```
 7. **Reboot test.** Unplug the Pod's power, plug it back in, wait up to four minutes, and confirm
-   the UI loads again.
+   the UI loads again. The serial console showing `eight-pod login:` again is normal; the test
+   is whether the Pod is back on the network. If it is not, see the Wi-Fi recovery in step 2.
 8. **Leave the hub open and the serial cable attached** until Part 5 is done. If the firewall
    step ever locks you out of the network, the serial cable is the way back in.
 9. Reconnect the cover's hose. The UI should stop being greyed out.
