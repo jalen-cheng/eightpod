@@ -1,7 +1,7 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="90063d81-688d-5ba9-943b-c43f95f9427e")}catch(e){}}();
-const PRESS_PATTERN = /\[TTC\] processing \[button\] side (left|right) \{ button: (top|bottom|middle)\b/;
-// Reported on its own line, without a side, just before the middle press it belongs to
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="668f5390-ccd6-5734-b6db-68e156d4969a")}catch(e){}}();
+const PRESS_PATTERN = /\[TTC\] processing \[button\] side (left|right) \{ button: (top|bottom|middle)\b(?:.*?\bcount: (\d+))?/;
+// Reported on its own line, without a side, once per press, before the line for the whole run
 const MIDDLE_HELD_PATTERN = /\[buttons\] middle button held for (\d+)ms/;
 // A hold duration older than this belongs to some earlier press
 const HELD_LINE_MAX_AGE_MS = 4_000;
@@ -15,26 +15,33 @@ export const BUTTON_GESTURES = {
     middle: 'quadTap',
 };
 // Returns a function that is fed the firmware log one line at a time and returns a press when a
-// line completes one. It keeps the last "held for" duration to attach to the next middle press.
+// line completes one. It keeps the longest recent "held for" duration to attach to the next
+// middle press.
 export function createButtonLineParser(getNowMs = Date.now) {
-    let lastHeldMs;
+    let longestHeldMs;
     let lastHeldAtMs = 0;
     return (line) => {
         const heldMatch = MIDDLE_HELD_PATTERN.exec(line);
         if (heldMatch) {
-            lastHeldMs = Number(heldMatch[1]);
+            const isRunStale = getNowMs() - lastHeldAtMs > HELD_LINE_MAX_AGE_MS;
+            const heldMs = Number(heldMatch[1]);
+            longestHeldMs = isRunStale || longestHeldMs === undefined ? heldMs : Math.max(longestHeldMs, heldMs);
             lastHeldAtMs = getNowMs();
             return null;
         }
         const pressMatch = PRESS_PATTERN.exec(line);
         if (!pressMatch)
             return null;
-        const press = { side: pressMatch[1], button: pressMatch[2] };
+        const press = {
+            side: pressMatch[1],
+            button: pressMatch[2],
+            count: Math.max(1, Number(pressMatch[3] ?? 1)),
+        };
         if (press.button === 'middle') {
-            const isHeldFresh = lastHeldMs !== undefined && getNowMs() - lastHeldAtMs <= HELD_LINE_MAX_AGE_MS;
+            const isHeldFresh = longestHeldMs !== undefined && getNowMs() - lastHeldAtMs <= HELD_LINE_MAX_AGE_MS;
             if (isHeldFresh)
-                press.heldMs = lastHeldMs;
-            lastHeldMs = undefined;
+                press.heldMs = longestHeldMs;
+            longestHeldMs = undefined;
         }
         return press;
     };
@@ -51,9 +58,9 @@ export function countPressesAsGestures(presses) {
         if (isPowerHold(press))
             continue;
         const gesture = BUTTON_GESTURES[press.button];
-        gestureCounts[gesture] = (gestureCounts[gesture] ?? 0) + 1;
+        gestureCounts[gesture] = (gestureCounts[gesture] ?? 0) + press.count;
     }
     return gestureCounts;
 }
 //# sourceMappingURL=buttonEvents.js.map
-//# debugId=90063d81-688d-5ba9-943b-c43f95f9427e
+//# debugId=668f5390-ccd6-5734-b6db-68e156d4969a

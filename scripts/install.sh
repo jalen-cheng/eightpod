@@ -205,7 +205,7 @@ DEST="/persistent/free-sleep-data/free-sleep-copy.db"
 
 if [ -f "$SRC" ]; then
   echo "Verifying and backing up the database prior to migrations..."
-  python3 "$REPO_DIR/scripts/sqlite_maintenance.py" backup "$SRC" "$DEST" --checkpoint
+  sh "$REPO_DIR/scripts/backup_database.sh" "$SRC" "$DEST"
 else
   echo "Source database not found, skipping copying database."
 fi
@@ -243,6 +243,8 @@ ExecStart=/home/$USERNAME/.volta/bin/npm run start
 WorkingDirectory=$SERVER_DIR
 Restart=always
 User=$USERNAME
+# Lets the server read the firmware journal, where a Pod 5 reports its button presses
+SupplementaryGroups=systemd-journal
 Environment=NODE_ENV=production
 Environment=VOLTA_HOME=/home/$USERNAME/.volta
 Environment=PATH=/home/$USERNAME/.volta/bin:/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin
@@ -333,9 +335,10 @@ MAINTENANCE_DIR="/persistent/free-sleep-maintenance"
 mkdir -p "$MAINTENANCE_DIR" /etc/systemd/system/free-sleep-update.service.d
 cp "$REPO_DIR/scripts/update_service.sh" "$MAINTENANCE_DIR/update_service.sh"
 cp "$REPO_DIR/scripts/sqlite_maintenance.py" "$MAINTENANCE_DIR/sqlite_maintenance.py"
+cp "$REPO_DIR/scripts/backup_database.sh" "$REPO_DIR/scripts/backup_database.mjs" "$MAINTENANCE_DIR/"
 chown -R root:root "$MAINTENANCE_DIR"
 chmod 755 "$MAINTENANCE_DIR" "$MAINTENANCE_DIR/update_service.sh"
-chmod 644 "$MAINTENANCE_DIR/sqlite_maintenance.py"
+chmod 644 "$MAINTENANCE_DIR/sqlite_maintenance.py" "$MAINTENANCE_DIR/backup_database.sh" "$MAINTENANCE_DIR/backup_database.mjs"
 cat > /etc/systemd/system/free-sleep-update.service.d/sqlite-maintenance.conf <<EOF
 [Service]
 ExecStart=
