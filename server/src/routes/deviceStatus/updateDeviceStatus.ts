@@ -6,14 +6,12 @@ import { DeviceStatus, SideStatus } from './deviceStatusSchema.js';
 import { executeFunction } from '../../8sleep/deviceApi.js';
 import logger from '../../logger.js';
 import settingsDB from '../../db/settings.js';
+import { temperatureFToLevel } from '../../db/temperatureCurve.js';
 import { alarmSession } from '../../jobs/alarmScheduler.js';
 import { cancelPreWarm } from '../../jobs/preWarmState.js';
 import { INVERTED_SETTINGS_KEY_MAPPING } from '../../8sleep/loadDeviceStatus.js';
 
-const calculateLevelFromF = (temperatureF: number) => {
-  const level = (temperatureF - 82.5) / 27.5 * 100;
-  return Math.round(level).toString();
-};
+const calculateLevelFromF = (temperatureF: number) => temperatureFToLevel(temperatureF).toString();
 
 // Stops a side's alarm. If that alarm was set to switch the side off when dismissed, does that
 // too, unless `allowPowerOff` is false (a snooze stops the vibration but keeps the bed on).

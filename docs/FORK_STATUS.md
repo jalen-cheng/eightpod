@@ -49,7 +49,7 @@ typing, and the clock is unset before Wi-Fi (`password changed in future`).
 Run on the test Pod 5 on 2026-11-16. For each firmware level the script recorded the water
 temperature the firmware says it is aiming for. Both sides gave identical figures.
 
-| Dial | Firmware level | Firmware aims for | Free Sleep shows |
+| Dial | Firmware level | Firmware aims for | Free Sleep showed before #32 |
 |---|---|---|---|
 | -10 | -100 | 10.0°C / 50.0°F | 55.0°F |
 | -9 | -90 | 16.2°C / 61.2°F | 57.8°F |
@@ -63,14 +63,20 @@ What it shows:
 - **Three straight stretches, not one.** From -9 to 0 each dial step is 1.2°C (2.2°F). From 0 to +5
   each step is 1.8°C (3.2°F). From +5 to +10 each step is 1.2°C again.
 - **-10 is a special case**: it jumps to 10°C, 6.2°C below -9, which reads as "as cold as possible".
-- **Free Sleep's °F figures are off by up to 5°F**, most at the two ends and around neutral.
+- **Free Sleep's °F figures were off by up to 5°F**, most at the two ends and around neutral.
 - These are the firmware's targets, not measurements of the water. The optional `--measure` run,
   which checks the water reaches them, has not been done.
 
 The full output is in [pod5_temperature_calibration.json](pod5_temperature_calibration.json).
 
-Not yet applied: Free Sleep still spreads the levels evenly over 55 to 110°F. The -10 to +10 display is
-unaffected, because it is the firmware's own scale.
+Applied in [#32](https://github.com/jalen-cheng/free-sleep/pull/32): °F and °C now show what the firmware aims for, and the range
+is 50 to 108°F instead of 55 to 110°F. Saved schedules are converted once, on the first start after
+updating, so each keeps setting the bed to the same level; the schedules as they were are kept in
+`/persistent/free-sleep-data/schedulesDB.before-measured-temperatures.json`. The -10 to +10
+display is unaffected, because it is the firmware's own scale.
+
+The curve was measured on one Pod 5 and is used for every model. A Pod 3 or 4 may differ; running
+the calibration script on one would show it.
 
 ## Changes by pull request
 
@@ -121,6 +127,7 @@ unaffected, because it is the firmware's own scale.
 | [#29](https://github.com/jalen-cheng/free-sleep/pull/29) | Feature | Shortcut requests default to both sides and follow linked sides. |
 | [#30](https://github.com/jalen-cheng/free-sleep/pull/30) | Feature | Alarm times are read however a phone writes them (AM/PM, full dates). `GET /api/deviceStatus/dial` reports the bed in one sentence. |
 | [#31](https://github.com/jalen-cheng/free-sleep/pull/31) | Docs | README introduces the fork; this file and the walkthrough updated; calibration results and remote access options written up. |
+| [#32](https://github.com/jalen-cheng/free-sleep/pull/32) | Fix | °F and °C use the measured level-to-temperature curve instead of an even 55-110°F spread. Range is now 50-108°F. Saved schedule temperatures are converted once. |
 
 ## Compared with the Eight Sleep app
 
@@ -128,7 +135,7 @@ The Eight Sleep column is from memory and public material, not from testing the 
 
 | Area | Eight Sleep app | This fork |
 |---|---|---|
-| Temperature | Level -10 to +10, no units | °F, °C or level. The °F figures are an even spread over 55-110°F; the measured values differ by up to 5°F (see above). |
+| Temperature | Level -10 to +10, no units | °F, °C or level. The °F and °C figures are the temperatures the firmware aims for, measured on a Pod 5 (see above). |
 | Automatic adjustment | Autopilot changes temperature overnight | None. Fixed times and temperatures per day. |
 | Schedules | Bedtime, night and wake phases | One night as a list of events: bedtime, any number of timed changes, alarm, bed off. Saved for every day, weekdays / weekend, or each day. |
 | Both sides together | Per account | Link button for temperature, power and schedules. |
@@ -233,7 +240,7 @@ Searched 2026-11-13. These are other people's reports, not verified here.
 ### Depends on what the Pod shows
 - [ ] **Dismiss.** If sending `ALARM_CLEAR` with a side stops a vibrating alarm, switch dismiss and snooze to it.
 - [ ] **Pod 4 tap fields.** Treat a large jump in a tap field as one tap, for firmware that reports a time instead of a count.
-- [ ] **Calibration.** Replace the even 55-110°F spread in `loadDeviceStatus.ts`, `updateDeviceStatus.ts` and the app's conversions with the measured curve above, so °F and °C show what the firmware aims for.
+- [ ] **Calibration, second half.** Run the script with `--measure` on an empty bed to see whether the water reaches what the firmware aims for, especially at -10 and +10.
 - [ ] **Remote access.** Pick and set up one of the options in [REMOTE_ACCESS.md](REMOTE_ACCESS.md).
 - [ ] **Biometrics.** Point the sleep analysis at the `rawmem.*` subjects this firmware publishes.
 

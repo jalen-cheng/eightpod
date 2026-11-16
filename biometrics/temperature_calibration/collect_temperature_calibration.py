@@ -1,6 +1,6 @@
 """
-Finds out what temperature each Pod level really means, to replace Free Sleep's assumption that
-levels -100..100 map evenly onto 55..110°F.
+Finds out what temperature each Pod level really means, to check (or correct) the curve Free
+Sleep uses in server/src/db/temperatureCurve.ts.
 
 The firmware publishes, every few seconds, the water temperature it is aiming for on each side
 (`frzTherm.target`, in °C) along with the measured water and bed surface temperatures. So for
@@ -242,7 +242,7 @@ async def run(arguments):
             json.dump(results, output_file, indent=2)
         print(f'Saved {len(points)} levels to {arguments.output}')
         print(json.dumps(results['fit'], indent=2))
-        print('Free Sleep currently assumes 0.275°F per level and 82.5°F at level 0.')
+        print('Compare the "firmware aims for" figures above with what Free Sleep shows: they should match.')
     finally:
         await connection.close()
 

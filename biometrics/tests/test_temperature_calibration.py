@@ -19,9 +19,12 @@ from calibration_math import (
 
 class TemperatureCalibrationMathTest(unittest.TestCase):
     def test_assumed_temperature_matches_the_servers_mapping(self):
-        self.assertEqual(level_to_assumed_temp_f(-100), 55)
-        self.assertEqual(level_to_assumed_temp_f(0), 82.5)
-        self.assertEqual(level_to_assumed_temp_f(100), 110)
+        self.assertAlmostEqual(level_to_assumed_temp_f(-100), 50)
+        self.assertAlmostEqual(level_to_assumed_temp_f(-90), 61.16)
+        self.assertAlmostEqual(level_to_assumed_temp_f(0), 80.6)
+        self.assertAlmostEqual(level_to_assumed_temp_f(25), 88.7)
+        self.assertAlmostEqual(level_to_assumed_temp_f(50), 96.8)
+        self.assertAlmostEqual(level_to_assumed_temp_f(100), 107.6)
 
     def test_raw_readings_are_hundredths_of_a_degree_celsius(self):
         self.assertAlmostEqual(raw_to_fahrenheit(2000), 68.0)
@@ -43,7 +46,7 @@ class TemperatureCalibrationMathTest(unittest.TestCase):
 
     def test_fit_recovers_a_straight_line(self):
         levels = [-80, -40, 0, 40, 80]
-        temps_f = [level_to_assumed_temp_f(level) for level in levels]
+        temps_f = [82.5 + level * 0.275 for level in levels]
         fit = fit_line(levels, temps_f)
         self.assertAlmostEqual(fit['degrees_f_per_level'], 0.275)
         self.assertAlmostEqual(fit['temp_f_at_level_0'], 82.5)
