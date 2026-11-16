@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="ce46da8c-f5ab-5235-8106-cd2bdf6bcb07")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="653143be-dc56-5d5b-af7d-106331ff0e61")}catch(e){}}();
 export const DAYS_OF_WEEK = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 const MINUTES_PER_DAY = 24 * 60;
 // Returns the HH:mm that is `minutes` before `time`, wrapping past midnight ("00:10" - 30 -> "23:40")
@@ -35,5 +35,31 @@ export function findNextScheduledAlarm(sideSchedule, now) {
     }
     return nextAlarm;
 }
+// "9:05", "09:05:00", "9.05 pm", or either inside a longer text such as a full date
+const CLOCK_WITH_MINUTES = /(\d{1,2})[:.](\d{2})(?::\d{2})?\s*(a\.?m|p\.?m)?/i;
+// "9 pm"
+const CLOCK_HOUR_ONLY = /\b(\d{1,2})\s*(a\.?m|p\.?m)/i;
+// Reads a time of day however a phone writes it ("21:30", "9:30 PM", "Nov 16, 2026 at 9:30 PM",
+// "2026-11-16T21:30:00-08:00", "9 pm") and returns it as HH:mm, or undefined if there is none.
+// Phones on a 12-hour clock send AM/PM even when asked for 24-hour time.
+export function parseClockTime(text) {
+    const withMinutes = CLOCK_WITH_MINUTES.exec(text);
+    const hourOnly = withMinutes ? null : CLOCK_HOUR_ONLY.exec(text);
+    const hourText = withMinutes?.[1] ?? hourOnly?.[1];
+    if (hourText === undefined)
+        return undefined;
+    const meridiem = (withMinutes?.[3] ?? hourOnly?.[2])?.toLowerCase();
+    const minute = Number(withMinutes?.[2] ?? 0);
+    let hour = Number(hourText);
+    if (meridiem) {
+        if (hour < 1 || hour > 12)
+            return undefined;
+        const isAfternoon = meridiem.startsWith('p');
+        hour = (hour % 12) + (isAfternoon ? 12 : 0);
+    }
+    if (hour > 23 || minute > 59)
+        return undefined;
+    return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+}
 //# sourceMappingURL=scheduleTiming.js.map
-//# debugId=ce46da8c-f5ab-5235-8106-cd2bdf6bcb07
+//# debugId=653143be-dc56-5d5b-af7d-106331ff0e61
