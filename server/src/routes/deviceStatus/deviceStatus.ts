@@ -46,6 +46,29 @@ const DialSchema = z.object({
   dial: z.number().min(-10).max(10),
 }).strict();
 
+const FIRMWARE_LEVELS_PER_DIAL_STEP = 10;
+const formatDial = (dial: number) => `${dial > 0 ? '+' : ''}${dial}`;
+
+// What each side is set to and has reached, on the -10..+10 scale, with a sentence a phone
+// shortcut can show or speak as it is.
+router.get('/deviceStatus/dial', async (req: Request, res: Response) => {
+  const franken = await connectFranken();
+  const deviceStatus = await franken.getDeviceStatus();
+  const describeSide = (side: 'left' | 'right') => {
+    const { isOn, targetTemperatureF, currentTemperatureLevel } = deviceStatus[side];
+    const targetDial = Math.round((targetTemperatureF - DIAL_CENTER_F) / DIAL_STEP_F * 2) / 2;
+    const currentDial = Math.round(currentTemperatureLevel / FIRMWARE_LEVELS_PER_DIAL_STEP * 2) / 2;
+    const summary = isOn ? `set to ${formatDial(targetDial)}, now at ${formatDial(currentDial)}` : 'off';
+    return { isOn, targetDial, currentDial, summary };
+  };
+  const left = describeSide('left');
+  const right = describeSide('right');
+  const summary = left.summary === right.summary
+    ? `Both sides ${left.summary}.`
+    : `Left ${left.summary}. Right ${right.summary}.`;
+  res.json({ summary, left, right });
+});
+
 // Turns a side on at a setting from -10 (coldest) to +10 (hottest) with one short request.
 // Made for phone shortcuts, so they need no temperature arithmetic.
 router.post('/deviceStatus/dial', async (req: Request, res: Response) => {

@@ -6,11 +6,10 @@ import {
   AlarmJobSchema,
   DayOfWeek,
   Side,
-  TimeSchema,
 } from '../../db/schedulesSchema.js';
 import { DAYS_OF_WEEK } from '../../jobs/utils.js';
 import { SideChoiceSchema, resolveSides } from '../sideChoice.js';
-import { findNextScheduledAlarm } from '../../jobs/scheduleTiming.js';
+import { findNextScheduledAlarm, parseClockTime } from '../../jobs/scheduleTiming.js';
 import logger from '../../logger.js';
 import schedulesDB from '../../db/schedules.js';
 import settingsDB from '../../db/settings.js';
@@ -43,12 +42,22 @@ const MAX_SHIFT_MINUTES = 12 * HOURS_TO_MINUTES;
 const ONE_OFF_EXPIRY_MINUTES = 2;
 const NO_ONE_OFF = { disabled: false, timeOverride: '', expiresAt: '' };
 
+// A time of day as a phone sends it: 24-hour, or 12-hour with AM/PM, alone or inside a date
+const ClockTimeSchema = z.string().transform((text, context) => {
+  const time = parseClockTime(text);
+  if (time === undefined) {
+    context.addIssue({ code: z.ZodIssueCode.custom, message: `No time of day found in "${text}"` });
+    return z.NEVER;
+  }
+  return time;
+});
+
 const AlarmTimeSchema = z.object({
   side: SideChoiceSchema,
   // Exactly one of these two:
   // - time: the alarm goes off at this time of day
   // - shiftMinutes: the next alarm moves this many minutes later (negative: earlier)
-  time: TimeSchema.optional(),
+  time: ClockTimeSchema.optional(),
   shiftMinutes: z.number().int().min(-MAX_SHIFT_MINUTES).max(MAX_SHIFT_MINUTES).optional(),
   // Only with time. Without days: a one-off alarm at the next time the clock shows `time`.
   // With days: changes the weekly schedule's alarm on those days for good.
@@ -131,6 +140,7 @@ router.post('/alarm/time', async (req: Request, res: Response) => {
     .map(alarmSide => {
       if (shiftMinutes !== undefined) return shiftNextAlarm(alarmSide, shiftMinutes, now);
       const firesAt = nextOccurrenceHhMm(settingsDB.data.timeZone, time as string);
+      // (time is set here: the schema requires it whenever shiftMinutes is missing)
       return setOneOff(alarmSide, firesAt, firesAt);
     })
     .filter(alarm => alarm !== undefined);
