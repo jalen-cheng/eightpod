@@ -9,6 +9,7 @@ import {
   TimeSchema,
 } from '../../db/schedulesSchema.js';
 import { DAYS_OF_WEEK } from '../../jobs/utils.js';
+import { SideChoiceSchema, resolveSides } from '../sideChoice.js';
 import { findNextScheduledAlarm } from '../../jobs/scheduleTiming.js';
 import logger from '../../logger.js';
 import schedulesDB from '../../db/schedules.js';
@@ -34,7 +35,6 @@ router.post('/alarm', async (req: Request, res: Response) => {
 });
 
 
-const SIDES: Side[] = ['left', 'right'];
 const HOURS_TO_MINUTES = 60;
 // A one-off alarm is stored as a time of day, so it can only be up to a day ahead
 const ONE_OFF_WINDOW_HOURS = 24;
@@ -43,7 +43,6 @@ const MAX_SHIFT_MINUTES = 12 * HOURS_TO_MINUTES;
 const ONE_OFF_EXPIRY_MINUTES = 2;
 const NO_ONE_OFF = { disabled: false, timeOverride: '', expiresAt: '' };
 
-const SideChoiceSchema = z.enum(['left', 'right', 'both']);
 const AlarmTimeSchema = z.object({
   side: SideChoiceSchema,
   // Exactly one of these two:
@@ -59,8 +58,6 @@ const AlarmTimeSchema = z.object({
 }).strict()
   .refine(body => (body.time === undefined) !== (body.shiftMinutes === undefined), { message: 'Send either time or shiftMinutes' })
   .refine(body => !body.days || body.time !== undefined, { message: 'days needs time, not shiftMinutes' });
-
-const getSides = (side: z.infer<typeof SideChoiceSchema>): Side[] => (side === 'both' ? SIDES : [side]);
 
 // When a side's waiting one-off alarm will go off, if it has one
 const getPendingOneOff = (side: Side, now: moment.Moment) => {
@@ -111,7 +108,7 @@ router.post('/alarm/time', async (req: Request, res: Response) => {
     return;
   }
   const { side, time, shiftMinutes, days, enabled = true } = validationResult.data;
-  const alarmSides = getSides(side);
+  const alarmSides = await resolveSides(side);
 
   if (days && time) {
     await schedulesDB.read();
@@ -152,8 +149,7 @@ router.post('/alarm/time/cancel', async (req: Request, res: Response) => {
     res.status(400).json({ error: 'Invalid request data', details: validationResult.error.errors });
     return;
   }
-  await settingsDB.read();
-  const alarmSides = getSides(validationResult.data.side);
+  const alarmSides = await resolveSides(validationResult.data.side);
   for (const alarmSide of alarmSides) {
     settingsDB.data[alarmSide].scheduleOverrides.alarm = { ...NO_ONE_OFF };
   }

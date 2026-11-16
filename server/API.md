@@ -78,14 +78,14 @@ Turns a side on at a setting on the stock app's scale, -10 (coldest) to +10 (hot
 ```json
 { "side": "left", "dial": -3 }
 ```
-`side` is `left`, `right` or `both`.
+`side` is `left`, `right` or `both`. Left out, it means both. With the sides linked in Settings, one side means both.
 
 ---
 
 ## `/api/alarm/time`
 
 ### POST
-Sets an alarm with one short request. `side` is `left`, `right` or `both`.
+Sets an alarm with one short request. `side` works as for `/api/deviceStatus/dial`.
 
 | Body | Effect |
 | --- | --- |
