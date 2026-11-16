@@ -1,6 +1,6 @@
 // WARNING! - Any changes here MUST be the same between app/src/api & server/src/db/
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="864e2c66-33ed-5ba2-9655-6822fff7ea8f")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="3c61eec0-2f30-5045-9f5b-f55a7fff3bce")}catch(e){}}();
 import { z } from 'zod';
 import { MIN_TEMPERATURE_F } from './temperatureCurve.js';
 const timeRegexFormat = /^([01]\d|2[0-3]):([0-5]\d)$/;
@@ -13,6 +13,9 @@ export const TemperatureSchema = z.number().int().min(MIN_TEMPERATURE_F).max(110
 // at a time, so a longer alarm is sent as several stretches (see alarmSession).
 export const MAX_ALARM_SECONDS = 1800;
 export const MAX_FIRMWARE_ALARM_SECONDS = 180;
+// An alarm set for after the schedule's off time keeps the bed on until it has gone off, as long
+// as it is within this many hours of the off time. Later than that it belongs to another night.
+export const LATE_ALARM_WINDOW_HOURS = 6;
 export const AlarmSchema = z.object({
     vibrationIntensity: z.number().int().min(1).max(100),
     vibrationPattern: z.enum(['double', 'rise']),
@@ -21,6 +24,8 @@ export const AlarmSchema = z.object({
 export const AlarmJobSchema = AlarmSchema.extend({
     side: SideSchema,
     force: z.boolean().optional(),
+    // Set by the server on the later stretches of a ramp-up alarm: how many ramp steps are done
+    rampStep: z.number().int().min(0).optional(),
     // Switch the side off when this alarm is dismissed (not when it runs out)
     turnOffAfterDismiss: z.boolean().optional(),
 }).strict();
@@ -59,4 +64,4 @@ export const SchedulesSchema = z.object({
     right: SideScheduleSchema,
 }).strict();
 //# sourceMappingURL=schedulesSchema.js.map
-//# debugId=864e2c66-33ed-5ba2-9655-6822fff7ea8f
+//# debugId=3c61eec0-2f30-5045-9f5b-f55a7fff3bce
