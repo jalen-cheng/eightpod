@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="b34d65cc-a832-53aa-b426-0f8b033cc39d")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="f7a11f5c-62d7-50db-944e-94239ee02855")}catch(e){}}();
 import schedule from 'node-schedule';
 import cbor from 'cbor';
 import moment from 'moment-timezone';
@@ -8,7 +8,7 @@ import memoryDB from '../db/memoryDB.js';
 import serverStatus from '../serverStatus.js';
 import schedulesDB from '../db/schedules.js';
 import settingsDB from '../db/settings.js';
-import { LATE_ALARM_WINDOW_HOURS, MAX_FIRMWARE_ALARM_SECONDS, } from '../db/schedulesSchema.js';
+import { LATE_ALARM_WINDOW_HOURS, MAX_ALARM_SECONDS, MAX_FIRMWARE_ALARM_SECONDS, } from '../db/schedulesSchema.js';
 import { minutesAlarmIsAfterOff } from './scheduleTiming.js';
 import { executeFunction } from '../8sleep/deviceApi.js';
 import { getDayIndexForSchedule, logJob, subtractMinutesFromTime } from './utils.js';
@@ -105,7 +105,6 @@ const getOneOffAlarmSettings = (settingsData, side, firesAt) => {
     const dayKey = firesAt.clone().tz(settingsData.timeZone).format('dddd').toLowerCase();
     return schedulesDB.data?.[side]?.[dayKey]?.alarm ?? {
         vibrationIntensity: 100,
-        duration: 60,
         vibrationPattern: 'rise',
         turnOffAfterDismiss: undefined,
     };
@@ -122,13 +121,13 @@ export async function findLateAlarmEnd(side, day) {
     const alarmEnds = [];
     const oneOffFiresAt = getPendingOneOffAlarm(settingsData, side, now);
     if (oneOffFiresAt?.isBefore(windowEnd)) {
-        alarmEnds.push(oneOffFiresAt.clone().add(getOneOffAlarmSettings(settingsData, side, oneOffFiresAt).duration, 'seconds'));
+        alarmEnds.push(oneOffFiresAt.clone().add(MAX_ALARM_SECONDS, 'seconds'));
     }
     const { alarm, power } = schedulesDB.data[side][day];
     if (alarm.enabled && minutesAlarmIsAfterOff(alarm.time, power) > 0) {
         const firesAt = nextOccurrenceHhMm(settingsData.timeZone, alarm.time);
         if (firesAt.isBefore(windowEnd))
-            alarmEnds.push(firesAt.clone().add(alarm.duration, 'seconds'));
+            alarmEnds.push(firesAt.clone().add(MAX_ALARM_SECONDS, 'seconds'));
     }
     return alarmEnds.length > 0 ? moment.max(alarmEnds) : undefined;
 }
@@ -139,13 +138,13 @@ export function scheduleAlarmOverride(settingsData, side) {
     const { timeOverride } = settingsData[side].scheduleOverrides.alarm;
     logger.debug(`Alarm override is set! Scheduling alarm for ${next.format()}`);
     schedule.scheduleJob(`${side}-alarm-override-${timeOverride}`, next.toDate(), async () => {
-        const { vibrationIntensity, duration, vibrationPattern, turnOffAfterDismiss } = getOneOffAlarmSettings(settingsData, side, next);
+        const { vibrationIntensity, vibrationPattern, turnOffAfterDismiss } = getOneOffAlarmSettings(settingsData, side, next);
         // Asked for by hand, so it goes off even if the side is off by then (for example after
         // the schedule's off time) or in away mode
         await executeAlarm({
             side,
             vibrationIntensity,
-            duration,
+            duration: MAX_ALARM_SECONDS,
             vibrationPattern,
             turnOffAfterDismiss,
             force: true,
@@ -185,7 +184,7 @@ export const scheduleAlarm = (settingsData, side, day, dailySchedule) => {
             await executeAlarm({
                 side,
                 vibrationIntensity: dailySchedule.alarm.vibrationIntensity,
-                duration: dailySchedule.alarm.duration,
+                duration: MAX_ALARM_SECONDS,
                 vibrationPattern: dailySchedule.alarm.vibrationPattern,
                 turnOffAfterDismiss: dailySchedule.alarm.turnOffAfterDismiss,
             });
@@ -235,4 +234,4 @@ export const scheduleAlarmPreWarm = (settingsData, side, day, dailySchedule) => 
     });
 };
 //# sourceMappingURL=alarmScheduler.js.map
-//# debugId=b34d65cc-a832-53aa-b426-0f8b033cc39d
+//# debugId=f7a11f5c-62d7-50db-944e-94239ee02855
