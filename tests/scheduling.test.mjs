@@ -3,7 +3,9 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { test } from 'node:test';
 import { isPowerScheduleDurationValid } from '../app/src/pages/SchedulePage/scheduleValidation.ts';
-import { DAYS_OF_WEEK, findNextScheduledAlarm, getDayIndexForSchedule, subtractMinutesFromTime } from '../server/src/jobs/scheduleTiming.ts';
+import {
+  DAYS_OF_WEEK, findNextScheduledAlarm, getDayIndexForSchedule, parseClockTime, subtractMinutesFromTime,
+} from '../server/src/jobs/scheduleTiming.ts';
 
 const requireServer = createRequire(new URL('../server/package.json', import.meta.url));
 const { RecurrenceRule } = requireServer('node-schedule');
@@ -112,4 +114,27 @@ test('the next scheduled alarm is the soonest enabled one, on the morning after 
   // Once Thursday's alarm has gone off, the next is Saturday morning (Friday's night)
   const afterAlarm = moment.tz('2026-11-12T06:31:00', 'America/New_York');
   assert.equal(findNextScheduledAlarm(sideSchedule, afterAlarm).format(), '2026-11-14T09:00:00-05:00');
+});
+
+test('a time of day is read however a phone writes it', () => {
+  const cases = [
+    ['21:30', '21:30'],
+    ['9:05', '09:05'],
+    ['09:05:00', '09:05'],
+    ['9:30 PM', '21:30'],
+    ['9:30\u202fPM', '21:30'],
+    ['9:30 a.m.', '09:30'],
+    ['12:00 AM', '00:00'],
+    ['12:15 PM', '12:15'],
+    ['Nov 16, 2026 at 10:00 AM', '10:00'],
+    ['2026-11-16T21:30:00-08:00', '21:30'],
+    ['9 pm', '21:00'],
+    ['ten', undefined],
+    ['25:00', undefined],
+    ['13:00 PM', undefined],
+    ['9:75', undefined],
+  ];
+  for (const [text, expected] of cases) {
+    assert.equal(parseClockTime(text), expected, text);
+  }
 });

@@ -72,6 +72,17 @@ The server exposes RESTful endpoints for interaction. All responses are JSON unl
 
 ## `/api/deviceStatus/dial`
 
+### GET
+What each side is set to and has reached on the -10..+10 scale, plus a sentence to show as it is.
+
+```json
+{
+  "summary": "Left set to +5, now at +4. Right off.",
+  "left": { "isOn": true, "targetDial": 5, "currentDial": 4, "summary": "set to +5, now at +4" },
+  "right": { "isOn": false, "targetDial": 0, "currentDial": 0, "summary": "off" }
+}
+```
+
 ### POST
 Turns a side on at a setting on the stock app's scale, -10 (coldest) to +10 (hottest).
 
@@ -85,7 +96,8 @@ Turns a side on at a setting on the stock app's scale, -10 (coldest) to +10 (hot
 ## `/api/alarm/time`
 
 ### POST
-Sets an alarm with one short request. `side` works as for `/api/deviceStatus/dial`.
+Sets an alarm with one short request. `side` works as for `/api/deviceStatus/dial`. `time` can be
+24-hour (`06:30`), 12-hour (`6:30 AM`), or a longer text containing either.
 
 | Body | Effect |
 | --- | --- |
