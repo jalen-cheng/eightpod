@@ -1,5 +1,45 @@
 # Free Sleep — Local Control for 8 Sleep Pods
 
+## About this fork
+
+This is a fork of [throwaway31265/free-sleep](https://github.com/throwaway31265/free-sleep), built and
+tested on one **Pod 5**. Everything upstream does still applies; the sections below this one are
+upstream's own README. Thanks to the upstream author and contributors for the project this builds on.
+
+What the fork adds:
+
+- **Pod 5 side buttons.** + and - change the temperature (and switch an off side on), holding the
+  middle button switches the side on or off, and any button dismisses or snoozes a vibrating alarm.
+- **Stays offline.** The internet block survives reboots and updates, Eight Sleep's updater is
+  locked out, and the installer and updater handle a Pod 5's differences.
+- **Linked sides.** One switch makes temperature, power, schedules, buttons and shortcuts apply to both sides.
+- **A -10 to +10 display**, like the Pod's own app, next to °F and °C.
+- **A redesigned schedule page**: one night as a list of events, a simple day picker, and a one-time alarm.
+- **Alarms that keep going until dismissed** (up to 30 minutes), with an optional warm-up beforehand
+  and the bed switching off when the alarm is dismissed.
+- **iPhone Shortcuts**: set the temperature, set an alarm, or check the bed, each with one short request.
+
+Where to go:
+
+| If you want to | Read |
+|---|---|
+| Install on a Pod 5, step by step | [docs/POD5_FIRST_DAY.md](docs/POD5_FIRST_DAY.md) |
+| Control the bed from iPhone Shortcuts | [docs/IOS_SHORTCUTS.md](docs/IOS_SHORTCUTS.md) |
+| See every change, what was tested on a Pod, and what is not done | [docs/FORK_STATUS.md](docs/FORK_STATUS.md) |
+| Use the API directly | [server/API.md](server/API.md) |
+
+Things to know before using it:
+
+- **Tested on one Pod 5 only.** Pod 3 and Pod 4 run the same code but have not been tried with this fork.
+- **Sleep tracking (Biometrics) does not work on the tested Pod 5**: its firmware publishes sensor
+  data somewhere the analysis does not read. This is the same upstream.
+- **Some newer Pod 5 units cannot be opened up this way.** See the first section of the walkthrough.
+- To install this fork instead of upstream, set `FREE_SLEEP_REPO=jalen-cheng/free-sleep` before
+  running the installer, as the walkthrough shows. Updates then come from this fork.
+- The demo link below shows upstream's app, not this fork's.
+
+---
+
 ## 👀 [Demo App](https://free-sleep.vercel.app/)
 
 ## 💬 [Discord Server](https://discord.gg/JpArXnBgEj)
