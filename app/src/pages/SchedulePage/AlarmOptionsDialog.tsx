@@ -55,7 +55,7 @@ export default function AlarmOptionsDialog({ open, onClose }: AlarmOptionsDialog
     <Dialog open={ open } onClose={ onClose } fullWidth maxWidth="xs">
       <DialogTitle>Alarm options</DialogTitle>
       <DialogContent sx={ { display: 'flex', flexDirection: 'column', gap: 1.5 } }>
-        <OptionRow label="Vibration" hint="Ramp up starts gently and builds">
+        <OptionRow label="Vibration" hint="Ramp up builds over 40 seconds">
           <ToggleButtonGroup
             exclusive
             size="small"

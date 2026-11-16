@@ -9,6 +9,33 @@ type SideAlarmState = {
   vibrationEndTimer?: ReturnType<typeof setTimeout>;
 };
 
+// The firmware's "rise" pattern vibrates at one steady strength (felt on a Pod 5), and it ignores
+// a new alarm while one is vibrating. So a ramp-up is made here: short stretches one after
+// another, each stronger than the last, then full strength.
+const RAMP_STEP_SECONDS = 10;
+const RAMP_STRENGTH_FRACTIONS = [0.2, 0.4, 0.6, 0.8];
+// The firmware does not run an alarm shorter than this
+const MIN_ALARM_SECONDS = 10;
+
+// Works out the next stretch of an alarm to send to the Pod: how strong, for how long, and what
+// is left to run after it (undefined when this stretch finishes the alarm).
+export function planAlarmStretch(alarmJob: AlarmJob, maxStretchSeconds: number) {
+  const totalSeconds = Math.max(MIN_ALARM_SECONDS, alarmJob.duration);
+  const rampStep = alarmJob.rampStep ?? 0;
+  const isRamping = alarmJob.vibrationPattern === 'rise'
+    && rampStep < RAMP_STRENGTH_FRACTIONS.length
+    && totalSeconds > RAMP_STEP_SECONDS;
+  const seconds = Math.min(isRamping ? RAMP_STEP_SECONDS : maxStretchSeconds, totalSeconds);
+  const strength = isRamping
+    ? Math.max(1, Math.round(alarmJob.vibrationIntensity * RAMP_STRENGTH_FRACTIONS[rampStep]))
+    : alarmJob.vibrationIntensity;
+  const remainingSeconds = totalSeconds - seconds;
+  const continuation: AlarmJob | undefined = remainingSeconds > 0
+    ? { ...alarmJob, duration: remainingSeconds, rampStep: isRamping ? rampStep + 1 : RAMP_STRENGTH_FRACTIONS.length }
+    : undefined;
+  return { strength, seconds, continuation };
+}
+
 export type AlarmSessionDeps = {
   // Sends the alarm to the Pod. It must report back through alarmStarted once vibration begins.
   // `isContinuation` marks a further stretch of an alarm that is already going off.

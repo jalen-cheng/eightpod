@@ -4,7 +4,8 @@ import { createRequire } from 'node:module';
 import { test } from 'node:test';
 import { isPowerScheduleDurationValid } from '../app/src/pages/SchedulePage/scheduleValidation.ts';
 import {
-  DAYS_OF_WEEK, findNextScheduledAlarm, getDayIndexForSchedule, parseClockTime, subtractMinutesFromTime,
+  DAYS_OF_WEEK, findNextScheduledAlarm, getDayIndexForSchedule, minutesAlarmIsAfterOff, parseClockTime,
+  subtractMinutesFromTime,
 } from '../server/src/jobs/scheduleTiming.ts';
 
 const requireServer = createRequire(new URL('../server/package.json', import.meta.url));
@@ -137,4 +138,14 @@ test('a time of day is read however a phone writes it', () => {
   for (const [text, expected] of cases) {
     assert.equal(parseClockTime(text), expected, text);
   }
+});
+
+test('an alarm is measured against the off time within its own night', () => {
+  const night = { on: '23:59', off: '11:00' };
+  assert.equal(minutesAlarmIsAfterOff('10:30', night), -30);
+  assert.equal(minutesAlarmIsAfterOff('11:00', night), 0);
+  assert.equal(minutesAlarmIsAfterOff('11:55', night), 55);
+  // Bedtime before midnight, off after it
+  assert.equal(minutesAlarmIsAfterOff('07:30', { on: '22:00', off: '07:00' }), 30);
+  assert.equal(minutesAlarmIsAfterOff('23:30', { on: '22:00', off: '07:00' }), -450);
 });

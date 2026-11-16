@@ -1,7 +1,32 @@
+// The firmware's "rise" pattern vibrates at one steady strength (felt on a Pod 5), and it ignores
+// a new alarm while one is vibrating. So a ramp-up is made here: short stretches one after
+// another, each stronger than the last, then full strength.
+
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="23084b26-2544-5fbe-9d98-77a481ce3c4c")}catch(e){}}();
+const RAMP_STEP_SECONDS = 10;
+const RAMP_STRENGTH_FRACTIONS = [0.2, 0.4, 0.6, 0.8];
+// The firmware does not run an alarm shorter than this
+const MIN_ALARM_SECONDS = 10;
+// Works out the next stretch of an alarm to send to the Pod: how strong, for how long, and what
+// is left to run after it (undefined when this stretch finishes the alarm).
+export function planAlarmStretch(alarmJob, maxStretchSeconds) {
+    const totalSeconds = Math.max(MIN_ALARM_SECONDS, alarmJob.duration);
+    const rampStep = alarmJob.rampStep ?? 0;
+    const isRamping = alarmJob.vibrationPattern === 'rise'
+        && rampStep < RAMP_STRENGTH_FRACTIONS.length
+        && totalSeconds > RAMP_STEP_SECONDS;
+    const seconds = Math.min(isRamping ? RAMP_STEP_SECONDS : maxStretchSeconds, totalSeconds);
+    const strength = isRamping
+        ? Math.max(1, Math.round(alarmJob.vibrationIntensity * RAMP_STRENGTH_FRACTIONS[rampStep]))
+        : alarmJob.vibrationIntensity;
+    const remainingSeconds = totalSeconds - seconds;
+    const continuation = remainingSeconds > 0
+        ? { ...alarmJob, duration: remainingSeconds, rampStep: isRamping ? rampStep + 1 : RAMP_STRENGTH_FRACTIONS.length }
+        : undefined;
+    return { strength, seconds, continuation };
+}
 // Creates the alarm state tracker. The Pod cannot tell us whether an alarm is vibrating,
 // so this is the single owner of that knowledge and of every timer attached to it.
-
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="43a77361-0bce-5bc8-99c3-6065f9338c5a")}catch(e){}}();
 export function createAlarmSession({ startAlarm, setAlarmVibrating, logDebug }) {
     const sideStates = { left: {}, right: {} };
     const cancelVibrationEndTimer = (side) => {
@@ -74,4 +99,4 @@ export async function handleAlarmGesture(tapConfig, deps) {
     return 'none';
 }
 //# sourceMappingURL=alarmSession.js.map
-//# debugId=43a77361-0bce-5bc8-99c3-6065f9338c5a
+//# debugId=23084b26-2544-5fbe-9d98-77a481ce3c4c

@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="e19a1389-a542-5e81-b2e6-4ebeaddb364b")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="faa780fb-c07f-5736-891c-c7877a93fbc5")}catch(e){}}();
 import express from 'express';
 import { z } from 'zod';
 import moment from 'moment-timezone';
@@ -10,7 +10,7 @@ import { findNextScheduledAlarm, parseClockTime } from '../../jobs/scheduleTimin
 import logger from '../../logger.js';
 import schedulesDB from '../../db/schedules.js';
 import settingsDB from '../../db/settings.js';
-import { executeAlarm, nextOccurrenceHhMm } from '../../jobs/alarmScheduler.js';
+import { executeAlarm, getPendingOneOffAlarm, nextOccurrenceHhMm } from '../../jobs/alarmScheduler.js';
 const router = express.Router();
 router.post('/alarm', async (req, res) => {
     const body = req.body;
@@ -58,14 +58,6 @@ const AlarmTimeSchema = z.object({
 }).strict()
     .refine(body => (body.time === undefined) !== (body.shiftMinutes === undefined), { message: 'Send either time or shiftMinutes' })
     .refine(body => !body.days || body.time !== undefined, { message: 'days needs time, not shiftMinutes' });
-// When a side's waiting one-off alarm will go off, if it has one
-const getPendingOneOff = (side, now) => {
-    const { disabled, timeOverride, expiresAt } = settingsDB.data[side].scheduleOverrides.alarm;
-    if (disabled || !timeOverride || !expiresAt)
-        return undefined;
-    const firesAt = nextOccurrenceHhMm(settingsDB.data.timeZone, timeOverride);
-    return moment(expiresAt).isAfter(now) && !firesAt.isAfter(moment(expiresAt)) ? firesAt : undefined;
-};
 // Stores a one-off alarm for a side. Scheduled alarms are held back until `holdBackUntil`, so
 // the one this replaces stays quiet even when the one-off goes off before it.
 const setOneOff = (side, firesAt, holdBackUntil) => {
@@ -80,7 +72,7 @@ const setOneOff = (side, firesAt, holdBackUntil) => {
 // as a one-off. Returns undefined when there is no alarm in the next day to move, or it would
 // land in the past.
 const shiftNextAlarm = (side, shiftMinutes, now) => {
-    const nextAlarm = getPendingOneOff(side, now) ?? findNextScheduledAlarm(schedulesDB.data[side], now);
+    const nextAlarm = getPendingOneOffAlarm(settingsDB.data, side, now) ?? findNextScheduledAlarm(schedulesDB.data[side], now);
     const windowEnd = now.clone().add(ONE_OFF_WINDOW_HOURS, 'hours');
     if (!nextAlarm)
         return undefined;
@@ -157,4 +149,4 @@ router.post('/alarm/time/cancel', async (req, res) => {
 });
 export default router;
 //# sourceMappingURL=alarm.js.map
-//# debugId=e19a1389-a542-5e81-b2e6-4ebeaddb364b
+//# debugId=faa780fb-c07f-5736-891c-c7877a93fbc5

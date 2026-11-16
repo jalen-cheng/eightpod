@@ -63,3 +63,17 @@ export function parseClockTime(text: string): Time | undefined {
   if (hour > 23 || minute > 59) return undefined;
   return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
 }
+
+// Minutes from bedtime to a time later that night (past midnight counts as later)
+export function minutesAfterBedtime(time: Time, bedtime: Time): number {
+  const toMinutes = (clockTime: Time) => {
+    const [hour, minute] = clockTime.split(':').map(Number);
+    return hour * 60 + minute;
+  };
+  return (toMinutes(time) - toMinutes(bedtime) + MINUTES_PER_DAY) % MINUTES_PER_DAY;
+}
+
+// How long after a night's off time its alarm goes off, in minutes. Zero or less: at or before it.
+export function minutesAlarmIsAfterOff(alarmTime: Time, power: { on: Time; off: Time }): number {
+  return minutesAfterBedtime(alarmTime, power.on) - minutesAfterBedtime(power.off, power.on);
+}

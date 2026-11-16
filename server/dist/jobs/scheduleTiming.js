@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="653143be-dc56-5d5b-af7d-106331ff0e61")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="be3c7924-c172-5645-9236-d83308a9c0e8")}catch(e){}}();
 export const DAYS_OF_WEEK = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 const MINUTES_PER_DAY = 24 * 60;
 // Returns the HH:mm that is `minutes` before `time`, wrapping past midnight ("00:10" - 30 -> "23:40")
@@ -61,5 +61,17 @@ export function parseClockTime(text) {
         return undefined;
     return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
 }
+// Minutes from bedtime to a time later that night (past midnight counts as later)
+export function minutesAfterBedtime(time, bedtime) {
+    const toMinutes = (clockTime) => {
+        const [hour, minute] = clockTime.split(':').map(Number);
+        return hour * 60 + minute;
+    };
+    return (toMinutes(time) - toMinutes(bedtime) + MINUTES_PER_DAY) % MINUTES_PER_DAY;
+}
+// How long after a night's off time its alarm goes off, in minutes. Zero or less: at or before it.
+export function minutesAlarmIsAfterOff(alarmTime, power) {
+    return minutesAfterBedtime(alarmTime, power.on) - minutesAfterBedtime(power.off, power.on);
+}
 //# sourceMappingURL=scheduleTiming.js.map
-//# debugId=653143be-dc56-5d5b-af7d-106331ff0e61
+//# debugId=be3c7924-c172-5645-9236-d83308a9c0e8
