@@ -1,6 +1,6 @@
 // WARNING! - Any changes here MUST be the same between app/src/api & server/src/db/
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="3c61eec0-2f30-5045-9f5b-f55a7fff3bce")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="3e500765-6d3f-52d8-852c-3c3fbb08bf86")}catch(e){}}();
 import { z } from 'zod';
 import { MIN_TEMPERATURE_F } from './temperatureCurve.js';
 const timeRegexFormat = /^([01]\d|2[0-3]):([0-5]\d)$/;
@@ -9,8 +9,10 @@ export const SideSchema = z.enum(['right', 'left']);
 export const TimeSchema = z.string().regex(timeRegexFormat, 'Invalid time format, must be HH:mm');
 // 50°F is the coldest the Pod can be set to. Up to 110 is accepted (the old maximum) and treated as the hottest.
 export const TemperatureSchema = z.number().int().min(MIN_TEMPERATURE_F).max(110);
-// The longest alarm that can be asked for. The firmware runs at most MAX_FIRMWARE_ALARM_SECONDS
-// at a time, so a longer alarm is sent as several stretches (see alarmSession).
+// How long a scheduled or one-time alarm keeps going if nobody dismisses it, and the longest that
+// can be asked for directly. The firmware runs at most MAX_FIRMWARE_ALARM_SECONDS at a time, so
+// it is sent as several stretches (see alarmSession). The `duration` saved with a schedule's
+// alarm is no longer used: every such alarm runs until dismissed.
 export const MAX_ALARM_SECONDS = 1800;
 export const MAX_FIRMWARE_ALARM_SECONDS = 180;
 // An alarm set for after the schedule's off time keeps the bed on until it has gone off, as long
@@ -64,4 +66,4 @@ export const SchedulesSchema = z.object({
     right: SideScheduleSchema,
 }).strict();
 //# sourceMappingURL=schedulesSchema.js.map
-//# debugId=3c61eec0-2f30-5045-9f5b-f55a7fff3bce
+//# debugId=3e500765-6d3f-52d8-852c-3c3fbb08bf86

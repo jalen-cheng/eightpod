@@ -12,8 +12,10 @@ export const TimeSchema = z.string().regex(timeRegexFormat, 'Invalid time format
 export const TemperatureSchema = z.number().int().min(MIN_TEMPERATURE_F).max(110);
 
 
-// The longest alarm that can be asked for. The firmware runs at most MAX_FIRMWARE_ALARM_SECONDS
-// at a time, so a longer alarm is sent as several stretches (see alarmSession).
+// How long a scheduled or one-time alarm keeps going if nobody dismisses it, and the longest that
+// can be asked for directly. The firmware runs at most MAX_FIRMWARE_ALARM_SECONDS at a time, so
+// it is sent as several stretches (see alarmSession). The `duration` saved with a schedule's
+// alarm is no longer used: every such alarm runs until dismissed.
 export const MAX_ALARM_SECONDS = 1800;
 export const MAX_FIRMWARE_ALARM_SECONDS = 180;
 // An alarm set for after the schedule's off time keeps the bed on until it has gone off, as long
