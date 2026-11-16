@@ -5,18 +5,17 @@ import CloseIcon from '@mui/icons-material/Close';
 import TuneIcon from '@mui/icons-material/Tune';
 import moment from 'moment-timezone';
 import { PropsWithChildren, ReactNode, useState } from 'react';
-import { DailySchedule, LATE_ALARM_WINDOW_HOURS, Time } from '@api/schedulesSchema.ts';
+import { DailySchedule, LATE_ALARM_WINDOW_HOURS, MAX_ALARM_SECONDS, Time } from '@api/schedulesSchema.ts';
 import { useAppStore } from '@state/appStore.tsx';
 import { describeTemperature } from '@lib/temperatureConversions.ts';
 import { useTemperatureFormat } from '@lib/useTemperatureFormat.ts';
 import { useScheduleStore } from './scheduleStore.tsx';
 import { TemperatureSelect, TimeField } from './ScheduleFields.tsx';
-import AlarmOptionsDialog, { DEFAULT_ALARM_SECONDS, PATTERN_NAMES } from './AlarmOptionsDialog.tsx';
+import AlarmOptionsDialog, { PATTERN_NAMES } from './AlarmOptionsDialog.tsx';
 import { isPowerScheduleDurationValid } from './scheduleValidation.ts';
 
 const COOL_COLOR = '#2196f3';
 const WARM_COLOR = '#db5858';
-const SECONDS_PER_MINUTE = 60;
 const MINUTES_PER_HOUR = 60;
 const NEW_CHANGE_TEMPERATURE_F = 70;
 // When the bed turns off with the alarm, this is how long after the alarm time it turns off
@@ -62,10 +61,8 @@ const TimelineRow = ({ title, subtitle, color, isMainEvent, headerAction, childr
   );
 };
 
-// "45 s" for a short alarm, "10 min" otherwise
-const formatAlarmLength = (seconds: number) => (
-  seconds < SECONDS_PER_MINUTE ? `${seconds} s` : `${Math.round(seconds / SECONDS_PER_MINUTE)} min`
-);
+// Upstream's alarms ran for seconds. One saved that short has never been set up in this app.
+const SET_UP_ALARM_SECONDS = 600;
 
 // Minutes from bedtime to a time later that night (past midnight counts as later)
 const minutesAfterBedtime = (time: Time, bedtime: Time) => {
@@ -142,13 +139,14 @@ export default function NightTimeline() {
     updateAlarmAndOffTime({ time }, turnsOffWithAlarm ? addMinutes(time, OFF_AFTER_ALARM_MINUTES) : power.off);
   };
 
-  // Switching the alarm on gives it sensible settings if it has never been set up: a gentle
-  // ramp-up that keeps going until dismissed, after which the bed turns off
+  // Switching the alarm on gives it sensible settings if it has never been set up: a ramp-up,
+  // after which the bed turns off when it is dismissed. (The saved length is not used any more:
+  // an alarm always keeps going until dismissed.)
   const setAlarmEnabled = (enabled: boolean) => {
-    const needsDefaults = enabled && alarm.duration < DEFAULT_ALARM_SECONDS;
+    const needsDefaults = enabled && alarm.duration < SET_UP_ALARM_SECONDS;
     if (!needsDefaults) return updateAlarmAndOffTime({ enabled });
     updateAlarmAndOffTime(
-      { enabled, duration: DEFAULT_ALARM_SECONDS, vibrationPattern: 'rise', turnOffAfterDismiss: true },
+      { enabled, duration: MAX_ALARM_SECONDS, vibrationPattern: 'rise', turnOffAfterDismiss: true },
       addMinutes(alarm.time, OFF_AFTER_ALARM_MINUTES),
     );
   };
@@ -161,7 +159,7 @@ export default function NightTimeline() {
   };
 
   const alarmSummary = [
-    `${PATTERN_NAMES[alarm.vibrationPattern]}, up to ${formatAlarmLength(alarm.duration)}`,
+    `${PATTERN_NAMES[alarm.vibrationPattern]}, until dismissed`,
     preWarmMinutes > 0 && `warms to ${describeTemperature(alarm.alarmTemperature, temperatureFormat)} ${preWarmMinutes} min before`,
     isAlarmAfterOff && 'bed stays on for it',
   ].filter(Boolean).join(' · ');

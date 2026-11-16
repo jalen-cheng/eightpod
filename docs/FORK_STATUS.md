@@ -50,7 +50,8 @@ Pod 5, control board 830-00067-00 REV-17. Last updated 2026-11-16.
 - [x] With the sides linked, a request naming one side changes both.
 - [x] Buttons with the sides linked.
 - [x] The bed vibrates for an alarm while the side is off.
-- [ ] Still to do: feeling the stepped ramp-up, an alarm after the off time keeping the bed on, and saving from the schedule page in the app.
+- [x] The stepped ramp-up runs as built: 20, 40, 60, 80% for 10 seconds each, then full strength.
+- [ ] Still to do: an alarm after the off time keeping the bed on, and saving from the schedule page in the app.
 
 Seen along the way: the serial line drops the odd character, password prompts show nothing while
 typing, and the clock is unset before Wi-Fi (`password changed in future`).
@@ -143,6 +144,7 @@ the calibration script on one would show it.
 | [#33](https://github.com/jalen-cheng/free-sleep/pull/33) | Fixes | Found by testing on the Pod. The curve drops to 10°C only at level -100. Dismissing one side's alarm no longer silently ends the other side's (the firmware stops both): with the sides linked both are dismissed, otherwise the other is restarted. Saving part of an alarm through the API keeps the rest of it. |
 | [#34](https://github.com/jalen-cheng/free-sleep/pull/34) | Fix, removal | A one-time alarm goes off even when the side is off: one set for 11:55 was skipped because the schedule had switched the bed off at 11:00, after it had already replaced the 10:30 alarm. Snooze removed; an alarm gesture always dismisses. |
 | [#35](https://github.com/jalen-cheng/free-sleep/pull/35) | Feature, fix | An alarm later than the schedule's off time (a one-time alarm, or the night's own) keeps the bed on until it has gone off, up to 6 hours past the off time. Ramp up is made by Free Sleep: 10-second steps at 20, 40, 60 and 80% of the chosen strength, then full strength. |
+| [#36](https://github.com/jalen-cheng/free-sleep/pull/36) | Feature | Scheduled and one-time alarms always keep going until dismissed, up to 30 minutes. The length choice is gone from Alarm options. |
 
 ## Compared with the Eight Sleep app
 
