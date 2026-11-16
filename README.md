@@ -2,41 +2,78 @@
 
 ## About this fork
 
-This is a fork of [throwaway31265/free-sleep](https://github.com/throwaway31265/free-sleep), built and
-tested on one **Pod 5**. Everything upstream does still applies; the sections below this one are
-upstream's own README. Thanks to the upstream author and contributors for the project this builds on.
+This is a fork of [throwaway31265/free-sleep](https://github.com/throwaway31265/free-sleep), built for and
+tested on one **Pod 5**. Everything upstream does still applies, and upstream's own README follows
+this section unchanged. Thanks to the upstream author and contributors for the project this builds on.
 
-What the fork adds:
-
-- **Pod 5 side buttons.** + and - change the temperature (and switch an off side on), holding the
-  middle button switches the side on or off, and any button dismisses a vibrating alarm.
-- **Stays offline.** The internet block survives reboots and updates, Eight Sleep's updater is
-  locked out, and the installer and updater handle a Pod 5's differences.
-- **Linked sides.** One switch makes temperature, power, schedules, buttons and shortcuts apply to both sides.
-- **A -10 to +10 display**, like the Pod's own app, next to °F and °C.
-- **Real temperatures.** °F and °C show what the firmware aims for at each setting, measured on a
-  Pod 5, instead of an even spread over 55-110°F that was off by up to 5°F.
-- **A redesigned schedule page**: one night as a list of events, a simple day picker, and a one-time alarm.
-- **Alarms that keep going until dismissed** (up to 30 minutes), with a real ramp-up, an optional
-  warm-up beforehand, and the bed switching off when the alarm is dismissed. The bed stays on for an
-  alarm set later than its off time.
-- **iPhone Shortcuts**: set the temperature, set an alarm, or check the bed, each with one short request.
-
-Where to go:
+Start here:
 
 | If you want to | Read |
 |---|---|
 | Install on a Pod 5, step by step | [docs/POD5_FIRST_DAY.md](docs/POD5_FIRST_DAY.md) |
 | Control the bed from iPhone Shortcuts | [docs/IOS_SHORTCUTS.md](docs/IOS_SHORTCUTS.md) |
+| Reach the Pod away from home | [docs/REMOTE_ACCESS.md](docs/REMOTE_ACCESS.md) (researched, not set up) |
 | See every change, what was tested on a Pod, and what is not done | [docs/FORK_STATUS.md](docs/FORK_STATUS.md) |
 | Use the API directly | [server/API.md](server/API.md) |
 
-Things to know before using it:
+### What is different from upstream
 
-- **Tested on one Pod 5 only.** Pod 3 and Pod 4 run the same code but have not been tried with this fork.
+| Area | Upstream | This fork |
+|---|---|---|
+| **Pod 5 side buttons** | Do nothing | + and - change the temperature and switch an off side on. Holding the middle button two seconds switches the side on or off. Any button stops an alarm. |
+| **Temperatures** | Levels spread evenly over 55-110°F, off by up to 5°F | What the firmware aims for at each level, measured on a Pod 5. Range is 50-108°F. |
+| **Display units** | °F or °C | °F, °C, or the -10 to +10 scale of Eight Sleep's app |
+| **Both sides at once** | Each side set separately | A link switch: temperature, power, schedules, buttons and shortcuts apply to both sides |
+| **Schedule page** | Separate sections per setting, one day at a time | One night as a list of events in order. Save for every day, weekdays / weekend, or each day. |
+| **Alarm length** | A set time, 3 minutes at most | Keeps going until dismissed, up to 30 minutes |
+| **Alarm ramp-up** | The firmware's "rise" pattern, which on a Pod 5 is one steady strength | A real ramp: 20, 40, 60, 80% of the chosen strength, then full |
+| **Before the alarm** | Nothing | Optional warm-up to a chosen temperature 15, 30 or 45 minutes before |
+| **After the alarm** | Bed stays on until its off time | Optionally switches off when the alarm is dismissed |
+| **One-time alarm** | "Override tonight's alarm" on the temperature page | Set from the schedule page or one request, for the next time the clock shows that time. Goes off even if the bed is off. |
+| **Alarm after the off time** | Skipped, because the bed is off | The bed stays on until the alarm has gone off (up to 6 hours past the off time) |
+| **Two sleepers' alarms** | Dismissing one stops both (the firmware's doing), so the other is lost | The other side's alarm is started again |
+| **iPhone Shortcuts** | Possible with the general API | Three short requests: set by -10..+10, set an alarm by time ("6:30 AM" works), read the bed in one sentence |
+| **Internet block** | Blocks outbound traffic including DNS, which can stop the clock syncing | Also re-applied by its own service at every boot. DNS, DHCP and time sync keep working. Eight Sleep's updater is locked out. |
+| **Updates** | From upstream | From whichever repository it was installed from; works on a Pod without Python's `json` and `sqlite3` |
+| **Install on a Pod 5** | Wi-Fi step breaks a Pod already set up in the app; firmware socket not found | Both handled, with a walkthrough written from a real install |
+
+### Smaller quality-of-life changes
+
+- Temperature controls respond at once instead of locking after every press, and the app refreshes
+  the bed's state every 5 seconds.
+- The dial is blue when cooling and red when warming, and labels its range and step size.
+- The power button waits for the Pod's state instead of acting on a guess.
+- Schedule changes save with one button that says what it will save ("Save for weekdays, both sides").
+- The schedule chart's time axis marks the events you set, and its temperature axis is right in °C.
+- Tap and button settings are one short set of choices for both sides, named for the buttons on a Pod 5.
+- `GET /api/deviceStatus/raw` shows the firmware's unparsed status, for seeing what a Pod reports.
+- A calibration script that reads the firmware's own targets in ten minutes.
+
+### Removed
+
+- Snooze. Upstream defines the setting but never acts on it; this fork briefly did, then took it out.
+- The alarm test button and the alarm length choice.
+
+### Sent back to upstream
+
+Open pull requests on the original project, each a small fix that stands on its own:
+[#67](https://github.com/throwaway31265/free-sleep/pull/67) Pod 5 Wi-Fi step,
+[#68](https://github.com/throwaway31265/free-sleep/pull/68) chart axis in °C,
+[#69](https://github.com/throwaway31265/free-sleep/pull/69) +/- button range,
+[#70](https://github.com/throwaway31265/free-sleep/pull/70) power button loading,
+[#72](https://github.com/throwaway31265/free-sleep/pull/72) measured temperatures,
+[#73](https://github.com/throwaway31265/free-sleep/pull/73) partial alarm updates,
+[#74](https://github.com/throwaway31265/free-sleep/pull/74) alarm flag on both sides.
+
+### Things to know before using it
+
+- **Tested on one Pod 5 only.** Pod 3 and Pod 4 run the same code but have not been tried with this
+  fork. The temperature figures were measured on that one Pod and are used for every model.
 - **Sleep tracking (Biometrics) does not work on the tested Pod 5**: its firmware publishes sensor
   data somewhere the analysis does not read. This is the same upstream.
 - **Some newer Pod 5 units cannot be opened up this way.** See the first section of the walkthrough.
+- **Saved schedules are converted once** when updating to the measured temperatures, so each keeps
+  setting the same level. The originals are kept beside them.
 - To install this fork instead of upstream, set `FREE_SLEEP_REPO=jalen-cheng/free-sleep` before
   running the installer, as the walkthrough shows. Updates then come from this fork.
 - The demo link below shows upstream's app, not this fork's.
