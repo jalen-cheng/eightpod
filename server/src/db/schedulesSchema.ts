@@ -16,6 +16,9 @@ export const TemperatureSchema = z.number().int().min(MIN_TEMPERATURE_F).max(110
 // at a time, so a longer alarm is sent as several stretches (see alarmSession).
 export const MAX_ALARM_SECONDS = 1800;
 export const MAX_FIRMWARE_ALARM_SECONDS = 180;
+// An alarm set for after the schedule's off time keeps the bed on until it has gone off, as long
+// as it is within this many hours of the off time. Later than that it belongs to another night.
+export const LATE_ALARM_WINDOW_HOURS = 6;
 
 export const AlarmSchema = z.object({
   vibrationIntensity: z.number().int().min(1).max(100),
@@ -26,6 +29,8 @@ export const AlarmSchema = z.object({
 export const AlarmJobSchema = AlarmSchema.extend({
   side: SideSchema,
   force: z.boolean().optional(),
+  // Set by the server on the later stretches of a ramp-up alarm: how many ramp steps are done
+  rampStep: z.number().int().min(0).optional(),
   // Switch the side off when this alarm is dismissed (not when it runs out)
   turnOffAfterDismiss: z.boolean().optional(),
 }).strict();

@@ -7,26 +7,29 @@ import memoryDB from '../db/memoryDB.js';
 import serverStatus from '../serverStatus.js';
 import schedulesDB from '../db/schedules.js';
 import settingsDB from '../db/settings.js';
-import { AlarmJob, DailySchedule, DayOfWeek, MAX_FIRMWARE_ALARM_SECONDS, Side } from '../db/schedulesSchema.js';
+import {
+  AlarmJob, DailySchedule, DayOfWeek, LATE_ALARM_WINDOW_HOURS, MAX_FIRMWARE_ALARM_SECONDS, Side,
+} from '../db/schedulesSchema.js';
+import { minutesAlarmIsAfterOff } from './scheduleTiming.js';
 import { executeFunction } from '../8sleep/deviceApi.js';
 import { getDayIndexForSchedule, logJob, subtractMinutesFromTime } from './utils.js';
 import { startPreWarm } from './preWarmState.js';
 import { updateDeviceStatus } from '../routes/deviceStatus/updateDeviceStatus.js';
 import { connectFranken } from '../8sleep/frankenServer.js';
 import { Settings } from '../db/settingsSchema.js';
-import { createAlarmSession } from './alarmSession.js';
+import { createAlarmSession, planAlarmStretch } from './alarmSession.js';
 
 
-// Sends an alarm to the Pod. An alarm longer than the firmware allows is sent as a first stretch
-// here, with the rest handed to the alarm session to start when this stretch ends.
+// Sends an alarm to the Pod, one stretch at a time: the ramp-up steps of a "rise" alarm, then
+// stretches as long as the firmware allows. The rest of the alarm is handed to the alarm session
+// to start when this stretch ends.
 export const executeAlarm = async (
-  { vibrationIntensity, duration, vibrationPattern, side, force=false, turnOffAfterDismiss }: AlarmJob,
+  alarmJob: AlarmJob,
   { isContinuation }: { isContinuation: boolean } = { isContinuation: false },
 ) => {
+  const { vibrationPattern, side, force = false } = alarmJob;
   try {
-    const totalDuration = Math.max(10, duration);
-    const min10Duration = Math.min(MAX_FIRMWARE_ALARM_SECONDS, totalDuration);
-    const remainingDuration = totalDuration - min10Duration;
+    const { strength, seconds: min10Duration, continuation } = planAlarmStretch(alarmJob, MAX_FIRMWARE_ALARM_SECONDS);
     // Exit is side is in away mode
     await settingsDB.read();
     if (settingsDB.data[side].awayMode && !force) {
@@ -48,7 +51,7 @@ export const executeAlarm = async (
     const alarmTimeEpoch = currentTime.unix();
 
     const alarmPayload = {
-      pl: vibrationIntensity,
+      pl: strength,
       du: min10Duration,
       pi: vibrationPattern,
       tt: alarmTimeEpoch,
@@ -60,16 +63,8 @@ export const executeAlarm = async (
 
     logger.debug(`Executing alarm... ${JSON.stringify(alarmPayload)}`);
     await executeFunction(command, hexPayload);
-    // Later stretches use full pulses: "rise" would drop back to a feeble start every few minutes
-    const continuation: AlarmJob | undefined = remainingDuration > 0
-      ? { vibrationIntensity, duration: remainingDuration, vibrationPattern: 'double', side, force, turnOffAfterDismiss }
-      : undefined;
     // eslint-disable-next-line no-use-before-define
-    await alarmSession.alarmStarted(
-      { vibrationIntensity, duration, vibrationPattern, side, force, turnOffAfterDismiss },
-      min10Duration,
-      { continuation, isContinuation },
-    );
+    await alarmSession.alarmStarted(alarmJob, min10Duration, { continuation, isContinuation });
     serverStatus.status.alarmSchedule.status = 'healthy';
     serverStatus.status.alarmSchedule.message = '';
   } catch (error: unknown) {
@@ -109,29 +104,60 @@ export function nextOccurrenceHhMm(tz: string, hhmm: string) {
   return candidate;
 }
 
-export function scheduleAlarmOverride(settingsData: Settings, side: Side) {
+// When a side's waiting one-off alarm will go off, or undefined if it has none
+export function getPendingOneOffAlarm(settingsData: Settings, side: Side, now: moment.Moment): moment.Moment | undefined {
   const alarmOverride = settingsData[side]?.scheduleOverrides?.alarm;
-  if (!alarmOverride || alarmOverride.disabled) return null;
-  if (!alarmOverride.timeOverride || !alarmOverride.expiresAt) return null;
-
-  const now = moment.tz(settingsData.timeZone);
+  if (!alarmOverride || alarmOverride.disabled) return undefined;
+  if (!alarmOverride.timeOverride || !alarmOverride.expiresAt) return undefined;
   const expiresAt = moment.tz(alarmOverride.expiresAt, settingsData.timeZone);
-  if (!expiresAt.isAfter(now)) return null;
+  if (!expiresAt.isAfter(now)) return undefined;
   const next = nextOccurrenceHhMm(settingsData.timeZone, alarmOverride.timeOverride);
   // Already gone off: the override is only still in force to hold back a scheduled alarm
-  if (next.isAfter(expiresAt)) return null;
+  return next.isAfter(expiresAt) ? undefined : next;
+}
+
+// How a one-off alarm vibrates: the settings of the weekly alarm on the day it goes off
+const getOneOffAlarmSettings = (settingsData: Settings, side: Side, firesAt: moment.Moment) => {
+  const dayKey = firesAt.clone().tz(settingsData.timeZone).format('dddd').toLowerCase() as DayOfWeek;
+  return schedulesDB.data?.[side]?.[dayKey]?.alarm ?? {
+    vibrationIntensity: 100,
+    duration: 60,
+    vibrationPattern: 'rise' as const,
+    turnOffAfterDismiss: undefined,
+  };
+};
+
+// When the last alarm that falls after a night's off time will finish, if there is one within
+// LATE_ALARM_WINDOW_HOURS: a waiting one-off alarm, or that night's own alarm when it is set
+// later than the off time. The power-off job keeps the bed on until then. Call it at the off time.
+export async function findLateAlarmEnd(side: Side, day: DayOfWeek): Promise<moment.Moment | undefined> {
+  await settingsDB.read();
+  await schedulesDB.read();
+  const settingsData = settingsDB.data;
+  const now = moment.tz(settingsData.timeZone);
+  const windowEnd = now.clone().add(LATE_ALARM_WINDOW_HOURS, 'hours');
+  const alarmEnds: moment.Moment[] = [];
+
+  const oneOffFiresAt = getPendingOneOffAlarm(settingsData, side, now);
+  if (oneOffFiresAt?.isBefore(windowEnd)) {
+    alarmEnds.push(oneOffFiresAt.clone().add(getOneOffAlarmSettings(settingsData, side, oneOffFiresAt).duration, 'seconds'));
+  }
+  const { alarm, power } = schedulesDB.data[side][day];
+  if (alarm.enabled && minutesAlarmIsAfterOff(alarm.time, power) > 0) {
+    const firesAt = nextOccurrenceHhMm(settingsData.timeZone, alarm.time);
+    if (firesAt.isBefore(windowEnd)) alarmEnds.push(firesAt.clone().add(alarm.duration, 'seconds'));
+  }
+  return alarmEnds.length > 0 ? moment.max(alarmEnds) : undefined;
+}
+
+export function scheduleAlarmOverride(settingsData: Settings, side: Side) {
+  const next = getPendingOneOffAlarm(settingsData, side, moment.tz(settingsData.timeZone));
+  if (!next) return null;
+  const { timeOverride } = settingsData[side].scheduleOverrides.alarm;
   logger.debug(`Alarm override is set! Scheduling alarm for ${next.format()}`);
 
-  schedule.scheduleJob(`${side}-alarm-override-${alarmOverride.timeOverride}`, next.toDate(), async () => {
-    const dayKey = next.tz(settingsData.timeZone).format('dddd').toLowerCase() as DayOfWeek;
-    const daySchedule = schedulesDB.data?.[side]?.[dayKey];
-
-    const { vibrationIntensity, duration, vibrationPattern, turnOffAfterDismiss } = daySchedule?.alarm ?? {
-      vibrationIntensity: 100,
-      duration: 60,
-      vibrationPattern: 'rise',
-      turnOffAfterDismiss: undefined,
-    };
+  schedule.scheduleJob(`${side}-alarm-override-${timeOverride}`, next.toDate(), async () => {
+    const { vibrationIntensity, duration, vibrationPattern, turnOffAfterDismiss } = getOneOffAlarmSettings(settingsData, side, next);
 
     // Asked for by hand, so it goes off even if the side is off by then (for example after
     // the schedule's off time) or in away mode

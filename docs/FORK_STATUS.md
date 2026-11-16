@@ -34,7 +34,7 @@ Pod 5, control board 830-00067-00 REV-17. Last updated 2026-11-16.
 - [x] **Buttons work through the firmware log.** + and - step the temperature and a long middle hold switches the side; three faults found in the first tests were fixed.
 - [x] **Sensor readings arrive on `rawmem.*`, not `raw.*`.** The `raw` stream that upstream's sleep analysis reads is empty on this firmware, so biometrics cannot work here as written. Temperatures are hundredths of a degree Celsius.
 - [x] **The firmware reports its own target water temperature** (`rawmem.frz.therm`, in °C). At level +100 it aims for 42.0°C (107.6°F), where Free Sleep shows 110°F.
-- [x] "Rise" vibration is too weak to feel at the start; "double" is felt clearly.
+- [x] **The firmware's "rise" pattern does not ramp.** Felt on the bed: one steady strength from start to finish. The firmware also ignores a new alarm while one is vibrating. Free Sleep now makes the ramp itself.
 - [x] **Updates work** with `fs-update` over SSH, from this fork, with the internet block restored afterwards.
 - [x] **Shortcuts work from an iPhone**: setting the temperature by -10..+10, setting a one-time alarm, and reading the bed's state.
 - [x] **Calibration run done.** See [Calibration results](#calibration-results).
@@ -49,7 +49,8 @@ Pod 5, control board 830-00067-00 REV-17. Last updated 2026-11-16.
   - The warm-up raised the target to the alarm temperature 15 minutes before a scheduled alarm.
 - [x] With the sides linked, a request naming one side changes both.
 - [x] Buttons with the sides linked.
-- [ ] Still to do, needing someone at the bed: whether "ramp up" is strong enough to wake someone, and saving from the schedule page in the app.
+- [x] The bed vibrates for an alarm while the side is off.
+- [ ] Still to do: feeling the stepped ramp-up, an alarm after the off time keeping the bed on, and saving from the schedule page in the app.
 
 Seen along the way: the serial line drops the odd character, password prompts show nothing while
 typing, and the clock is unset before Wi-Fi (`password changed in future`).
@@ -141,6 +142,7 @@ the calibration script on one would show it.
 | [#32](https://github.com/jalen-cheng/free-sleep/pull/32) | Fix | °F and °C use the measured level-to-temperature curve instead of an even 55-110°F spread. Range is now 50-108°F. Saved schedule temperatures are converted once. |
 | [#33](https://github.com/jalen-cheng/free-sleep/pull/33) | Fixes | Found by testing on the Pod. The curve drops to 10°C only at level -100. Dismissing one side's alarm no longer silently ends the other side's (the firmware stops both): with the sides linked both are dismissed, otherwise the other is restarted. Saving part of an alarm through the API keeps the rest of it. |
 | [#34](https://github.com/jalen-cheng/free-sleep/pull/34) | Fix, removal | A one-time alarm goes off even when the side is off: one set for 11:55 was skipped because the schedule had switched the bed off at 11:00, after it had already replaced the 10:30 alarm. Snooze removed; an alarm gesture always dismisses. |
+| [#35](https://github.com/jalen-cheng/free-sleep/pull/35) | Feature, fix | An alarm later than the schedule's off time (a one-time alarm, or the night's own) keeps the bed on until it has gone off, up to 6 hours past the off time. Ramp up is made by Free Sleep: 10-second steps at 20, 40, 60 and 80% of the chosen strength, then full strength. |
 
 ## Compared with the Eight Sleep app
 
@@ -152,7 +154,7 @@ The Eight Sleep column is from memory and public material, not from testing the 
 | Automatic adjustment | Autopilot changes temperature overnight | None. Fixed times and temperatures per day. |
 | Schedules | Bedtime, night and wake phases | One night as a list of events: bedtime, any number of timed changes, alarm, bed off. Saved for every day, weekdays / weekend, or each day. |
 | Both sides together | Per account | Link button for temperature, power and schedules. |
-| Alarm | Vibration and thermal, snooze in app | Vibration until dismissed (up to 30 min), optional warm-up before it, bed off on dismissal, one-time alarms. No snooze. |
+| Alarm | Vibration and thermal, snooze in app | Vibration until dismissed (up to 30 min) with a stepped ramp-up, optional warm-up before it, bed off on dismissal, one-time alarms, and the bed stays on for an alarm later than its off time. No snooze. |
 | Side buttons (Pod 5) | + warms, - cools, middle is configurable | + and - step the temperature, any button dismisses a vibrating alarm, and holding the middle button two seconds switches the side on or off. |
 | Sleep data | Stages, score, snoring | Time in bed, heart rate, HRV, breathing, movement. |
 | Base and speakers | Elevation, snore mitigation, audio | Not supported. |

@@ -44,7 +44,8 @@ How the time is understood:
   for 10 AM at 1 AM and it goes off that same morning. Ask for 6:30 AM at 11 PM and it goes off tomorrow.
 - Running it again replaces the alarm you set before.
 - A scheduled alarm that would have gone off before it is skipped.
-- It goes off even if the side is off by then, for example after the schedule's off time.
+- If it is later than your schedule's off time (by up to 6 hours), the bed stays on until it has
+  gone off. It goes off even if the side is off.
 - The app shows the waiting alarm, and can cancel it, under **Schedules > One-time alarm**.
 
 ## 3. Check the temperature

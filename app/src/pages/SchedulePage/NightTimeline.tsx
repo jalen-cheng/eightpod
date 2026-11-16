@@ -5,7 +5,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import TuneIcon from '@mui/icons-material/Tune';
 import moment from 'moment-timezone';
 import { PropsWithChildren, ReactNode, useState } from 'react';
-import { DailySchedule, Time } from '@api/schedulesSchema.ts';
+import { DailySchedule, LATE_ALARM_WINDOW_HOURS, Time } from '@api/schedulesSchema.ts';
 import { useAppStore } from '@state/appStore.tsx';
 import { describeTemperature } from '@lib/temperatureConversions.ts';
 import { useTemperatureFormat } from '@lib/useTemperatureFormat.ts';
@@ -17,6 +17,7 @@ import { isPowerScheduleDurationValid } from './scheduleValidation.ts';
 const COOL_COLOR = '#2196f3';
 const WARM_COLOR = '#db5858';
 const SECONDS_PER_MINUTE = 60;
+const MINUTES_PER_HOUR = 60;
 const NEW_CHANGE_TEMPERATURE_F = 70;
 // When the bed turns off with the alarm, this is how long after the alarm time it turns off
 // anyway if the alarm is never dismissed. Longer than the longest alarm.
@@ -77,6 +78,17 @@ const isDuringNight = (time: Time, { power }: DailySchedule) => {
   return minutesAfterBedtime(time, power.on) <= minutesAfterBedtime(power.off, power.on);
 };
 
+// How long after the bed's off time the alarm is. Zero or less: at or before it.
+const minutesAlarmIsAfterOff = ({ alarm, power }: DailySchedule) => (
+  minutesAfterBedtime(alarm.time, power.on) - minutesAfterBedtime(power.off, power.on)
+);
+
+// An alarm may be later than the off time: the bed then stays on until it has gone off. Much
+// later than that and it would belong to another night.
+const isAlarmTimeAllowed = (schedule: DailySchedule) => (
+  minutesAlarmIsAfterOff(schedule) <= LATE_ALARM_WINDOW_HOURS * MINUTES_PER_HOUR
+);
+
 // One night, top to bottom in the order it happens: bedtime, temperature changes, the alarm
 // (with its warm-up), and when the bed turns off.
 export default function NightTimeline() {
@@ -90,7 +102,8 @@ export default function NightTimeline() {
   const disabled = isUpdating || !power.enabled;
   const changes = Object.entries(temperatures)
     .sort(([timeA], [timeB]) => minutesAfterBedtime(timeA, power.on) - minutesAfterBedtime(timeB, power.on));
-  const isAlarmTimeValid = isDuringNight(alarm.time, selectedSchedule);
+  const isAlarmTimeValid = isAlarmTimeAllowed(selectedSchedule);
+  const isAlarmAfterOff = alarm.enabled && isAlarmTimeValid && minutesAlarmIsAfterOff(selectedSchedule) > 0;
   const preWarmMinutes = alarm.preWarmMinutes ?? 0;
   // With an alarm, the bed can turn off when it is dismissed, so no off time needs choosing
   const turnsOffWithAlarm = alarm.enabled && (alarm.turnOffAfterDismiss ?? false);
@@ -120,7 +133,7 @@ export default function NightTimeline() {
   const updateAlarmAndOffTime = (alarmChanges: Partial<DailySchedule['alarm']>, off: Time = power.off) => {
     const nextAlarm = { ...alarm, ...alarmChanges };
     const nextSchedule = { ...selectedSchedule, alarm: nextAlarm, power: { ...power, off } };
-    setValidations({ alarmTimeIsValid: !nextAlarm.enabled || isDuringNight(nextAlarm.time, nextSchedule) });
+    setValidations({ alarmTimeIsValid: !nextAlarm.enabled || isAlarmTimeAllowed(nextSchedule) });
     updateSelectedSchedule({ alarm: alarmChanges, power: { off } });
   };
 
@@ -150,11 +163,16 @@ export default function NightTimeline() {
   const alarmSummary = [
     `${PATTERN_NAMES[alarm.vibrationPattern]}, up to ${formatAlarmLength(alarm.duration)}`,
     preWarmMinutes > 0 && `warms to ${describeTemperature(alarm.alarmTemperature, temperatureFormat)} ${preWarmMinutes} min before`,
+    isAlarmAfterOff && 'bed stays on for it',
   ].filter(Boolean).join(' · ');
+
+  const lateAlarmError = `Too long after the bed turns off (over ${LATE_ALARM_WINDOW_HOURS} hours)`;
+  const alarmSubtitle = !alarm.enabled ? 'Off' : isAlarmTimeValid ? alarmSummary : lateAlarmError;
 
   const offSubtitle = !isPowerScheduleDurationValid(power.on, power.off)
     ? 'Must differ from bedtime'
-    : turnsOffWithAlarm ? `Or at ${formatClockTime(power.off)} if it is never dismissed` : undefined;
+    : turnsOffWithAlarm ? `Or at ${formatClockTime(power.off)} if it is never dismissed`
+      : isAlarmAfterOff ? 'Stays on until the alarm has gone off' : undefined;
 
   return (
     <Paper sx={ { p: { xs: 2, sm: 2.5 }, width: '100%' } }>
@@ -203,7 +221,7 @@ export default function NightTimeline() {
 
         <TimelineRow
           title="Alarm"
-          subtitle={ !alarm.enabled ? 'Off' : isAlarmTimeValid ? alarmSummary : 'Must be before the bed turns off' }
+          subtitle={ alarmSubtitle }
           color={ WARM_COLOR }
           isMainEvent
           headerAction={

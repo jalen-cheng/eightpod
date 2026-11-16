@@ -17,8 +17,9 @@ What the fork adds:
 - **Real temperatures.** °F and °C show what the firmware aims for at each setting, measured on a
   Pod 5, instead of an even spread over 55-110°F that was off by up to 5°F.
 - **A redesigned schedule page**: one night as a list of events, a simple day picker, and a one-time alarm.
-- **Alarms that keep going until dismissed** (up to 30 minutes), with an optional warm-up beforehand
-  and the bed switching off when the alarm is dismissed.
+- **Alarms that keep going until dismissed** (up to 30 minutes), with a real ramp-up, an optional
+  warm-up beforehand, and the bed switching off when the alarm is dismissed. The bed stays on for an
+  alarm set later than its off time.
 - **iPhone Shortcuts**: set the temperature, set an alarm, or check the bed, each with one short request.
 
 Where to go:

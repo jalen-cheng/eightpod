@@ -10,6 +10,7 @@ import { useScheduleStore } from './scheduleStore.tsx';
 import { TimeField } from './ScheduleFields.tsx';
 
 const FALLBACK_ALARM_TIME = '07:00';
+const UNCHANGED_NOTE = 'The weekly schedule is unchanged, and the bed stays on for it.';
 
 // The next moment the clock shows a time of day
 const getNextOccurrence = (time: Time) => {
@@ -53,7 +54,7 @@ export default function OneTimeAlarm() {
         <Typography variant="caption" sx={ { color: 'text.secondary', display: 'block' } }>
           { pendingAlarm
             ? 'Replaces any scheduled alarm before it. The weekly schedule is unchanged.'
-            : `Goes off once, the next time it is that time${linkSides ? ', on both sides' : ''}. The weekly schedule is unchanged.` }
+            : `Goes off once, the next time it is that time${linkSides ? ', on both sides' : ''}. ${UNCHANGED_NOTE}` }
         </Typography>
       </Box>
       { pendingAlarm ? (

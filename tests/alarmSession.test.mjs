@@ -1,7 +1,7 @@
 // Run with Node 24: node --test tests/alarmSession.test.mjs
 import assert from 'node:assert/strict';
 import { beforeEach, mock, test } from 'node:test';
-import { createAlarmSession, handleAlarmGesture } from '../server/src/jobs/alarmSession.ts';
+import { createAlarmSession, handleAlarmGesture, planAlarmStretch } from '../server/src/jobs/alarmSession.ts';
 
 const leftAlarm = { side: 'left', vibrationIntensity: 80, duration: 30, vibrationPattern: 'rise' };
 const dismissTap = { type: 'alarm', behavior: 'dismiss', snoozeDuration: 120, inactiveAlarmBehavior: 'power' };
@@ -154,4 +154,28 @@ test('an alarm stopped by the other side\'s dismissal starts again, and a finish
   await flushPromises();
   assert.equal(await testSession.session.restartIfVibrating('right'), false);
   assert.equal(testSession.startedAlarms.length, 1);
+});
+
+test('a ramp-up alarm climbs in short steps, then runs at full strength in long stretches', () => {
+  const alarmJob = { side: 'left', vibrationIntensity: 100, vibrationPattern: 'rise', duration: 600 };
+  const stretches = [];
+  let nextJob = alarmJob;
+  while (nextJob) {
+    const { strength, seconds, continuation } = planAlarmStretch(nextJob, 180);
+    stretches.push([strength, seconds]);
+    nextJob = continuation;
+  }
+  assert.deepEqual(stretches, [[20, 10], [40, 10], [60, 10], [80, 10], [100, 180], [100, 180], [100, 180], [100, 20]]);
+  assert.equal(stretches.reduce((total, [, seconds]) => total + seconds, 0), 600);
+});
+
+test('pulses do not ramp, a weaker alarm ramps to its own strength, and a short one still runs', () => {
+  const pulses = planAlarmStretch({ side: 'left', vibrationIntensity: 80, vibrationPattern: 'double', duration: 200 }, 180);
+  assert.deepEqual([pulses.strength, pulses.seconds, pulses.continuation.duration], [80, 180, 20]);
+
+  const gentle = planAlarmStretch({ side: 'left', vibrationIntensity: 50, vibrationPattern: 'rise', duration: 300 }, 180);
+  assert.deepEqual([gentle.strength, gentle.seconds, gentle.continuation.rampStep], [10, 10, 1]);
+
+  const short = planAlarmStretch({ side: 'left', vibrationIntensity: 100, vibrationPattern: 'rise', duration: 5 }, 180);
+  assert.deepEqual([short.strength, short.seconds, short.continuation], [100, 10, undefined]);
 });

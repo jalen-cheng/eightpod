@@ -13,7 +13,7 @@ import { findNextScheduledAlarm, parseClockTime } from '../../jobs/scheduleTimin
 import logger from '../../logger.js';
 import schedulesDB from '../../db/schedules.js';
 import settingsDB from '../../db/settings.js';
-import { executeAlarm, nextOccurrenceHhMm } from '../../jobs/alarmScheduler.js';
+import { executeAlarm, getPendingOneOffAlarm, nextOccurrenceHhMm } from '../../jobs/alarmScheduler.js';
 
 const router = express.Router();
 
@@ -68,14 +68,6 @@ const AlarmTimeSchema = z.object({
   .refine(body => (body.time === undefined) !== (body.shiftMinutes === undefined), { message: 'Send either time or shiftMinutes' })
   .refine(body => !body.days || body.time !== undefined, { message: 'days needs time, not shiftMinutes' });
 
-// When a side's waiting one-off alarm will go off, if it has one
-const getPendingOneOff = (side: Side, now: moment.Moment) => {
-  const { disabled, timeOverride, expiresAt } = settingsDB.data[side].scheduleOverrides.alarm;
-  if (disabled || !timeOverride || !expiresAt) return undefined;
-  const firesAt = nextOccurrenceHhMm(settingsDB.data.timeZone, timeOverride);
-  return moment(expiresAt).isAfter(now) && !firesAt.isAfter(moment(expiresAt)) ? firesAt : undefined;
-};
-
 // Stores a one-off alarm for a side. Scheduled alarms are held back until `holdBackUntil`, so
 // the one this replaces stays quiet even when the one-off goes off before it.
 const setOneOff = (side: Side, firesAt: moment.Moment, holdBackUntil: moment.Moment) => {
@@ -91,7 +83,7 @@ const setOneOff = (side: Side, firesAt: moment.Moment, holdBackUntil: moment.Mom
 // as a one-off. Returns undefined when there is no alarm in the next day to move, or it would
 // land in the past.
 const shiftNextAlarm = (side: Side, shiftMinutes: number, now: moment.Moment) => {
-  const nextAlarm = getPendingOneOff(side, now) ?? findNextScheduledAlarm(schedulesDB.data[side], now);
+  const nextAlarm = getPendingOneOffAlarm(settingsDB.data, side, now) ?? findNextScheduledAlarm(schedulesDB.data[side], now);
   const windowEnd = now.clone().add(ONE_OFF_WINDOW_HOURS, 'hours');
   if (!nextAlarm) return undefined;
   if (!nextAlarm.isBefore(windowEnd)) return undefined;
