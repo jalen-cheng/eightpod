@@ -8,105 +8,54 @@ Requirements:
 - Your iPhone is on the same network as the Pod (or can otherwise reach its local IP).
 - You know the Pod's IP address (step 14 of [INSTALLATION.md](../INSTALLATION.md)). Give it a fixed IP in your router so shortcuts keep working.
 
-## Build a shortcut
+Both shortcuts below ask you for a value each time you run them. Replace `<pod-ip>` with your Pod's
+address and `left` with `right` (or `both`) as needed. The first run asks for permission to connect to
+devices on your local network; allow it.
+
+## 1. Set the temperature (-10 to +10)
+
+Asks for a number on the same scale as the Pod's own app, turns your side on, and sets it.
 
 1. Open **Shortcuts** and tap **+**.
-2. Add the action **Get Contents of URL**.
-3. Set the URL to `http://<pod-ip>:3000/api/deviceStatus`.
-4. Tap the arrow to expand the action and set:
-   - **Method**: `POST`
-   - **Request Body**: `JSON`
-5. Add the fields from one of the examples below. The side (`left` or `right`) is a **Dictionary** field;
-   add the setting inside it with the type shown.
-6. Name the shortcut and run it. The first run asks for permission to connect to devices on your local network; allow it.
+2. Add **Ask for Input**. Set the type to **Number**, the prompt to "Bed temperature, -10 to 10", and
+   switch on **Allow Negative Numbers**.
+3. Add **Get Contents of URL** and set the URL to `http://<pod-ip>:3000/api/deviceStatus/dial`.
+4. Expand it and set **Method** to `POST` and **Request Body** to `JSON`.
+5. Add a **Text** field `side` with the value `left`.
+6. Add a **Number** field `dial` and pick **Provided Input** (the answer from step 2) as its value.
+7. Name it "Bed temperature".
 
-A successful request returns an empty response (HTTP 204).
+-10 is coldest, 0 is neutral, +10 is hottest. Halves such as 2.5 work. Anything outside -10 to 10 is refused.
 
-## Examples
+## 2. Set an alarm
 
-All of these are `POST http://<pod-ip>:3000/api/deviceStatus`. Replace `left` with `right` for the other side.
+Asks for a time and sets a one-time alarm. Your weekly schedule is not changed.
 
-| What it does | JSON body | Field type in Shortcuts |
-| --- | --- | --- |
-| Set the target temperature to 70°F | `{"left": {"targetTemperatureF": 70}}` | Number |
-| Turn the side on | `{"left": {"isOn": true}}` | Boolean |
-| Turn the side off | `{"left": {"isOn": false}}` | Boolean |
-| Dismiss a vibrating alarm | `{"left": {"isAlarmVibrating": false}}` | Boolean |
+1. Open **Shortcuts** and tap **+**.
+2. Add **Ask for Input**. Set the type to **Time** and the prompt to "Alarm time".
+3. Add **Format Date**. Set **Date Format** to **Custom** and the format string to `HH:mm`.
+4. Add **Get Contents of URL** and set the URL to `http://<pod-ip>:3000/api/alarm/time`.
+5. Expand it and set **Method** to `POST` and **Request Body** to `JSON`.
+6. Add a **Text** field `side` with the value `left`.
+7. Add a **Text** field `time` and pick **Formatted Date** (from step 3) as its value.
+8. Name it "Bed alarm".
 
-Notes:
-- `targetTemperatureF` is always Fahrenheit, from 55 to 110, whatever temperature format the app shows.
-- Setting a temperature does not turn the side on. Send both in one request to do that:
-  `{"left": {"isOn": true, "targetTemperatureF": 70}}`
-- Turning a side on keeps it on for 12 hours unless a schedule turns it off earlier.
-- You can change both sides in one request: `{"left": {"isOn": false}, "right": {"isOn": false}}`
-- If one side is in away mode, changes to either side apply to both sides.
-
-## Fixed actions or ones that ask you
-
-A shortcut can do either:
-
-- **A fixed action**: the JSON body is typed in once, and running the shortcut always does that.
-  "Dismiss my alarm", "Alarm an hour later" and "Bed off" are like this. Good for the Home Screen,
-  the Action button, and Automations.
-- **An action with a value you give each time**: put an **Ask for Input** (a number, a time, or text)
-  or a **Choose from Menu** action before **Get Contents of URL**, then use its result as the value of
-  a JSON field. Run from Siri, it asks you out loud. "Set bed alarm" below and "set my side to
-  ... degrees" are like this.
-
-Any field in any example on this page can be filled either way.
-
-## Change your alarm time
-
-`POST http://<pod-ip>:3000/api/alarm/time` sets an alarm without opening the app.
-
-**By default it is a one-off:** the alarm goes off the next time the clock shows that time, tonight
-or tomorrow, whichever comes first, and your weekly schedule is left alone. Run it at 11 PM with
-`06:30` and it fires at 6:30 tomorrow morning; run it at 11 PM with `01:00` and it fires at 1 AM tonight.
-
-| What it does | JSON body |
-| --- | --- |
-| One-off alarm at the next 6:30, left side | `{"side": "left", "time": "06:30"}` |
-| One-off alarm at the next 6:30, both sides | `{"side": "both", "time": "06:30"}` |
-| Move your next alarm an hour later, tonight only | `{"side": "left", "shiftMinutes": 60}` |
-| Move your next alarm 30 minutes earlier, tonight only | `{"side": "left", "shiftMinutes": -30}` |
-| Change the weekly alarm to 8:00 on the weekend | `{"side": "left", "time": "08:00", "days": ["saturday", "sunday"]}` |
-| Switch the weekly alarm off on Mondays | `{"side": "left", "time": "06:30", "days": ["monday"], "enabled": false}` |
-
-- `time` is 24-hour `HH:mm`, a Text field. `side` is `left`, `right` or `both`, a Text field.
-- Adding `days` (an Array of Text) changes the weekly schedule for those days instead of setting a one-off.
-- `shiftMinutes` is a Number field, used instead of `time`. It moves your next alarm (a one-off you
-  already set, otherwise the next scheduled one) and can be run again to move it further. It needs an
-  alarm within the next 24 hours, and replies with an error if there is none.
-- The reply says what was set, including `firesAt` for each side of a one-off.
-- To drop a one-off and go back to the schedule: `POST http://<pod-ip>:3000/api/alarm/time/cancel`
-  with `{"side": "left"}`.
-- The app shows and sets the same one-off under **Schedules > One-time alarm**.
-
-Things to know about a one-off:
+How the time is understood:
+- **AM and PM** come from the time picker (or from what you tell Siri, such as "ten AM"). Step 3 turns
+  it into 24-hour time for the Pod, so 10 PM is sent as `22:00`.
+- **The day is worked out for you**: the alarm goes off the next time the clock shows that time. Ask
+  for 10 AM at 1 AM and it goes off that same morning. Ask for 6:30 AM at 11 PM and it goes off tomorrow.
+- Running it again replaces the alarm you set before.
+- A scheduled alarm that would have gone off before it is skipped.
 - The side has to be on at that time, or the alarm is skipped.
-- It uses that day's vibration settings from the schedule, but not its warm-up.
-- A scheduled alarm that would have gone off before it is skipped. One scheduled for later that same
-  morning still goes off, unless the one-off was made by moving that alarm earlier with `shiftMinutes`.
-
-A shortcut that asks for the time each time you run it:
-
-1. Add **Ask for Input**. Set the type to **Time** and the prompt to "Alarm time".
-2. Add **Format Date**. Set Date Format to **Custom** and the format string to `HH:mm`.
-3. Add **Get Contents of URL** with the URL above, Method `POST`, Request Body `JSON`.
-4. Add a Text field `side` with your side, and a Text field `time` whose value is the **Formatted Date** from step 2.
-5. Name it "Set bed alarm". You can then say "Hey Siri, set bed alarm" and answer with a time.
-
-## Reading the current state
-
-`GET http://<pod-ip>:3000/api/deviceStatus` returns the current state as JSON. In a shortcut, follow
-**Get Contents of URL** with **Get Dictionary Value** (for example `left.isOn`) to branch on it,
-such as a single "toggle my side" shortcut.
+- The app shows the waiting alarm, and can cancel it, under **Schedules > One-time alarm**.
 
 ## Troubleshooting
 
 - **The shortcut times out**: check that the phone is on the same network and that `http://<pod-ip>:3000` opens in Safari.
-- **"Invalid request data" (HTTP 400)**: a field has the wrong type. Temperatures must be Number fields and
-  `isOn` / `isAlarmVibrating` must be Boolean fields, not Text.
+- **"Invalid request data" (HTTP 400)**: a field has the wrong type or value. `dial` must be a Number
+  field from -10 to 10; `side` and `time` must be Text fields.
 - **It stopped working after a while**: the Pod's IP address changed. Reserve an IP for it in your router.
 
-See [server/API.md](../server/API.md) for the rest of the API.
+Other requests (turning a side off, dismissing an alarm, moving an alarm by minutes, changing the
+weekly alarm) are in [server/API.md](../server/API.md).

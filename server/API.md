@@ -70,6 +70,37 @@ The server exposes RESTful endpoints for interaction. All responses are JSON unl
 
 ---
 
+## `/api/deviceStatus/dial`
+
+### POST
+Turns a side on at a setting on the stock app's scale, -10 (coldest) to +10 (hottest).
+
+```json
+{ "side": "left", "dial": -3 }
+```
+`side` is `left`, `right` or `both`.
+
+---
+
+## `/api/alarm/time`
+
+### POST
+Sets an alarm with one short request. `side` is `left`, `right` or `both`.
+
+| Body | Effect |
+| --- | --- |
+| `{"side": "left", "time": "06:30"}` | One-off alarm the next time the clock shows 06:30. The weekly schedule is unchanged. |
+| `{"side": "left", "shiftMinutes": 60}` | Moves the next alarm (within 24 hours) later, as a one-off. Negative moves it earlier. |
+| `{"side": "left", "time": "08:00", "days": ["saturday", "sunday"]}` | Changes the weekly alarm time on those days. |
+| `{"side": "left", "time": "06:30", "days": ["monday"], "enabled": false}` | Switches the weekly alarm off on those days. |
+
+## `/api/alarm/time/cancel`
+
+### POST
+Drops a waiting one-off alarm: `{"side": "left"}`.
+
+---
+
 ## `/api/settings`
 
 ### GET
