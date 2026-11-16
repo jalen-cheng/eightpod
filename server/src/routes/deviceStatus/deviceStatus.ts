@@ -1,4 +1,5 @@
 import express, { Request, Response } from 'express';
+import { z } from 'zod';
 import { connectFranken } from '../../8sleep/frankenServer.js';
 import { DeviceStatus, DeviceStatusSchema } from './deviceStatusSchema.js';
 import logger from '../../logger.js';
@@ -34,6 +35,29 @@ router.post('/deviceStatus', async (req: Request, res: Response) => {
 
   await updateDeviceStatus(body as DeepPartial<DeviceStatus>);
   res.status(204).end();
+});
+
+// The stock app's -10..+10 scale: each step is 10 firmware levels, which Free Sleep treats as 2.75°F
+const DIAL_CENTER_F = 82.5;
+const DIAL_STEP_F = 2.75;
+const DialSchema = z.object({
+  side: z.enum(['left', 'right', 'both']),
+  dial: z.number().min(-10).max(10),
+}).strict();
+
+// Turns a side on at a setting from -10 (coldest) to +10 (hottest) with one short request.
+// Made for phone shortcuts, so they need no temperature arithmetic.
+router.post('/deviceStatus/dial', async (req: Request, res: Response) => {
+  const validationResult = DialSchema.safeParse(req.body);
+  if (!validationResult.success) {
+    res.status(400).json({ error: 'Invalid request data', details: validationResult.error.errors });
+    return;
+  }
+  const { side, dial } = validationResult.data;
+  const sideStatus = { isOn: true, targetTemperatureF: DIAL_CENTER_F + dial * DIAL_STEP_F };
+  const sides = side === 'both' ? ['left', 'right'] : [side];
+  await updateDeviceStatus(Object.fromEntries(sides.map(dialSide => [dialSide, sideStatus])));
+  res.status(200).json({ sides, dial, targetTemperatureF: sideStatus.targetTemperatureF });
 });
 
 
