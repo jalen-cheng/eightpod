@@ -1,10 +1,11 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="abd34578-254a-55a4-b3ad-0b8d6e156648")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="a44ee96c-549d-598a-abb1-544f47921024")}catch(e){}}();
 import express from 'express';
 import { z } from 'zod';
 import moment from 'moment-timezone';
 import { AlarmJobSchema, TimeSchema, } from '../../db/schedulesSchema.js';
 import { DAYS_OF_WEEK } from '../../jobs/utils.js';
+import { SideChoiceSchema, resolveSides } from '../sideChoice.js';
 import { findNextScheduledAlarm } from '../../jobs/scheduleTiming.js';
 import logger from '../../logger.js';
 import schedulesDB from '../../db/schedules.js';
@@ -26,7 +27,6 @@ router.post('/alarm', async (req, res) => {
     void executeAlarm(alarmJob);
     res.status(200).json(schedulesDB.data);
 });
-const SIDES = ['left', 'right'];
 const HOURS_TO_MINUTES = 60;
 // A one-off alarm is stored as a time of day, so it can only be up to a day ahead
 const ONE_OFF_WINDOW_HOURS = 24;
@@ -34,7 +34,6 @@ const MAX_SHIFT_MINUTES = 12 * HOURS_TO_MINUTES;
 // How long after a one-off alarm its override stays in force. Matches the app's own override.
 const ONE_OFF_EXPIRY_MINUTES = 2;
 const NO_ONE_OFF = { disabled: false, timeOverride: '', expiresAt: '' };
-const SideChoiceSchema = z.enum(['left', 'right', 'both']);
 const AlarmTimeSchema = z.object({
     side: SideChoiceSchema,
     // Exactly one of these two:
@@ -50,7 +49,6 @@ const AlarmTimeSchema = z.object({
 }).strict()
     .refine(body => (body.time === undefined) !== (body.shiftMinutes === undefined), { message: 'Send either time or shiftMinutes' })
     .refine(body => !body.days || body.time !== undefined, { message: 'days needs time, not shiftMinutes' });
-const getSides = (side) => (side === 'both' ? SIDES : [side]);
 // When a side's waiting one-off alarm will go off, if it has one
 const getPendingOneOff = (side, now) => {
     const { disabled, timeOverride, expiresAt } = settingsDB.data[side].scheduleOverrides.alarm;
@@ -101,7 +99,7 @@ router.post('/alarm/time', async (req, res) => {
         return;
     }
     const { side, time, shiftMinutes, days, enabled = true } = validationResult.data;
-    const alarmSides = getSides(side);
+    const alarmSides = await resolveSides(side);
     if (days && time) {
         await schedulesDB.read();
         for (const alarmSide of alarmSides) {
@@ -140,8 +138,7 @@ router.post('/alarm/time/cancel', async (req, res) => {
         res.status(400).json({ error: 'Invalid request data', details: validationResult.error.errors });
         return;
     }
-    await settingsDB.read();
-    const alarmSides = getSides(validationResult.data.side);
+    const alarmSides = await resolveSides(validationResult.data.side);
     for (const alarmSide of alarmSides) {
         settingsDB.data[alarmSide].scheduleOverrides.alarm = { ...NO_ONE_OFF };
     }
@@ -150,4 +147,4 @@ router.post('/alarm/time/cancel', async (req, res) => {
 });
 export default router;
 //# sourceMappingURL=alarm.js.map
-//# debugId=abd34578-254a-55a4-b3ad-0b8d6e156648
+//# debugId=a44ee96c-549d-598a-abb1-544f47921024

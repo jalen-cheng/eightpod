@@ -1,7 +1,8 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="4bf6db83-d4a9-55d7-a688-ef18f13fcb91")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="52e2e9bb-07df-5850-8c7f-1c82a2b47d67")}catch(e){}}();
 import express from 'express';
 import { z } from 'zod';
+import { SideChoiceSchema, resolveSides } from '../sideChoice.js';
 import { connectFranken } from '../../8sleep/frankenServer.js';
 import { DeviceStatusSchema } from './deviceStatusSchema.js';
 import logger from '../../logger.js';
@@ -35,7 +36,7 @@ router.post('/deviceStatus', async (req, res) => {
 const DIAL_CENTER_F = 82.5;
 const DIAL_STEP_F = 2.75;
 const DialSchema = z.object({
-    side: z.enum(['left', 'right', 'both']),
+    side: SideChoiceSchema,
     dial: z.number().min(-10).max(10),
 }).strict();
 // Turns a side on at a setting from -10 (coldest) to +10 (hottest) with one short request.
@@ -48,10 +49,10 @@ router.post('/deviceStatus/dial', async (req, res) => {
     }
     const { side, dial } = validationResult.data;
     const sideStatus = { isOn: true, targetTemperatureF: DIAL_CENTER_F + dial * DIAL_STEP_F };
-    const sides = side === 'both' ? ['left', 'right'] : [side];
+    const sides = await resolveSides(side);
     await updateDeviceStatus(Object.fromEntries(sides.map(dialSide => [dialSide, sideStatus])));
     res.status(200).json({ sides, dial, targetTemperatureF: sideStatus.targetTemperatureF });
 });
 export default router;
 //# sourceMappingURL=deviceStatus.js.map
-//# debugId=4bf6db83-d4a9-55d7-a688-ef18f13fcb91
+//# debugId=52e2e9bb-07df-5850-8c7f-1c82a2b47d67
