@@ -48,7 +48,8 @@ Pod 5, control board 830-00067-00 REV-17. Last updated 2026-11-16.
   - Moving the next alarm by minutes and cancelling a one-time alarm answer correctly.
   - The warm-up raised the target to the alarm temperature 15 minutes before a scheduled alarm.
 - [x] With the sides linked, a request naming one side changes both.
-- [ ] Still to do, all needing someone at the bed: whether "ramp up" is felt, snooze from a button, buttons with the sides linked, and saving from the schedule page in the app.
+- [x] Buttons with the sides linked.
+- [ ] Still to do, needing someone at the bed: whether "ramp up" is strong enough to wake someone, and saving from the schedule page in the app.
 
 Seen along the way: the serial line drops the odd character, password prompts show nothing while
 typing, and the clock is unset before Wi-Fi (`password changed in future`).
@@ -139,6 +140,7 @@ the calibration script on one would show it.
 | [#31](https://github.com/jalen-cheng/free-sleep/pull/31) | Docs | README introduces the fork; this file and the walkthrough updated; calibration results and remote access options written up. |
 | [#32](https://github.com/jalen-cheng/free-sleep/pull/32) | Fix | °F and °C use the measured level-to-temperature curve instead of an even 55-110°F spread. Range is now 50-108°F. Saved schedule temperatures are converted once. |
 | [#33](https://github.com/jalen-cheng/free-sleep/pull/33) | Fixes | Found by testing on the Pod. The curve drops to 10°C only at level -100. Dismissing one side's alarm no longer silently ends the other side's (the firmware stops both): with the sides linked both are dismissed, otherwise the other is restarted. Saving part of an alarm through the API keeps the rest of it. |
+| [#34](https://github.com/jalen-cheng/free-sleep/pull/34) | Fix, removal | A one-time alarm goes off even when the side is off: one set for 11:55 was skipped because the schedule had switched the bed off at 11:00, after it had already replaced the 10:30 alarm. Snooze removed; an alarm gesture always dismisses. |
 
 ## Compared with the Eight Sleep app
 
@@ -150,8 +152,8 @@ The Eight Sleep column is from memory and public material, not from testing the 
 | Automatic adjustment | Autopilot changes temperature overnight | None. Fixed times and temperatures per day. |
 | Schedules | Bedtime, night and wake phases | One night as a list of events: bedtime, any number of timed changes, alarm, bed off. Saved for every day, weekdays / weekend, or each day. |
 | Both sides together | Per account | Link button for temperature, power and schedules. |
-| Alarm | Vibration and thermal, snooze in app | Vibration until dismissed (up to 30 min), optional warm-up before it, bed off on dismissal, one-time alarms. Snooze only from the bed, no snooze button in the app. |
-| Side buttons (Pod 5) | + warms, - cools, middle is configurable | + and - step the temperature, any button dismisses or snoozes a vibrating alarm, and holding the middle button two seconds switches the side on or off. |
+| Alarm | Vibration and thermal, snooze in app | Vibration until dismissed (up to 30 min), optional warm-up before it, bed off on dismissal, one-time alarms. No snooze. |
+| Side buttons (Pod 5) | + warms, - cools, middle is configurable | + and - step the temperature, any button dismisses a vibrating alarm, and holding the middle button two seconds switches the side on or off. |
 | Sleep data | Stages, score, snoring | Time in bed, heart rate, HRV, breathing, movement. |
 | Base and speakers | Elevation, snore mitigation, audio | Not supported. |
 | Remote access | Anywhere, through Eight Sleep's cloud | Home network only. Options with Tailscale are in [REMOTE_ACCESS.md](REMOTE_ACCESS.md); none is set up yet. |
@@ -249,20 +251,18 @@ Searched 2026-11-13. These are other people's reports, not verified here.
 ## Later
 
 ### Depends on what the Pod shows
-- [ ] **Dismiss.** If sending `ALARM_CLEAR` with a side stops a vibrating alarm, switch dismiss and snooze to it.
 - [ ] **Pod 4 tap fields.** Treat a large jump in a tap field as one tap, for firmware that reports a time instead of a count.
 - [ ] **Calibration, second half.** Run the script with `--measure` on an empty bed to see whether the water reaches what the firmware aims for, especially at -10 and +10.
 - [ ] **Remote access.** Pick and set up one of the options in [REMOTE_ACCESS.md](REMOTE_ACCESS.md).
 - [ ] **Biometrics.** Point the sleep analysis at the `rawmem.*` subjects this firmware publishes.
 
 ### Known gaps
-- [ ] No snooze button or "snoozed" indicator in the app.
 - [ ] A press just after an alarm stops vibrating toggles power; a short grace period would avoid it.
 - [ ] Optionally let any press stop a vibrating alarm.
 - [ ] In Level, tap steps are stored as whole °F (3, 6 or 8), so many presses in a row can drift by a level.
 - [ ] An alarm restarted because the other side dismissed theirs starts over from its full length.
 - [ ] The app's Update button compares against upstream's version, not the fork's. Use `fs-update` over SSH.
-- [ ] A one-time alarm has no warm-up and is skipped if the side is off at that time.
+- [ ] A one-time alarm has no warm-up.
 - [ ] The Pod's address is whatever the router hands out. Reserve it in the router; there is no `.local` name.
 - [ ] Node tests (`tests/*.test.mjs`) do not run in CI, and no CI runs on the fork.
 - [ ] Hardware differences between Pod 3, 4 and 5 are checked ad hoc; one capabilities table per model would replace those checks.

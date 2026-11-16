@@ -81,7 +81,7 @@ export const executeAlarm = async (
 };
 
 
-// Owns the per-side alarm timers (end of vibration, snooze). A snoozed alarm re-runs executeAlarm.
+// Owns the per-side alarm timers. An alarm stopped by the other side's dismissal re-runs executeAlarm.
 export const alarmSession = createAlarmSession({
   startAlarm: executeAlarm,
   setAlarmVibrating: async (side, isAlarmVibrating) => {
@@ -133,12 +133,15 @@ export function scheduleAlarmOverride(settingsData: Settings, side: Side) {
       turnOffAfterDismiss: undefined,
     };
 
+    // Asked for by hand, so it goes off even if the side is off by then (for example after
+    // the schedule's off time) or in away mode
     await executeAlarm({
       side,
       vibrationIntensity,
       duration,
       vibrationPattern,
       turnOffAfterDismiss,
+      force: true,
     });
   });
 }

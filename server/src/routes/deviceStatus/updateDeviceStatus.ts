@@ -14,29 +14,28 @@ import { INVERTED_SETTINGS_KEY_MAPPING } from '../../8sleep/loadDeviceStatus.js'
 const calculateLevelFromF = (temperatureF: number) => temperatureFToLevel(temperatureF).toString();
 
 // Records that a side's alarm was stopped. If that alarm was set to switch the side off when
-// dismissed, does that too, unless `allowPowerOff` is false.
-const finishDismissedAlarm = async (side: 'left' | 'right', allowPowerOff: boolean) => {
+// dismissed, does that too.
+const finishDismissedAlarm = async (side: 'left' | 'right') => {
   const dismissedAlarm = await alarmSession.alarmCleared(side);
-  if (allowPowerOff && dismissedAlarm?.turnOffAfterDismiss) {
+  if (dismissedAlarm?.turnOffAfterDismiss) {
     logger.debug(`Alarm dismissed, switching ${side} side off`);
     await executeFunction(side === 'left' ? 'LEFT_TEMP_DURATION' : 'RIGHT_TEMP_DURATION', '0');
     cancelPreWarm(side);
   }
 };
 
-// Stops a side's alarm. `allowPowerOff` is false for a snooze, which stops the vibration but
-// keeps the bed on.
+// Stops a side's alarm.
 // The firmware's clear command takes no side and stops both (confirmed on a Pod 5). So the other
 // side is dealt with here: with the sides linked it is one sleeper's alarm and is dismissed too;
 // otherwise the other side's alarm is started again if it was still going off.
-export const dismissAlarm = async (side: 'left' | 'right', { allowPowerOff }: { allowPowerOff: boolean }) => {
+export const dismissAlarm = async (side: 'left' | 'right') => {
   logger.debug(`Clearing alarm, requested by ${side} side`);
   await executeFunction('ALARM_CLEAR', 'empty');
-  await finishDismissedAlarm(side, allowPowerOff);
+  await finishDismissedAlarm(side);
   const otherSide = side === 'left' ? 'right' : 'left';
   await settingsDB.read();
   if (settingsDB.data.linkSides) {
-    await finishDismissedAlarm(otherSide, allowPowerOff);
+    await finishDismissedAlarm(otherSide);
   } else {
     await alarmSession.restartIfVibrating(otherSide);
   }
@@ -82,16 +81,16 @@ const updateSide = async (side: 'left' | 'right', sideStatus: DeepPartial<SideSt
     if (updateRight) await executeFunction('RIGHT_TEMP_DURATION', seconds);
   }
 
-  // A pending snooze must not re-start the alarm on a side that was just turned off
+  // A warm-up must not carry on for a side that was just turned off
   if (isOn === false) {
-    if (updateLeft) { alarmSession.cancelSnooze('left'); cancelPreWarm('left'); }
-    if (updateRight) { alarmSession.cancelSnooze('right'); cancelPreWarm('right'); }
+    if (updateLeft) cancelPreWarm('left');
+    if (updateRight) cancelPreWarm('right');
   }
 
   if (isAlarmVibrating !== undefined) {
     logger.debug('Can only set isAlarmVibrating to false for now...');
     if (!isAlarmVibrating) {
-      await dismissAlarm(side, { allowPowerOff: true });
+      await dismissAlarm(side);
     } else {
       await alarmSession.alarmCleared(side);
     }

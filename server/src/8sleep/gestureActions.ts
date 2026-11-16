@@ -9,7 +9,6 @@ import {
 } from '../routes/deviceStatus/deviceStatusSchema.js';
 import { dismissAlarm, updateDeviceStatus } from '../routes/deviceStatus/updateDeviceStatus.js';
 import { handleAlarmGesture } from '../jobs/alarmSession.js';
-import { alarmSession } from '../jobs/alarmScheduler.js';
 import { TapCounts, processSideGestures } from './gestures.js';
 
 // One press can reach us twice: through the tap counters and through the Pod 5 button log, or as
@@ -71,12 +70,7 @@ export async function runSideGestures(
             isAlarmVibrating: deviceStatus[side].isAlarmVibrating,
             isSideOn: deviceStatus[side].isOn,
             // Same paths the app uses to dismiss an alarm and for its power button
-            // A snooze stops the vibration but must leave the side on for the alarm to come back
-            dismissAlarm: () => dismissAlarm(side, { allowPowerOff: tapConfig.behavior !== 'snooze' }),
-            // With the sides linked the dismissal above stopped both alarms, so both come back
-            snoozeAlarm: snoozeSeconds => (
-              getControlledSides(side).map(snoozeSide => alarmSession.snooze(snoozeSide, snoozeSeconds)).includes(true)
-            ),
+            dismissAlarm: () => dismissAlarm(side),
             setPower: isOn => setSidePower(side, isOn),
           });
           logger.debug(`Processed alarm gesture for ${side}: ${result}`);

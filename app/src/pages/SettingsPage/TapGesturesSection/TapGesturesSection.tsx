@@ -2,7 +2,6 @@ import { Box, Divider, MenuItem, TextField } from '@mui/material';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import TouchAppOutlinedIcon from '@mui/icons-material/TouchAppOutlined';
-import _ from 'lodash';
 import { DeepPartial } from 'ts-essentials';
 
 import { useDeviceStatus } from '@api/deviceStatus.ts';
@@ -13,9 +12,6 @@ import { formatTemperatureDelta, getStepOptions, snapStep } from '@lib/temperatu
 import Section from '../Section.tsx';
 import TapSettingRow from './TapSettingRow.tsx';
 import { SharedTapSettings, buildSideTaps, readSharedTapSettings } from './tapSettings.ts';
-
-const SNOOZE_MINUTES = _.range(1, 11);
-const SECONDS_PER_MINUTE = 60;
 
 // The section sets `overflow-wrap: anywhere`, which would otherwise break button labels mid-word
 const toggleGroupSx = { '& .MuiToggleButton-root': { flex: 1, py: 0.5, px: 1.5, whiteSpace: 'nowrap' } };
@@ -80,38 +76,8 @@ export default function TapGesturesSection({ settings, updateSettings }: TapGest
         <Divider/>
         <TapSettingRow
           gesture={ labels.duringAlarm }
-          action={ hasButtons ? 'Any button stops the alarm, or snoozes it' : 'Stops the alarm, or snoozes it' }
-        >
-          <ToggleButtonGroup
-            disabled={ isUpdating }
-            size="small"
-            value={ tapSettings.alarmBehavior }
-            exclusive
-            onChange={ (_event, alarmBehavior: SharedTapSettings['alarmBehavior'] | null) => {
-              if (alarmBehavior !== null) saveTapSettings({ alarmBehavior });
-            } }
-            aria-label={ labels.duringAlarm }
-            sx={ { ...toggleGroupSx, flex: 1 } }
-          >
-            <ToggleButton value="dismiss">Dismiss</ToggleButton>
-            <ToggleButton value="snooze">Snooze</ToggleButton>
-          </ToggleButtonGroup>
-          { tapSettings.alarmBehavior === 'snooze' && (
-            <TextField
-              select
-              size="small"
-              value={ Math.round(tapSettings.snoozeDurationSeconds / SECONDS_PER_MINUTE) }
-              onChange={ (event) => saveTapSettings({ snoozeDurationSeconds: Number(event.target.value) * SECONDS_PER_MINUTE }) }
-              disabled={ isUpdating }
-              sx={ selectSx }
-              slotProps={ { htmlInput: { 'aria-label': 'Snooze length' } } }
-            >
-              { SNOOZE_MINUTES.map(minutes => (
-                <MenuItem key={ minutes } value={ minutes }>{ minutes } min</MenuItem>
-              )) }
-            </TextField>
-          ) }
-        </TapSettingRow>
+          action={ hasButtons ? 'Any button stops the alarm' : 'Stops the alarm' }
+        />
         { !hasButtons && <Divider/> }
         { !hasButtons && (
           <TapSettingRow

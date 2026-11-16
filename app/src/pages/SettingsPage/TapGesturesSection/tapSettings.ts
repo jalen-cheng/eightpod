@@ -6,17 +6,14 @@ type AlarmTapConfig = Extract<SideSettings['taps']['quadTap'], { type: 'alarm' }
 // double tap cools, triple tap warms, and quadruple tap handles the alarm and power.
 export type SharedTapSettings = {
   temperatureStepF: number;
-  alarmBehavior: AlarmTapConfig['behavior'];
-  snoozeDurationSeconds: number;
   inactiveAlarmBehavior: AlarmTapConfig['inactiveAlarmBehavior'];
 };
 
 const MIN_TEMPERATURE_STEP_F = 1;
+const UNUSED_SNOOZE_SECONDS = 60;
 
 const DEFAULT_TAP_SETTINGS: SharedTapSettings = {
   temperatureStepF: MIN_TEMPERATURE_STEP_F,
-  alarmBehavior: 'dismiss',
-  snoozeDurationSeconds: 300,
   inactiveAlarmBehavior: 'power',
 };
 
@@ -30,8 +27,6 @@ export const readSharedTapSettings = (taps: SideSettings['taps']): SharedTapSett
     temperatureStepF: temperatureTap?.type === 'temperature'
       ? Math.max(MIN_TEMPERATURE_STEP_F, temperatureTap.amount)
       : DEFAULT_TAP_SETTINGS.temperatureStepF,
-    alarmBehavior: alarmTap?.behavior ?? DEFAULT_TAP_SETTINGS.alarmBehavior,
-    snoozeDurationSeconds: alarmTap?.snoozeDuration ?? DEFAULT_TAP_SETTINGS.snoozeDurationSeconds,
     inactiveAlarmBehavior: alarmTap?.inactiveAlarmBehavior ?? DEFAULT_TAP_SETTINGS.inactiveAlarmBehavior,
   };
 };
@@ -43,8 +38,9 @@ export const buildSideTaps =(tapSettings: SharedTapSettings): SideSettings['taps
   tripleTap: { type: 'temperature', change: 'increment', amount: tapSettings.temperatureStepF },
   quadTap: {
     type: 'alarm',
-    behavior: tapSettings.alarmBehavior,
-    snoozeDuration: tapSettings.snoozeDurationSeconds,
+    // An alarm gesture always dismisses. The saved config still needs these two fields.
+    behavior: 'dismiss',
+    snoozeDuration: UNUSED_SNOOZE_SECONDS,
     inactiveAlarmBehavior: tapSettings.inactiveAlarmBehavior,
   },
 });

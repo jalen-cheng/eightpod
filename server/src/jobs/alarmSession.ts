@@ -1,13 +1,12 @@
-// Tracks the running alarm per side: when its vibration ends, and any pending snooze.
+// Tracks the running alarm per side and when its vibration ends.
 // Keep this file free of runtime imports so tests can load it without a Pod environment.
 import type { AlarmJob, Side } from '../db/schedulesSchema.js';
 import type { AlarmTapConfig } from '../8sleep/gestures.js';
 
 type SideAlarmState = {
-  // The alarm that last started on this side, re-run when it is snoozed
+  // The alarm that last started on this side, re-run if the other side's dismissal stops it
   lastAlarm?: AlarmJob;
   vibrationEndTimer?: ReturnType<typeof setTimeout>;
-  snoozeTimer?: ReturnType<typeof setTimeout>;
 };
 
 export type AlarmSessionDeps = {
@@ -29,18 +28,12 @@ export function createAlarmSession({ startAlarm, setAlarmVibrating, logDebug }: 
     sideStates[side].vibrationEndTimer = undefined;
   };
 
-  const cancelSnooze = (side: Side) => {
-    if (sideStates[side].snoozeTimer) logDebug(`Cancelling pending snooze for ${side}`);
-    clearTimeout(sideStates[side].snoozeTimer);
-    sideStates[side].snoozeTimer = undefined;
-  };
-
   // Call when an alarm has been sent to the Pod. Replaces the previous end-of-vibration timer,
   // so an older alarm's timer cannot clear the flag while this one is still vibrating.
   //
   // The firmware only vibrates for a few minutes per request. For a longer alarm, pass the rest
   // of it as `continuation`: when this stretch ends it is started, and the alarm counts as
-  // vibrating throughout. Dismissing or snoozing cancels the timer, which ends the chain.
+  // vibrating throughout. Dismissing cancels the timer, which ends the chain.
   const alarmStarted = async (
     alarmJob: AlarmJob,
     durationSeconds: number,
@@ -48,8 +41,7 @@ export function createAlarmSession({ startAlarm, setAlarmVibrating, logDebug }: 
   ) => {
     const { side } = alarmJob;
     cancelVibrationEndTimer(side);
-    cancelSnooze(side);
-    // A snooze re-runs the whole alarm, so later stretches must not replace it
+    // A restart re-runs the whole alarm, so later stretches must not replace it
     if (!isContinuation) sideStates[side].lastAlarm = alarmJob;
     await setAlarmVibrating(side, true);
     const stretchTimer = setTimeout(() => {
@@ -73,7 +65,6 @@ export function createAlarmSession({ startAlarm, setAlarmVibrating, logDebug }: 
   const alarmCleared = async (side: Side): Promise<AlarmJob | undefined> => {
     const wasVibrating = sideStates[side].vibrationEndTimer !== undefined;
     cancelVibrationEndTimer(side);
-    cancelSnooze(side);
     await setAlarmVibrating(side, false);
     return wasVibrating ? sideStates[side].lastAlarm : undefined;
   };
@@ -90,22 +81,7 @@ export function createAlarmSession({ startAlarm, setAlarmVibrating, logDebug }: 
     return true;
   };
 
-  // Re-runs the last alarm of a side after snoozeSeconds. Returns false when there is nothing to snooze.
-  const snooze = (side: Side, snoozeSeconds: number): boolean => {
-    const { lastAlarm } = sideStates[side];
-    if (!lastAlarm) return false;
-    cancelSnooze(side);
-    logDebug(`Snoozing ${side} alarm for ${snoozeSeconds}s`);
-    sideStates[side].snoozeTimer = setTimeout(() => {
-      sideStates[side].snoozeTimer = undefined;
-      void startAlarm(lastAlarm);
-    }, snoozeSeconds * 1_000);
-    return true;
-  };
-
-  const hasPendingSnooze = (side: Side) => sideStates[side].snoozeTimer !== undefined;
-
-  return { alarmStarted, alarmCleared, restartIfVibrating, snooze, cancelSnooze, hasPendingSnooze };
+  return { alarmStarted, alarmCleared, restartIfVibrating };
 }
 
 export type AlarmSession = ReturnType<typeof createAlarmSession>;
@@ -115,19 +91,17 @@ export type AlarmGestureDeps = {
   isSideOn: boolean;
   // Stops the vibration on the Pod and clears the alarm state
   dismissAlarm: () => Promise<void>;
-  snoozeAlarm: (snoozeSeconds: number) => boolean;
   setPower: (isOn: boolean) => Promise<void>;
 };
 
-export type AlarmGestureResult = 'dismissed' | 'snoozed' | 'power' | 'none';
+export type AlarmGestureResult = 'dismissed' | 'power' | 'none';
 
-// Decides what an alarm tap does. While an alarm vibrates it dismisses or snoozes it;
-// otherwise it toggles the side's power if configured to.
+// Decides what an alarm tap does. While an alarm vibrates it dismisses it; otherwise it toggles
+// the side's power if configured to. (The saved config still carries a snooze choice, which
+// upstream's settings define; it is not acted on.)
 export async function handleAlarmGesture(tapConfig: AlarmTapConfig, deps: AlarmGestureDeps): Promise<AlarmGestureResult> {
   if (deps.isAlarmVibrating) {
-    // Dismiss first: it cancels any earlier snooze, then the new snooze is scheduled
     await deps.dismissAlarm();
-    if (tapConfig.behavior === 'snooze' && deps.snoozeAlarm(tapConfig.snoozeDuration)) return 'snoozed';
     return 'dismissed';
   }
   if (tapConfig.inactiveAlarmBehavior === 'power') {

@@ -9,7 +9,7 @@ upstream's own README. Thanks to the upstream author and contributors for the pr
 What the fork adds:
 
 - **Pod 5 side buttons.** + and - change the temperature (and switch an off side on), holding the
-  middle button switches the side on or off, and any button dismisses or snoozes a vibrating alarm.
+  middle button switches the side on or off, and any button dismisses a vibrating alarm.
 - **Stays offline.** The internet block survives reboots and updates, Eight Sleep's updater is
   locked out, and the installer and updater handle a Pod 5's differences.
 - **Linked sides.** One switch makes temperature, power, schedules, buttons and shortcuts apply to both sides.

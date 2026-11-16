@@ -26,7 +26,7 @@ export const AlarmSchema = z.object({
 export const AlarmJobSchema = AlarmSchema.extend({
   side: SideSchema,
   force: z.boolean().optional(),
-  // Switch the side off when this alarm is dismissed (not when it is snoozed or runs out)
+  // Switch the side off when this alarm is dismissed (not when it runs out)
   turnOffAfterDismiss: z.boolean().optional(),
 }).strict();
 
