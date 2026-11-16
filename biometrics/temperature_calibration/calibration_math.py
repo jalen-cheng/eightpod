@@ -7,7 +7,7 @@ MIN_LEVEL = -100
 MAX_LEVEL = 100
 # What Free Sleep takes each level to mean, in °C: straight lines between these points.
 # Must match server/src/db/temperatureCurve.ts.
-CURVE_POINTS_C = [(-100, 10.0), (-90, 16.2), (0, 27.0), (50, 36.0), (100, 42.0)]
+CURVE_POINTS_C = [(-100, 10.0), (-99, 15.12), (0, 27.0), (50, 36.0), (100, 42.0)]
 
 # Sensor readings are hundredths of a degree Celsius. Confirmed on a Pod 5: with the firmware
 # aiming for 42.0°C the water sensors read about 4210. Raw values are kept in the output anyway.

@@ -73,7 +73,10 @@ export async function runSideGestures(
             // Same paths the app uses to dismiss an alarm and for its power button
             // A snooze stops the vibration but must leave the side on for the alarm to come back
             dismissAlarm: () => dismissAlarm(side, { allowPowerOff: tapConfig.behavior !== 'snooze' }),
-            snoozeAlarm: snoozeSeconds => alarmSession.snooze(side, snoozeSeconds),
+            // With the sides linked the dismissal above stopped both alarms, so both come back
+            snoozeAlarm: snoozeSeconds => (
+              getControlledSides(side).map(snoozeSide => alarmSession.snooze(snoozeSide, snoozeSeconds)).includes(true)
+            ),
             setPower: isOn => setSidePower(side, isOn),
           });
           logger.debug(`Processed alarm gesture for ${side}: ${result}`);
