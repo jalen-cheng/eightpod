@@ -5,6 +5,7 @@ import moment from 'moment-timezone';
 
 import DayPicker from './DayPicker.tsx';
 import NightTimeline from './NightTimeline.tsx';
+import OneTimeAlarm from './OneTimeAlarm.tsx';
 import PageContainer from '../PageContainer.tsx';
 import SideControl from '../../components/SideControl.tsx';
 import { DayOfWeek, Schedules } from '@api/schedulesSchema.ts';
@@ -89,6 +90,7 @@ export default function SchedulePage() {
 
       <Box sx={ { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, width: '100%', minHeight: 40 } }>
         <FormControlLabel
+          sx={ { whiteSpace: 'nowrap' } }
           label="Schedule on"
           control={
             <Switch
@@ -101,7 +103,7 @@ export default function SchedulePage() {
         { changesPresent ? (
           <Box sx={ { display: 'flex', gap: 1 } }>
             { hasEdits && <Button onClick={ reloadScheduleData } disabled={ isUpdating }>Discard</Button> }
-            <Button variant="contained" onClick={ handleSave } disabled={ isUpdating || !isValid() }>
+            <Button variant="contained" onClick={ handleSave } disabled={ isUpdating || !isValid() } sx={ { whiteSpace: 'nowrap' } }>
               Save for { describeDays(saveDays) }{ linkSides ? ', both sides' : '' }
             </Button>
           </Box>
@@ -109,6 +111,8 @@ export default function SchedulePage() {
           <Typography variant="caption" sx={ { color: 'text.secondary' } }>Saved</Typography>
         ) }
       </Box>
+
+      <OneTimeAlarm/>
     </PageContainer>
   );
 }

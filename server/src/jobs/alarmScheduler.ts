@@ -118,6 +118,8 @@ export function scheduleAlarmOverride(settingsData: Settings, side: Side) {
   const expiresAt = moment.tz(alarmOverride.expiresAt, settingsData.timeZone);
   if (!expiresAt.isAfter(now)) return null;
   const next = nextOccurrenceHhMm(settingsData.timeZone, alarmOverride.timeOverride);
+  // Already gone off: the override is only still in force to hold back a scheduled alarm
+  if (next.isAfter(expiresAt)) return null;
   logger.debug(`Alarm override is set! Scheduling alarm for ${next.format()}`);
 
   schedule.scheduleJob(`${side}-alarm-override-${alarmOverride.timeOverride}`, next.toDate(), async () => {

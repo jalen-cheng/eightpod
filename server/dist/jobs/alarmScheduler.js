@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="33ea2caa-332d-5e7c-9656-bff3b4c5218d")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="c49f6a45-6ede-5737-a195-b92df3d88237")}catch(e){}}();
 import schedule from 'node-schedule';
 import cbor from 'cbor';
 import moment from 'moment-timezone';
@@ -100,6 +100,9 @@ export function scheduleAlarmOverride(settingsData, side) {
     if (!expiresAt.isAfter(now))
         return null;
     const next = nextOccurrenceHhMm(settingsData.timeZone, alarmOverride.timeOverride);
+    // Already gone off: the override is only still in force to hold back a scheduled alarm
+    if (next.isAfter(expiresAt))
+        return null;
     logger.debug(`Alarm override is set! Scheduling alarm for ${next.format()}`);
     schedule.scheduleJob(`${side}-alarm-override-${alarmOverride.timeOverride}`, next.toDate(), async () => {
         const dayKey = next.tz(settingsData.timeZone).format('dddd').toLowerCase();
@@ -202,4 +205,4 @@ export const scheduleAlarmPreWarm = (settingsData, side, day, dailySchedule) => 
     });
 };
 //# sourceMappingURL=alarmScheduler.js.map
-//# debugId=33ea2caa-332d-5e7c-9656-bff3b4c5218d
+//# debugId=c49f6a45-6ede-5737-a195-b92df3d88237
