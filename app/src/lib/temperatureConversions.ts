@@ -1,20 +1,23 @@
 import _ from 'lodash';
 import type { TemperatureFormat } from '@api/settingsSchema.ts';
+import { MAX_TEMPERATURE_F, MIN_TEMPERATURE_F, levelToTemperatureF, temperatureFToLevel } from '@api/temperatureCurve.ts';
 
 // Every temperature in the app, the API and the saved schedules is a whole number of °F.
 // The display unit only changes how those numbers are shown and which values can be picked.
 export type { TemperatureFormat };
 export const DEFAULT_TEMPERATURE_FORMAT: TemperatureFormat = 'fahrenheit';
 
-export const MIN_TEMP_F = 55;
-export const MAX_TEMP_F = 110;
+export const MIN_TEMP_F = MIN_TEMPERATURE_F;
+export const MAX_TEMP_F = MAX_TEMPERATURE_F;
 
 // The Pod itself works in levels from -100 to 100, and Eight Sleep's app shows those as -10 to +10.
-// Free Sleep spreads the levels evenly over 55-110°F, so level 0 is 82.5°F and one level is 2.75°F.
-const NEUTRAL_TEMP_F = (MIN_TEMP_F + MAX_TEMP_F) / 2;
+// What temperature each level means was measured (see @api/temperatureCurve.ts): the levels are
+// not evenly spaced, so one level is anywhere from 2.2°F to 3.2°F, and 11°F between -10 and -9.
 export const MAX_LEVEL = 10;
 export const MIN_LEVEL = -MAX_LEVEL;
-const DEGREES_F_PER_LEVEL = (MAX_TEMP_F - NEUTRAL_TEMP_F) / MAX_LEVEL;
+const FIRMWARE_LEVELS_PER_LEVEL = 10;
+// Used only to label and offer step sizes, where one figure has to stand for every level
+const DEGREES_F_PER_LEVEL = 2.75;
 
 const UNIT_LABELS: Record<TemperatureFormat, string> = { fahrenheit: '°F', celsius: '°C', level: 'Level' };
 export const getTemperatureUnitLabel = (format: TemperatureFormat) => UNIT_LABELS[format];
@@ -26,14 +29,14 @@ export function farenheitToCelcius(farenheit: number): number {
 
 // The nearest level (-10 to +10) for a temperature
 export function temperatureToLevel(tempF: number): number {
-  const level = Math.round((tempF - NEUTRAL_TEMP_F) / DEGREES_F_PER_LEVEL);
+  const level = Math.round(temperatureFToLevel(tempF) / FIRMWARE_LEVELS_PER_LEVEL);
   // `|| 0` turns -0 into 0
   return _.clamp(level, MIN_LEVEL, MAX_LEVEL) || 0;
 }
 
 // The whole °F that stands for a level. Converting it back always gives the same level.
 export function levelToTemperature(level: number): number {
-  return _.clamp(Math.round(NEUTRAL_TEMP_F + level * DEGREES_F_PER_LEVEL), MIN_TEMP_F, MAX_TEMP_F);
+  return _.clamp(Math.round(levelToTemperatureF(level * FIRMWARE_LEVELS_PER_LEVEL)), MIN_TEMP_F, MAX_TEMP_F);
 }
 
 const formatLevel = (level: number) => (level > 0 ? `+${level}` : `${level}`);

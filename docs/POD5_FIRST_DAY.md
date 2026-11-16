@@ -392,7 +392,9 @@ From the UI on your phone.
 ## Part 8: calibration
 
 The firmware reports the water temperature it aims for at each level, so the table of what each
-level means can be read directly. This takes about ten minutes and the bed does not need to be empty,
+level means can be read directly. Free Sleep already uses the table measured on the test Pod 5
+(see [FORK_STATUS.md](FORK_STATUS.md#calibration-results)); running this on your Pod checks that
+yours matches. This takes about ten minutes and the bed does not need to be empty,
 though it will swing from cold to hot while it runs:
 
 ```

@@ -1,6 +1,7 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="59024bed-8fc6-50cd-9b30-0c50483aa099")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="bcc36309-a602-5763-a4ba-87cfada4abff")}catch(e){}}();
 import { z } from 'zod';
+import { levelToTemperatureF } from '../db/temperatureCurve.js';
 import { Version } from '../routes/deviceStatus/deviceStatusSchema.js';
 import logger from '../logger.js';
 import memoryDB from '../db/memoryDB.js';
@@ -38,25 +39,8 @@ const parseRawDeviceData = (response) => {
         throw error;
     }
 };
-// Scale goes from -100 < - > 100
-// Low  -> 55
-// High -> 110
-// 0 -> 82.5f
-// -100 -> 55f
-// 100 -> 110f
-const calculateTempInF = (value) => {
-    const level = Number(value);
-    if (level === 0) {
-        // Technically 0 is 82.5, rounding the temperature simplifies everything though...
-        return 83;
-    }
-    else if (level < 0) {
-        return Math.round(82.5 - (-1 * level / 100) * 27.5);
-    }
-    else {
-        return Math.round(82.5 + (level / 100) * 27.5);
-    }
-};
+// The firmware reports levels from -100 to 100; this is the whole °F each one stands for
+const calculateTempInF = (value) => Math.round(levelToTemperatureF(Number(value)));
 export const SETTINGS_KEY_MAPPING = {
     gl: 'gainLeft',
     gr: 'gainRight',
@@ -198,4 +182,4 @@ export async function loadDeviceStatus(response, getGestures) {
     return deviceStatus;
 }
 //# sourceMappingURL=loadDeviceStatus.js.map
-//# debugId=59024bed-8fc6-50cd-9b30-0c50483aa099
+//# debugId=bcc36309-a602-5763-a4ba-87cfada4abff

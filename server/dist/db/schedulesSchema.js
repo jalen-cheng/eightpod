@@ -1,12 +1,14 @@
 // WARNING! - Any changes here MUST be the same between app/src/api & server/src/db/
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="a2bf272c-d78d-568c-b1c9-ecda4b6ceb4a")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="97b84530-bbb6-5e3a-81bc-a6e437e9cc75")}catch(e){}}();
 import { z } from 'zod';
+import { MIN_TEMPERATURE_F } from './temperatureCurve.js';
 const timeRegexFormat = /^([01]\d|2[0-3]):([0-5]\d)$/;
 export const SideSchema = z.enum(['right', 'left']);
 // Reusable Zod type for time
 export const TimeSchema = z.string().regex(timeRegexFormat, 'Invalid time format, must be HH:mm');
-export const TemperatureSchema = z.number().int().min(55).max(110);
+// 50°F is the coldest the Pod can be set to. Up to 110 is accepted (the old maximum) and treated as the hottest.
+export const TemperatureSchema = z.number().int().min(MIN_TEMPERATURE_F).max(110);
 // The longest alarm that can be asked for. The firmware runs at most MAX_FIRMWARE_ALARM_SECONDS
 // at a time, so a longer alarm is sent as several stretches (see alarmSession).
 export const MAX_ALARM_SECONDS = 1800;
@@ -57,4 +59,4 @@ export const SchedulesSchema = z.object({
     right: SideScheduleSchema,
 }).strict();
 //# sourceMappingURL=schedulesSchema.js.map
-//# debugId=a2bf272c-d78d-568c-b1c9-ecda4b6ceb4a
+//# debugId=97b84530-bbb6-5e3a-81bc-a6e437e9cc75

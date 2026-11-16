@@ -3,11 +3,11 @@
 from statistics import mean, pstdev
 from typing import Dict, List, Optional
 
-# Free Sleep's current assumption: Pod levels -100..100 map evenly onto 55..110°F
 MIN_LEVEL = -100
 MAX_LEVEL = 100
-NEUTRAL_TEMP_F = 82.5
-DEGREES_F_PER_LEVEL = 27.5 / 100
+# What Free Sleep takes each level to mean, in °C: straight lines between these points.
+# Must match server/src/db/temperatureCurve.ts.
+CURVE_POINTS_C = [(-100, 10.0), (-90, 16.2), (0, 27.0), (50, 36.0), (100, 42.0)]
 
 # Sensor readings are hundredths of a degree Celsius. Confirmed on a Pod 5: with the firmware
 # aiming for 42.0°C the water sensors read about 4210. Raw values are kept in the output anyway.
@@ -15,8 +15,13 @@ RAW_UNITS_PER_DEGREE_C = 100
 
 
 def level_to_assumed_temp_f(level: float) -> float:
-    """The °F that Free Sleep currently shows for a Pod level."""
-    return NEUTRAL_TEMP_F + level * DEGREES_F_PER_LEVEL
+    """The °F that Free Sleep takes a Pod level to mean (not rounded)."""
+    level = min(MAX_LEVEL, max(MIN_LEVEL, level))
+    for (lower_level, lower_c), (upper_level, upper_c) in zip(CURVE_POINTS_C, CURVE_POINTS_C[1:]):
+        if level <= upper_level:
+            fraction = (level - lower_level) / (upper_level - lower_level)
+            return (lower_c + fraction * (upper_c - lower_c)) * 9 / 5 + 32
+    return CURVE_POINTS_C[-1][1] * 9 / 5 + 32
 
 
 def celsius_to_fahrenheit(temp_c: float) -> float:

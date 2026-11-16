@@ -1,17 +1,15 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="6e9f8b65-0f80-51cb-ab94-fc4e5e952737")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="a92df30a-08a1-5990-9d67-27c4068c6ad3")}catch(e){}}();
 import _ from 'lodash';
 import cbor from 'cbor';
 import { executeFunction } from '../../8sleep/deviceApi.js';
 import logger from '../../logger.js';
 import settingsDB from '../../db/settings.js';
+import { temperatureFToLevel } from '../../db/temperatureCurve.js';
 import { alarmSession } from '../../jobs/alarmScheduler.js';
 import { cancelPreWarm } from '../../jobs/preWarmState.js';
 import { INVERTED_SETTINGS_KEY_MAPPING } from '../../8sleep/loadDeviceStatus.js';
-const calculateLevelFromF = (temperatureF) => {
-    const level = (temperatureF - 82.5) / 27.5 * 100;
-    return Math.round(level).toString();
-};
+const calculateLevelFromF = (temperatureF) => temperatureFToLevel(temperatureF).toString();
 // Stops a side's alarm. If that alarm was set to switch the side off when dismissed, does that
 // too, unless `allowPowerOff` is false (a snooze stops the vibration but keeps the bed on).
 export const dismissAlarm = async (side, { allowPowerOff }) => {
@@ -106,4 +104,4 @@ export const updateDeviceStatus = async (deviceStatus) => {
     logger.info('Finished updating device status');
 };
 //# sourceMappingURL=updateDeviceStatus.js.map
-//# debugId=6e9f8b65-0f80-51cb-ab94-fc4e5e952737
+//# debugId=a92df30a-08a1-5990-9d67-27c4068c6ad3

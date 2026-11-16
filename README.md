@@ -14,6 +14,8 @@ What the fork adds:
   locked out, and the installer and updater handle a Pod 5's differences.
 - **Linked sides.** One switch makes temperature, power, schedules, buttons and shortcuts apply to both sides.
 - **A -10 to +10 display**, like the Pod's own app, next to °F and °C.
+- **Real temperatures.** °F and °C show what the firmware aims for at each setting, measured on a
+  Pod 5, instead of an even spread over 55-110°F that was off by up to 5°F.
 - **A redesigned schedule page**: one night as a list of events, a simple day picker, and a one-time alarm.
 - **Alarms that keep going until dismissed** (up to 30 minutes), with an optional warm-up beforehand
   and the bed switching off when the alarm is dismissed.
