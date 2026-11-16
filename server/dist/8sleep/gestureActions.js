@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="d8f76b44-7fce-5817-b503-f3df5076a57b")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="07631c42-3b8c-50ce-a017-a13a5c7aa468")}catch(e){}}();
 import logger from '../logger.js';
 import settingsDB from '../db/settings.js';
 import { MAX_TARGET_TEMPERATURE_F, MIN_TARGET_TEMPERATURE_F, } from '../routes/deviceStatus/deviceStatusSchema.js';
@@ -57,7 +57,8 @@ export async function runSideGestures(side, deviceStatus, previousTaps, nextTaps
                         // Same paths the app uses to dismiss an alarm and for its power button
                         // A snooze stops the vibration but must leave the side on for the alarm to come back
                         dismissAlarm: () => dismissAlarm(side, { allowPowerOff: tapConfig.behavior !== 'snooze' }),
-                        snoozeAlarm: snoozeSeconds => alarmSession.snooze(side, snoozeSeconds),
+                        // With the sides linked the dismissal above stopped both alarms, so both come back
+                        snoozeAlarm: snoozeSeconds => (getControlledSides(side).map(snoozeSide => alarmSession.snooze(snoozeSide, snoozeSeconds)).includes(true)),
                         setPower: isOn => setSidePower(side, isOn),
                     });
                     logger.debug(`Processed alarm gesture for ${side}: ${result}`);
@@ -71,4 +72,4 @@ export async function runSideGestures(side, deviceStatus, previousTaps, nextTaps
     }
 }
 //# sourceMappingURL=gestureActions.js.map
-//# debugId=d8f76b44-7fce-5817-b503-f3df5076a57b
+//# debugId=07631c42-3b8c-50ce-a017-a13a5c7aa468

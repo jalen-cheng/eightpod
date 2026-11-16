@@ -78,6 +78,18 @@ export function createAlarmSession({ startAlarm, setAlarmVibrating, logDebug }: 
     return wasVibrating ? sideStates[side].lastAlarm : undefined;
   };
 
+  // The firmware's clear command stops the vibration on both sides. Call this for the side that
+  // did not ask for it: if its alarm was still going off it is started again, so one sleeper
+  // dismissing their alarm does not silence the other's. Returns whether it restarted one.
+  const restartIfVibrating = async (side: Side): Promise<boolean> => {
+    const { lastAlarm, vibrationEndTimer } = sideStates[side];
+    if (vibrationEndTimer === undefined || !lastAlarm) return false;
+    logDebug(`Restarting ${side} alarm, which the other side's dismissal stopped`);
+    cancelVibrationEndTimer(side);
+    await startAlarm(lastAlarm);
+    return true;
+  };
+
   // Re-runs the last alarm of a side after snoozeSeconds. Returns false when there is nothing to snooze.
   const snooze = (side: Side, snoozeSeconds: number): boolean => {
     const { lastAlarm } = sideStates[side];
@@ -93,7 +105,7 @@ export function createAlarmSession({ startAlarm, setAlarmVibrating, logDebug }: 
 
   const hasPendingSnooze = (side: Side) => sideStates[side].snoozeTimer !== undefined;
 
-  return { alarmStarted, alarmCleared, snooze, cancelSnooze, hasPendingSnooze };
+  return { alarmStarted, alarmCleared, restartIfVibrating, snooze, cancelSnooze, hasPendingSnooze };
 }
 
 export type AlarmSession = ReturnType<typeof createAlarmSession>;

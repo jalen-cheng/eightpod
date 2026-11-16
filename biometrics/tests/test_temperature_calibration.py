@@ -20,6 +20,7 @@ from calibration_math import (
 class TemperatureCalibrationMathTest(unittest.TestCase):
     def test_assumed_temperature_matches_the_servers_mapping(self):
         self.assertAlmostEqual(level_to_assumed_temp_f(-100), 50)
+        self.assertAlmostEqual(level_to_assumed_temp_f(-99), 59.216)
         self.assertAlmostEqual(level_to_assumed_temp_f(-90), 61.16)
         self.assertAlmostEqual(level_to_assumed_temp_f(0), 80.6)
         self.assertAlmostEqual(level_to_assumed_temp_f(25), 88.7)

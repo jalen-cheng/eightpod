@@ -3,13 +3,13 @@
 //
 // The firmware works in levels from -100 to 100. These are the temperatures it reported aiming
 // for at each level on a Pod 5 (docs/pod5_temperature_calibration.json): three straight
-// stretches, plus a drop to "as cold as possible" at -100. Levels between the points are on the
-// straight line between them.
+// stretches, with levels between the points on the straight line between them. Level -100 alone
+// is different: it drops to 10°C, "as cold as possible", while -99 is still on the first stretch.
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="4e16c3c5-f619-5eea-ac68-2ea32821cd55")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="ae226c1a-56de-532e-99f2-00d4725e2949")}catch(e){}}();
 const CURVE_POINTS_C = [
     [-100, 10],
-    [-90, 16.2],
+    [-99, 15.12],
     [0, 27],
     [50, 36],
     [100, 42],
@@ -56,4 +56,4 @@ export function convertFromEvenSpreadF(temperatureF) {
     return Math.round(levelToTemperatureF(clampedLevel));
 }
 //# sourceMappingURL=temperatureCurve.js.map
-//# debugId=4e16c3c5-f619-5eea-ac68-2ea32821cd55
+//# debugId=ae226c1a-56de-532e-99f2-00d4725e2949

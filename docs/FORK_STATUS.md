@@ -39,7 +39,16 @@ Pod 5, control board 830-00067-00 REV-17. Last updated 2026-11-16.
 - [x] **Shortcuts work from an iPhone**: setting the temperature by -10..+10, setting a one-time alarm, and reading the bed's state.
 - [x] **Calibration run done.** See [Calibration results](#calibration-results).
 - [x] The firewall on this Pod cannot filter by program (`iptables -m owner` is missing), which shapes the [remote access](REMOTE_ACCESS.md) options.
-- [ ] Still to do: alarms end to end (ramp-up, long alarms, dismiss, warm-up, auto-off), saving from the redesigned schedule page, the one-time alarm firing, and buttons with the sides linked.
+- [x] **The measured temperature curve matches the firmware** at every level tried after it was applied, once one error was fixed: only level -100 drops to 10°C; -99 to -91 stay on the main line.
+- [x] **Alarms, checked against the firmware's own log:**
+  - Dismiss stops the vibration. The firmware's clear command stops both sides at once.
+  - A 200-second alarm ran its 180-second limit, restarted for the last 20, and stopped when dismissed.
+  - With "bed off when dismissed" the side switched off on dismissal.
+  - A one-time alarm asked for as "2:00 PM" fired at 14:00 on the side that was on, was skipped on the side that was off, and did not fire again.
+  - Moving the next alarm by minutes and cancelling a one-time alarm answer correctly.
+  - The warm-up raised the target to the alarm temperature 15 minutes before a scheduled alarm.
+- [x] With the sides linked, a request naming one side changes both.
+- [ ] Still to do, all needing someone at the bed: whether "ramp up" is felt, snooze from a button, buttons with the sides linked, and saving from the schedule page in the app.
 
 Seen along the way: the serial line drops the odd character, password prompts show nothing while
 typing, and the clock is unset before Wi-Fi (`password changed in future`).
@@ -52,6 +61,7 @@ temperature the firmware says it is aiming for. Both sides gave identical figure
 | Dial | Firmware level | Firmware aims for | Free Sleep showed before #32 |
 |---|---|---|---|
 | -10 | -100 | 10.0°C / 50.0°F | 55.0°F |
+| -9.9 | -99 | 15.1°C / 59.2°F | 55.3°F |
 | -9 | -90 | 16.2°C / 61.2°F | 57.8°F |
 | -5 | -50 | 21.0°C / 69.8°F | 68.8°F |
 | 0 | 0 | 27.0°C / 80.6°F | 82.5°F |
@@ -62,7 +72,7 @@ What it shows:
 
 - **Three straight stretches, not one.** From -9 to 0 each dial step is 1.2°C (2.2°F). From 0 to +5
   each step is 1.8°C (3.2°F). From +5 to +10 each step is 1.2°C again.
-- **-10 is a special case**: it jumps to 10°C, 6.2°C below -9, which reads as "as cold as possible".
+- **-10 is a special case**: level -100 alone jumps to 10°C, 5°C below level -99, which reads as "as cold as possible".
 - **Free Sleep's °F figures were off by up to 5°F**, most at the two ends and around neutral.
 - These are the firmware's targets, not measurements of the water. The optional `--measure` run,
   which checks the water reaches them, has not been done.
@@ -128,6 +138,7 @@ the calibration script on one would show it.
 | [#30](https://github.com/jalen-cheng/free-sleep/pull/30) | Feature | Alarm times are read however a phone writes them (AM/PM, full dates). `GET /api/deviceStatus/dial` reports the bed in one sentence. |
 | [#31](https://github.com/jalen-cheng/free-sleep/pull/31) | Docs | README introduces the fork; this file and the walkthrough updated; calibration results and remote access options written up. |
 | [#32](https://github.com/jalen-cheng/free-sleep/pull/32) | Fix | °F and °C use the measured level-to-temperature curve instead of an even 55-110°F spread. Range is now 50-108°F. Saved schedule temperatures are converted once. |
+| [#33](https://github.com/jalen-cheng/free-sleep/pull/33) | Fixes | Found by testing on the Pod. The curve drops to 10°C only at level -100. Dismissing one side's alarm no longer silently ends the other side's (the firmware stops both): with the sides linked both are dismissed, otherwise the other is restarted. Saving part of an alarm through the API keeps the rest of it. |
 
 ## Compared with the Eight Sleep app
 
@@ -249,6 +260,7 @@ Searched 2026-11-13. These are other people's reports, not verified here.
 - [ ] A press just after an alarm stops vibrating toggles power; a short grace period would avoid it.
 - [ ] Optionally let any press stop a vibrating alarm.
 - [ ] In Level, tap steps are stored as whole °F (3, 6 or 8), so many presses in a row can drift by a level.
+- [ ] An alarm restarted because the other side dismissed theirs starts over from its full length.
 - [ ] The app's Update button compares against upstream's version, not the fork's. Use `fs-update` over SSH.
 - [ ] A one-time alarm has no warm-up and is skipped if the side is off at that time.
 - [ ] The Pod's address is whatever the router hands out. Reserve it in the router; there is no `.local` name.

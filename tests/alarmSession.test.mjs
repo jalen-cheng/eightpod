@@ -191,3 +191,24 @@ test('a long alarm carries on in stretches until it is dismissed', async () => {
   assert.equal(started.length, 1);
   mock.timers.reset();
 });
+
+test('an alarm stopped by the other side\'s dismissal starts again, and a finished one does not', async () => {
+  const testSession = createTestSession();
+  const rightAlarm = { ...leftAlarm, side: 'right' };
+  await testSession.session.alarmStarted(leftAlarm, 30);
+  await testSession.session.alarmStarted(rightAlarm, 30);
+
+  // Left dismisses; the firmware stops both, so right is started again
+  await testSession.session.alarmCleared('left');
+  assert.equal(await testSession.session.restartIfVibrating('right'), true);
+  assert.deepEqual(testSession.startedAlarms, [rightAlarm]);
+  assert.equal(testSession.vibrating.right, true);
+  assert.equal(testSession.vibrating.left, false);
+
+  // Nothing going off on the left any more: nothing to restart
+  assert.equal(await testSession.session.restartIfVibrating('left'), false);
+  mock.timers.tick(30_000);
+  await flushPromises();
+  assert.equal(await testSession.session.restartIfVibrating('right'), false);
+  assert.equal(testSession.startedAlarms.length, 1);
+});

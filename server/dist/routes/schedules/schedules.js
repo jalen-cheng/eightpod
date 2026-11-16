@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="8ab3d5fe-6061-54ca-b5cb-5fcaca8eab50")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="d9f2b914-c978-50c5-8fd9-eeb996165cc7")}catch(e){}}();
 import _ from 'lodash';
 import express from 'express';
 import logger from '../../logger.js';
@@ -30,8 +30,9 @@ router.post('/schedules', async (req, res) => {
             }
             if (schedule.temperatures)
                 schedulesDB.data[side][day].temperatures = schedule.temperatures;
+            // Merged, like power: a request with only some alarm fields must keep the others
             if (schedule.alarm)
-                schedulesDB.data[side][day].alarm = schedule.alarm;
+                _.merge(schedulesDB.data[side][day].alarm, schedule.alarm);
         });
     });
     await schedulesDB.write();
@@ -39,4 +40,4 @@ router.post('/schedules', async (req, res) => {
 });
 export default router;
 //# sourceMappingURL=schedules.js.map
-//# debugId=8ab3d5fe-6061-54ca-b5cb-5fcaca8eab50
+//# debugId=d9f2b914-c978-50c5-8fd9-eeb996165cc7

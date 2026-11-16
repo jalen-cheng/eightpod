@@ -1,7 +1,7 @@
 // Creates the alarm state tracker. The Pod cannot tell us whether an alarm is vibrating,
 // so this is the single owner of that knowledge and of every timer attached to it.
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="129b00f2-104e-5d2a-a913-c91cfcfe5673")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="d578d42f-cfc8-5a71-ab51-b77f024b39e8")}catch(e){}}();
 export function createAlarmSession({ startAlarm, setAlarmVibrating, logDebug }) {
     const sideStates = { left: {}, right: {} };
     const cancelVibrationEndTimer = (side) => {
@@ -53,6 +53,18 @@ export function createAlarmSession({ startAlarm, setAlarmVibrating, logDebug }) 
         await setAlarmVibrating(side, false);
         return wasVibrating ? sideStates[side].lastAlarm : undefined;
     };
+    // The firmware's clear command stops the vibration on both sides. Call this for the side that
+    // did not ask for it: if its alarm was still going off it is started again, so one sleeper
+    // dismissing their alarm does not silence the other's. Returns whether it restarted one.
+    const restartIfVibrating = async (side) => {
+        const { lastAlarm, vibrationEndTimer } = sideStates[side];
+        if (vibrationEndTimer === undefined || !lastAlarm)
+            return false;
+        logDebug(`Restarting ${side} alarm, which the other side's dismissal stopped`);
+        cancelVibrationEndTimer(side);
+        await startAlarm(lastAlarm);
+        return true;
+    };
     // Re-runs the last alarm of a side after snoozeSeconds. Returns false when there is nothing to snooze.
     const snooze = (side, snoozeSeconds) => {
         const { lastAlarm } = sideStates[side];
@@ -67,7 +79,7 @@ export function createAlarmSession({ startAlarm, setAlarmVibrating, logDebug }) 
         return true;
     };
     const hasPendingSnooze = (side) => sideStates[side].snoozeTimer !== undefined;
-    return { alarmStarted, alarmCleared, snooze, cancelSnooze, hasPendingSnooze };
+    return { alarmStarted, alarmCleared, restartIfVibrating, snooze, cancelSnooze, hasPendingSnooze };
 }
 // Decides what an alarm tap does. While an alarm vibrates it dismisses or snoozes it;
 // otherwise it toggles the side's power if configured to.
@@ -86,4 +98,4 @@ export async function handleAlarmGesture(tapConfig, deps) {
     return 'none';
 }
 //# sourceMappingURL=alarmSession.js.map
-//# debugId=129b00f2-104e-5d2a-a913-c91cfcfe5673
+//# debugId=d578d42f-cfc8-5a71-ab51-b77f024b39e8
