@@ -1,6 +1,6 @@
 // Upper bound on repeats from one poll, so a counter glitch cannot swing the temperature wildly
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="52aae6e0-fc5a-54bd-be93-4ae403512215")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="78455a08-9b90-5eb9-8375-00c28dac68a5")}catch(e){}}();
 export const MAX_GESTURES_PER_POLL = 3;
 // How many times a gesture happened between two polls of Frank's cumulative counter.
 // A counter that went backwards means Frank restarted: fire nothing, the caller rebases on nextCount.
@@ -19,7 +19,7 @@ export function stepTargetTemperature(targetTemperatureF, tapConfig, { minTemper
 }
 // Runs every new gesture for one side, one at a time. Each temperature step starts from the
 // result of the previous one, so two quick taps move the target twice instead of racing.
-// Alarm gestures (dismiss, snooze, power toggle) run once even if the counter moved further,
+// Alarm gestures (dismiss, power toggle) run once even if the counter moved further,
 // because repeating them would undo the first one.
 // Returns the target temperature after all steps.
 export async function processSideGestures({ previousTaps, nextTaps, tapSettings, targetTemperatureF, temperatureLimits, actions, }) {
@@ -44,4 +44,4 @@ export async function processSideGestures({ previousTaps, nextTaps, tapSettings,
     return currentTargetF;
 }
 //# sourceMappingURL=gestures.js.map
-//# debugId=52aae6e0-fc5a-54bd-be93-4ae403512215
+//# debugId=78455a08-9b90-5eb9-8375-00c28dac68a5
