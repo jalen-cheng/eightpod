@@ -418,7 +418,8 @@ scp -P 8822 root@<pod-ip>:/persistent/free-sleep-data/temperature_calibration.js
 
 ## Part 9: read-only checks for remote access
 
-These change nothing. Record all four outputs.
+These change nothing. Record all four outputs. What they showed on the test Pod, and what to do
+with them, is in [REMOTE_ACCESS.md](REMOTE_ACCESS.md).
 
 ```
 uname -m

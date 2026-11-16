@@ -3,11 +3,13 @@
 What this fork (`jalen-cheng/free-sleep`) changes from upstream Free Sleep, how it compares with
 Eight Sleep's own app, and what is left to do. The fork targets a Pod 5.
 
-Everything listed as done is merged to `main`. It was checked with unit tests and the demo UI.
-What has been confirmed on the Pod itself is listed under
-[Confirmed on the Pod so far](#confirmed-on-the-pod-so-far); nothing else has run on one yet.
+Everything listed as done is merged to `main` and installed on the test Pod. It was checked with
+unit tests and the demo UI. What has been confirmed on the Pod itself is listed under
+[Confirmed on the Pod so far](#confirmed-on-the-pod-so-far); the rest runs there but has not been
+deliberately tested.
 
 - [Confirmed on the Pod so far](#confirmed-on-the-pod-so-far)
+- [Calibration results](#calibration-results)
 - [Changes by pull request](#changes-by-pull-request)
 - [Compared with the Eight Sleep app](#compared-with-the-eight-sleep-app)
 - [Checklist for the first day on the Pod](#checklist-for-the-first-day-on-the-pod)
@@ -16,7 +18,7 @@ What has been confirmed on the Pod itself is listed under
 
 ## Confirmed on the Pod so far
 
-Pod 5, control board 830-00067-00 REV-17. Last updated 2026-11-14.
+Pod 5, control board 830-00067-00 REV-17. Last updated 2026-11-16.
 
 - [x] **The bootloader is not locked.** `Hit any key to stop autoboot` appeared and Ctrl+C stopped it.
 - [x] **The serial header is J7**, the lower of the two pad grids on the board's right edge.
@@ -33,10 +35,42 @@ Pod 5, control board 830-00067-00 REV-17. Last updated 2026-11-14.
 - [x] **Sensor readings arrive on `rawmem.*`, not `raw.*`.** The `raw` stream that upstream's sleep analysis reads is empty on this firmware, so biometrics cannot work here as written. Temperatures are hundredths of a degree Celsius.
 - [x] **The firmware reports its own target water temperature** (`rawmem.frz.therm`, in °C). At level +100 it aims for 42.0°C (107.6°F), where Free Sleep shows 110°F.
 - [x] "Rise" vibration is too weak to feel at the start; "double" is felt clearly.
-- [ ] Still to do: the calibration run, alarms end to end (ramp-up, long alarms, dismiss, auto-off), the redesigned schedule page, and the update path.
+- [x] **Updates work** with `fs-update` over SSH, from this fork, with the internet block restored afterwards.
+- [x] **Shortcuts work from an iPhone**: setting the temperature by -10..+10, setting a one-time alarm, and reading the bed's state.
+- [x] **Calibration run done.** See [Calibration results](#calibration-results).
+- [x] The firewall on this Pod cannot filter by program (`iptables -m owner` is missing), which shapes the [remote access](REMOTE_ACCESS.md) options.
+- [ ] Still to do: alarms end to end (ramp-up, long alarms, dismiss, warm-up, auto-off), saving from the redesigned schedule page, the one-time alarm firing, and buttons with the sides linked.
 
 Seen along the way: the serial line drops the odd character, password prompts show nothing while
 typing, and the clock is unset before Wi-Fi (`password changed in future`).
+
+## Calibration results
+
+Run on the test Pod 5 on 2026-11-16. For each firmware level the script recorded the water
+temperature the firmware says it is aiming for. Both sides gave identical figures.
+
+| Dial | Firmware level | Firmware aims for | Free Sleep shows |
+|---|---|---|---|
+| -10 | -100 | 10.0°C / 50.0°F | 55.0°F |
+| -9 | -90 | 16.2°C / 61.2°F | 57.8°F |
+| -5 | -50 | 21.0°C / 69.8°F | 68.8°F |
+| 0 | 0 | 27.0°C / 80.6°F | 82.5°F |
+| +5 | +50 | 36.0°C / 96.8°F | 96.3°F |
+| +10 | +100 | 42.0°C / 107.6°F | 110.0°F |
+
+What it shows:
+
+- **Three straight stretches, not one.** From -9 to 0 each dial step is 1.2°C (2.2°F). From 0 to +5
+  each step is 1.8°C (3.2°F). From +5 to +10 each step is 1.2°C again.
+- **-10 is a special case**: it jumps to 10°C, 6.2°C below -9, which reads as "as cold as possible".
+- **Free Sleep's °F figures are off by up to 5°F**, most at the two ends and around neutral.
+- These are the firmware's targets, not measurements of the water. The optional `--measure` run,
+  which checks the water reaches them, has not been done.
+
+The full output is in [pod5_temperature_calibration.json](pod5_temperature_calibration.json).
+
+Not yet applied: Free Sleep still spreads the levels evenly over 55 to 110°F. The -10 to +10 display is
+unaffected, because it is the firmware's own scale.
 
 ## Changes by pull request
 
@@ -69,6 +103,24 @@ typing, and the clock is unset before Wi-Fi (`password changed in future`).
 | [#11](https://github.com/jalen-cheng/free-sleep/pull/11) | Docs | Findings from the project's Discord and other Pod 5 owners, with sources. |
 | [#12](https://github.com/jalen-cheng/free-sleep/pull/12) | Feature | Pod 5 side buttons. A monitor follows the firmware's log, where a Pod 5 reports each press, and runs the same settings the tap gestures use. Holding the middle button two seconds switches the side on or off. Settings name the buttons on a Pod 5. |
 | [#13](https://github.com/jalen-cheng/free-sleep/pull/13) | Docs | Walkthrough corrections from the first real install steps: the J7 header, versions from the boot log, serial quirks, checking the clock before the HTTPS download, and installing Biometrics before the block. |
+| [#14](https://github.com/jalen-cheng/free-sleep/pull/14) | Docs | This file brought up to date. |
+| [#15](https://github.com/jalen-cheng/free-sleep/pull/15) | Fixes | Installer reads the firmware socket path from the `frank` service when `frank.sh` is missing (Pod 5). Found on the first real install. |
+| [#16](https://github.com/jalen-cheng/free-sleep/pull/16) | Docs | Walkthrough: a Pod 5 already has a Wi-Fi profile, so the upstream Wi-Fi step is skipped. Records what the install confirmed. |
+| [#17](https://github.com/jalen-cheng/free-sleep/pull/17) | Docs | Walkthrough explains `fs-update`, shutting down, and reconnecting over SSH. |
+| [#18](https://github.com/jalen-cheng/free-sleep/pull/18) | Fixes | Button reader can read the firmware log (journal group), long holds are recognised, and updates work without Python's `json` and `sqlite3` (database backup falls back to Node). |
+| [#19](https://github.com/jalen-cheng/free-sleep/pull/19) | Fixes | Quick button presses all count, a long hold no longer undoes itself, and the app refreshes the Pod's state every 5 seconds. |
+| [#20](https://github.com/jalen-cheng/free-sleep/pull/20) | Feature | Only a hold of the middle button switches power. Linked sides apply to the buttons. The dial is blue when cooling. Alarm warm-up (15, 30 or 45 minutes before) and switching the side off when the alarm is dismissed. |
+| [#21](https://github.com/jalen-cheng/free-sleep/pull/21) | Feature | Schedule page redesigned as one night's list of events, with alarm options in their own dialog. Alarms run until dismissed, up to 30 minutes, by chaining the firmware's 3-minute limit. |
+| [#22](https://github.com/jalen-cheng/free-sleep/pull/22) | Fix | Lint error in the alarm scheduler. |
+| [#23](https://github.com/jalen-cheng/free-sleep/pull/23) | Feature | + or - switches a side on when it is off. |
+| [#24](https://github.com/jalen-cheng/free-sleep/pull/24) | Feature, fixes | Day picker (every day, weekdays / weekend, each day). `POST /api/alarm/time` for shortcuts. Warm-up temperature shown only when a warm-up time is chosen; dial labels no longer covered. |
+| [#25](https://github.com/jalen-cheng/free-sleep/pull/25) | Feature | The alarm time request sets a one-off alarm unless days are given. |
+| [#26](https://github.com/jalen-cheng/free-sleep/pull/26) | Tooling | Calibration reads the firmware's live stream (`rawmem.*`) and takes ten minutes. |
+| [#27](https://github.com/jalen-cheng/free-sleep/pull/27) | Feature | One-time alarm on the schedule page. "Bed turns off" can follow the alarm. `shiftMinutes` moves the next alarm; a cancel request. |
+| [#28](https://github.com/jalen-cheng/free-sleep/pull/28) | Feature, docs | `POST /api/deviceStatus/dial` sets a side by -10..+10. Shortcuts guide cut to the essentials. |
+| [#29](https://github.com/jalen-cheng/free-sleep/pull/29) | Feature | Shortcut requests default to both sides and follow linked sides. |
+| [#30](https://github.com/jalen-cheng/free-sleep/pull/30) | Feature | Alarm times are read however a phone writes them (AM/PM, full dates). `GET /api/deviceStatus/dial` reports the bed in one sentence. |
+| [#31](https://github.com/jalen-cheng/free-sleep/pull/31) | Docs | README introduces the fork; this file and the walkthrough updated; calibration results and remote access options written up. |
 
 ## Compared with the Eight Sleep app
 
@@ -76,17 +128,17 @@ The Eight Sleep column is from memory and public material, not from testing the 
 
 | Area | Eight Sleep app | This fork |
 |---|---|---|
-| Temperature | Level -10 to +10, no units | °F, °C or level. The °F figures are an even spread over 55-110°F until calibrated. |
+| Temperature | Level -10 to +10, no units | °F, °C or level. The °F figures are an even spread over 55-110°F; the measured values differ by up to 5°F (see above). |
 | Automatic adjustment | Autopilot changes temperature overnight | None. Fixed times and temperatures per day. |
-| Schedules | Bedtime, night and wake phases | Per-day power on/off, any number of timed changes, copy to other days. |
+| Schedules | Bedtime, night and wake phases | One night as a list of events: bedtime, any number of timed changes, alarm, bed off. Saved for every day, weekdays / weekend, or each day. |
 | Both sides together | Per account | Link button for temperature, power and schedules. |
-| Alarm | Vibration and thermal, snooze in app | Vibration with an alarm temperature. Snooze only from the bed, no snooze button in the app. |
-| Side buttons (Pod 5) | + warms, - cools, middle is configurable | + and - step the temperature, the middle button dismisses or snoozes an alarm, and holding it two seconds switches the side on or off. Built from other owners' reports; unverified on a Pod. |
+| Alarm | Vibration and thermal, snooze in app | Vibration until dismissed (up to 30 min), optional warm-up before it, bed off on dismissal, one-time alarms. Snooze only from the bed, no snooze button in the app. |
+| Side buttons (Pod 5) | + warms, - cools, middle is configurable | + and - step the temperature, any button dismisses or snoozes a vibrating alarm, and holding the middle button two seconds switches the side on or off. |
 | Sleep data | Stages, score, snoring | Time in bed, heart rate, HRV, breathing, movement. |
 | Base and speakers | Elevation, snore mitigation, audio | Not supported. |
-| Remote access | Anywhere, through Eight Sleep's cloud | Home network only. Tailscale is planned, not built. |
+| Remote access | Anywhere, through Eight Sleep's cloud | Home network only. Options with Tailscale are in [REMOTE_ACCESS.md](REMOTE_ACCESS.md); none is set up yet. |
 | Internet | Always connected, automatic firmware updates | Blocked at the firewall, updater disabled. |
-| Automation | None | Local REST API, Apple Shortcuts guide. |
+| Automation | None | Local REST API, with short requests made for Apple Shortcuts (temperature, alarm, status). |
 
 ## Checklist for the first day on the Pod
 
@@ -140,7 +192,7 @@ The full walkthrough, with every command and what to expect, is in [POD5_FIRST_D
 - [ ] `cat /etc/free-sleep/update_source.conf` still names this fork.
 - [ ] `curl -m 5 https://example.com` still fails afterwards.
 
-### Calibration (needs the bed empty for about two hours)
+### Calibration (about ten minutes)
 - [ ] `cd /home/dac/free-sleep/biometrics/temperature_calibration && /home/dac/venv/bin/python collect_temperature_calibration.py`
 - [ ] Keep `/persistent/free-sleep-data/temperature_calibration.json`.
 
@@ -179,11 +231,11 @@ Searched 2026-11-13. These are other people's reports, not verified here.
 ## Later
 
 ### Depends on what the Pod shows
-- [ ] **Buttons.** The Pod 5 button reader is built from other owners' reports of the log format. Confirm it against the lines your Pod prints, and adjust the patterns in `server/src/8sleep/buttonEvents.ts` if they differ.
 - [ ] **Dismiss.** If sending `ALARM_CLEAR` with a side stops a vibrating alarm, switch dismiss and snooze to it.
 - [ ] **Pod 4 tap fields.** Treat a large jump in a tap field as one tap, for firmware that reports a time instead of a count.
-- [ ] **Calibration.** Confirm the sensor unit (assumed hundredths of a degree Celsius), choose which sensor defines "the temperature", and replace the even 55-110°F spread in `loadDeviceStatus.ts` and `updateDeviceStatus.ts` with the measured curve, stored per Pod.
-- [ ] **Remote access.** If the read-only checks pass, run Tailscale on the Pod behind a "Remote access" switch, with only Tailscale's own traffic allowed out.
+- [ ] **Calibration.** Replace the even 55-110°F spread in `loadDeviceStatus.ts`, `updateDeviceStatus.ts` and the app's conversions with the measured curve above, so °F and °C show what the firmware aims for.
+- [ ] **Remote access.** Pick and set up one of the options in [REMOTE_ACCESS.md](REMOTE_ACCESS.md).
+- [ ] **Biometrics.** Point the sleep analysis at the `rawmem.*` subjects this firmware publishes.
 
 ### Known gaps
 - [ ] No snooze button or "snoozed" indicator in the app.
@@ -191,6 +243,8 @@ Searched 2026-11-13. These are other people's reports, not verified here.
 - [ ] Optionally let any press stop a vibrating alarm.
 - [ ] In Level, tap steps are stored as whole °F (3, 6 or 8), so many presses in a row can drift by a level.
 - [ ] The app's Update button compares against upstream's version, not the fork's. Use `fs-update` over SSH.
+- [ ] A one-time alarm has no warm-up and is skipped if the side is off at that time.
+- [ ] The Pod's address is whatever the router hands out. Reserve it in the router; there is no `.local` name.
 - [ ] Node tests (`tests/*.test.mjs`) do not run in CI, and no CI runs on the fork.
 - [ ] Hardware differences between Pod 3, 4 and 5 are checked ad hoc; one capabilities table per model would replace those checks.
 - [ ] Not started, by choice: an iOS app wrapper.
