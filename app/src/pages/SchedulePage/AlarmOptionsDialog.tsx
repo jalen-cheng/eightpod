@@ -1,5 +1,5 @@
 import {
-  Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem, Slider, Switch, TextField,
+  Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem, Slider, TextField,
   ToggleButton, ToggleButtonGroup, Typography,
 } from '@mui/material';
 import _ from 'lodash';
@@ -36,8 +36,8 @@ type AlarmOptionsDialogProps = {
   onClose: () => void;
 };
 
-// Everything about the alarm except its time: how it vibrates, how long for, the warm-up before
-// it, and whether dismissing it turns the side off. Changes go into the schedule being edited
+// Everything about the alarm except its time: how it vibrates, how long for, and the warm-up
+// before it. Changes go into the schedule being edited
 // and are saved with it.
 // eslint-disable-next-line react/no-multi-comp
 export default function AlarmOptionsDialog({ open, onClose }: AlarmOptionsDialogProps) {
@@ -120,14 +120,6 @@ export default function AlarmOptionsDialog({ open, onClose }: AlarmOptionsDialog
             />
           </OptionRow>
         ) }
-
-        <OptionRow label="Turn this side off when dismissed">
-          <Switch
-            checked={ alarm.turnOffAfterDismiss ?? false }
-            onChange={ (event) => updateAlarm({ turnOffAfterDismiss: event.target.checked }) }
-            slotProps={ { input: { 'aria-label': 'Turn this side off when the alarm is dismissed' } } }
-          />
-        </OptionRow>
       </DialogContent>
       <DialogActions>
         <Button onClick={ onClose }>Done</Button>

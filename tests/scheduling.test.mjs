@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { test } from 'node:test';
 import { isPowerScheduleDurationValid } from '../app/src/pages/SchedulePage/scheduleValidation.ts';
-import { DAYS_OF_WEEK, getDayIndexForSchedule, subtractMinutesFromTime } from '../server/src/jobs/scheduleTiming.ts';
+import { DAYS_OF_WEEK, findNextScheduledAlarm, getDayIndexForSchedule, subtractMinutesFromTime } from '../server/src/jobs/scheduleTiming.ts';
 
 const requireServer = createRequire(new URL('../server/package.json', import.meta.url));
 const { RecurrenceRule } = requireServer('node-schedule');
@@ -92,4 +92,24 @@ test('a warm-up before an early alarm lands on the morning after power-on', () =
   const warmUpTime = subtractMinutesFromTime('00:10', 30);
   assert.equal(DAYS_OF_WEEK[getDayIndexForSchedule('sunday', warmUpTime, '22:00')], 'sunday');
   assert.equal(DAYS_OF_WEEK[getDayIndexForSchedule('sunday', '00:10', '22:00')], 'monday');
+});
+
+test('the next scheduled alarm is the soonest enabled one, on the morning after its night', () => {
+  const requireMoment = createRequire(new URL('../server/package.json', import.meta.url));
+  const moment = requireMoment('moment-timezone');
+  const night = (alarmTime, isAlarmOn) => ({
+    power: { enabled: true, on: '22:00', off: '08:00' },
+    alarm: { enabled: isAlarmOn, time: alarmTime },
+  });
+  const sideSchedule = Object.fromEntries(DAYS_OF_WEEK.map(day => [day, night('07:00', false)]));
+  // Wednesday 2026-11-11 23:00 in New York
+  const now = moment.tz('2026-11-11T23:00:00', 'America/New_York');
+  assert.equal(findNextScheduledAlarm(sideSchedule, now), undefined);
+
+  sideSchedule.wednesday = night('06:30', true);
+  sideSchedule.friday = night('09:00', true);
+  assert.equal(findNextScheduledAlarm(sideSchedule, now).format(), '2026-11-12T06:30:00-05:00');
+  // Once Thursday's alarm has gone off, the next is Saturday morning (Friday's night)
+  const afterAlarm = moment.tz('2026-11-12T06:31:00', 'America/New_York');
+  assert.equal(findNextScheduledAlarm(sideSchedule, afterAlarm).format(), '2026-11-14T09:00:00-05:00');
 });

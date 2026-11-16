@@ -1,5 +1,5 @@
 /* eslint-disable react/no-multi-comp */
-import { Box, Button, IconButton, Paper, Switch, Typography } from '@mui/material';
+import { Box, Button, IconButton, MenuItem, Paper, Switch, TextField, Typography } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
 import TuneIcon from '@mui/icons-material/Tune';
@@ -18,6 +18,12 @@ const COOL_COLOR = '#2196f3';
 const WARM_COLOR = '#db5858';
 const SECONDS_PER_MINUTE = 60;
 const NEW_CHANGE_TEMPERATURE_F = 70;
+// When the bed turns off with the alarm, this is how long after the alarm time it turns off
+// anyway if the alarm is never dismissed. Longer than the longest alarm.
+const OFF_AFTER_ALARM_MINUTES = 60;
+
+const addMinutes = (time: Time, minutes: number): Time => moment(time, 'HH:mm').add(minutes, 'minutes').format('HH:mm');
+const formatClockTime = (time: Time) => moment(time, 'HH:mm').format('h:mm A');
 
 type TimelineRowProps = PropsWithChildren<{
   title: string;
@@ -86,6 +92,8 @@ export default function NightTimeline() {
     .sort(([timeA], [timeB]) => minutesAfterBedtime(timeA, power.on) - minutesAfterBedtime(timeB, power.on));
   const isAlarmTimeValid = isDuringNight(alarm.time, selectedSchedule);
   const preWarmMinutes = alarm.preWarmMinutes ?? 0;
+  // With an alarm, the bed can turn off when it is dismissed, so no off time needs choosing
+  const turnsOffWithAlarm = alarm.enabled && (alarm.turnOffAfterDismiss ?? false);
 
   const replaceChange = (oldTime: Time, newTime: Time, temperatureF: number) => {
     const nextTemperatures = { ...temperatures };
@@ -108,26 +116,45 @@ export default function NightTimeline() {
     updateSelectedTemperatures({ ...temperatures, [nextTime]: NEW_CHANGE_TEMPERATURE_F });
   };
 
-  const setAlarmTime = (time: Time) => {
-    setValidations({ alarmTimeIsValid: isDuringNight(time, selectedSchedule) });
-    updateSelectedSchedule({ alarm: { time } });
+  // Applies a change to the alarm and/or the off time, and rechecks that the alarm is in the night
+  const updateAlarmAndOffTime = (alarmChanges: Partial<DailySchedule['alarm']>, off: Time = power.off) => {
+    const nextAlarm = { ...alarm, ...alarmChanges };
+    const nextSchedule = { ...selectedSchedule, alarm: nextAlarm, power: { ...power, off } };
+    setValidations({ alarmTimeIsValid: !nextAlarm.enabled || isDuringNight(nextAlarm.time, nextSchedule) });
+    updateSelectedSchedule({ alarm: alarmChanges, power: { off } });
   };
 
-  // Switching the alarm on gives it sensible settings if it has never been set up:
-  // a gentle ramp-up that keeps going until dismissed
+  // The off time follows the alarm while the bed turns off with it
+  const setAlarmTime = (time: Time) => {
+    updateAlarmAndOffTime({ time }, turnsOffWithAlarm ? addMinutes(time, OFF_AFTER_ALARM_MINUTES) : power.off);
+  };
+
+  // Switching the alarm on gives it sensible settings if it has never been set up: a gentle
+  // ramp-up that keeps going until dismissed, after which the bed turns off
   const setAlarmEnabled = (enabled: boolean) => {
     const needsDefaults = enabled && alarm.duration < DEFAULT_ALARM_SECONDS;
-    setValidations({ alarmTimeIsValid: !enabled || isDuringNight(alarm.time, selectedSchedule) });
-    updateSelectedSchedule({
-      alarm: needsDefaults ? { enabled, duration: DEFAULT_ALARM_SECONDS, vibrationPattern: 'rise' } : { enabled },
-    });
+    if (!needsDefaults) return updateAlarmAndOffTime({ enabled });
+    updateAlarmAndOffTime(
+      { enabled, duration: DEFAULT_ALARM_SECONDS, vibrationPattern: 'rise', turnOffAfterDismiss: true },
+      addMinutes(alarm.time, OFF_AFTER_ALARM_MINUTES),
+    );
+  };
+
+  const setTurnsOffWithAlarm = (turnOffAfterDismiss: boolean) => {
+    updateAlarmAndOffTime(
+      { turnOffAfterDismiss },
+      turnOffAfterDismiss ? addMinutes(alarm.time, OFF_AFTER_ALARM_MINUTES) : power.off,
+    );
   };
 
   const alarmSummary = [
     `${PATTERN_NAMES[alarm.vibrationPattern]}, up to ${formatAlarmLength(alarm.duration)}`,
     preWarmMinutes > 0 && `warms to ${describeTemperature(alarm.alarmTemperature, temperatureFormat)} ${preWarmMinutes} min before`,
-    alarm.turnOffAfterDismiss && 'bed off when dismissed',
   ].filter(Boolean).join(' · ');
+
+  const offSubtitle = !isPowerScheduleDurationValid(power.on, power.off)
+    ? 'Must differ from bedtime'
+    : turnsOffWithAlarm ? `Or at ${formatClockTime(power.off)} if it is never dismissed` : undefined;
 
   return (
     <Paper sx={ { p: { xs: 2, sm: 2.5 }, width: '100%' } }>
@@ -204,18 +231,34 @@ export default function NightTimeline() {
           ) }
         </TimelineRow>
 
-        <TimelineRow
-          title="Bed turns off"
-          subtitle={ isPowerScheduleDurationValid(power.on, power.off) ? undefined : 'Must differ from bedtime' }
-          color="text.disabled"
-        >
-          <TimeField
-            label="Bed turns off"
-            value={ power.off }
-            onChange={ (off) => updateSelectedSchedule({ power: { off } }) }
-            disabled={ disabled }
-            error={ !isPowerScheduleDurationValid(power.on, power.off) }
-          />
+        <TimelineRow title="Bed turns off" subtitle={ offSubtitle } color="text.disabled">
+          { alarm.enabled && (
+            <TextField
+              select
+              size="small"
+              value={ turnsOffWithAlarm ? 'alarm' : 'time' }
+              onChange={ (event) => setTurnsOffWithAlarm(event.target.value === 'alarm') }
+              disabled={ disabled }
+              sx={ { minWidth: 0, flexShrink: 0 } }
+              slotProps={ {
+                htmlInput: { 'aria-label': 'When the bed turns off' },
+                // Shown short next to the time field, which says the rest
+                select: { renderValue: (value) => (value === 'alarm' ? 'When the alarm is dismissed' : 'At') },
+              } }
+            >
+              <MenuItem value="alarm">When the alarm is dismissed</MenuItem>
+              <MenuItem value="time">At a set time</MenuItem>
+            </TextField>
+          ) }
+          { !turnsOffWithAlarm && (
+            <TimeField
+              label="Bed turns off"
+              value={ power.off }
+              onChange={ (off) => updateAlarmAndOffTime({}, off) }
+              disabled={ disabled }
+              error={ !isPowerScheduleDurationValid(power.on, power.off) }
+            />
+          ) }
         </TimelineRow>
       </Box>
       <AlarmOptionsDialog open={ areAlarmOptionsOpen } onClose={ () => setAreAlarmOptionsOpen(false) }/>

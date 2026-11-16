@@ -41,6 +41,20 @@ Notes:
 - You can change both sides in one request: `{"left": {"isOn": false}, "right": {"isOn": false}}`
 - If one side is in away mode, changes to either side apply to both sides.
 
+## Fixed actions or ones that ask you
+
+A shortcut can do either:
+
+- **A fixed action**: the JSON body is typed in once, and running the shortcut always does that.
+  "Dismiss my alarm", "Alarm an hour later" and "Bed off" are like this. Good for the Home Screen,
+  the Action button, and Automations.
+- **An action with a value you give each time**: put an **Ask for Input** (a number, a time, or text)
+  or a **Choose from Menu** action before **Get Contents of URL**, then use its result as the value of
+  a JSON field. Run from Siri, it asks you out loud. "Set bed alarm" below and "set my side to
+  ... degrees" are like this.
+
+Any field in any example on this page can be filled either way.
+
 ## Change your alarm time
 
 `POST http://<pod-ip>:3000/api/alarm/time` sets an alarm without opening the app.
@@ -53,18 +67,26 @@ or tomorrow, whichever comes first, and your weekly schedule is left alone. Run 
 | --- | --- |
 | One-off alarm at the next 6:30, left side | `{"side": "left", "time": "06:30"}` |
 | One-off alarm at the next 6:30, both sides | `{"side": "both", "time": "06:30"}` |
+| Move your next alarm an hour later, tonight only | `{"side": "left", "shiftMinutes": 60}` |
+| Move your next alarm 30 minutes earlier, tonight only | `{"side": "left", "shiftMinutes": -30}` |
 | Change the weekly alarm to 8:00 on the weekend | `{"side": "left", "time": "08:00", "days": ["saturday", "sunday"]}` |
 | Switch the weekly alarm off on Mondays | `{"side": "left", "time": "06:30", "days": ["monday"], "enabled": false}` |
 
 - `time` is 24-hour `HH:mm`, a Text field. `side` is `left`, `right` or `both`, a Text field.
 - Adding `days` (an Array of Text) changes the weekly schedule for those days instead of setting a one-off.
-- The reply says what was set, including `firesAt` for a one-off.
+- `shiftMinutes` is a Number field, used instead of `time`. It moves your next alarm (a one-off you
+  already set, otherwise the next scheduled one) and can be run again to move it further. It needs an
+  alarm within the next 24 hours, and replies with an error if there is none.
+- The reply says what was set, including `firesAt` for each side of a one-off.
+- To drop a one-off and go back to the schedule: `POST http://<pod-ip>:3000/api/alarm/time/cancel`
+  with `{"side": "left"}`.
+- The app shows and sets the same one-off under **Schedules > One-time alarm**.
 
 Things to know about a one-off:
 - The side has to be on at that time, or the alarm is skipped.
 - It uses that day's vibration settings from the schedule, but not its warm-up.
 - A scheduled alarm that would have gone off before it is skipped. One scheduled for later that same
-  morning still goes off.
+  morning still goes off, unless the one-off was made by moving that alarm earlier with `shiftMinutes`.
 
 A shortcut that asks for the time each time you run it:
 
