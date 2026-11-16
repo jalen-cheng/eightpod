@@ -52,7 +52,7 @@ type ProcessSideGesturesArgs = {
 
 // Runs every new gesture for one side, one at a time. Each temperature step starts from the
 // result of the previous one, so two quick taps move the target twice instead of racing.
-// Alarm gestures (dismiss, snooze, power toggle) run once even if the counter moved further,
+// Alarm gestures (dismiss, power toggle) run once even if the counter moved further,
 // because repeating them would undo the first one.
 // Returns the target temperature after all steps.
 export async function processSideGestures({

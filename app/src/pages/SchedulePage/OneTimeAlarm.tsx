@@ -71,7 +71,6 @@ export default function OneTimeAlarm() {
           </Button>
         </Box>
       ) }
-      <Typography variant="caption" sx={ { color: 'text.secondary' } }>The side has to be on at that time.</Typography>
     </Paper>
   );
 }

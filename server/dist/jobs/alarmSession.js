@@ -1,30 +1,23 @@
 // Creates the alarm state tracker. The Pod cannot tell us whether an alarm is vibrating,
 // so this is the single owner of that knowledge and of every timer attached to it.
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="d578d42f-cfc8-5a71-ab51-b77f024b39e8")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="43a77361-0bce-5bc8-99c3-6065f9338c5a")}catch(e){}}();
 export function createAlarmSession({ startAlarm, setAlarmVibrating, logDebug }) {
     const sideStates = { left: {}, right: {} };
     const cancelVibrationEndTimer = (side) => {
         clearTimeout(sideStates[side].vibrationEndTimer);
         sideStates[side].vibrationEndTimer = undefined;
     };
-    const cancelSnooze = (side) => {
-        if (sideStates[side].snoozeTimer)
-            logDebug(`Cancelling pending snooze for ${side}`);
-        clearTimeout(sideStates[side].snoozeTimer);
-        sideStates[side].snoozeTimer = undefined;
-    };
     // Call when an alarm has been sent to the Pod. Replaces the previous end-of-vibration timer,
     // so an older alarm's timer cannot clear the flag while this one is still vibrating.
     //
     // The firmware only vibrates for a few minutes per request. For a longer alarm, pass the rest
     // of it as `continuation`: when this stretch ends it is started, and the alarm counts as
-    // vibrating throughout. Dismissing or snoozing cancels the timer, which ends the chain.
+    // vibrating throughout. Dismissing cancels the timer, which ends the chain.
     const alarmStarted = async (alarmJob, durationSeconds, { continuation, isContinuation = false } = {}) => {
         const { side } = alarmJob;
         cancelVibrationEndTimer(side);
-        cancelSnooze(side);
-        // A snooze re-runs the whole alarm, so later stretches must not replace it
+        // A restart re-runs the whole alarm, so later stretches must not replace it
         if (!isContinuation)
             sideStates[side].lastAlarm = alarmJob;
         await setAlarmVibrating(side, true);
@@ -49,7 +42,6 @@ export function createAlarmSession({ startAlarm, setAlarmVibrating, logDebug }) 
     const alarmCleared = async (side) => {
         const wasVibrating = sideStates[side].vibrationEndTimer !== undefined;
         cancelVibrationEndTimer(side);
-        cancelSnooze(side);
         await setAlarmVibrating(side, false);
         return wasVibrating ? sideStates[side].lastAlarm : undefined;
     };
@@ -65,30 +57,14 @@ export function createAlarmSession({ startAlarm, setAlarmVibrating, logDebug }) 
         await startAlarm(lastAlarm);
         return true;
     };
-    // Re-runs the last alarm of a side after snoozeSeconds. Returns false when there is nothing to snooze.
-    const snooze = (side, snoozeSeconds) => {
-        const { lastAlarm } = sideStates[side];
-        if (!lastAlarm)
-            return false;
-        cancelSnooze(side);
-        logDebug(`Snoozing ${side} alarm for ${snoozeSeconds}s`);
-        sideStates[side].snoozeTimer = setTimeout(() => {
-            sideStates[side].snoozeTimer = undefined;
-            void startAlarm(lastAlarm);
-        }, snoozeSeconds * 1_000);
-        return true;
-    };
-    const hasPendingSnooze = (side) => sideStates[side].snoozeTimer !== undefined;
-    return { alarmStarted, alarmCleared, restartIfVibrating, snooze, cancelSnooze, hasPendingSnooze };
+    return { alarmStarted, alarmCleared, restartIfVibrating };
 }
-// Decides what an alarm tap does. While an alarm vibrates it dismisses or snoozes it;
-// otherwise it toggles the side's power if configured to.
+// Decides what an alarm tap does. While an alarm vibrates it dismisses it; otherwise it toggles
+// the side's power if configured to. (The saved config still carries a snooze choice, which
+// upstream's settings define; it is not acted on.)
 export async function handleAlarmGesture(tapConfig, deps) {
     if (deps.isAlarmVibrating) {
-        // Dismiss first: it cancels any earlier snooze, then the new snooze is scheduled
         await deps.dismissAlarm();
-        if (tapConfig.behavior === 'snooze' && deps.snoozeAlarm(tapConfig.snoozeDuration))
-            return 'snoozed';
         return 'dismissed';
     }
     if (tapConfig.inactiveAlarmBehavior === 'power') {
@@ -98,4 +74,4 @@ export async function handleAlarmGesture(tapConfig, deps) {
     return 'none';
 }
 //# sourceMappingURL=alarmSession.js.map
-//# debugId=d578d42f-cfc8-5a71-ab51-b77f024b39e8
+//# debugId=43a77361-0bce-5bc8-99c3-6065f9338c5a

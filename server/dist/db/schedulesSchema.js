@@ -1,6 +1,6 @@
 // WARNING! - Any changes here MUST be the same between app/src/api & server/src/db/
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="97b84530-bbb6-5e3a-81bc-a6e437e9cc75")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="864e2c66-33ed-5ba2-9655-6822fff7ea8f")}catch(e){}}();
 import { z } from 'zod';
 import { MIN_TEMPERATURE_F } from './temperatureCurve.js';
 const timeRegexFormat = /^([01]\d|2[0-3]):([0-5]\d)$/;
@@ -21,7 +21,7 @@ export const AlarmSchema = z.object({
 export const AlarmJobSchema = AlarmSchema.extend({
     side: SideSchema,
     force: z.boolean().optional(),
-    // Switch the side off when this alarm is dismissed (not when it is snoozed or runs out)
+    // Switch the side off when this alarm is dismissed (not when it runs out)
     turnOffAfterDismiss: z.boolean().optional(),
 }).strict();
 export const AlarmScheduleSchema = AlarmSchema.extend({
@@ -59,4 +59,4 @@ export const SchedulesSchema = z.object({
     right: SideScheduleSchema,
 }).strict();
 //# sourceMappingURL=schedulesSchema.js.map
-//# debugId=97b84530-bbb6-5e3a-81bc-a6e437e9cc75
+//# debugId=864e2c66-33ed-5ba2-9655-6822fff7ea8f
