@@ -18,7 +18,7 @@
 #   sh setup_tailscale.sh regions       List every relay region code
 #   sh setup_tailscale.sh policy        Print the entry for your Tailscale policy file that makes
 #                                       all your devices use the Pod's relay regions
-#   sh setup_tailscale.sh sync-scripts  Refresh the root-owned script copies (run by install.sh)
+#   sh setup_tailscale.sh sync-scripts  Refresh the root-owned script copies and the units (run by install.sh)
 #   sh setup_tailscale.sh remove        Sign out and remove everything this script added
 #
 # Options (environment variables):
@@ -139,18 +139,20 @@ choose_relay_regions() {
   echo "Relay regions: $relay_regions"
 }
 
-# Writes the units: Tailscale itself, and the daily refresh of the relay addresses
+# Writes the units: Tailscale itself, and the daily refresh of the relay addresses.
+# Neither may ask for network-online.target: nothing else on the Pod does, and pulling it in
+# makes the boot wait two minutes for a network service the Pod does not use, which holds up
+# the bed's own firmware. Tailscale copes with starting before the network is up.
 write_units() {
   cat > "$TAILSCALE_UNIT_DIR/$TAILSCALE_SERVICE_NAME" <<EOF
 [Unit]
 Description=Tailscale for Free Sleep (userspace mode, relays only)
-After=network-online.target free-sleep-firewall.service
-Wants=network-online.target
+After=network.target free-sleep-firewall.service
 
 [Service]
 ExecStart=$TAILSCALE_BIN_DIR/tailscaled --tun=userspace-networking --statedir=$TAILSCALE_STATE_DIR --socket=/run/tailscale/tailscaled.sock --no-logs-no-support
 RuntimeDirectory=tailscale
-Restart=on-failure
+Restart=always
 RestartSec=10
 
 [Install]
@@ -160,7 +162,6 @@ EOF
   cat > "$TAILSCALE_UNIT_DIR/$TAILSCALE_REFRESH_SERVICE_NAME" <<EOF
 [Unit]
 Description=Refresh the Tailscale relay addresses the Free Sleep internet block allows
-After=network-online.target
 
 [Service]
 Type=oneshot
@@ -281,6 +282,8 @@ case "$ACTION" in
     # Nothing to do on a Pod without Tailscale
     if [ -d "$TAILSCALE_SCRIPTS_DIR" ]; then
       copy_refresh_scripts
+      # Rewritten too, so a fix to the units reaches Pods that already have Tailscale
+      write_units
     fi
     ;;
   remove)
