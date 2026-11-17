@@ -36,7 +36,7 @@ export default function AlarmNotification() {
     if (!settings || !schedules) return;
     const alarm = schedules[side][currentDay].alarm;
 
-    const hhMm = moment(alarm.time, 'HH:mm').format('hh:mm');
+    const hhMm = alarm.time;
     const amPm = moment(alarm.time, 'HH:mm').format('h:mm A');
     setScheduledAlarmTimeHhMm(hhMm);
     setScheduledAlarmTimeAmPm(amPm);
@@ -53,13 +53,15 @@ export default function AlarmNotification() {
         } else {
           setAlarmDisabled(false);
           setScheduledAlarmTimeAmPm(moment(alarmScheduleOverrides.timeOverride, 'HH:mm').format('h:mm A'));
-          setScheduledAlarmTimeHhMm(moment(alarmScheduleOverrides.timeOverride, 'HH:mm').format('hh:mm'));
+          setScheduledAlarmTimeHhMm(alarmScheduleOverrides.timeOverride);
         }
       }
     }
   }, [settings, schedules, side]);
 
   if (!power?.enabled || !alarm?.enabled || !settings) return null;
+  const oneTimeAlarm = settings[side].scheduleOverrides.alarm;
+  const hasOneTimeAlarm = !oneTimeAlarm.disabled && !!oneTimeAlarm.timeOverride && moment(oneTimeAlarm.expiresAt).isAfter(moment());
 
   return (
     <Alert
@@ -78,6 +80,7 @@ export default function AlarmNotification() {
         setOverrideOpen={ setOverrideOpen }
         alarmTimeLocalOverride={ alarmTimeLocalOverride }
         scheduledAlarmTimeHhMm={ scheduledAlarmTimeHhMm }
+        hasOneTimeAlarm={ hasOneTimeAlarm }
         setAlarmTimeLocalOverride={ setAlarmTimeLocalOverride }
       />
       <AlarmDisabledDialog

@@ -1,75 +1,78 @@
-import { Box, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
+import { ListSubheader, MenuItem, TextField } from '@mui/material';
 import { DayOfWeek } from '@api/schedulesSchema.ts';
 import { useAppStore } from '@state/appStore.tsx';
 import { LOWERCASE_DAYS } from './days.ts';
 import { useScheduleStore } from './scheduleStore.tsx';
 import { DayMode, WEEK_ORDER, getDayGroup } from './scheduleDays.ts';
 
-const MODE_NAMES: Record<DayMode, string> = {
-  everyDay: 'Every day',
-  weekdaysWeekend: 'Weekdays / weekend',
-  eachDay: 'Each day',
-};
+// One thing that can be opened and saved: a split of the week, and a day that stands for the
+// group it falls in.
+type ScheduleTarget = { key: string; label: string; dayMode: DayMode; day: DayOfWeek };
 
 const DAY_NAMES: Record<DayOfWeek, string> = {
-  monday: 'Mon', tuesday: 'Tue', wednesday: 'Wed', thursday: 'Thu', friday: 'Fri', saturday: 'Sat', sunday: 'Sun',
+  monday: 'Monday', tuesday: 'Tuesday', wednesday: 'Wednesday', thursday: 'Thursday',
+  friday: 'Friday', saturday: 'Saturday', sunday: 'Sunday',
 };
 
-// The tabs for a mode: one per schedule the week is split into. `day` is the day that is opened.
-const MODE_TABS: Record<DayMode, { day: DayOfWeek; label: string }[]> = {
-  everyDay: [],
-  weekdaysWeekend: [{ day: 'monday', label: 'Weekdays' }, { day: 'saturday', label: 'Weekend' }],
-  eachDay: WEEK_ORDER.map(day => ({ day, label: DAY_NAMES[day] })),
-};
+// The choices, grouped by how the week is split
+const TARGET_GROUPS: { heading: string; targets: ScheduleTarget[] }[] = [
+  {
+    heading: 'One schedule for the week',
+    targets: [{ key: 'everyDay', label: 'Every day', dayMode: 'everyDay', day: 'monday' }],
+  },
+  {
+    heading: 'Weekdays and weekend',
+    targets: [
+      { key: 'weekdays', label: 'Weekdays', dayMode: 'weekdaysWeekend', day: 'monday' },
+      { key: 'weekend', label: 'Weekend', dayMode: 'weekdaysWeekend', day: 'saturday' },
+    ],
+  },
+  {
+    heading: 'A single day',
+    targets: WEEK_ORDER.map(day => ({ key: day, label: DAY_NAMES[day], dayMode: 'eachDay' as const, day })),
+  },
+];
+const ALL_TARGETS = TARGET_GROUPS.flatMap(group => group.targets);
 
-const toggleGroupSx = { width: '100%', '& .MuiToggleButton-root': { flex: 1, minWidth: 0, px: 0.5, whiteSpace: 'nowrap' } };
-
-// Chooses how the week is split into schedules, then which of them to look at.
-// "Same every day" needs no second choice, so most people only ever see one row.
+// The one control for which nights a schedule covers. Picking an entry both chooses how the week
+// is split and opens that schedule; saving then writes to exactly the days it names.
 export default function DayPicker() {
   const { isUpdating } = useAppStore();
   const { selectedDay, dayMode, setDayMode, selectDay, hasEdits } = useScheduleStore();
-  const tabs = MODE_TABS[dayMode];
-  // The tab whose group contains the opened day
-  const selectedTab = tabs.find(tab => getDayGroup(tab.day, dayMode).includes(selectedDay))?.day;
+
+  const coversOpenDay = (target: ScheduleTarget) => getDayGroup(target.day, target.dayMode).includes(selectedDay);
+  const selectedTarget = ALL_TARGETS.find(target => target.dayMode === dayMode && coversOpenDay(target));
+
+  // A target that covers the open day keeps what is on screen, so it can be chosen with unsaved
+  // edits (for example to save Monday's edits for every day). Any other opens a different
+  // schedule, which would throw the edits away, so it waits for Save or Discard.
+  const choose = (target: ScheduleTarget) => {
+    setDayMode(target.dayMode);
+    if (!coversOpenDay(target)) selectDay(LOWERCASE_DAYS.indexOf(target.day));
+  };
 
   return (
-    <Box sx={ { display: 'flex', flexDirection: 'column', gap: 1 } }>
-      <ToggleButtonGroup
-        exclusive
-        size="small"
-        value={ dayMode }
-        disabled={ isUpdating }
-        onChange={ (_event, newDayMode: DayMode | null) => { if (newDayMode !== null) setDayMode(newDayMode); } }
-        aria-label="How the week is split"
-        // Sized by their text: the middle label is the longest and would crowd its neighbours at equal widths
-        sx={ { ...toggleGroupSx, '& .MuiToggleButton-root': { flex: '1 1 auto', px: 1, whiteSpace: 'nowrap' } } }
-      >
-        { (Object.keys(MODE_NAMES) as DayMode[]).map(mode => (
-          <ToggleButton key={ mode } value={ mode }>{ MODE_NAMES[mode] }</ToggleButton>
-        )) }
-      </ToggleButtonGroup>
-
-      { tabs.length > 0 && (
-        <ToggleButtonGroup
-          exclusive
-          size="small"
-          value={ selectedTab }
-          // Switching would throw away what is on screen, so it waits for Save or Discard
-          disabled={ isUpdating || hasEdits }
-          onChange={ (_event, day: DayOfWeek | null) => { if (day !== null) selectDay(LOWERCASE_DAYS.indexOf(day)); } }
-          aria-label="Which schedule"
-          sx={ toggleGroupSx }
-        >
-          { tabs.map(tab => <ToggleButton key={ tab.day } value={ tab.day }>{ tab.label }</ToggleButton>) }
-        </ToggleButtonGroup>
-      ) }
-
-      { tabs.length > 0 && hasEdits && (
-        <Typography variant="caption" sx={ { color: 'text.secondary' } }>
-          Save or discard your changes to switch.
-        </Typography>
-      ) }
-    </Box>
+    <TextField
+      select
+      fullWidth
+      size="small"
+      label="Schedule for"
+      value={ selectedTarget?.key ?? '' }
+      disabled={ isUpdating }
+      onChange={ (event) => {
+        const target = ALL_TARGETS.find(candidate => candidate.key === event.target.value);
+        if (target) choose(target);
+      } }
+      helperText={ hasEdits ? 'Save or discard your changes to open a different schedule.' : undefined }
+    >
+      { TARGET_GROUPS.flatMap(group => [
+        <ListSubheader key={ group.heading }>{ group.heading }</ListSubheader>,
+        ...group.targets.map(target => (
+          <MenuItem key={ target.key } value={ target.key } disabled={ hasEdits && !coversOpenDay(target) }>
+            { target.label }
+          </MenuItem>
+        )),
+      ]) }
+    </TextField>
   );
 }

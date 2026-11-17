@@ -121,6 +121,7 @@ const getOneOffAlarmSettings = (settingsData: Settings, side: Side, firesAt: mom
   const dayKey = firesAt.clone().tz(settingsData.timeZone).format('dddd').toLowerCase() as DayOfWeek;
   return schedulesDB.data?.[side]?.[dayKey]?.alarm ?? {
     vibrationIntensity: 100,
+    duration: MAX_ALARM_SECONDS,
     vibrationPattern: 'rise' as const,
     turnOffAfterDismiss: undefined,
   };
@@ -139,12 +140,12 @@ export async function findLateAlarmEnd(side: Side, day: DayOfWeek): Promise<mome
 
   const oneOffFiresAt = getPendingOneOffAlarm(settingsData, side, now);
   if (oneOffFiresAt?.isBefore(windowEnd)) {
-    alarmEnds.push(oneOffFiresAt.clone().add(MAX_ALARM_SECONDS, 'seconds'));
+    alarmEnds.push(oneOffFiresAt.clone().add(getOneOffAlarmSettings(settingsData, side, oneOffFiresAt).duration, 'seconds'));
   }
   const { alarm, power } = schedulesDB.data[side][day];
   if (alarm.enabled && minutesAlarmIsAfterOff(alarm.time, power) > 0) {
     const firesAt = nextOccurrenceHhMm(settingsData.timeZone, alarm.time);
-    if (firesAt.isBefore(windowEnd)) alarmEnds.push(firesAt.clone().add(MAX_ALARM_SECONDS, 'seconds'));
+    if (firesAt.isBefore(windowEnd)) alarmEnds.push(firesAt.clone().add(alarm.duration, 'seconds'));
   }
   return alarmEnds.length > 0 ? moment.max(alarmEnds) : undefined;
 }
@@ -156,14 +157,14 @@ export function scheduleAlarmOverride(settingsData: Settings, side: Side) {
   logger.debug(`Alarm override is set! Scheduling alarm for ${next.format()}`);
 
   schedule.scheduleJob(`${side}-alarm-override-${timeOverride}`, next.toDate(), async () => {
-    const { vibrationIntensity, vibrationPattern, turnOffAfterDismiss } = getOneOffAlarmSettings(settingsData, side, next);
+    const { vibrationIntensity, duration, vibrationPattern, turnOffAfterDismiss } = getOneOffAlarmSettings(settingsData, side, next);
 
     // Asked for by hand, so it goes off even if the side is off by then (for example after
     // the schedule's off time) or in away mode
     await executeAlarm({
       side,
       vibrationIntensity,
-      duration: MAX_ALARM_SECONDS,
+      duration,
       vibrationPattern,
       turnOffAfterDismiss,
       force: true,
@@ -208,7 +209,7 @@ export const scheduleAlarm = (settingsData: Settings, side: Side, day: DayOfWeek
       await executeAlarm({
         side,
         vibrationIntensity: dailySchedule.alarm.vibrationIntensity,
-        duration: MAX_ALARM_SECONDS,
+        duration: dailySchedule.alarm.duration,
         vibrationPattern: dailySchedule.alarm.vibrationPattern,
         turnOffAfterDismiss: dailySchedule.alarm.turnOffAfterDismiss,
       });

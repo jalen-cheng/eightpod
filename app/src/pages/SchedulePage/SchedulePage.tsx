@@ -5,7 +5,6 @@ import moment from 'moment-timezone';
 
 import DayPicker from './DayPicker.tsx';
 import NightTimeline from './NightTimeline.tsx';
-import OneTimeAlarm from './OneTimeAlarm.tsx';
 import PageContainer from '../PageContainer.tsx';
 import SideControl from '../../components/SideControl.tsx';
 import { DayOfWeek, Schedules } from '@api/schedulesSchema.ts';
@@ -111,8 +110,6 @@ export default function SchedulePage() {
           <Typography variant="caption" sx={ { color: 'text.secondary' } }>Saved</Typography>
         ) }
       </Box>
-
-      <OneTimeAlarm/>
     </PageContainer>
   );
 }

@@ -63,6 +63,12 @@ const TimelineRow = ({ title, subtitle, color, isMainEvent, headerAction, childr
 
 // Upstream's alarms ran for seconds. One saved that short has never been set up in this app.
 const SET_UP_ALARM_SECONDS = 600;
+const SECONDS_PER_MINUTE = 60;
+
+// "45 s" for a short alarm, "10 min" otherwise
+const formatAlarmLength = (seconds: number) => (
+  seconds < SECONDS_PER_MINUTE ? `${seconds} s` : `${Math.round(seconds / SECONDS_PER_MINUTE)} min`
+);
 
 // Minutes from bedtime to a time later that night (past midnight counts as later)
 const minutesAfterBedtime = (time: Time, bedtime: Time) => {
@@ -139,9 +145,8 @@ export default function NightTimeline() {
     updateAlarmAndOffTime({ time }, turnsOffWithAlarm ? addMinutes(time, OFF_AFTER_ALARM_MINUTES) : power.off);
   };
 
-  // Switching the alarm on gives it sensible settings if it has never been set up: a ramp-up,
-  // after which the bed turns off when it is dismissed. (The saved length is not used any more:
-  // an alarm always keeps going until dismissed.)
+  // Switching the alarm on gives it sensible settings if it has never been set up: a ramp-up
+  // that keeps going until dismissed, after which the bed turns off
   const setAlarmEnabled = (enabled: boolean) => {
     const needsDefaults = enabled && alarm.duration < SET_UP_ALARM_SECONDS;
     if (!needsDefaults) return updateAlarmAndOffTime({ enabled });
@@ -159,7 +164,7 @@ export default function NightTimeline() {
   };
 
   const alarmSummary = [
-    `${PATTERN_NAMES[alarm.vibrationPattern]}, until dismissed`,
+    `${PATTERN_NAMES[alarm.vibrationPattern]}, up to ${formatAlarmLength(alarm.duration)}`,
     preWarmMinutes > 0 && `warms to ${describeTemperature(alarm.alarmTemperature, temperatureFormat)} ${preWarmMinutes} min before`,
     isAlarmAfterOff && 'bed stays on for it',
   ].filter(Boolean).join(' · ');

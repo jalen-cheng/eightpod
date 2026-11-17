@@ -145,6 +145,8 @@ the calibration script on one would show it.
 | [#34](https://github.com/jalen-cheng/free-sleep/pull/34) | Fix, removal | A one-time alarm goes off even when the side is off: one set for 11:55 was skipped because the schedule had switched the bed off at 11:00, after it had already replaced the 10:30 alarm. Snooze removed; an alarm gesture always dismisses. |
 | [#35](https://github.com/jalen-cheng/free-sleep/pull/35) | Feature, fix | An alarm later than the schedule's off time (a one-time alarm, or the night's own) keeps the bed on until it has gone off, up to 6 hours past the off time. Ramp up is made by Free Sleep: 10-second steps at 20, 40, 60 and 80% of the chosen strength, then full strength. |
 | [#36](https://github.com/jalen-cheng/free-sleep/pull/36) | Feature | Scheduled and one-time alarms always keep going until dismissed, up to 30 minutes. The length choice is gone from Alarm options. |
+| [#37](https://github.com/jalen-cheng/free-sleep/pull/37) | Docs | README compares the fork with upstream area by area. |
+| [#38](https://github.com/jalen-cheng/free-sleep/pull/38) | Feature | Alarm length choice (10 to 30 minutes) and a one-minute test are back in Alarm options. The one-time alarm is only on the Temperature page, with a cleaner dialog that can also go back to the schedule. The schedule page's two rows of day buttons are one "Schedule for" picker. |
 
 ## Compared with the Eight Sleep app
 
@@ -154,9 +156,9 @@ The Eight Sleep column is from memory and public material, not from testing the 
 |---|---|---|
 | Temperature | Level -10 to +10, no units | °F, °C or level. The °F and °C figures are the temperatures the firmware aims for, measured on a Pod 5 (see above). |
 | Automatic adjustment | Autopilot changes temperature overnight | None. Fixed times and temperatures per day. |
-| Schedules | Bedtime, night and wake phases | One night as a list of events: bedtime, any number of timed changes, alarm, bed off. Saved for every day, weekdays / weekend, or each day. |
+| Schedules | Bedtime, night and wake phases | One night as a list of events: bedtime, any number of timed changes, alarm, bed off. One picker chooses what it covers: every day, weekdays, the weekend, or a single day. |
 | Both sides together | Per account | Link button for temperature, power and schedules. |
-| Alarm | Vibration and thermal, snooze in app | Vibration until dismissed (up to 30 min) with a stepped ramp-up, optional warm-up before it, bed off on dismissal, one-time alarms, and the bed stays on for an alarm later than its off time. No snooze. |
+| Alarm | Vibration and thermal, snooze in app | Vibration until dismissed (10 to 30 min) with a stepped ramp-up, a test button, optional warm-up before it, bed off on dismissal, one-time alarms, and the bed stays on for an alarm later than its off time. No snooze. |
 | Side buttons (Pod 5) | + warms, - cools, middle is configurable | + and - step the temperature, any button dismisses a vibrating alarm, and holding the middle button two seconds switches the side on or off. |
 | Sleep data | Stages, score, snoring | Time in bed, heart rate, HRV, breathing, movement. |
 | Base and speakers | Elevation, snore mitigation, audio | Not supported. |

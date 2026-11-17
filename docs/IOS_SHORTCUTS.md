@@ -46,7 +46,8 @@ How the time is understood:
 - A scheduled alarm that would have gone off before it is skipped.
 - If it is later than your schedule's off time (by up to 6 hours), the bed stays on until it has
   gone off. It goes off even if the side is off.
-- The app shows the waiting alarm, and can cancel it, under **Schedules > One-time alarm**.
+- The app shows the waiting alarm on the **Temperature** page. Tap its time there to change it or go
+  back to the schedule.
 
 ## 3. Check the temperature
 
