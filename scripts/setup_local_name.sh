@@ -7,19 +7,35 @@
 # installed and the Wi-Fi connection is not restarted. The internet block allows the traffic
 # (link-local multicast on UDP 5353, which routers do not forward).
 #
-# Not run by the installer: Eight Sleep ships the Pod with this responder switched off to reduce
-# what listens on the network (/etc/systemd/resolved.conf.d/10-eight-hardening.conf). This adds a
-# later drop-in that switches it back on, for the home network only. Run it if you want the name.
+# Eight Sleep ships the Pod with this responder switched off to reduce what listens on the
+# network (/etc/systemd/resolved.conf.d/10-eight-hardening.conf). This adds a later drop-in that
+# switches it back on, for the home network only. The installer does that by default; "disable"
+# switches it off and is remembered, so updates leave it off.
 #
 # Usage:
 #   sh setup_local_name.sh            Switch the name on
-#   sh setup_local_name.sh disable    Switch it off again
+#   sh setup_local_name.sh disable    Switch it off, and keep it off across updates
+#   sh setup_local_name.sh auto       Switch it on unless it was disabled (used by install.sh)
 set -eu
 
 ACTION="${1:-enable}"
 # Overridable so the script can be tested away from a Pod
 RESOLVED_DROP_IN_DIR="${RESOLVED_DROP_IN_DIR:-/etc/systemd/resolved.conf.d}"
 DROP_IN_FILE="$RESOLVED_DROP_IN_DIR/free-sleep-mdns.conf"
+# Present when someone chose to switch the name off
+OPT_OUT_FILE="${LOCAL_NAME_OPT_OUT_FILE:-/etc/free-sleep/local_name_disabled}"
+
+if [ "$ACTION" = "auto" ]; then
+  if [ -f "$OPT_OUT_FILE" ]; then
+    echo "The .local name was switched off earlier; leaving it off."
+    exit 0
+  fi
+  # Already on: skip the restart of the name service that switching it on needs
+  if [ -f "$DROP_IN_FILE" ]; then
+    exit 0
+  fi
+  ACTION="enable"
+fi
 
 if ! systemctl is-active --quiet systemd-resolved; then
   echo "systemd-resolved is not running on this Pod, so a .local name cannot be set up this way." >&2
@@ -29,8 +45,11 @@ fi
 if [ "$ACTION" = "disable" ]; then
   MDNS_SETTING="no"
   rm -f "$DROP_IN_FILE"
+  mkdir -p "$(dirname "$OPT_OUT_FILE")"
+  touch "$OPT_OUT_FILE"
 else
   MDNS_SETTING="yes"
+  rm -f "$OPT_OUT_FILE"
   mkdir -p "$RESOLVED_DROP_IN_DIR"
   printf '[Resolve]\nMulticastDNS=yes\n' > "$DROP_IN_FILE"
 fi

@@ -4,7 +4,9 @@
 # Options (environment variables, remembered for later runs such as the re-block after an update):
 #   ALLOW_SENTRY=true      Allow error logs to reach Sentry's ingestion servers (default: blocked)
 #   ALLOW_TAILSCALE=true   Allow the Tailscale address range, for remote access through a
-#                          tailnet (default: blocked)
+#                          tailnet (default: blocked). When Tailscale runs on the Pod itself
+#                          (setup_tailscale.sh) this also opens its sign-in servers and the
+#                          listed relays, and nothing else.
 #
 # Usage:
 #   sh block_internet_access.sh                 Apply, save and persist the rules
@@ -30,9 +32,28 @@ PRIVATE_IPV4_RANGES="10.0.0.0/8 172.16.0.0/12 192.168.0.0/16"
 PRIVATE_IPV6_RANGES="fe80::/10 fd00::/8 ff02::/16"
 # Tailscale's CGNAT range. Its IPv6 range (fd7a:115c:a1e0::/48) is already inside fd00::/8.
 TAILSCALE_IPV4_RANGE="100.64.0.0/10"
+# Tailscale's sign-in and coordination servers, the one range it documents as fixed:
+# https://tailscale.com/kb/1082/firewall-ports
+TAILSCALE_CONTROL_RANGE="192.200.0.0/24"
+TAILSCALE_RELAY_ADDRESSES=""
 if [ "$ALLOW_TAILSCALE" = "true" ]; then
   PRIVATE_IPV4_RANGES="$PRIVATE_IPV4_RANGES $TAILSCALE_IPV4_RANGE"
+  if [ -f "$TAILSCALE_RELAY_ADDRESSES_FILE" ]; then
+    TAILSCALE_ON_POD=true
+    # Only plain IPv4 addresses are taken from the file, whatever else it contains
+    TAILSCALE_RELAY_ADDRESSES=$(grep -E '^([0-9]{1,3}\.){3}[0-9]{1,3}$' "$TAILSCALE_RELAY_ADDRESSES_FILE" || true)
+  fi
 fi
+TAILSCALE_ON_POD="${TAILSCALE_ON_POD:-false}"
+
+# Prints the rules that let the Pod open a TCP connection to one address and port, and accept
+# only the replies. Replies are matched as "not a new connection", so nothing can connect inwards.
+allow_outbound_tcp() {
+  destination="$1"
+  destination_port="$2"
+  echo "-A OUTPUT -p tcp -d $destination --dport $destination_port -j ACCEPT"
+  echo "-A INPUT -p tcp -s $destination --sport $destination_port ! --syn -j ACCEPT"
+}
 
 # Prints the IPv4 ruleset in iptables-restore format. Loading it replaces the whole filter table
 # in one step, so re-running this script never duplicates rules or leaves a half-open window.
@@ -65,6 +86,14 @@ build_ipv4_rules() {
     echo "-A INPUT -s $private_range -j ACCEPT"
     echo "-A OUTPUT -d $private_range -j ACCEPT"
   done
+  if [ "$TAILSCALE_ON_POD" = "true" ]; then
+    # Sign-in and coordination (port 80 is tried first, 443 is the fallback), then the relays
+    allow_outbound_tcp "$TAILSCALE_CONTROL_RANGE" 80
+    allow_outbound_tcp "$TAILSCALE_CONTROL_RANGE" 443
+    for relay_address in $TAILSCALE_RELAY_ADDRESSES; do
+      allow_outbound_tcp "$relay_address" 443
+    done
+  fi
   if [ "$ALLOW_SENTRY" = "true" ]; then
     echo "-A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT"
     for sentry_ip in $SENTRY_INGESTION_IPS; do
@@ -118,6 +147,10 @@ fi
 
 if [ "$ALLOW_TAILSCALE" = "true" ]; then
   echo "Tailscale range $TAILSCALE_IPV4_RANGE is allowed (ALLOW_TAILSCALE=true)."
+  if [ "$TAILSCALE_ON_POD" = "true" ]; then
+    relay_count=$(echo "$TAILSCALE_RELAY_ADDRESSES" | grep -c . || true)
+    echo "Tailscale on the Pod: sign-in range $TAILSCALE_CONTROL_RANGE and $relay_count relay addresses are allowed."
+  fi
 fi
 
 echo "Updating the timesyncd config"

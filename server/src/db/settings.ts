@@ -55,7 +55,7 @@ const defaultData: Settings = {
     name: 'Right',
   },
   primePodDaily: {
-    enabled: false,
+    enabled: true,
     time: '14:00',
   },
 };

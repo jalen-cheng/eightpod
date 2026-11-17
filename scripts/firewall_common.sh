@@ -9,6 +9,9 @@ FIREWALL_CONFIG="${FIREWALL_CONFIG:-/etc/free-sleep/firewall.conf}"
 FIREWALL_SERVICE_NAME="free-sleep-firewall.service"
 FIREWALL_SERVICE_FILE="${SYSTEMD_UNIT_DIR:-/etc/systemd/system}/$FIREWALL_SERVICE_NAME"
 TIMESYNCD_CONFIG="${TIMESYNCD_CONFIG:-/etc/systemd/timesyncd.conf}"
+# Addresses of the Tailscale relays the Pod may reach, one per line. Written by
+# refresh_tailscale_relays.sh; present only when Tailscale runs on the Pod (setup_tailscale.sh).
+TAILSCALE_RELAY_ADDRESSES_FILE="${TAILSCALE_RELAY_ADDRESSES_FILE:-/etc/free-sleep/tailscale_relay_addresses}"
 
 # Prints a true/false option. The environment wins, then the saved config, then the default.
 # The saved config is what lets the re-block after an update keep the choices made at setup.
