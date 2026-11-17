@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="b838ceac-a0bd-5628-a0f0-d5eb1c94a250")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="1c3f0117-35d2-58f5-89c3-752d9e1042ba")}catch(e){}}();
 import schedule from 'node-schedule';
 import cbor from 'cbor';
 import moment from 'moment-timezone';
@@ -15,6 +15,7 @@ import { getDayIndexForSchedule, logJob, subtractMinutesFromTime } from './utils
 import { startPreWarm } from './preWarmState.js';
 import { updateDeviceStatus } from '../routes/deviceStatus/updateDeviceStatus.js';
 import { connectFranken } from '../8sleep/frankenServer.js';
+import { Version } from '../routes/deviceStatus/deviceStatusSchema.js';
 import { createAlarmSession, planAlarmStretch } from './alarmSession.js';
 import { OFF_AFTER_ALARM_MINUTES } from '../db/automaticOffTime.js';
 const SECONDS_PER_MINUTE = 60;
@@ -24,7 +25,6 @@ const SECONDS_PER_MINUTE = 60;
 export const executeAlarm = async (alarmJob, { isContinuation } = { isContinuation: false }) => {
     const { vibrationPattern, side, force = false } = alarmJob;
     try {
-        const { strength, seconds: min10Duration, continuation } = planAlarmStretch(alarmJob, MAX_FIRMWARE_ALARM_SECONDS);
         // Exit is side is in away mode
         await settingsDB.read();
         if (settingsDB.data[side].awayMode && !force) {
@@ -40,6 +40,9 @@ export const executeAlarm = async (alarmJob, { isContinuation } = { isContinuati
             logger.debug('Not executing alarm, side is off!');
             return;
         }
+        // The ramp built from short stretches was worked out on a Pod 5, whose firmware "rise" is flat
+        const rampInSteps = resp.coverVersion === Version.Pod5;
+        const { strength, seconds: min10Duration, continuation } = planAlarmStretch(alarmJob, MAX_FIRMWARE_ALARM_SECONDS, { rampInSteps });
         const currentTime = moment.tz(settingsDB.data.timeZone);
         const alarmTimeEpoch = currentTime.unix();
         const alarmPayload = {
@@ -286,4 +289,4 @@ export const scheduleAlarmPreWarm = (settingsData, side, day, dailySchedule) => 
     });
 };
 //# sourceMappingURL=alarmScheduler.js.map
-//# debugId=b838ceac-a0bd-5628-a0f0-d5eb1c94a250
+//# debugId=1c3f0117-35d2-58f5-89c3-752d9e1042ba

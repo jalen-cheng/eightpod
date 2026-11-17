@@ -1,6 +1,7 @@
-// Upper bound on repeats from one poll, so a counter glitch cannot swing the temperature wildly
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="78455a08-9b90-5eb9-8375-00c28dac68a5")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="8db0256e-44c3-5a3b-8ff3-84bea0f22f43")}catch(e){}}();
+const stepWithinRange = (temperatureF, deltaF, minTemperatureF, maxTemperatureF) => (Math.min(maxTemperatureF, Math.max(minTemperatureF, temperatureF + deltaF)));
+// Upper bound on repeats from one poll, so a counter glitch cannot swing the temperature wildly
 export const MAX_GESTURES_PER_POLL = 3;
 // How many times a gesture happened between two polls of Frank's cumulative counter.
 // A counter that went backwards means Frank restarted: fire nothing, the caller rebases on nextCount.
@@ -12,10 +13,9 @@ export function countNewGestures(previousCount, nextCount) {
     return Math.min(nextCount - previousCount, MAX_GESTURES_PER_POLL);
 }
 // Applies one temperature tap to a target temperature, clamped to the range the Pod accepts.
-export function stepTargetTemperature(targetTemperatureF, tapConfig, { minTemperatureF, maxTemperatureF }) {
+export function stepTargetTemperature(targetTemperatureF, tapConfig, { minTemperatureF, maxTemperatureF, stepTemperature = stepWithinRange }) {
     const direction = tapConfig.change === 'increment' ? 1 : -1;
-    const steppedTemperatureF = targetTemperatureF + direction * tapConfig.amount;
-    return Math.min(maxTemperatureF, Math.max(minTemperatureF, steppedTemperatureF));
+    return stepTemperature(targetTemperatureF, direction * tapConfig.amount, minTemperatureF, maxTemperatureF);
 }
 // Runs every new gesture for one side, one at a time. Each temperature step starts from the
 // result of the previous one, so two quick taps move the target twice instead of racing.
@@ -44,4 +44,4 @@ export async function processSideGestures({ previousTaps, nextTaps, tapSettings,
     return currentTargetF;
 }
 //# sourceMappingURL=gestures.js.map
-//# debugId=78455a08-9b90-5eb9-8375-00c28dac68a5
+//# debugId=8db0256e-44c3-5a3b-8ff3-84bea0f22f43

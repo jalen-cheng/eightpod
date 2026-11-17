@@ -171,9 +171,14 @@ echo "Configuring IPv4 rules..."
 build_ipv4_rules > "$FIREWALL_RULES_V4"
 iptables-restore < "$FIREWALL_RULES_V4"
 
+# Best-effort: some Pod images have no IPv6 firewall. Failing here must not stop the script
+# before the IPv4 block (already live) is saved and set to come back at boot.
 echo "Configuring IPv6 rules..."
 build_ipv6_rules > "$FIREWALL_RULES_V6"
-ip6tables-restore < "$FIREWALL_RULES_V6"
+if ! ip6tables-restore < "$FIREWALL_RULES_V6"; then
+  echo "WARNING: could not apply the IPv6 rules; IPv4 is blocked, IPv6 is not." >&2
+  rm -f "$FIREWALL_RULES_V6"
+fi
 
 save_firewall_option ALLOW_SENTRY "$ALLOW_SENTRY"
 save_firewall_option ALLOW_TAILSCALE "$ALLOW_TAILSCALE"

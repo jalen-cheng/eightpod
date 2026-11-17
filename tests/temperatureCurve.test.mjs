@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
-  MAX_TEMPERATURE_F, MIN_TEMPERATURE_F, convertFromEvenSpreadF, levelToTemperatureF, temperatureFToLevel,
+  MAX_TEMPERATURE_F, MIN_TEMPERATURE_F, convertFromEvenSpreadF, levelToTemperatureF, stepTemperatureF, temperatureFToLevel,
 } from '../server/src/db/temperatureCurve.ts';
 
 const closeTo = (actual, expected) => assert.ok(Math.abs(actual - expected) < 0.01, `${actual} is not ${expected}`);
@@ -49,4 +49,17 @@ test('temperatures saved under the old even spread keep their level', () => {
     // Whole degrees are coarser than levels, so the level can move slightly but never by a dial step
     assert.ok(Math.abs(newLevel - oldLevel) <= 3, `${oldF}°F: level ${oldLevel} became ${newLevel}`);
   }
+});
+
+test('a one-degree step always moves the level, even across the gap above the coldest level', () => {
+  // Ordinary steps are plain arithmetic
+  assert.equal(stepTemperatureF(80, 1, 50, 108), 81);
+  assert.equal(stepTemperatureF(80, -3, 50, 108), 77);
+  // The coldest level is 50°F and the next is 59°F: 51°F would still be the coldest level
+  assert.equal(temperatureFToLevel(stepTemperatureF(50, 1, 50, 108)), -99);
+  assert.equal(temperatureFToLevel(stepTemperatureF(59, -1, 50, 108)), -100);
+  // At the ends it stays put, and the range is respected
+  assert.equal(stepTemperatureF(50, -1, 50, 108), 50);
+  assert.equal(stepTemperatureF(108, 1, 50, 108), 108);
+  assert.equal(stepTemperatureF(60, -10, 55, 110), 55);
 });

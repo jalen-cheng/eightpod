@@ -19,10 +19,17 @@ const MIN_ALARM_SECONDS = 10;
 
 // Works out the next stretch of an alarm to send to the Pod: how strong, for how long, and what
 // is left to run after it (undefined when this stretch finishes the alarm).
-export function planAlarmStretch(alarmJob: AlarmJob, maxStretchSeconds: number) {
+// `rampInSteps` is false for Pods whose own "rise" pattern has not been checked (Pod 3 and 4):
+// they get the pattern exactly as the original project sent it, at the set strength throughout.
+export function planAlarmStretch(
+  alarmJob: AlarmJob,
+  maxStretchSeconds: number,
+  { rampInSteps }: { rampInSteps: boolean } = { rampInSteps: true },
+) {
   const totalSeconds = Math.max(MIN_ALARM_SECONDS, alarmJob.duration);
   const rampStep = alarmJob.rampStep ?? 0;
-  const isRamping = alarmJob.vibrationPattern === 'rise'
+  const isRamping = rampInSteps
+    && alarmJob.vibrationPattern === 'rise'
     && rampStep < RAMP_STRENGTH_FRACTIONS.length
     && totalSeconds > RAMP_STEP_SECONDS;
   const seconds = Math.min(isRamping ? RAMP_STEP_SECONDS : maxStretchSeconds, totalSeconds);
