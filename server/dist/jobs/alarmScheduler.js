@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="f7a11f5c-62d7-50db-944e-94239ee02855")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="9414229f-f055-57da-8976-4a43b4c3d5cf")}catch(e){}}();
 import schedule from 'node-schedule';
 import cbor from 'cbor';
 import moment from 'moment-timezone';
@@ -105,6 +105,7 @@ const getOneOffAlarmSettings = (settingsData, side, firesAt) => {
     const dayKey = firesAt.clone().tz(settingsData.timeZone).format('dddd').toLowerCase();
     return schedulesDB.data?.[side]?.[dayKey]?.alarm ?? {
         vibrationIntensity: 100,
+        duration: MAX_ALARM_SECONDS,
         vibrationPattern: 'rise',
         turnOffAfterDismiss: undefined,
     };
@@ -121,13 +122,13 @@ export async function findLateAlarmEnd(side, day) {
     const alarmEnds = [];
     const oneOffFiresAt = getPendingOneOffAlarm(settingsData, side, now);
     if (oneOffFiresAt?.isBefore(windowEnd)) {
-        alarmEnds.push(oneOffFiresAt.clone().add(MAX_ALARM_SECONDS, 'seconds'));
+        alarmEnds.push(oneOffFiresAt.clone().add(getOneOffAlarmSettings(settingsData, side, oneOffFiresAt).duration, 'seconds'));
     }
     const { alarm, power } = schedulesDB.data[side][day];
     if (alarm.enabled && minutesAlarmIsAfterOff(alarm.time, power) > 0) {
         const firesAt = nextOccurrenceHhMm(settingsData.timeZone, alarm.time);
         if (firesAt.isBefore(windowEnd))
-            alarmEnds.push(firesAt.clone().add(MAX_ALARM_SECONDS, 'seconds'));
+            alarmEnds.push(firesAt.clone().add(alarm.duration, 'seconds'));
     }
     return alarmEnds.length > 0 ? moment.max(alarmEnds) : undefined;
 }
@@ -138,13 +139,13 @@ export function scheduleAlarmOverride(settingsData, side) {
     const { timeOverride } = settingsData[side].scheduleOverrides.alarm;
     logger.debug(`Alarm override is set! Scheduling alarm for ${next.format()}`);
     schedule.scheduleJob(`${side}-alarm-override-${timeOverride}`, next.toDate(), async () => {
-        const { vibrationIntensity, vibrationPattern, turnOffAfterDismiss } = getOneOffAlarmSettings(settingsData, side, next);
+        const { vibrationIntensity, duration, vibrationPattern, turnOffAfterDismiss } = getOneOffAlarmSettings(settingsData, side, next);
         // Asked for by hand, so it goes off even if the side is off by then (for example after
         // the schedule's off time) or in away mode
         await executeAlarm({
             side,
             vibrationIntensity,
-            duration: MAX_ALARM_SECONDS,
+            duration,
             vibrationPattern,
             turnOffAfterDismiss,
             force: true,
@@ -184,7 +185,7 @@ export const scheduleAlarm = (settingsData, side, day, dailySchedule) => {
             await executeAlarm({
                 side,
                 vibrationIntensity: dailySchedule.alarm.vibrationIntensity,
-                duration: MAX_ALARM_SECONDS,
+                duration: dailySchedule.alarm.duration,
                 vibrationPattern: dailySchedule.alarm.vibrationPattern,
                 turnOffAfterDismiss: dailySchedule.alarm.turnOffAfterDismiss,
             });
@@ -234,4 +235,4 @@ export const scheduleAlarmPreWarm = (settingsData, side, day, dailySchedule) => 
     });
 };
 //# sourceMappingURL=alarmScheduler.js.map
-//# debugId=f7a11f5c-62d7-50db-944e-94239ee02855
+//# debugId=9414229f-f055-57da-8976-4a43b4c3d5cf
