@@ -148,6 +148,7 @@ the calibration script on one would show it.
 | [#37](https://github.com/jalen-cheng/free-sleep/pull/37) | Docs | README compares the fork with upstream area by area. |
 | [#38](https://github.com/jalen-cheng/free-sleep/pull/38) | Feature | Alarm length choice (10 to 30 minutes) and a one-minute test are back in Alarm options. The one-time alarm is only on the Temperature page, with a cleaner dialog that can also go back to the schedule. The schedule page's two rows of day buttons are one "Schedule for" picker. |
 | [#39](https://github.com/jalen-cheng/free-sleep/pull/39) | Feature | Schedule page: a tab per day replaces the "Schedule for" picker. The week starts on Monday. Saving offers that day, or a dialog to tick any days, and can copy a saved night to other days. |
+| [#40](https://github.com/jalen-cheng/free-sleep/pull/40) | Feature, docs | `scripts/setup_local_name.sh` makes the Pod answer to `eight-pod.local` (opt-in), and the internet block allows the lookups. Remote access write-up extended: a stable address three ways, and options that need no other device at home. Schedule page: "Copy to other days" sits where "Saved" was, and the save buttons fit one row. |
 
 ## Compared with the Eight Sleep app
 
@@ -270,7 +271,7 @@ Searched 2026-11-13. These are other people's reports, not verified here.
 - [ ] An alarm restarted because the other side dismissed theirs starts over from its full length.
 - [ ] The app's Update button compares against upstream's version, not the fork's. Use `fs-update` over SSH.
 - [ ] A one-time alarm has no warm-up.
-- [ ] The Pod's address is whatever the router hands out. Reserve it in the router; there is no `.local` name.
+- [ ] The Pod's address is whatever the router hands out. [REMOTE_ACCESS.md](REMOTE_ACCESS.md) gives three ways to pin it, including a script for an `eight-pod.local` name that has not yet been run on a Pod.
 - [ ] Node tests (`tests/*.test.mjs`) do not run in CI, and no CI runs on the fork.
 - [ ] Hardware differences between Pod 3, 4 and 5 are checked ad hoc; one capabilities table per model would replace those checks.
 - [ ] Not started, by choice: an iOS app wrapper.

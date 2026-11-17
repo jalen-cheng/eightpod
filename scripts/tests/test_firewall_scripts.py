@@ -122,6 +122,13 @@ if [ "$1" = "is-enabled" ] && [ "$2" = "swupdate.socket" ]; then echo masked; fi
         self.assertFalse(self.rules_folder.exists())
         self.assertFalse(self.log.exists())
 
+    def test_local_name_lookups_are_allowed_on_the_home_network_only(self):
+        rules = self.run_script('block_internet_access.sh', '--print-rules').stdout
+        self.assertIn('-A OUTPUT -p udp -d 224.0.0.251 --dport 5353 -j ACCEPT', rules)
+        self.assertIn('-A INPUT -p udp -d 224.0.0.251 --dport 5353 -j ACCEPT', rules)
+        # Only the multicast address is opened for that port, not the internet
+        self.assertNotIn('-A OUTPUT -p udp --dport 5353 -j ACCEPT', rules)
+
     def test_temporary_unblock_keeps_boot_persistence(self):
         self.run_script('block_internet_access.sh')
         self.log.unlink()

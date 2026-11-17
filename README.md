@@ -12,7 +12,7 @@ Start here:
 |---|---|
 | Install on a Pod 5, step by step | [docs/POD5_FIRST_DAY.md](docs/POD5_FIRST_DAY.md) |
 | Control the bed from iPhone Shortcuts | [docs/IOS_SHORTCUTS.md](docs/IOS_SHORTCUTS.md) |
-| Reach the Pod away from home | [docs/REMOTE_ACCESS.md](docs/REMOTE_ACCESS.md) (researched, not set up) |
+| Keep the Pod's address stable, or reach it away from home | [docs/REMOTE_ACCESS.md](docs/REMOTE_ACCESS.md) (remote access is researched, not set up) |
 | See every change, what was tested on a Pod, and what is not done | [docs/FORK_STATUS.md](docs/FORK_STATUS.md) |
 | Use the API directly | [server/API.md](server/API.md) |
 

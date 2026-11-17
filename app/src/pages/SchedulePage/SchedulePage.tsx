@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Box, Button, FormControlLabel, Switch, Typography } from '@mui/material';
+import { Box, Button, FormControlLabel, Switch } from '@mui/material';
 import { DeepPartial } from 'ts-essentials';
 import moment from 'moment-timezone';
 
@@ -14,7 +14,7 @@ import { useAppStore } from '@state/appStore.tsx';
 import { useSchedules } from '@api/schedules';
 import { useScheduleStore } from './scheduleStore.tsx';
 import { LOWERCASE_DAYS } from './days.ts';
-import { DAY_NAMES } from './scheduleDays.ts';
+import { SHORT_DAY_NAMES } from './scheduleDays.ts';
 import TemperatureScheduleChart from './ScheduleChart.tsx';
 import ErrorBoundary from '@components/ErrorBoundary.tsx';
 import PageHeader from '@components/PageHeader.tsx';
@@ -103,34 +103,34 @@ export default function SchedulePage() {
             />
           }
         />
-        { !changesPresent && <Typography variant="caption" sx={ { color: 'text.secondary' } }>Saved</Typography> }
+        { /* With nothing to save, the only thing left to do with this night is copy it elsewhere */ }
+        { !changesPresent && (
+          <Button size="small" onClick={ () => setIsChoosingDays(true) } disabled={ isUpdating || !isValid() } sx={ { whiteSpace: 'nowrap' } }>
+            Copy to other days
+          </Button>
+        ) }
       </Box>
 
-      <Box sx={ { display: 'flex', justifyContent: 'flex-end', gap: 1, width: '100%', flexWrap: 'wrap' } }>
-        { hasEdits && <Button onClick={ reloadScheduleData } disabled={ isUpdating }>Discard</Button> }
-        <Button
-          variant={ changesPresent ? 'outlined' : 'text' }
-          onClick={ () => setIsChoosingDays(true) }
-          disabled={ isUpdating || !isValid() }
-          sx={ { whiteSpace: 'nowrap' } }
-        >
-          { changesPresent ? 'Other days…' : 'Copy to other days' }
-        </Button>
-        { changesPresent && (
+      { changesPresent && (
+        <Box sx={ { display: 'flex', justifyContent: 'flex-end', gap: 1, width: '100%' } }>
+          { hasEdits && <Button onClick={ reloadScheduleData } disabled={ isUpdating }>Discard</Button> }
+          <Button
+            variant="outlined"
+            onClick={ () => setIsChoosingDays(true) }
+            disabled={ isUpdating || !isValid() }
+            sx={ { whiteSpace: 'nowrap' } }
+          >
+            Other days…
+          </Button>
           <Button
             variant="contained"
             onClick={ () => handleSave([selectedDay]) }
             disabled={ isUpdating || !isValid() }
             sx={ { whiteSpace: 'nowrap' } }
           >
-            Save for { DAY_NAMES[selectedDay] }
+            Save for { SHORT_DAY_NAMES[selectedDay] }
           </Button>
-        ) }
-      </Box>
-      { linkSides && changesPresent && (
-        <Typography variant="caption" sx={ { color: 'text.secondary', width: '100%', textAlign: 'right' } }>
-          Sides linked: saving writes to both.
-        </Typography>
+        </Box>
       ) }
 
       <SaveDaysDialog open={ isChoosingDays } openDay={ selectedDay } onClose={ () => setIsChoosingDays(false) } onSave={ handleSave }/>
