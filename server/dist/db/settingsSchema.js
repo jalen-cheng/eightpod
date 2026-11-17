@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="3179338f-6414-5565-9e8f-2129e3b718e7")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="2c847358-ab5c-520b-a74f-b7b51e34c4ab")}catch(e){}}();
 import { z } from 'zod';
 import { TIME_ZONES } from './timeZones.js';
 import { TimeSchema } from './schedulesSchema.js';
@@ -55,6 +55,15 @@ export const SettingsSchema = z.object({
     rebootDaily: z.boolean(),
     // When true, temperature and power changes made for one side (in the app or at the bed) apply to both
     linkSides: z.boolean(),
+    // What happens when a side is switched on by hand (app, shortcut, or the buttons on the bed)
+    manualOn: z.object({
+        // How long it stays on before turning itself off
+        hours: z.union([z.literal(3), z.literal(6), z.literal(12)]),
+        // When true the schedule leaves that side alone until it turns off: no scheduled power,
+        // temperature changes or warm-up. Alarms still go off.
+        overridesSchedule: z.boolean(),
+    }),
 }).strict();
+export const MANUAL_ON_HOUR_CHOICES = [3, 6, 12];
 //# sourceMappingURL=settingsSchema.js.map
-//# debugId=3179338f-6414-5565-9e8f-2129e3b718e7
+//# debugId=2c847358-ab5c-520b-a74f-b7b51e34c4ab

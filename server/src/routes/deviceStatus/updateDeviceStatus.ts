@@ -9,6 +9,7 @@ import settingsDB from '../../db/settings.js';
 import { temperatureFToLevel } from '../../db/temperatureCurve.js';
 import { alarmSession } from '../../jobs/alarmScheduler.js';
 import { cancelPreWarm } from '../../jobs/preWarmState.js';
+import { cancelManualHold, startManualHold } from '../../jobs/manualHold.js';
 import { INVERTED_SETTINGS_KEY_MAPPING } from '../../8sleep/loadDeviceStatus.js';
 
 const calculateLevelFromF = (temperatureF: number) => temperatureFToLevel(temperatureF).toString();
@@ -41,7 +42,17 @@ export const dismissAlarm = async (side: 'left' | 'right') => {
   }
 };
 
-const updateSide = async (side: 'left' | 'right', sideStatus: DeepPartial<SideStatus>) => {
+const SECONDS_PER_HOUR = 3_600;
+// How long the schedule switches a side on for. Its own off time ends the night long before this.
+const SCHEDULED_ON_SECONDS = 12 * SECONDS_PER_HOUR;
+
+export type UpdateOptions = {
+  // True when a person asked for the change (app, shortcut, buttons) and not the schedule.
+  // A side switched on by hand stays on for the length chosen in settings.manualOn.
+  isManual?: boolean;
+};
+
+const updateSide = async (side: 'left' | 'right', sideStatus: DeepPartial<SideStatus>, { isManual = false }: UpdateOptions) => {
   await settingsDB.read();
   const settings = settingsDB.data;
   if (side === 'left') {
@@ -63,10 +74,17 @@ const updateSide = async (side: 'left' | 'right', sideStatus: DeepPartial<SideSt
     logger.debug('One side is in away mode, updating both sides...');
   }
 
+  const updatedSides = [...(updateLeft ? ['left' as const] : []), ...(updateRight ? ['right' as const] : [])];
   if (isOn !== undefined) {
-    const onDuration = isOn ? '43200' : '0';
+    const onSeconds = isManual ? settings.manualOn.hours * SECONDS_PER_HOUR : SCHEDULED_ON_SECONDS;
+    const onDuration = isOn ? onSeconds.toString() : '0';
     if (updateLeft) await executeFunction('LEFT_TEMP_DURATION', onDuration);
     if (updateRight) await executeFunction('RIGHT_TEMP_DURATION', onDuration);
+    // Switched on by hand with "ignore the schedule": the schedule stays away until it turns off
+    for (const updatedSide of updatedSides) {
+      if (isOn && isManual && settings.manualOn.overridesSchedule) startManualHold(updatedSide, onSeconds);
+      else cancelManualHold(updatedSide);
+    }
   }
 
   if (targetTemperatureF) {
@@ -105,12 +123,12 @@ const updateSettings = async (settings: Partial<DeviceStatus['settings']>) => {
   await executeFunction('SET_SETTINGS', hexString);
 };
 
-export const updateDeviceStatus = async (deviceStatus: DeepPartial<DeviceStatus>) => {
+export const updateDeviceStatus = async (deviceStatus: DeepPartial<DeviceStatus>, options: UpdateOptions = {}) => {
   logger.info(`Updating device status..`);
 
   if (deviceStatus.isPriming) await executeFunction('PRIME');
-  if (deviceStatus?.left) await updateSide('left', deviceStatus.left);
-  if (deviceStatus?.right) await updateSide('right', deviceStatus.right);
+  if (deviceStatus?.left) await updateSide('left', deviceStatus.left, options);
+  if (deviceStatus?.right) await updateSide('right', deviceStatus.right, options);
   if (deviceStatus?.settings) await updateSettings(deviceStatus.settings);
   logger.info('Finished updating device status');
 };

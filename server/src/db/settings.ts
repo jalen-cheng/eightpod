@@ -54,6 +54,8 @@ const defaultData: Settings = {
     ..._.cloneDeep(defaultSideSettings),
     name: 'Right',
   },
+  // The firmware's own length for a side switched on, and the schedule carries on as usual
+  manualOn: { hours: 12, overridesSchedule: false },
   primePodDaily: {
     enabled: true,
     time: '14:00',

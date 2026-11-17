@@ -1,11 +1,12 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="761d8c45-e93d-52f0-8c54-73d050fe8383")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="6215007b-d3bc-5dff-a3ce-604f22b7f63d")}catch(e){}}();
 import schedule from 'node-schedule';
 import { getDayIndexForSchedule, logJob } from './utils.js';
 import { updateDeviceStatus } from '../routes/deviceStatus/updateDeviceStatus.js';
 import serverStatus from '../serverStatus.js';
 import logger from '../logger.js';
 import { isPreWarmActive } from './preWarmState.js';
+import { isManualHoldActive } from './manualHold.js';
 const scheduleAdjustment = (timeZone, side, day, time, temperature, powerOnTime) => {
     const onRule = new schedule.RecurrenceRule();
     const dayOfWeekIndex = getDayIndexForSchedule(day, time, powerOnTime);
@@ -17,6 +18,10 @@ const scheduleAdjustment = (timeZone, side, day, time, temperature, powerOnTime)
     onRule.tz = timeZone;
     schedule.scheduleJob(`${side}-${day}-${time}-${temperature}-temperature-adjustment`, onRule, async () => {
         try {
+            if (isManualHoldActive(side)) {
+                logJob('Skipping temperature adjustment job, the side was switched on by hand', side, day, dayOfWeekIndex, time);
+                return;
+            }
             if (isPreWarmActive(side)) {
                 logJob('Skipping temperature adjustment job, warming up for the alarm', side, day, dayOfWeekIndex, time);
                 return;
@@ -52,4 +57,4 @@ export const scheduleTemperatures = (settingsData, side, day, dailySchedule) => 
     });
 };
 //# sourceMappingURL=temperatureScheduler.js.map
-//# debugId=761d8c45-e93d-52f0-8c54-73d050fe8383
+//# debugId=6215007b-d3bc-5dff-a3ce-604f22b7f63d

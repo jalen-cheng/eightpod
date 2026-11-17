@@ -34,7 +34,7 @@ const getControlledSides = (side: Side): Side[] => (settingsDB.data.linkSides ? 
 const updateControlledSides = (side: Side, sideStatus: DeepPartial<DeviceStatus['left']>) => {
   const update: DeepPartial<DeviceStatus> = {};
   getControlledSides(side).forEach((controlledSide) => { update[controlledSide] = sideStatus; });
-  return updateDeviceStatus(update);
+  return updateDeviceStatus(update, { isManual: true });
 };
 
 export const setSidePower = (side: Side, isOn: boolean) => updateControlledSides(side, { isOn });

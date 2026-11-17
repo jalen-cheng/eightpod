@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="e33504c5-159e-5038-aef2-21d6c7c3d738")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="cf0c550e-14b7-5be5-bcab-b153d6e90682")}catch(e){}}();
 import logger from '../logger.js';
 import settingsDB from '../db/settings.js';
 import { MAX_TARGET_TEMPERATURE_F, MIN_TARGET_TEMPERATURE_F, } from '../routes/deviceStatus/deviceStatusSchema.js';
@@ -25,7 +25,7 @@ const getControlledSides = (side) => (settingsDB.data.linkSides ? [side, getOthe
 const updateControlledSides = (side, sideStatus) => {
     const update = {};
     getControlledSides(side).forEach((controlledSide) => { update[controlledSide] = sideStatus; });
-    return updateDeviceStatus(update);
+    return updateDeviceStatus(update, { isManual: true });
 };
 export const setSidePower = (side, isOn) => updateControlledSides(side, { isOn });
 // Runs a side's configured actions for the gestures made between two sets of counts.
@@ -71,4 +71,4 @@ export async function runSideGestures(side, deviceStatus, previousTaps, nextTaps
     }
 }
 //# sourceMappingURL=gestureActions.js.map
-//# debugId=e33504c5-159e-5038-aef2-21d6c7c3d738
+//# debugId=cf0c550e-14b7-5be5-bcab-b153d6e90682

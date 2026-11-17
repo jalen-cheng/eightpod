@@ -61,7 +61,17 @@ export const SettingsSchema = z.object({
   rebootDaily: z.boolean(),
   // When true, temperature and power changes made for one side (in the app or at the bed) apply to both
   linkSides: z.boolean(),
+  // What happens when a side is switched on by hand (app, shortcut, or the buttons on the bed)
+  manualOn: z.object({
+    // How long it stays on before turning itself off
+    hours: z.union([z.literal(3), z.literal(6), z.literal(12)]),
+    // When true the schedule leaves that side alone until it turns off: no scheduled power,
+    // temperature changes or warm-up. Alarms still go off.
+    overridesSchedule: z.boolean(),
+  }),
 }).strict();
+
+export const MANUAL_ON_HOUR_CHOICES = [3, 6, 12] as const;
 
 export type SideSettings = z.infer<typeof SideSettingsSchema>;
 export type Settings = z.infer<typeof SettingsSchema>;

@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="9ef490ab-0e0f-519e-9f58-59ec2665ee2b")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="3c84a971-92ea-5b02-8b5a-7bb448f424ec")}catch(e){}}();
 import express from 'express';
 import { z } from 'zod';
 import { SideChoiceSchema, resolveSides } from '../sideChoice.js';
@@ -30,7 +30,7 @@ router.post('/deviceStatus', async (req, res) => {
         });
         return;
     }
-    await updateDeviceStatus(body);
+    await updateDeviceStatus(body, { isManual: true });
     res.status(204).end();
 });
 // The stock app's -10..+10 scale: each step is 10 firmware levels
@@ -70,9 +70,9 @@ router.post('/deviceStatus/dial', async (req, res) => {
     const { side, dial } = validationResult.data;
     const sideStatus = { isOn: true, targetTemperatureF: levelToTemperatureF(dial * FIRMWARE_LEVELS_PER_DIAL_STEP) };
     const sides = await resolveSides(side);
-    await updateDeviceStatus(Object.fromEntries(sides.map(dialSide => [dialSide, sideStatus])));
+    await updateDeviceStatus(Object.fromEntries(sides.map(dialSide => [dialSide, sideStatus])), { isManual: true });
     res.status(200).json({ sides, dial, targetTemperatureF: sideStatus.targetTemperatureF });
 });
 export default router;
 //# sourceMappingURL=deviceStatus.js.map
-//# debugId=9ef490ab-0e0f-519e-9f58-59ec2665ee2b
+//# debugId=3c84a971-92ea-5b02-8b5a-7bb448f424ec

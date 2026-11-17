@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="9df088dd-f9df-5e2b-8842-45158bdd22e7")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="dc1bdbcd-345b-5bc0-9482-413545bf8086")}catch(e){}}();
 import schedule from 'node-schedule';
 import { updateDeviceStatus } from '../routes/deviceStatus/updateDeviceStatus.js';
 import { getDayIndexForSchedule, getDayOfWeekIndex, logJob } from './utils.js';
@@ -10,6 +10,7 @@ import logger from '../logger.js';
 import servicesDB from '../db/services.js';
 import memoryDB from '../db/memoryDB.js';
 import { findLateAlarmEnd } from './alarmScheduler.js';
+import { isManualHoldActive } from './manualHold.js';
 import { connectFranken } from '../8sleep/frankenServer.js';
 // How long the bed stays on after an alarm that was later than the schedule's off time
 const SECONDS_ON_AFTER_LATE_ALARM = 120;
@@ -31,6 +32,10 @@ export const schedulePowerOn = (settingsData, side, day, power) => {
     logJob('Scheduling power on job', side, day, dayOfWeekIndex, time);
     schedule.scheduleJob(`${side}-${day}-${time}-power-on`, onRule, async () => {
         try {
+            if (isManualHoldActive(side)) {
+                logJob('Skipping power on job, the side was switched on by hand', side, day, dayOfWeekIndex, time);
+                return;
+            }
             logJob('Executing power on job', side, day, dayOfWeekIndex, time);
             await updateDeviceStatus({
                 [side]: {
@@ -100,6 +105,10 @@ export const schedulePowerOffAndSleepAnalysis = (settingsData, side, day, power)
     logJob('Scheduling power off job', side, day, dayOfWeekIndex, time);
     schedule.scheduleJob(`${side}-${day}-${time}-power-off`, offRule, async () => {
         try {
+            if (isManualHoldActive(side)) {
+                logJob('Skipping power off job, the side was switched on by hand', side, day, dayOfWeekIndex, time);
+                return;
+            }
             logJob('Executing power off job', side, day, dayOfWeekIndex, time);
             // An alarm still to come keeps the bed on: the firmware is told to switch the side off
             // itself shortly after the alarm ends, which holds even if the jobs are rebuilt meanwhile
@@ -129,4 +138,4 @@ export const schedulePowerOffAndSleepAnalysis = (settingsData, side, day, power)
     });
 };
 //# sourceMappingURL=powerScheduler.js.map
-//# debugId=9df088dd-f9df-5e2b-8842-45158bdd22e7
+//# debugId=dc1bdbcd-345b-5bc0-9482-413545bf8086

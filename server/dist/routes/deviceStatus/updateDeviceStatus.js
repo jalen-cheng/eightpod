@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="7d2f2f65-1315-5efa-a08b-05fd172c0dea")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="df5da8d7-49bd-51e4-9a50-545086d1e18e")}catch(e){}}();
 import _ from 'lodash';
 import cbor from 'cbor';
 import { executeFunction } from '../../8sleep/deviceApi.js';
@@ -8,6 +8,7 @@ import settingsDB from '../../db/settings.js';
 import { temperatureFToLevel } from '../../db/temperatureCurve.js';
 import { alarmSession } from '../../jobs/alarmScheduler.js';
 import { cancelPreWarm } from '../../jobs/preWarmState.js';
+import { cancelManualHold, startManualHold } from '../../jobs/manualHold.js';
 import { INVERTED_SETTINGS_KEY_MAPPING } from '../../8sleep/loadDeviceStatus.js';
 const calculateLevelFromF = (temperatureF) => temperatureFToLevel(temperatureF).toString();
 // Records that a side's alarm was stopped. If that alarm was set to switch the side off when
@@ -37,7 +38,10 @@ export const dismissAlarm = async (side) => {
         await alarmSession.restartIfVibrating(otherSide);
     }
 };
-const updateSide = async (side, sideStatus) => {
+const SECONDS_PER_HOUR = 3_600;
+// How long the schedule switches a side on for. Its own off time ends the night long before this.
+const SCHEDULED_ON_SECONDS = 12 * SECONDS_PER_HOUR;
+const updateSide = async (side, sideStatus, { isManual = false }) => {
     await settingsDB.read();
     const settings = settingsDB.data;
     if (side === 'left') {
@@ -57,12 +61,21 @@ const updateSide = async (side, sideStatus) => {
     if (controlBothSides) {
         logger.debug('One side is in away mode, updating both sides...');
     }
+    const updatedSides = [...(updateLeft ? ['left'] : []), ...(updateRight ? ['right'] : [])];
     if (isOn !== undefined) {
-        const onDuration = isOn ? '43200' : '0';
+        const onSeconds = isManual ? settings.manualOn.hours * SECONDS_PER_HOUR : SCHEDULED_ON_SECONDS;
+        const onDuration = isOn ? onSeconds.toString() : '0';
         if (updateLeft)
             await executeFunction('LEFT_TEMP_DURATION', onDuration);
         if (updateRight)
             await executeFunction('RIGHT_TEMP_DURATION', onDuration);
+        // Switched on by hand with "ignore the schedule": the schedule stays away until it turns off
+        for (const updatedSide of updatedSides) {
+            if (isOn && isManual && settings.manualOn.overridesSchedule)
+                startManualHold(updatedSide, onSeconds);
+            else
+                cancelManualHold(updatedSide);
+        }
     }
     if (targetTemperatureF) {
         const level = calculateLevelFromF(targetTemperatureF);
@@ -101,17 +114,17 @@ const updateSettings = async (settings) => {
     const hexString = encodedBuffer.toString('hex');
     await executeFunction('SET_SETTINGS', hexString);
 };
-export const updateDeviceStatus = async (deviceStatus) => {
+export const updateDeviceStatus = async (deviceStatus, options = {}) => {
     logger.info(`Updating device status..`);
     if (deviceStatus.isPriming)
         await executeFunction('PRIME');
     if (deviceStatus?.left)
-        await updateSide('left', deviceStatus.left);
+        await updateSide('left', deviceStatus.left, options);
     if (deviceStatus?.right)
-        await updateSide('right', deviceStatus.right);
+        await updateSide('right', deviceStatus.right, options);
     if (deviceStatus?.settings)
         await updateSettings(deviceStatus.settings);
     logger.info('Finished updating device status');
 };
 //# sourceMappingURL=updateDeviceStatus.js.map
-//# debugId=7d2f2f65-1315-5efa-a08b-05fd172c0dea
+//# debugId=df5da8d7-49bd-51e4-9a50-545086d1e18e
