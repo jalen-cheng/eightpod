@@ -1,6 +1,6 @@
 // LowDB, stores the schedules in /persistent/free-sleep-data/lowdb/settingsDB.json
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="7d4bff43-4012-514a-bba3-dbd586c97b02")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="d64f39d9-ff3b-5a81-af7b-482cd9f826b1")}catch(e){}}();
 import _ from 'lodash';
 import { Low } from 'lowdb';
 import { JSONFile } from 'lowdb/node';
@@ -53,7 +53,7 @@ const defaultData = {
         name: 'Right',
     },
     primePodDaily: {
-        enabled: false,
+        enabled: true,
         time: '14:00',
     },
 };
@@ -65,4 +65,4 @@ settingsDB.data = _.merge({}, defaultData, settingsDB.data);
 await settingsDB.write();
 export default settingsDB;
 //# sourceMappingURL=settings.js.map
-//# debugId=7d4bff43-4012-514a-bba3-dbd586c97b02
+//# debugId=d64f39d9-ff3b-5a81-af7b-482cd9f826b1
