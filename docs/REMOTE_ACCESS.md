@@ -101,10 +101,21 @@ No other device at home is needed. You need a free Tailscale account and SSH acc
    `http://eight-pod:3000`. The same name works at home and away while Tailscale is connected, so
    it can replace the address in your shortcuts.
 
+**One link for home and away.** The names differ by where you are: `eight-pod.local` only works at
+home, and `eight-pod` only while Tailscale is connected. To use a single link everywhere:
+
+- Leave Tailscale connected on the phone (the iOS app has "VPN On Demand") and always use `http://eight-pod:3000`; or
+- Run `sh /home/dac/free-sleep/scripts/setup_tailscale.sh home-address`, approve the route it names in
+  the Tailscale admin page, and always use the Pod's home address, for example `http://10.0.0.177:3000`.
+  At home with Tailscale off the phone reaches it directly; with Tailscale on, at home or away, it
+  goes through Tailscale. Reserve the address in the router first (part 1, B), since everything
+  then points at it. Not yet tried from a phone.
+
 Other commands:
 
 | Command | What it does |
 |---|---|
+| `setup_tailscale.sh home-address` | Makes the Pod's home address reachable over Tailscale as well (see above) |
 | `setup_tailscale.sh status` | Shows the connection, the regions and the relay addresses the block allows |
 | `setup_tailscale.sh regions` | Lists every relay region code |
 | `TAILSCALE_RELAY_REGIONS="sfo sea" sh setup_tailscale.sh` | Chooses the regions yourself |
