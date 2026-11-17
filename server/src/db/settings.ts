@@ -46,6 +46,7 @@ const defaultData: Settings = {
   temperatureFormat: 'fahrenheit',
   rebootDaily: true,
   linkSides: false,
+  swapSides: false,
   left: {
     ..._.cloneDeep(defaultSideSettings),
     name: 'Left',
@@ -60,7 +61,7 @@ const defaultData: Settings = {
   presence: {
     sensitivity: 'medium',
     wakeAfterHours: { enabled: false, hours: 9 },
-    turnOnWhenInBed: { enabled: false, after: '21:00', hours: 8 },
+    turnOnWhenInBed: { enabled: false, temperatureF: 81, stayOn: 'untilOutOfBed' },
   },
   primePodDaily: {
     enabled: true,

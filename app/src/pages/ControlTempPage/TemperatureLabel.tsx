@@ -63,7 +63,7 @@ export default function TemperatureLabel({
           <Typography variant="caption" sx={ { color: 'text.secondary' } }>
             { measuredTemperatureF === undefined
               ? `Currently at ${describeTemperature(currentTemperatureF, temperatureFormat)}`
-              : `Water at ${describeTemperature(Math.round(measuredTemperatureF), temperatureFormat)}` }
+              : `Bed at ${describeTemperature(Math.round(measuredTemperatureF), temperatureFormat)}` }
           </Typography>
         </Box>
       ) }

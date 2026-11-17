@@ -111,7 +111,7 @@ sending, so several taps become one request, and it ignores the Pod's reported v
 still tapping.
 
 **Measured water temperature.** A Pod 5 also reports the water temperature it measures on each
-side. The Temperature page shows it under the target ("Water at 70°F"), and `/api/deviceStatus`
+side. The Temperature page shows it under the target ("Bed at 70°F"), and `/api/deviceStatus`
 carries it as `measuredTemperatureF`. On a Pod that does not report it, the page shows the
 firmware's own estimate as before ("Currently at"). In a two-hour run on the test Pod the water
 settled within 2°F of the target from level -5 to +10; at the coldest level it reached 63°F
@@ -262,6 +262,10 @@ side picker is one "Both sides" button and the chain button reads "Unlink":
 Linking is applied by the app and by those server paths. A hand-written request to
 `/api/deviceStatus` or `/api/schedules` naming one side changes only that side.
 
+**Flip left and right** (Settings > Side settings) swaps which physical side the app calls left
+and right. It is applied where Free Sleep meets the firmware (commands, status, buttons, sensors),
+so each side keeps its name, schedule and settings and simply drives the other half of the bed.
+
 **Away mode** (Settings, per side) is for one person being away: that side's schedule, alarm and
 warm-up do not run, and its controls are hidden. While either side is away, every temperature or
 power change to the other side is **mirrored to the away side**, so the whole bed follows the
@@ -286,16 +290,20 @@ Two optional actions, both off by default, each run once per stay:
 
 | Setting | What it does |
 |---|---|
-| Turn on when I get into bed | If the bed is off and someone gets in at or after the chosen time (until 6 AM), it turns on at tonight's bedtime temperature for the chosen hours |
+| Turn on when I get into bed | If the bed is off and someone gets in, it turns on at the chosen temperature. It turns off after the chosen hours, or with "until I get out of bed", 15 minutes after they leave. A bed that was already on is left alone both ways |
 | Alarm after a long time in bed | After the chosen hours in one stay, vibrates like that day's alarm |
 
 With the sides linked, someone on either side counts for the whole bed and both sides act. A side
 in away mode is ignored.
 
-**Not yet verified:** the margins were set from an empty bed only (it wobbles by about 100 on a
-total near 3,900). Nobody has been measured in the bed, so detection may need its sensitivity
-changed, or its margins changed in code, once real readings are in.
-`GET /api/metrics/presence/sensors` returns the live signal and empty level for that.
+**What it was checked against:** one person on the test Pod 5, about two minutes on each side
+(17 Nov 2026). An empty side read about 3,900 and moved by up to 140 as the water went from
+coldest to hottest. Lying on a side raised it by 1,800 to 3,000; lying on the other side raised
+it by up to 1,200 for a moment. The Medium margin is 800. Both sides were detected within about a
+minute of lying down. A lighter person, a thick topper or a different Pod may need another
+sensitivity. `GET /api/metrics/presence/sensors` returns the live signal and empty level.
+
+**Not yet tried on the Pod:** either action actually firing.
 
 ## 8. Daily housekeeping: priming, reboot, calibration
 

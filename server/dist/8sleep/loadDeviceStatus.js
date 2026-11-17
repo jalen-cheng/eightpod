@@ -1,7 +1,8 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="0c3528aa-f11d-5c43-8349-b1627466d1c7")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="d5e3c760-7f2e-5078-8f24-520cac072ec7")}catch(e){}}();
 import { z } from 'zod';
 import { getMeasuredWaterF } from './measuredWater.js';
+import { areSidesFlipped } from './sideMapping.js';
 import { levelToTemperatureF } from '../db/temperatureCurve.js';
 import { Version } from '../routes/deviceStatus/deviceStatusSchema.js';
 import logger from '../logger.js';
@@ -129,7 +130,18 @@ const detectHubVersion = async () => {
 const HUB_VERSION = await detectHubVersion();
 // The default naming convention was ugly... This remaps the keys to human-readable names
 export async function loadDeviceStatus(response, getGestures) {
-    const rawDeviceData = parseRawDeviceData(response);
+    const firmwareData = parseRawDeviceData(response);
+    // With the sides flipped in settings, the firmware's left is reported as right and vice versa
+    const isFlipped = areSidesFlipped();
+    const rawDeviceData = isFlipped ? {
+        ...firmwareData,
+        heatLevelL: firmwareData.heatLevelR,
+        heatLevelR: firmwareData.heatLevelL,
+        tgHeatLevelL: firmwareData.tgHeatLevelR,
+        tgHeatLevelR: firmwareData.tgHeatLevelL,
+        heatTimeL: firmwareData.heatTimeR,
+        heatTimeR: firmwareData.heatTimeL,
+    } : firmwareData;
     const leftSideSecondsRemaining = Number(rawDeviceData.heatTimeL);
     const rightSideSecondsRemaining = Number(rawDeviceData.heatTimeR);
     await memoryDB.read();
@@ -174,8 +186,8 @@ export async function loadDeviceStatus(response, getGestures) {
                 if (!data)
                     continue;
                 const taps = JSON.parse(data);
-                deviceStatus.left.taps[field] = taps.l;
-                deviceStatus.right.taps[field] = taps.r;
+                deviceStatus.left.taps[field] = isFlipped ? taps.r : taps.l;
+                deviceStatus.right.taps[field] = isFlipped ? taps.l : taps.r;
             }
         }
         catch (error) {
@@ -185,4 +197,4 @@ export async function loadDeviceStatus(response, getGestures) {
     return deviceStatus;
 }
 //# sourceMappingURL=loadDeviceStatus.js.map
-//# debugId=0c3528aa-f11d-5c43-8349-b1627466d1c7
+//# debugId=d5e3c760-7f2e-5078-8f24-520cac072ec7

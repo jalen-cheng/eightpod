@@ -1,9 +1,10 @@
 import { DeepPartial } from 'ts-essentials';
-import { Box, Divider } from '@mui/material';
+import { Box, Divider, Switch } from '@mui/material';
 import BedOutlinedIcon from '@mui/icons-material/BedOutlined';
 import WaterDropOutlinedIcon from '@mui/icons-material/WaterDropOutlined';
 import MemoryOutlinedIcon from '@mui/icons-material/MemoryOutlined';
 import SideSettings from './SideSettings.tsx';
+import SettingToggle from './SettingToggle.tsx';
 import PageContainer from '../PageContainer.tsx';
 import { Settings } from '@api/settingsSchema.ts';
 import { postSettings, useSettings } from '@api/settings.ts';
@@ -24,9 +25,12 @@ import ErrorBoundary from '@components/ErrorBoundary.tsx';
 import PageHeader from '@components/PageHeader.tsx';
 import ConnectionBadge from '@components/ConnectionBadge.tsx';
 
+const FLIP_SIDES_INFO = 'Swaps which side of the bed the app calls left and right, everywhere: controls, schedules, buttons '
+  + 'and in-bed detection. Each side keeps its name, schedule and settings.';
+
 export default function SettingsPage() {
   const { data: settings, refetch } = useSettings();
-  const { setIsUpdating } = useAppStore();
+  const { isUpdating, setIsUpdating } = useAppStore();
 
   const updateSettings = (settings: DeepPartial<Settings>) => {
     setIsUpdating(true);
@@ -52,6 +56,19 @@ export default function SettingsPage() {
           <Box sx={ { display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2.5 } }>
             <SideSettings side="left" settings={ settings } updateSettings={ updateSettings }/>
             <SideSettings side="right" settings={ settings } updateSettings={ updateSettings }/>
+          </Box>
+          <Box sx={ { mt: 2 } }>
+            <SettingToggle
+              label="Flip left and right"
+              info={ FLIP_SIDES_INFO }
+              control={
+                <Switch
+                  disabled={ isUpdating }
+                  checked={ settings?.swapSides || false }
+                  onChange={ (event) => updateSettings({ swapSides: event.target.checked }) }
+                />
+              }
+            />
           </Box>
         </Section>
       </ErrorBoundary>

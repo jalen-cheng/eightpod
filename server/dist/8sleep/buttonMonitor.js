@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="e6929c3f-91a0-509a-a3a7-54c92dcddec6")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="2ebf603a-8982-5525-84e0-8a35a3e91e6e")}catch(e){}}();
 import { spawn } from 'child_process';
 import { createInterface } from 'readline';
 import logger from '../logger.js';
@@ -7,6 +7,7 @@ import config from '../config.js';
 import settingsDB from '../db/settings.js';
 import { Version } from '../routes/deviceStatus/deviceStatusSchema.js';
 import { connectFranken } from './frankenServer.js';
+import { toFirmwareSide } from './sideMapping.js';
 import { countPressesAsGestures, createButtonLineParser, hasTemperaturePress, isPowerHold, } from './buttonEvents.js';
 import { noteAlarmGestureHandled, runSideGestures, setSidePower } from './gestureActions.js';
 // Presses are collected for this long before acting, so a quick run of "+" presses becomes one
@@ -103,7 +104,9 @@ export class ButtonMonitor {
             }, RESTART_WAIT_MS);
         });
     }
-    addPress(press) {
+    // `firmwarePress` names the side as the firmware does; it is turned into Free Sleep's side here
+    addPress(firmwarePress) {
+        const press = { ...firmwarePress, side: toFirmwareSide(firmwarePress.side) };
         logger.debug(`Button press: ${press.side} ${press.button} x${press.count}${press.heldMs === undefined ? '' : ` held ${press.heldMs}ms`}`);
         this.pendingPresses[press.side].push(press);
         if (this.batchTimer)
@@ -159,4 +162,4 @@ export class ButtonMonitor {
     }
 }
 //# sourceMappingURL=buttonMonitor.js.map
-//# debugId=e6929c3f-91a0-509a-a3a7-54c92dcddec6
+//# debugId=2ebf603a-8982-5525-84e0-8a35a3e91e6e

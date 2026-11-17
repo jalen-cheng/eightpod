@@ -1,6 +1,6 @@
 // LowDB, stores the schedules in /persistent/free-sleep-data/lowdb/settingsDB.json
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="b16e21a3-6128-54d4-8bd3-e5f00d05e77c")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="c55f0aa9-f51c-545e-b611-8fe041644812")}catch(e){}}();
 import _ from 'lodash';
 import { Low } from 'lowdb';
 import { JSONFile } from 'lowdb/node';
@@ -44,6 +44,7 @@ const defaultData = {
     temperatureFormat: 'fahrenheit',
     rebootDaily: true,
     linkSides: false,
+    swapSides: false,
     left: {
         ..._.cloneDeep(defaultSideSettings),
         name: 'Left',
@@ -58,7 +59,7 @@ const defaultData = {
     presence: {
         sensitivity: 'medium',
         wakeAfterHours: { enabled: false, hours: 9 },
-        turnOnWhenInBed: { enabled: false, after: '21:00', hours: 8 },
+        turnOnWhenInBed: { enabled: false, temperatureF: 81, stayOn: 'untilOutOfBed' },
     },
     primePodDaily: {
         enabled: true,
@@ -73,4 +74,4 @@ settingsDB.data = _.merge({}, defaultData, settingsDB.data);
 await settingsDB.write();
 export default settingsDB;
 //# sourceMappingURL=settings.js.map
-//# debugId=b16e21a3-6128-54d4-8bd3-e5f00d05e77c
+//# debugId=c55f0aa9-f51c-545e-b611-8fe041644812

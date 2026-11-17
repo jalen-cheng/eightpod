@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="41fe7e57-3f8d-5488-884e-9a18af7bdc55")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="47281c68-d8a0-5289-a0b2-3a47c8f385ca")}catch(e){}}();
 import { z } from 'zod';
 import { TIME_ZONES } from './timeZones.js';
 import { TimeSchema } from './schedulesSchema.js';
@@ -55,6 +55,8 @@ export const SettingsSchema = z.object({
     rebootDaily: z.boolean(),
     // When true, temperature and power changes made for one side (in the app or at the bed) apply to both
     linkSides: z.boolean(),
+    // When true, Free Sleep's left is the firmware's right and the other way round (see 8sleep/sideMapping.ts)
+    swapSides: z.boolean(),
     // What happens when a side is switched on by hand (app, shortcut, or the buttons on the bed)
     manualOn: z.object({
         // How long it stays on before turning itself off
@@ -69,11 +71,15 @@ export const SettingsSchema = z.object({
         sensitivity: z.enum(['low', 'medium', 'high']),
         // Vibrate the alarm once someone has been in bed this many hours in one stay
         wakeAfterHours: z.object({ enabled: z.boolean(), hours: z.number().int().min(1).max(14) }),
-        // Turn the bed on, at tonight's bedtime temperature and for this many hours, when someone
-        // gets in at or after this time of the evening
-        turnOnWhenInBed: z.object({ enabled: z.boolean(), after: TimeSchema, hours: z.number().int().min(1).max(12) }),
+        // Turn the bed on when someone gets in: at this temperature (°F), and for this many hours or
+        // until they get out again
+        turnOnWhenInBed: z.object({
+            enabled: z.boolean(),
+            temperatureF: z.number().min(50).max(110),
+            stayOn: z.union([z.number().int().min(1).max(12), z.literal('untilOutOfBed')]),
+        }),
     }),
 }).strict();
 export const MANUAL_ON_HOUR_CHOICES = [3, 6, 12];
 //# sourceMappingURL=settingsSchema.js.map
-//# debugId=41fe7e57-3f8d-5488-884e-9a18af7bdc55
+//# debugId=47281c68-d8a0-5289-a0b2-3a47c8f385ca

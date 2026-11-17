@@ -5,11 +5,12 @@
 // the bed. There is no fixed "empty" value: it differs per Pod and drifts, so the detector
 // learns it as a baseline and looks for a rise above that.
 // How far above the empty baseline the three zones together must rise to count as someone in
-// bed. An empty bed was seen to wobble by about 100; nobody has been measured in the bed yet,
-// so these are starting points to be adjusted from real readings.
+// bed. Measured on one Pod 5 with one person (17 Nov 2026): an empty side read about 3,900 and
+// moved by up to 140 as the water went from coldest to hottest; lying on a side raised it by
+// 1,800 to 3,000, and lying on the other side raised it by up to 1,200 for a moment.
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="6e8672b3-7ff7-5cd2-8ed1-16ca6b3e0330")}catch(e){}}();
-export const PRESENCE_DELTAS = { low: 300, medium: 150, high: 80 };
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="16c38746-4af1-54b6-917a-4e37c908d844")}catch(e){}}();
+export const PRESENCE_DELTAS = { low: 1400, medium: 800, high: 400 };
 // Readings are noisy one by one, so the middle of the last few is used (5 seconds' worth)
 const SMOOTHING_SAMPLES = 10;
 // A rise must last this long to count as getting in, so leaning or sitting on the bed for a
@@ -64,4 +65,4 @@ export function createPresenceDetector() {
     return { update };
 }
 //# sourceMappingURL=presenceDetector.js.map
-//# debugId=6e8672b3-7ff7-5cd2-8ed1-16ca6b3e0330
+//# debugId=16c38746-4af1-54b6-917a-4e37c908d844

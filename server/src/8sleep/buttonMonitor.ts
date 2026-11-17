@@ -6,6 +6,7 @@ import settingsDB from '../db/settings.js';
 import { Side } from '../db/schedulesSchema.js';
 import { Version } from '../routes/deviceStatus/deviceStatusSchema.js';
 import { connectFranken } from './frankenServer.js';
+import { toFirmwareSide } from './sideMapping.js';
 import {
   ButtonPress, countPressesAsGestures, createButtonLineParser, hasTemperaturePress, isPowerHold,
 } from './buttonEvents.js';
@@ -103,7 +104,9 @@ export class ButtonMonitor {
     });
   }
 
-  private addPress(press: ButtonPress) {
+  // `firmwarePress` names the side as the firmware does; it is turned into Free Sleep's side here
+  private addPress(firmwarePress: ButtonPress) {
+    const press = { ...firmwarePress, side: toFirmwareSide(firmwarePress.side) };
     logger.debug(`Button press: ${press.side} ${press.button} x${press.count}${press.heldMs === undefined ? '' : ` held ${press.heldMs}ms`}`);
     this.pendingPresses[press.side].push(press);
     if (this.batchTimer) clearTimeout(this.batchTimer);
