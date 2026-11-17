@@ -16,6 +16,8 @@
 #   sh setup_tailscale.sh login         Sign the Pod in (prints a link to open on your phone)
 #   sh setup_tailscale.sh status        Show the connection, regions and allowed relay addresses
 #   sh setup_tailscale.sh regions       List every relay region code
+#   sh setup_tailscale.sh home-address  Make the Pod's home address (for example 10.0.0.177) work
+#                                       over Tailscale too, so one link works at home and away
 #   sh setup_tailscale.sh policy        Print the entry for your Tailscale policy file that makes
 #                                       all your devices use the Pod's relay regions
 #   sh setup_tailscale.sh sync-scripts  Refresh the root-owned script copies and the units, and install a
@@ -241,6 +243,21 @@ login_tailscale() {
   echo "In the Tailscale admin page, switch off key expiry for this Pod so it stays signed in."
 }
 
+# Offers the Pod's own home address to the tailnet as a one-address route. A device with Tailscale
+# on then reaches http://<home address>:3000 from anywhere, and the same link works at home with
+# Tailscale off. The route has to be approved once in the Tailscale admin page.
+advertise_home_address() {
+  home_address=$(ip -4 route get 1.1.1.1 2>/dev/null | sed -n 's/.* src \([0-9.]*\).*/\1/p' | head -n 1)
+  if ! echo "$home_address" | grep -Eq '^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.)'; then
+    echo "Could not find the Pod's home network address (got '$home_address')." >&2
+    return 1
+  fi
+  "$TAILSCALE_BIN_DIR/tailscale" set --advertise-routes="$home_address/32"
+  echo "Offered $home_address to your Tailscale network."
+  echo "Approve it once: Tailscale admin page > Machines > $(hostname) > Edit route settings > tick $home_address/32."
+  echo "Then http://$home_address:3000 works at home and away. Reserve that address in your router so it never changes."
+}
+
 show_status() {
   "$TAILSCALE_BIN_DIR/tailscale" status || true
   echo ""
@@ -286,6 +303,9 @@ case "$ACTION" in
   status)
     show_status
     ;;
+  home-address)
+    advertise_home_address
+    ;;
   regions)
     curl -fsS --max-time 30 "$TAILSCALE_RELAY_MAP_URL" | python3 "$SCRIPT_DIR/tailscale_relay_addresses.py" --list
     ;;
@@ -307,7 +327,7 @@ case "$ACTION" in
     remove_tailscale
     ;;
   *)
-    echo "Unknown action '$ACTION'. Use install, upgrade, login, status, regions, policy, sync-scripts or remove." >&2
+    echo "Unknown action '$ACTION'. Use install, upgrade, login, status, home-address, regions, policy, sync-scripts or remove." >&2
     exit 1
     ;;
 esac

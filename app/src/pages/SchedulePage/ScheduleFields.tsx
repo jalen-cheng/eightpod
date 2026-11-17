@@ -54,7 +54,7 @@ export function TemperatureSelect({ label, value, onChange, disabled }: Temperat
       value={ value }
       onChange={ (event) => onChange(Number(event.target.value)) }
       disabled={ disabled }
-      sx={ { width: { xs: 92, sm: 104 }, flexShrink: 0 } }
+      sx={ { width: { xs: 100, sm: 108 }, flexShrink: 0 } }
       slotProps={ { htmlInput: { 'aria-label': label } } }
     >
       { temperatureOptions.map(temperatureF => (
