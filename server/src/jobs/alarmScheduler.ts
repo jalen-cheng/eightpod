@@ -148,7 +148,7 @@ const runPreWarm = async (side: Side, preWarmMinutes: number, alarmTemperatureF:
 };
 
 // How a one-off alarm vibrates: the settings of the weekly alarm on the day it goes off
-const getOneOffAlarmSettings = (settingsData: Settings, side: Side, firesAt: moment.Moment) => {
+export const getOneOffAlarmSettings = (settingsData: Settings, side: Side, firesAt: moment.Moment) => {
   const dayKey = firesAt.clone().tz(settingsData.timeZone).format('dddd').toLowerCase() as DayOfWeek;
   return schedulesDB.data?.[side]?.[dayKey]?.alarm ?? {
     vibrationIntensity: 100,

@@ -69,6 +69,16 @@ export const SettingsSchema = z.object({
     // temperature changes or warm-up. Alarms still go off.
     overridesSchedule: z.boolean(),
   }),
+  // What being in bed sets off, using the bed's own presence sensors (Pod 5)
+  presence: z.object({
+    // How easily a rise in the sensors counts as someone in bed
+    sensitivity: z.enum(['low', 'medium', 'high']),
+    // Vibrate the alarm once someone has been in bed this many hours in one stay
+    wakeAfterHours: z.object({ enabled: z.boolean(), hours: z.number().int().min(1).max(14) }),
+    // Turn the bed on, at tonight's bedtime temperature and for this many hours, when someone
+    // gets in at or after this time of the evening
+    turnOnWhenInBed: z.object({ enabled: z.boolean(), after: TimeSchema, hours: z.number().int().min(1).max(12) }),
+  }),
 }).strict();
 
 export const MANUAL_ON_HOUR_CHOICES = [3, 6, 12] as const;

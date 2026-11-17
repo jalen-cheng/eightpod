@@ -3,6 +3,7 @@ import moment from 'moment-timezone';
 import { z } from 'zod';
 import logger from '../../logger.js';
 import settingsDB from '../../db/settings.js';
+import { getPresenceSnapshot } from '../../8sleep/presenceMonitor.js';
 
 const router: Router = express.Router();
 
@@ -92,6 +93,14 @@ router.post('/presence', async (req: Request, res: Response) => {
  */
 router.get('/presence', (req: Request, res: Response) => {
   return res.status(200).json(presenceData);
+});
+
+/**
+ * GET /presence/sensors
+ * What the bed's own presence sensors say right now, with the numbers behind it
+ */
+router.get('/presence/sensors', (req: Request, res: Response) => {
+  return res.status(200).json(getPresenceSnapshot());
 });
 
 export default router;

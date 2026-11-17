@@ -1,6 +1,6 @@
 // LowDB, stores the schedules in /persistent/free-sleep-data/lowdb/settingsDB.json
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="7ff62e20-a033-5014-bd81-df6cf3b5ef16")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="b16e21a3-6128-54d4-8bd3-e5f00d05e77c")}catch(e){}}();
 import _ from 'lodash';
 import { Low } from 'lowdb';
 import { JSONFile } from 'lowdb/node';
@@ -54,6 +54,12 @@ const defaultData = {
     },
     // The firmware's own length for a side switched on, and the schedule carries on as usual
     manualOn: { hours: 12, overridesSchedule: false },
+    // Detection always runs where the sensors exist; both actions are off until switched on
+    presence: {
+        sensitivity: 'medium',
+        wakeAfterHours: { enabled: false, hours: 9 },
+        turnOnWhenInBed: { enabled: false, after: '21:00', hours: 8 },
+    },
     primePodDaily: {
         enabled: true,
         time: '14:00',
@@ -67,4 +73,4 @@ settingsDB.data = _.merge({}, defaultData, settingsDB.data);
 await settingsDB.write();
 export default settingsDB;
 //# sourceMappingURL=settings.js.map
-//# debugId=7ff62e20-a033-5014-bd81-df6cf3b5ef16
+//# debugId=b16e21a3-6128-54d4-8bd3-e5f00d05e77c
