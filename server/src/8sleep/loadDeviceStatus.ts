@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { getMeasuredWaterF } from './measuredWater.js';
 import { levelToTemperatureF } from '../db/temperatureCurve.js';
 import { DeviceStatus, Version } from '../routes/deviceStatus/deviceStatusSchema.js';
 import logger from '../logger.js';
@@ -147,6 +148,7 @@ export async function loadDeviceStatus(response: string, getGestures: boolean): 
     left: {
       currentTemperatureLevel: Number.parseInt(rawDeviceData.heatLevelL, 10),
       currentTemperatureF: calculateTempInF(rawDeviceData.heatLevelL),
+      measuredTemperatureF: getMeasuredWaterF('left'),
       targetTemperatureF: calculateTempInF(rawDeviceData.tgHeatLevelL),
       secondsRemaining: leftSideSecondsRemaining,
       isOn: leftSideSecondsRemaining > 0,
@@ -155,6 +157,7 @@ export async function loadDeviceStatus(response: string, getGestures: boolean): 
     right: {
       currentTemperatureLevel: Number.parseInt(rawDeviceData.heatLevelR, 10),
       currentTemperatureF: calculateTempInF(rawDeviceData.heatLevelR),
+      measuredTemperatureF: getMeasuredWaterF('right'),
       targetTemperatureF: calculateTempInF(rawDeviceData.tgHeatLevelR),
       secondsRemaining: rightSideSecondsRemaining,
       isOn: rightSideSecondsRemaining > 0,

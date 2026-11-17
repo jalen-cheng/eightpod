@@ -1,6 +1,6 @@
 // WARNING! - Any changes here MUST be the same between app/src/api & server/src/db/
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="b4bdbe35-5ec7-505c-8481-a0bf83d983fb")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="b3a34cde-fbe7-52fc-a23f-85a08c52775b")}catch(e){}}();
 import { z } from 'zod';
 import { MAX_TEMPERATURE_F, MIN_TEMPERATURE_F } from '../../db/temperatureCurve.js';
 // The range the Pod can be set to, from the measured curve: 50°F to 108°F
@@ -11,6 +11,8 @@ const MAX_ACCEPTED_TEMPERATURE_F = 110;
 const SideStatusSchema = z.object({
     currentTemperatureLevel: z.number(),
     currentTemperatureF: z.number(),
+    // The water temperature the bed measures on this side, where the firmware reports it (Pod 5)
+    measuredTemperatureF: z.number().optional(),
     targetTemperatureF: z.number()
         .min(MIN_TARGET_TEMPERATURE_F, { message: `Temperature must be at least ${MIN_TARGET_TEMPERATURE_F}°F` })
         .max(MAX_ACCEPTED_TEMPERATURE_F, { message: `Temperature cannot exceed ${MAX_ACCEPTED_TEMPERATURE_F}°F` }),
@@ -50,4 +52,4 @@ export var Version;
     Version["Pod5"] = "Pod 5";
 })(Version || (Version = {}));
 //# sourceMappingURL=deviceStatusSchema.js.map
-//# debugId=b4bdbe35-5ec7-505c-8481-a0bf83d983fb
+//# debugId=b3a34cde-fbe7-52fc-a23f-85a08c52775b

@@ -1,4 +1,5 @@
 import { Box, Typography } from '@mui/material';
+import WaterDropOutlinedIcon from '@mui/icons-material/WaterDropOutlined';
 import moment from 'moment-timezone';
 import { useSchedules } from '@api/schedules.ts';
 import { useSettings } from '@api/settings.ts';
@@ -12,11 +13,13 @@ type TemperatureLabelProps = {
   sliderColor: string;
   currentTargetTemp: number;
   currentTemperatureF: number;
+  // The water temperature the bed measures, when the Pod reports it
+  measuredTemperatureF?: number;
   temperatureFormat: TemperatureFormat;
 };
 
 export default function TemperatureLabel({
-  isOn, sliderTemp, sliderColor, currentTargetTemp, currentTemperatureF, temperatureFormat,
+  isOn, sliderTemp, sliderColor, currentTargetTemp, currentTemperatureF, measuredTemperatureF, temperatureFormat,
 }: TemperatureLabelProps) {
   const { side } = useAppStore();
   const { data: schedules } = useSchedules();
@@ -50,11 +53,17 @@ export default function TemperatureLabel({
           </>
         ) : 'Off' }
       </Typography>
+      { /* Where the bed is now. The measured water temperature when the Pod reports it; otherwise
+           the firmware's own estimate of the level it has reached. */ }
       { isOn && (
-        <Box sx={ { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.75 } }>
-          <Box component="span" sx={ { width: 5, height: 5, borderRadius: '50%', bgcolor: sliderColor } }/>
+        <Box sx={ { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5 } }>
+          { measuredTemperatureF === undefined
+            ? <Box component="span" sx={ { width: 5, height: 5, borderRadius: '50%', bgcolor: sliderColor, mr: 0.25 } }/>
+            : <WaterDropOutlinedIcon aria-hidden sx={ { fontSize: 13, color: sliderColor } }/> }
           <Typography variant="caption" sx={ { color: 'text.secondary' } }>
-            Currently at { describeTemperature(currentTemperatureF, temperatureFormat) }
+            { measuredTemperatureF === undefined
+              ? `Currently at ${describeTemperature(currentTemperatureF, temperatureFormat)}`
+              : `Water at ${describeTemperature(Math.round(measuredTemperatureF), temperatureFormat)}` }
           </Typography>
         </Box>
       ) }

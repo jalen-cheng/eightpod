@@ -160,6 +160,7 @@ the calibration script on one would show it.
 | [#54](https://github.com/jalen-cheng/free-sleep/pull/54) | Fix, docs | Reviewed against the original project for Pod 3 and Pod 4. The service starts without the journal group, the IPv6 firewall step is best-effort, the stepped alarm ramp is Pod 5 only, and a one-degree step can no longer get stuck at the coldest level. [POD_MODELS.md](POD_MODELS.md) lists what works on each model. |
 | [#55](https://github.com/jalen-cheng/free-sleep/pull/55) | Feature | Settings: how long the bed stays on when turned on by hand (3, 6 or 12 hours), and a switch that makes the schedule leave a hand-switched side alone until it turns off. |
 | [#56](https://github.com/jalen-cheng/free-sleep/pull/56) | Feature | In-bed detection from the bed's capacitive sensors (Pod 5), with two optional actions: turn the bed on when someone gets in during the evening, and an alarm after a long time in bed. Detection margins are from an empty bed only and are not yet verified with someone in it. |
+| [#57](https://github.com/jalen-cheng/free-sleep/pull/57) | Feature | The Temperature page shows the measured water temperature under the target where the Pod reports it. Second calibration run: water within 2°F of the target from level -5 to +10; 63°F against 50°F at the coldest level after 20 minutes. |
 
 ## Compared with the Eight Sleep app
 

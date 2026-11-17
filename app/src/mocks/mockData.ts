@@ -318,6 +318,7 @@ const createDeviceStatus = (): DeviceStatus => ({
   left: {
     currentTemperatureLevel: 4,
     currentTemperatureF: 82,
+    measuredTemperatureF: 81.3,
     targetTemperatureF: 84,
     secondsRemaining: 1_200,
     isOn: true,

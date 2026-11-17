@@ -1,6 +1,7 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="bcc36309-a602-5763-a4ba-87cfada4abff")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="0c3528aa-f11d-5c43-8349-b1627466d1c7")}catch(e){}}();
 import { z } from 'zod';
+import { getMeasuredWaterF } from './measuredWater.js';
 import { levelToTemperatureF } from '../db/temperatureCurve.js';
 import { Version } from '../routes/deviceStatus/deviceStatusSchema.js';
 import logger from '../logger.js';
@@ -136,6 +137,7 @@ export async function loadDeviceStatus(response, getGestures) {
         left: {
             currentTemperatureLevel: Number.parseInt(rawDeviceData.heatLevelL, 10),
             currentTemperatureF: calculateTempInF(rawDeviceData.heatLevelL),
+            measuredTemperatureF: getMeasuredWaterF('left'),
             targetTemperatureF: calculateTempInF(rawDeviceData.tgHeatLevelL),
             secondsRemaining: leftSideSecondsRemaining,
             isOn: leftSideSecondsRemaining > 0,
@@ -144,6 +146,7 @@ export async function loadDeviceStatus(response, getGestures) {
         right: {
             currentTemperatureLevel: Number.parseInt(rawDeviceData.heatLevelR, 10),
             currentTemperatureF: calculateTempInF(rawDeviceData.heatLevelR),
+            measuredTemperatureF: getMeasuredWaterF('right'),
             targetTemperatureF: calculateTempInF(rawDeviceData.tgHeatLevelR),
             secondsRemaining: rightSideSecondsRemaining,
             isOn: rightSideSecondsRemaining > 0,
@@ -182,4 +185,4 @@ export async function loadDeviceStatus(response, getGestures) {
     return deviceStatus;
 }
 //# sourceMappingURL=loadDeviceStatus.js.map
-//# debugId=bcc36309-a602-5763-a4ba-87cfada4abff
+//# debugId=0c3528aa-f11d-5c43-8349-b1627466d1c7
