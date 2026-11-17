@@ -16,7 +16,7 @@ test('every name and address the Pod is opened under is allowed', () => {
     'http://eight-pod:3000',
     'http://eight-pod.local:3000',
     'http://EIGHT-POD.local:3000',
-    'http://100.64.125.127:3000',
+    'http://100.64.0.5:3000',
     'https://eight-pod.tail1234.ts.net',
   ];
   for (const origin of allowedOrigins) assert.equal(isAllowedOrigin(origin, rules), true, String(origin));
