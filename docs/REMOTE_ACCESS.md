@@ -138,6 +138,9 @@ Other commands:
 
 What can still go wrong:
 
+- Pods that installed Tailscale from the first version of the script (17 Nov 2026) booted two
+  minutes slower, bed firmware included, because its unit waited for a network service the Pod
+  does not use. Updating Free Sleep rewrites the unit.
 - If Tailscale ever changes its sign-in range, the Pod loses remote access until the range in
   `block_internet_access.sh` is updated. Home access is not affected.
 - A firmware update from Eight Sleep may remove the files under `/etc`. Re-run
