@@ -236,8 +236,8 @@ installer. A **Pod 4** reports double, triple and quadruple taps as counters, re
 
 ## 7. Linked sides and away mode
 
-**Linked sides** (the chain button beside the side picker) make the bed behave as one. While linked, both
-halves of the side picker are lit:
+**Linked sides** (the chain button beside the side picker) make the bed behave as one. While linked, the
+side picker is one "Both sides" button and the chain button reads "Unlink":
 
 | What | When linked |
 |---|---|
