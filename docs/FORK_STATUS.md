@@ -54,7 +54,6 @@ Pod 5, control board 830-00067-00 REV-17. Last updated 2026-11-16.
 - [x] Buttons with the sides linked.
 - [x] The bed vibrates for an alarm while the side is off.
 - [x] The stepped ramp-up runs as built: 20, 40, 60, 80% for 10 seconds each, then full strength.
-- [ ] Still to do: an alarm after the off time keeping the bed on, and saving from the schedule page in the app.
 
 Seen along the way: the serial line drops the odd character, password prompts show nothing while
 typing, and the clock is unset before Wi-Fi (`password changed in future`).
@@ -154,6 +153,7 @@ the calibration script on one would show it.
 | [#40](https://github.com/jalen-cheng/free-sleep/pull/40) | Feature, docs | `scripts/setup_local_name.sh` makes the Pod answer to `eight-pod.local` (opt-in), and the internet block allows the lookups. Remote access write-up extended: a stable address three ways, and options that need no other device at home. Schedule page: "Copy to other days" sits where "Saved" was, and the save buttons fit one row. |
 | [#41](https://github.com/jalen-cheng/free-sleep/pull/41), [#42](https://github.com/jalen-cheng/free-sleep/pull/42) | Feature, docs | `scripts/setup_tailscale.sh` puts Tailscale on the Pod with the internet block on: only its sign-in range and two relay regions are opened, and a daily timer keeps the relay addresses current. The `.local` name and daily priming (2:00 PM) are on by default for new installs. |
 | [#43](https://github.com/jalen-cheng/free-sleep/pull/43), [#44](https://github.com/jalen-cheng/free-sleep/pull/44), [#45](https://github.com/jalen-cheng/free-sleep/pull/45) | Fix, docs | The Tailscale unit no longer delays boot by two minutes. The app loads when opened as `eight-pod`, `eight-pod.local` or the Tailscale address (it was a blank page: the server refused its own script files under those names). The fork installs and updates from itself by default, and the README has current screenshots. |
+| [#46](https://github.com/jalen-cheng/free-sleep/pull/46), [#47](https://github.com/jalen-cheng/free-sleep/pull/47) | Feature, fix, docs | Schedule page: a night switch under the day tabs and a save bar that stays in view. Clearer alarm text. Wi-Fi and version chips on Status. A one-time alarm now also replaces a scheduled alarm up to 6 hours after it (before, both went off). The alarm dialog shows again for the next alarm. Tailscale upgrades with Free Sleep updates. [HOW_IT_WORKS.md](HOW_IT_WORKS.md) explains every part. |
 
 ## Compared with the Eight Sleep app
 
@@ -186,7 +186,7 @@ The full walkthrough, with every command and what to expect, is in [POD5_FIRST_D
 ### Install
 - [ ] Follow [INSTALLATION.md](../INSTALLATION.md) steps 1 to 12 as written (board access, root access, disable software updates, Wi-Fi).
 - [ ] After joining Wi-Fi, confirm the Pod has an address and `date` is correct before installing. The download uses HTTPS, which fails while the clock is wrong.
-- [ ] Step 13, install from this fork: set `FREE_SLEEP_REPO=jalen-cheng/free-sleep` and `FREE_SLEEP_BRANCH=main` first, as the note in that step describes.
+- [ ] Step 13 installs this fork as written; nothing extra to set.
 - [ ] Steps 14 to 18: open the UI at the Pod's address, reboot once and confirm the UI comes back, set up SSH.
 - [ ] Reconnect the cover (if it was disconnected) and confirm a temperature change is felt on each side.
 - [ ] Install Biometrics with `sh /home/dac/free-sleep/scripts/enable_biometrics.sh` while the internet is open. The button probe and the calibration script need its Python environment.
@@ -270,11 +270,9 @@ Searched 2026-11-13. These are other people's reports, not verified here.
 - [ ] **Biometrics.** Point the sleep analysis at the `rawmem.*` subjects this firmware publishes.
 
 ### Known gaps
-- [ ] A press just after an alarm stops vibrating toggles power; a short grace period would avoid it.
-- [ ] Optionally let any press stop a vibrating alarm.
+- [ ] On a Pod 4, a four-tap just after an alarm stops vibrating toggles power; a short grace period would avoid it. (A Pod 5 is not affected.)
 - [ ] In Level, tap steps are stored as whole °F (3, 6 or 8), so many presses in a row can drift by a level.
 - [ ] An alarm restarted because the other side dismissed theirs starts over from its full length.
-- [ ] The app's Update button compares against upstream's version, not the fork's. Use `fs-update` over SSH.
 - [ ] A one-time alarm has no warm-up.
 - [ ] Node tests (`tests/*.test.mjs`) do not run in CI, and no CI runs on the fork.
 - [ ] Hardware differences between Pod 3, 4 and 5 are checked ad hoc; one capabilities table per model would replace those checks.

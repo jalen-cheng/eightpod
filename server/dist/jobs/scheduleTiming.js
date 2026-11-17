@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="be3c7924-c172-5645-9236-d83308a9c0e8")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="a600419d-75d4-5073-b12d-05f453adf5f5")}catch(e){}}();
 export const DAYS_OF_WEEK = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 const MINUTES_PER_DAY = 24 * 60;
 // Returns the HH:mm that is `minutes` before `time`, wrapping past midnight ("00:10" - 30 -> "23:40")
@@ -34,6 +34,15 @@ export function findNextScheduledAlarm(sideSchedule, now) {
             nextAlarm = candidate;
     }
     return nextAlarm;
+}
+// The scheduled alarm a one-off alarm stands in for: the side's next scheduled alarm, when it
+// falls no more than `withinHours` after the one-off. An alarm set for 6:00 replaces the 8:45 of
+// the same morning; an afternoon nap alarm leaves tomorrow morning's alone.
+export function findAlarmReplacedByOneOff(sideSchedule, now, oneOffFiresAt, withinHours) {
+    const nextScheduled = findNextScheduledAlarm(sideSchedule, now);
+    if (!nextScheduled)
+        return undefined;
+    return nextScheduled.isSameOrBefore(oneOffFiresAt.clone().add(withinHours, 'hours')) ? nextScheduled : undefined;
 }
 // "9:05", "09:05:00", "9.05 pm", or either inside a longer text such as a full date
 const CLOCK_WITH_MINUTES = /(\d{1,2})[:.](\d{2})(?::\d{2})?\s*(a\.?m|p\.?m)?/i;
@@ -74,4 +83,4 @@ export function minutesAlarmIsAfterOff(alarmTime, power) {
     return minutesAfterBedtime(alarmTime, power.on) - minutesAfterBedtime(power.off, power.on);
 }
 //# sourceMappingURL=scheduleTiming.js.map
-//# debugId=be3c7924-c172-5645-9236-d83308a9c0e8
+//# debugId=a600419d-75d4-5073-b12d-05f453adf5f5

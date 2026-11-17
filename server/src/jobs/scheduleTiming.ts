@@ -39,6 +39,20 @@ export function findNextScheduledAlarm(sideSchedule: SideSchedule, now: moment.M
   return nextAlarm;
 }
 
+// The scheduled alarm a one-off alarm stands in for: the side's next scheduled alarm, when it
+// falls no more than `withinHours` after the one-off. An alarm set for 6:00 replaces the 8:45 of
+// the same morning; an afternoon nap alarm leaves tomorrow morning's alone.
+export function findAlarmReplacedByOneOff(
+  sideSchedule: SideSchedule,
+  now: moment.Moment,
+  oneOffFiresAt: moment.Moment,
+  withinHours: number,
+): moment.Moment | undefined {
+  const nextScheduled = findNextScheduledAlarm(sideSchedule, now);
+  if (!nextScheduled) return undefined;
+  return nextScheduled.isSameOrBefore(oneOffFiresAt.clone().add(withinHours, 'hours')) ? nextScheduled : undefined;
+}
+
 // "9:05", "09:05:00", "9.05 pm", or either inside a longer text such as a full date
 const CLOCK_WITH_MINUTES = /(\d{1,2})[:.](\d{2})(?::\d{2})?\s*(a\.?m|p\.?m)?/i;
 // "9 pm"

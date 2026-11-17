@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Dialog,
   DialogActions,
@@ -33,6 +33,11 @@ export default function AlarmDismissal({ refetch }: AlarmDismissalProps) {
   const deviceStatus = useControlTempStore(state => state.deviceStatus);
 
   const [dismissed, setDismissed] = useState(false);
+  const isAlarmVibrating = deviceStatus?.[side]?.isAlarmVibrating || false;
+  // Once the alarm has stopped, forget the dismissal so the dialog shows for the next alarm
+  useEffect(() => {
+    if (!isAlarmVibrating) setDismissed(false);
+  }, [isAlarmVibrating]);
 
   const theme = useTheme();
   const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
@@ -61,7 +66,7 @@ export default function AlarmDismissal({ refetch }: AlarmDismissalProps) {
 
   return (
     <Dialog
-      open={ dismissed ? false : deviceStatus?.[side]?.isAlarmVibrating || false }
+      open={ !dismissed && isAlarmVibrating }
       fullScreen={ isSmallScreen }
       slotProps={ {
         paper: {
