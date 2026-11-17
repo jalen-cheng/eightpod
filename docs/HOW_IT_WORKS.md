@@ -1,0 +1,435 @@
+# How this fork works
+
+Everything that runs on the Pod, what each part does, how the features affect each other, and what
+changed from the original project ([throwaway31265/free-sleep](https://github.com/throwaway31265/free-sleep)).
+Written from the code on `main` on 17 Nov 2026. File references are for anyone who wants to check.
+
+For the list of changes by pull request and what was tested on a Pod, see [FORK_STATUS.md](FORK_STATUS.md).
+
+- [1. The parts](#1-the-parts)
+- [2. Where things are stored](#2-where-things-are-stored)
+- [3. Temperature](#3-temperature)
+- [4. The weekly schedule and its jobs](#4-the-weekly-schedule-and-its-jobs)
+- [5. Alarms](#5-alarms)
+- [6. Pod 5 buttons and Pod 4 taps](#6-pod-5-buttons-and-pod-4-taps)
+- [7. Linked sides and away mode](#7-linked-sides-and-away-mode)
+- [8. Daily housekeeping: priming, reboot, calibration](#8-daily-housekeeping-priming-reboot-calibration)
+- [9. The app, page by page](#9-the-app-page-by-page)
+- [10. The API and phone shortcuts](#10-the-api-and-phone-shortcuts)
+- [11. Network: the internet block, the name, Tailscale](#11-network-the-internet-block-the-name-tailscale)
+- [12. Installing and updating](#12-installing-and-updating)
+- [13. How features interact](#13-how-features-interact)
+- [14. What changed from the original project](#14-what-changed-from-the-original-project)
+- [15. Known rough edges](#15-known-rough-edges)
+
+## 1. The parts
+
+| Part | What it is | Where |
+|---|---|---|
+| **Firmware** ("frank") | Eight Sleep's own program. It drives the pumps, heaters and vibration motors and is the only thing that touches hardware. | Already on the Pod |
+| **Free Sleep server** | A Node program on port 3000. It tells the firmware what to do, runs the schedule, and serves the app. | `server/` |
+| **The app** | The web page you open. It only talks to the server. | `app/`, built into `server/public` |
+| **Biometrics** | Python that turns sensor data into sleep and heart data. **Off on a Pod 5**: its firmware publishes that data where the analysis does not read. | `biometrics/` |
+| **Scripts** | Install, update, the internet block, the `.local` name, Tailscale. | `scripts/` |
+
+How the server reaches the firmware: Free Sleep opens a socket file (`dac.sock`) and the firmware
+connects to it, the same way it would connect to Eight Sleep's cloud program. Free Sleep then sends
+numbered commands one at a time and waits up to 10 seconds for each answer
+(`server/src/8sleep/frankenServer.ts`). The commands it uses:
+
+| Command | Used for |
+|---|---|
+| `DEVICE_STATUS` | Read both sides' levels, time left, water, priming, settings |
+| `TEMP_LEVEL_LEFT` / `RIGHT` | Set a side's level, -100 to 100 |
+| `LEFT` / `RIGHT_TEMP_DURATION` | Seconds a side stays on. 43200 (12 hours) switches it on, 0 switches it off |
+| `ALARM_LEFT` / `RIGHT` | Vibrate a side: strength, seconds, pattern |
+| `ALARM_CLEAR` | Stop vibrating. The firmware stops **both** sides |
+| `PRIME` | Run the water priming cycle |
+| `SET_SETTINGS` | LED brightness and sensor gains |
+
+A side is "on" when the firmware reports time left on its timer. There is no separate on/off flag.
+
+At start-up the server loads its saved files, builds the schedule's jobs, starts listening on port
+3000, connects to the firmware, and starts two watchers: one polls the firmware's status (every
+half second on a Pod 4 or 5), the other follows the firmware's log for Pod 5 button presses.
+
+## 2. Where things are stored
+
+Everything Free Sleep keeps lives in `/persistent/free-sleep-data/` on the Pod.
+
+| File | Holds | Notes |
+|---|---|---|
+| `lowdb/settingsDB.json` | Time zone, display unit, link sides, side names, away mode, button settings, daily priming and reboot, and the one-time alarm | Defaults: UTC, °F, daily reboot on, daily priming on at 14:00, sides not linked |
+| `lowdb/schedulesDB.json` | For each side and each day: bedtime, off time, temperature changes, the alarm | See section 4 |
+| `lowdb/servicesDB.json` | Biometrics and error-reporting switches and their status | |
+| `free-sleep.db` | Sleep, heart and movement records (SQLite) | Only filled when biometrics works |
+| `logs/` | Server log, update log, calibration logs | |
+| `temperature_scale_version.txt` | Marks that saved temperatures were converted to the measured scale | See section 3 |
+
+**Any write to the settings or schedules file rebuilds every scheduled job.** The server watches the
+folder and, on a change, cancels all jobs and creates them again from the files
+(`server/src/jobs/jobScheduler.ts`). That is why a setting takes effect straight away, and why
+nothing needs restarting. Things that are in progress (a vibrating alarm, a warm-up) are kept in
+memory instead, so a rebuild does not interrupt them. A restart of the server or the Pod does lose
+them.
+
+## 3. Temperature
+
+The firmware works in **levels from -100 to 100**. Eight Sleep's own app shows these as -10 to +10.
+Free Sleep stores and sends whole **°F** everywhere and converts at the edges.
+
+**The measured curve.** The original project assumed levels were spread evenly from 55 to 110°F.
+On the test Pod 5 the firmware reports the water temperature it actually aims for, and it is not
+even (`server/src/db/temperatureCurve.ts`):
+
+| Level (dial) | Firmware aims for |
+|---|---|
+| -100 (-10) | 10.0°C / 50°F (this one level drops sharply) |
+| -99 | 15.1°C / 59°F |
+| 0 | 27.0°C / 81°F |
+| +50 (+5) | 36.0°C / 97°F |
+| +100 (+10) | 42.0°C / 108°F |
+
+Between those points the line is straight. So the range is 50 to 108°F, and "level +5" is 97°F, not
+96. These are the firmware's targets; whether the water reaches them is what the second
+calibration run measures.
+
+**Saved schedules were converted once.** A schedule saved under the old even scale kept its number
+but would have meant a different level, so on first start with the new curve every saved
+temperature was converted to keep its *level*. The originals are in
+`schedulesDB.before-measured-temperatures.json`.
+
+**Display units** (Settings > Temperature format): °F, °C (to half a degree), or **Level** (-10 to
++10, matching Eight Sleep's app). In Level, the + and - buttons move one level; in °F and °C, one
+degree.
+
+**Setting a temperature.** The server turns °F into the nearest level and sends it. Turning a side
+on sets its timer to 12 hours. The Temperature page waits 0.7 seconds after your last tap before
+sending, so several taps become one request, and it ignores the Pod's reported value while you are
+still tapping.
+
+**The dial endpoints** exist for phone shortcuts: `POST /api/deviceStatus/dial {"dial": -3}` turns
+the bed on at that level, and `GET /api/deviceStatus/dial` answers with a sentence such as "Both
+sides set to -2, now at -3".
+
+## 4. The weekly schedule and its jobs
+
+Each side has seven entries, one per day. An entry describes **one night, named after the day it
+starts on**:
+
+| Field | Meaning |
+|---|---|
+| Schedule on | If off, the bed does not turn on or off by itself that night, and its alarm does not run |
+| Bedtime, and its temperature | The bed turns on at this time, at this temperature |
+| Temperature changes | Any number of "at this time, change to this" |
+| Alarm | Time, pattern, strength, how long it keeps going, the warm-up, whether the bed turns off when it is dismissed |
+| Off time | When the bed turns off |
+
+**Which calendar day a time belongs to.** Bedtime is on the entry's own day. Every other time is
+compared with bedtime on the clock: earlier on the clock means the next day. With Monday's bedtime
+at 22:00, a change at 23:00 is Monday night, a change at 01:00 and an alarm at 06:30 are Tuesday
+morning (`getDayIndexForSchedule` in `server/src/jobs/scheduleTiming.ts`).
+
+**The jobs** built from each entry, for each side:
+
+| Job | When | What it does | Skipped when |
+|---|---|---|---|
+| Power on | Bedtime | Turns the side on at the bedtime temperature | Schedule off, or the side is away |
+| Temperature change | Each change time | Sets the temperature. Does not turn the side on | Side away; or a warm-up is running |
+| Warm-up | Alarm time minus the warm-up minutes | Sets the warm-up temperature and holds off scheduled changes until the alarm | Schedule off, alarm off, away, or the side is off at that moment |
+| Alarm | Alarm time | Starts the vibration (section 5) | Schedule off, alarm off, away, the side is off, or a one-time alarm stands in for it |
+| Power off | Off time | Turns the side off, **unless an alarm is still to come** (section 5) | Schedule off, or away |
+
+Jobs are per side. When the sides are linked, the app saves the same night to both sides, so both
+sides' jobs do the same thing at the same time.
+
+## 5. Alarms
+
+### What a scheduled alarm does
+
+1. **Warm-up** (optional, 15 to 45 minutes before): the bed goes to the warm-up temperature.
+2. **Vibration starts** at the alarm time, if the side is on.
+3. **Ramp up** (if the pattern is "Ramp up"): 10 seconds each at 20%, 40%, 60% and 80% of the set
+   strength, then full strength. "Pulses" starts at full strength.
+4. **It keeps going** until dismissed, up to the length you chose (10, 15, 20 or 30 minutes).
+5. **Dismiss it** with any button on a Pod 5, a four-tap on a Pod 4, the dialog in the app, or a
+   request to the API.
+6. If "Bed turns off: when the alarm is dismissed" is chosen, the side turns off at that moment.
+   Otherwise it turns off at the off time.
+
+### Why the vibration is sent in pieces
+
+The firmware has three limits, all found by testing on the Pod:
+
+- It vibrates for at most about **three minutes** per request.
+- Its own "rise" pattern **does not ramp**: it is one steady strength.
+- It **ignores a new request while it is vibrating**.
+
+So Free Sleep sends one stretch at a time and, when a stretch is due to end, sends the next
+(`server/src/jobs/alarmSession.ts`). A 30-minute ramp-up alarm at 100% is: 10 s at 20, 10 s at 40,
+10 s at 60, 10 s at 80, then full strength in three-minute stretches until 30 minutes have passed.
+There is a gap of about a second between stretches.
+
+### Dismissing, and two sides
+
+The firmware's stop command stops both sides. So:
+
+- **Sides linked:** dismissing either side dismisses both, and each side's "turn off when
+  dismissed" applies.
+- **Sides not linked:** the other side's alarm is started again straight away. It starts over
+  from the beginning, ramp included.
+
+"Turn off when dismissed" applies only to a dismissal. An alarm that runs to its full length
+leaves the bed on until the off time.
+
+### One-time alarms
+
+Set from the Temperature page ("Change the next alarm"), or by a shortcut
+(`POST /api/alarm/time {"time": "7:15 AM"}`). It is stored in the settings file as a time plus an
+expiry, and the weekly schedule is not touched.
+
+- It goes off at the next moment the clock shows that time: later today, or tomorrow.
+- It goes off **even if the bed is off or the side is away**. It does not turn the bed on.
+- Its pattern, strength, length and "turn off when dismissed" are taken from the alarm saved for
+  that weekday.
+- **It replaces the scheduled alarm of the same morning.** The scheduled alarm is skipped if it
+  falls before the one-time alarm, or up to 6 hours after it. An afternoon one-time alarm therefore
+  leaves tomorrow morning's alarm alone.
+- **It has no warm-up of its own.** The scheduled alarm's warm-up still runs at its usual time.
+- `{"shiftMinutes": 30}` moves the next alarm later (or earlier with a negative number) the same way.
+- "Back to schedule" in the app, or `POST /api/alarm/time/cancel`, removes it.
+
+### An alarm later than the off time
+
+If an alarm (the night's own, or a one-time one) is due within 6 hours after the off time, the
+power-off job does not switch the side off. It sets the side's timer to run out two minutes after
+that alarm would finish, so the firmware switches it off then. The app allows a scheduled alarm up
+to 6 hours after the off time and says "Bed stays on until it has gone off".
+
+### Testing an alarm
+
+Alarm options > "Test for a minute" vibrates now with the settings on screen, saved or not, on
+both sides when linked, whether or not the bed is on.
+
+## 6. Pod 5 buttons and Pod 4 taps
+
+A **Pod 5** has three buttons per side: -, + and a middle button. The firmware does not report them
+through the status the Pod 4 uses, but it writes each press to its log, so Free Sleep follows that
+log (`server/src/8sleep/buttonMonitor.ts`). The server's user is given permission to read it by the
+installer. A **Pod 4** reports double, triple and quadruple taps as counters, read by polling.
+
+| Situation | Pod 5 | Pod 4 |
+|---|---|---|
+| Bed on, - or + | Cooler or warmer by the step set in Settings, per press | Double tap cooler, triple tap warmer |
+| Bed off, - or + | Turns the side on. No temperature change | Changes the temperature setting |
+| Middle button, short press | Nothing | (Four taps) turns the side on or off |
+| Middle button, held 2 seconds | Turns the side on or off | Not available |
+| Alarm vibrating | **Any** short press of any button dismisses it | Four taps dismiss it |
+
+- Presses within 0.4 seconds of each other are handled together, so three quick presses move three steps.
+- A second alarm or power press within 3 seconds is ignored, so one press is never counted twice.
+- When the sides are linked, buttons on either side control both.
+- The step is set in Settings > Side buttons. In Level the choices are 1, 2 or 3 levels.
+- Snooze was removed. Any press stops the alarm.
+
+## 7. Linked sides and away mode
+
+**Linked sides** (the chain button beside the side picker) make the bed behave as one:
+
+| What | When linked |
+|---|---|
+| Temperature and power in the app | Sent to both sides. Linking copies this side's state to the other at once |
+| Saving a schedule | Saved to both sides |
+| Buttons and taps | Control both |
+| Dismissing an alarm | Dismisses both |
+| Shortcuts (dial, alarm time) | Apply to both, even if the request names one side |
+| Alarm test | Both |
+
+Linking is applied by the app and by those server paths. A hand-written request to
+`/api/deviceStatus` or `/api/schedules` naming one side changes only that side.
+
+**Away mode** (Settings, per side) is for one person being away: that side's schedule, alarm and
+warm-up do not run, and its controls are hidden. While either side is away, every temperature or
+power change to the other side is **mirrored to the away side**, so the whole bed follows the
+person who is there. One-time alarms and the alarm test still vibrate an away side.
+
+## 8. Daily housekeeping: priming, reboot, calibration
+
+All three hang off Settings > "Prime daily" and its time (default 14:00, on by default in this fork).
+
+| Job | When | Notes |
+|---|---|---|
+| Daily reboot | One hour before the priming time (13:00) | Only if "Reboot once a day" is on. **Does not exist if daily priming is off** |
+| Priming | The priming time (14:00) | Runs the water cycle. It does not check whether the bed is in use |
+| Sensor calibration | Left at 14:00, right at 14:30 | Biometrics only; does nothing when biometrics is off |
+
+A reboot takes under a minute. After it, the internet block, the `.local` name and Tailscale come
+back by themselves. Anything held in memory (a vibrating alarm, a running warm-up) is lost.
+
+## 9. The app, page by page
+
+The app refreshes the bed's state every 5 seconds.
+
+**Temperature.** Side picker and link button; the dial with the target, the current reading and
+"Turns off at"; + and -; the power button; and a row for the next alarm. That row opens "Change
+the next alarm" (a one-time alarm) or disables tonight's alarm. While an alarm vibrates, a dialog
+offers to dismiss it.
+
+**Schedules.**
+- A tab per day, Monday first. It opens on tonight (before noon, that is yesterday's entry,
+  because a night belongs to the day it started).
+- "Monday night" with a switch: whether that night's schedule runs at all.
+- A chart of the night, then the night as a list from top to bottom: bedtime, each temperature
+  change, the alarm with its Options, and when the bed turns off.
+- Editing anything brings up a bar that stays in view: **Discard**, **Other days…** (tick any days
+  to save this night to) and **Save for Mon**. Other day tabs are locked until you save or discard.
+- With nothing to save, "Copy this night to other days" does the same without an edit.
+- Saving always writes the whole night shown, to each chosen day, on both sides when linked.
+
+**Data.** Sleep records and logs. Sleep needs biometrics.
+
+**Status.** Wi-Fi strength and whether Free Sleep is up to date, then each internal service with
+its state. Services that are jobs have a Run button.
+
+**Settings.** Time zone (set this first: the schedule runs in it), temperature format, LED
+brightness, side names and away mode, side buttons, priming, biometrics and error reporting, and
+the device: Wi-Fi, versions, update, reboot.
+
+## 10. The API and phone shortcuts
+
+Everything the app does goes through `http://<pod>:3000/api/...`, with no login. The full list is
+in [server/API.md](../server/API.md). The ones made for shortcuts:
+
+| Request | Does |
+|---|---|
+| `POST /api/deviceStatus/dial` `{"dial": -3}` | Bed on at that level, both sides unless `side` is given |
+| `GET /api/deviceStatus/dial` | A one-sentence summary of the bed |
+| `POST /api/alarm/time` `{"time": "7:15 AM"}` | One-time alarm. Accepts "07:15", "7:15 AM", "7 am", or a full date |
+| `POST /api/alarm/time` `{"shiftMinutes": 30}` | Next alarm 30 minutes later |
+| `POST /api/alarm/time` `{"time": "07:00", "days": ["monday"]}` | Changes the weekly alarm for those days |
+| `POST /api/alarm/time/cancel` | Removes the one-time alarm |
+| `POST /api/deviceStatus` `{"left": {"isAlarmVibrating": false}}` | Dismisses a vibrating alarm |
+
+Step-by-step shortcut recipes are in [IOS_SHORTCUTS.md](IOS_SHORTCUTS.md).
+
+**Which pages may call the API.** A browser tells the server which page a request came from. The
+server accepts the Pod's own addresses and names (home network addresses, `eight-pod`,
+`eight-pod.local`, its Tailscale address and name) and refuses any other website, so a page on the
+internet cannot drive the bed through your browser. Requests with no page behind them, such as
+shortcuts, are accepted.
+
+## 11. Network: the internet block, the name, Tailscale
+
+**The internet block** (`scripts/block_internet_access.sh`) is a firewall on the Pod that drops
+everything except: your home network, time sync, DNS lookups, address requests to the router, and
+name lookups on the home network. It is restored at every boot before the network starts. With it
+on, the Pod cannot reach Eight Sleep or anything else. `scripts/updater_lockout.sh` separately
+switches off Eight Sleep's updater so it cannot replace the firmware.
+
+**The name.** The installer switches on a responder so the Pod answers at
+`http://eight-pod.local:3000` at home, whatever address the router gives it.
+`setup_local_name.sh disable` turns it off for good.
+
+**Tailscale** (optional, `scripts/setup_tailscale.sh`) lets your own devices reach the page from
+anywhere:
+
+- It runs on the Pod in a mode that adds no routes or firewall rules.
+- The block is opened for Tailscale's sign-in servers and the relays of two regions only, replies only.
+- A daily timer re-reads Tailscale's relay list and updates the allowed addresses.
+- Updating Free Sleep also installs a newer Tailscale when one is out.
+- **Home access never depends on it.** If Tailscale is down, `http://10.0.0.x:3000` and
+  `eight-pod.local` work as before on your home network.
+
+Details, limits and alternatives: [REMOTE_ACCESS.md](REMOTE_ACCESS.md).
+
+## 12. Installing and updating
+
+**Install** (`scripts/install.sh`, as root) downloads this fork, installs Node, finds the
+firmware's socket path, sets up the database, creates the `free-sleep` service (and gives it
+permission to read the firmware log), adds the `fs-*` shortcuts, switches on the `.local` name, and
+refreshes Tailscale's files if Tailscale is installed.
+
+**Update** (`fs-update`, or `sh /home/dac/free-sleep/scripts/update.sh`):
+
+1. Stops Free Sleep and backs up the database.
+2. Opens the internet block **temporarily**: the saved rules stay, so a power cut mid-update still
+   comes back blocked.
+3. Keeps the old install aside, downloads and runs the installer from the saved source.
+4. If anything fails, puts the old install back.
+5. Blocks the internet again, with the same options as before.
+
+It takes about four minutes. The bed's firmware keeps running throughout, so the bed stays at its
+temperature, but nothing scheduled fires while Free Sleep is stopped. The app's Update button runs
+the same thing.
+
+**The repository contains the built app and server** (`server/public`, `server/dist`), because the
+Pod runs them as downloaded and does not build anything.
+
+## 13. How features interact
+
+The cases where one feature changes what another does:
+
+| If | Then |
+|---|---|
+| You save any setting or schedule | Every job is rebuilt. A vibrating alarm and a running warm-up carry on |
+| A one-time alarm is set | The same morning's scheduled alarm is skipped. Its warm-up still runs. The one-time alarm uses that weekday's saved pattern, strength and length |
+| A one-time alarm is set and the bed is off | It still vibrates; the bed stays off |
+| An alarm is due after the off time | The bed stays on until two minutes after the alarm would end |
+| "Bed turns off when the alarm is dismissed" is on | The off time shown is only a fallback an hour after the alarm, used if nobody dismisses it |
+| A warm-up is running | Scheduled temperature changes are skipped until the alarm. Changes you make by hand are not |
+| The night's schedule is switched off | No power on or off, no alarm, no warm-up. **Saved temperature changes still fire**, but they never turn the bed on |
+| The bed is off at the alarm time | A scheduled alarm does not vibrate. A one-time alarm and a test do |
+| Sides are linked and one side dismisses | Both stop |
+| Sides are not linked and one side dismisses | The other side's alarm restarts from the beginning |
+| One side is in away mode | The other side's changes are mirrored to it; its own schedule and alarm do not run |
+| Daily priming is switched off | The daily reboot stops too |
+| The Pod reboots or Free Sleep restarts during an alarm | The alarm is forgotten: the current stretch (up to three minutes) finishes and nothing follows |
+| An update is running | Nothing scheduled fires for about four minutes |
+| Tailscale is down | Only remote access is affected |
+
+## 14. What changed from the original project
+
+| Area | Original | This fork |
+|---|---|---|
+| **Pod 5 buttons** | Not read; nothing happens | -, + and middle work, and any press stops an alarm |
+| **Temperatures** | Even spread, 55 to 110°F | Measured curve, 50 to 108°F; saved schedules converted once |
+| **Display** | °F or °C | Also Level (-10 to +10) |
+| **Alarm length** | Up to 3 minutes | Until dismissed, up to 30 minutes |
+| **Ramp up** | The firmware's flat "rise" | Real steps: 20, 40, 60, 80%, then full |
+| **Snooze** | Offered | Removed |
+| **Warm-up before the alarm** | None | 15 to 45 minutes, to a chosen temperature |
+| **Bed off after the alarm** | At the off time only | Optionally the moment it is dismissed |
+| **Alarm after the off time** | Does not go off, the bed is already off | The bed stays on for it |
+| **One-time alarm** | "Override tonight's alarm" on the Temperature page | Works when the bed is off, replaces that morning's alarm, can be shifted or cancelled, set by one request |
+| **Dismissing with two sides** | One side's dismissal silently stops the other | Linked: both stop. Not linked: the other restarts |
+| **Linked sides** | None | One switch; app, buttons, shortcuts and dismissal all follow it |
+| **Schedule page** | A form per day with day checkboxes | Day tabs, the night as a timeline, save for this day or any days |
+| **Partial schedule saves** | Sending part of an alarm wiped the rest | Merged |
+| **Shortcuts** | Whole-object requests only | Dial, alarm time, shift, cancel, status sentence |
+| **Opening by name** | Blank page under any name | Works as `eight-pod`, `eight-pod.local`, Tailscale name |
+| **Internet block** | Also blocks DNS, which can stop the clock syncing | DNS, address requests and time sync keep working; re-applied by its own service at every boot; updates come from this fork |
+| **Eight Sleep's updater** | Left running | Can be locked out |
+| **Remote access** | None | Optional Tailscale on the Pod |
+| **Daily priming** | Off by default | On by default at 14:00 |
+
+Fixes offered back to the original project are linked in the [README](../README.md); none has been
+answered yet. That has no effect on this fork.
+
+## 15. Known rough edges
+
+Found while writing this guide. None is new; they are listed so nothing here is a surprise.
+
+- **Temperature changes still fire when a night's schedule is switched off** (they never turn the bed on).
+- **A scheduled alarm's warm-up still runs when a one-time alarm replaces that alarm**, at the old time.
+- **A restarted alarm starts over**, ramp included (the unlinked two-sides case).
+- **A time just before bedtime is treated as the next day.** With bedtime at 22:00, a change at
+  21:55 fires the following evening.
+- **Two saves in quick succession** can leave the jobs built from the first; any later save fixes it.
+- **Daily reboot depends on daily priming being on.**
+- **Priming and the daily reboot do not check whether the bed is in use.** Keep their time in the afternoon.
+- **Holding the middle button during an alarm** turns the bed off or on but does not dismiss the
+  alarm; a short press does.
+- **`server/API.md` is missing some endpoints** (starting an alarm now, raw status, jobs, logs) and
+  has a few outdated examples.
+- **The version number does not change between fork updates**, so the app always says "Up to date".
+  Use `fs-update` to get the newest.

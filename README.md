@@ -74,8 +74,8 @@ Open pull requests on the original project, each a small fix that stands on its 
 - **Some newer Pod 5 units cannot be opened up this way.** See the first section of the walkthrough.
 - **Saved schedules are converted once** when updating to the measured temperatures, so each keeps
   setting the same level. The originals are kept beside them.
-- To install this fork instead of upstream, set `FREE_SLEEP_REPO=jalen-cheng/free-sleep` before
-  running the installer, as the walkthrough shows. Updates then come from this fork.
+- The installer in [INSTALLATION.md](INSTALLATION.md) installs this fork, and updates come from it.
+- How everything fits together, feature by feature: [docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md).
 - The demo link below shows upstream's app, not this fork's.
 
 ---

@@ -4,7 +4,7 @@ import { createRequire } from 'node:module';
 import { test } from 'node:test';
 import { isPowerScheduleDurationValid } from '../app/src/pages/SchedulePage/scheduleValidation.ts';
 import {
-  DAYS_OF_WEEK, findNextScheduledAlarm, getDayIndexForSchedule, minutesAlarmIsAfterOff, parseClockTime,
+  DAYS_OF_WEEK, findAlarmReplacedByOneOff, findNextScheduledAlarm, getDayIndexForSchedule, minutesAlarmIsAfterOff, parseClockTime,
   subtractMinutesFromTime,
 } from '../server/src/jobs/scheduleTiming.ts';
 
@@ -115,6 +115,26 @@ test('the next scheduled alarm is the soonest enabled one, on the morning after 
   // Once Thursday's alarm has gone off, the next is Saturday morning (Friday's night)
   const afterAlarm = moment.tz('2026-11-12T06:31:00', 'America/New_York');
   assert.equal(findNextScheduledAlarm(sideSchedule, afterAlarm).format(), '2026-11-14T09:00:00-05:00');
+});
+
+test('a one-off alarm replaces the scheduled alarm of the same morning only', () => {
+  const requireMoment = createRequire(new URL('../server/package.json', import.meta.url));
+  const moment = requireMoment('moment-timezone');
+  const zone = 'America/New_York';
+  const sideSchedule = Object.fromEntries(DAYS_OF_WEEK.map(day => [day, {
+    power: { on: '22:00', off: '09:00', enabled: true, onTemperature: 80 },
+    alarm: { time: '08:45', enabled: true },
+  }]));
+  const lateEvening = moment.tz('2026-11-11T23:30:00', zone);
+  const replaced = (oneOff, now = lateEvening) => findAlarmReplacedByOneOff(sideSchedule, now, moment.tz(oneOff, zone), 6)?.format();
+
+  // Earlier than the scheduled alarm: the 8:45 must not also go off
+  assert.equal(replaced('2026-11-12T06:00:00'), '2026-11-12T08:45:00-05:00');
+  // Later than it: still the same morning's alarm
+  assert.equal(replaced('2026-11-12T11:30:00'), '2026-11-12T08:45:00-05:00');
+  // An afternoon nap alarm leaves tomorrow morning's alarm alone
+  const afternoon = moment.tz('2026-11-12T14:00:00', zone);
+  assert.equal(replaced('2026-11-12T15:00:00', afternoon), undefined);
 });
 
 test('a time of day is read however a phone writes it', () => {

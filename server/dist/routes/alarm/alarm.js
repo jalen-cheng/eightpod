@@ -1,12 +1,12 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="faa780fb-c07f-5736-891c-c7877a93fbc5")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="755aebf1-d9b2-575b-9809-d199a297f2d4")}catch(e){}}();
 import express from 'express';
 import { z } from 'zod';
 import moment from 'moment-timezone';
-import { AlarmJobSchema, } from '../../db/schedulesSchema.js';
+import { AlarmJobSchema, LATE_ALARM_WINDOW_HOURS, } from '../../db/schedulesSchema.js';
 import { DAYS_OF_WEEK } from '../../jobs/utils.js';
 import { SideChoiceSchema, resolveSides } from '../sideChoice.js';
-import { findNextScheduledAlarm, parseClockTime } from '../../jobs/scheduleTiming.js';
+import { findAlarmReplacedByOneOff, findNextScheduledAlarm, parseClockTime } from '../../jobs/scheduleTiming.js';
 import logger from '../../logger.js';
 import schedulesDB from '../../db/schedules.js';
 import settingsDB from '../../db/settings.js';
@@ -89,7 +89,8 @@ const shiftNextAlarm = (side, shiftMinutes, now) => {
 // Sets an alarm with one short request. Made for phone shortcuts and the app's one-time alarm,
 // where sending a whole schedule is impractical.
 // - `time`, no `days`: a one-off alarm at the next occurrence of the time (tonight or tomorrow,
-//   whichever comes first). The weekly schedule is untouched and a scheduled alarm before it is skipped.
+//   whichever comes first). The weekly schedule is untouched; the scheduled alarm of that same
+//   morning is skipped, whether it is earlier or up to LATE_ALARM_WINDOW_HOURS later.
 // - `time` with `days`: sets the weekly alarm time on those days, leaving the rest of each alarm alone.
 // - `shiftMinutes`: moves the next alarm later or earlier, as a one-off.
 router.post('/alarm/time', async (req, res) => {
@@ -121,9 +122,11 @@ router.post('/alarm/time', async (req, res) => {
         .map(alarmSide => {
         if (shiftMinutes !== undefined)
             return shiftNextAlarm(alarmSide, shiftMinutes, now);
-        const firesAt = nextOccurrenceHhMm(settingsDB.data.timeZone, time);
         // (time is set here: the schema requires it whenever shiftMinutes is missing)
-        return setOneOff(alarmSide, firesAt, firesAt);
+        const firesAt = nextOccurrenceHhMm(settingsDB.data.timeZone, time);
+        // Without this, a one-off earlier than the scheduled alarm would leave both to go off
+        const replacedAlarm = findAlarmReplacedByOneOff(schedulesDB.data[alarmSide], now, firesAt, LATE_ALARM_WINDOW_HOURS);
+        return setOneOff(alarmSide, firesAt, replacedAlarm ?? firesAt);
     })
         .filter(alarm => alarm !== undefined);
     if (alarms.length === 0) {
@@ -149,4 +152,4 @@ router.post('/alarm/time/cancel', async (req, res) => {
 });
 export default router;
 //# sourceMappingURL=alarm.js.map
-//# debugId=faa780fb-c07f-5736-891c-c7877a93fbc5
+//# debugId=755aebf1-d9b2-575b-9809-d199a297f2d4
