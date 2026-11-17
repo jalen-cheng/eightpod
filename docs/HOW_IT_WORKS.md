@@ -154,7 +154,7 @@ sides' jobs do the same thing at the same time.
 4. **It keeps going** until dismissed, up to the length you chose (10, 15, 20 or 30 minutes).
 5. **Dismiss it** with any button on a Pod 5, a four-tap on a Pod 4, the dialog in the app, or a
    request to the API.
-6. If "Bed turns off: when the alarm is dismissed" is chosen, the side turns off at that moment.
+6. If "Bed off on dismiss" is switched on in the alarm's options, the side turns off at that moment.
    Otherwise it turns off at the off time.
 
 ### Why the vibration is sent in pieces
@@ -281,8 +281,9 @@ offers to dismiss it.
 - A tab per day, Monday first. It opens on tonight (before noon, that is yesterday's entry,
   because a night belongs to the day it started).
 - "Monday night" with a copy button (save this night to other days) and a switch: whether that night's schedule runs at all.
-- A chart of the night, then the night as a list from top to bottom: bedtime, each temperature
-  change, the alarm with its Options, and when the bed turns off.
+- A chart of the night, then the night as one line per event: bed on, each temperature change,
+  the alarm (time, an options button, a switch), and bed off. Everything else about the alarm,
+  including whether the bed turns off when it is dismissed, is behind the options button.
 - Editing anything brings up a bar that stays in view: **Discard**, **Other days…** (tick any days
   to save this night to) and **Save for Mon**. Other day tabs are locked until you save or discard.
 - Saving always writes the whole night shown, to each chosen day, on both sides when linked.
@@ -376,7 +377,7 @@ The cases where one feature changes what another does:
 | A one-time alarm is set | The same morning's scheduled alarm and its warm-up are skipped. The one-time alarm uses that weekday's saved pattern, strength, length and warm-up |
 | A one-time alarm is set and the bed is off | It still vibrates; the bed stays off |
 | An alarm is due after the off time | The bed stays on until two minutes after the alarm would end |
-| "Bed turns off when the alarm is dismissed" is on | The off time shown is only a fallback an hour after the alarm, used if nobody dismisses it |
+| "Bed off on dismiss" is on in the alarm's options | The off time shown is only a fallback an hour after the alarm, used if nobody dismisses it |
 | A warm-up is running | Scheduled temperature changes are skipped until the alarm. Changes you make by hand are not |
 | The night's schedule is switched off | Nothing runs that night: no power on or off, no temperature changes, no alarm, no warm-up |
 | The bed is off at the alarm time | A scheduled alarm does not vibrate. A one-time alarm and a test do |

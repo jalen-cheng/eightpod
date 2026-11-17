@@ -1,5 +1,5 @@
 import {
-  Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem, Slider, TextField,
+  Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem, Slider, Switch, TextField,
   ToggleButton, ToggleButtonGroup, Typography,
 } from '@mui/material';
 import _ from 'lodash';
@@ -12,6 +12,7 @@ import { AlarmSchedule } from '@api/schedulesSchema.ts';
 import InfoTip from '@components/InfoTip.tsx';
 import { useScheduleStore } from './scheduleStore.tsx';
 import { TemperatureSelect } from './ScheduleFields.tsx';
+import { offTimeFor } from './alarmOffTime.ts';
 
 const SECONDS_PER_MINUTE = 60;
 // An alarm keeps going until it is dismissed, up to this long
@@ -44,10 +45,10 @@ const OptionRow = ({ label, info, isStacked, children }: OptionRowProps) => (
       justifyContent: 'space-between',
     } }
   >
-    <Typography variant="body2" sx={ { fontWeight: 500, minWidth: 0 } }>
-      { label }
-      { info && <>{ ' ' }<InfoTip text={ info }/></> }
-    </Typography>
+    <Box sx={ { display: 'flex', alignItems: 'center', gap: 0.5, minWidth: 0 } }>
+      <Typography variant="body2" noWrap sx={ { fontWeight: 500 } }>{ label }</Typography>
+      { info && <InfoTip text={ info }/> }
+    </Box>
     <Box sx={ { flexShrink: 0 } }>{ children }</Box>
   </Box>
 );
@@ -73,13 +74,18 @@ export default function AlarmOptionsDialog({ open, onClose }: AlarmOptionsDialog
   }, [isTesting]);
   if (!selectedSchedule) return null;
 
-  const { alarm } = selectedSchedule;
+  const { alarm, power } = selectedSchedule;
   const updateAlarm = (changes: Partial<AlarmSchedule>) => updateSelectedSchedule({ alarm: changes });
   const preWarmMinutes = alarm.preWarmMinutes ?? 0;
   const lengthMinutes = Math.round(alarm.duration / SECONDS_PER_MINUTE);
   // An alarm saved with some other length keeps it until a new one is picked
   const lengthOptions = _.sortBy(_.union(ALARM_LENGTH_MINUTES, [lengthMinutes]));
   const testSides = getControlledSides(side, linkSides);
+
+  // With this on, the saved off time becomes a fallback an hour after the alarm
+  const setTurnsOffWithAlarm = (turnOffAfterDismiss: boolean) => {
+    updateSelectedSchedule({ alarm: { turnOffAfterDismiss }, power: { off: offTimeFor(turnOffAfterDismiss, alarm.time, power.off) } });
+  };
 
   // Vibrates the bed now, whether or not the side is on, so the settings can be felt
   const startTest = () => {
@@ -129,7 +135,7 @@ export default function AlarmOptionsDialog({ open, onClose }: AlarmOptionsDialog
           />
         </Box>
 
-        <OptionRow label="Keeps going for" info="It stops sooner if you dismiss it.">
+        <OptionRow label="Length" info="How long it keeps going. It stops sooner if you dismiss it.">
           <TextField
             select
             size="small"
@@ -144,7 +150,7 @@ export default function AlarmOptionsDialog({ open, onClose }: AlarmOptionsDialog
           </TextField>
         </OptionRow>
 
-        <OptionRow label="Warm the bed first" info="The bed goes to the warm-up temperature this long before the alarm.">
+        <OptionRow label="Warm-up" info="The bed goes to the warm-up temperature this long before the alarm.">
           <TextField
             select
             size="small"
@@ -168,6 +174,14 @@ export default function AlarmOptionsDialog({ open, onClose }: AlarmOptionsDialog
             />
           </OptionRow>
         ) }
+
+        <OptionRow label="Bed off on dismiss" info="The bed turns off the moment you dismiss the alarm, instead of at a set time.">
+          <Switch
+            checked={ alarm.turnOffAfterDismiss ?? false }
+            onChange={ (event) => setTurnsOffWithAlarm(event.target.checked) }
+            slotProps={ { input: { 'aria-label': 'Turn the bed off when the alarm is dismissed' } } }
+          />
+        </OptionRow>
       </DialogContent>
       <DialogActions sx={ { px: 3, pb: 2 } }>
         <Button onClick={ isTesting ? stopTest : startTest } sx={ { mr: 'auto' } }>

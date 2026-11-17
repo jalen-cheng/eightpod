@@ -23,7 +23,11 @@ export function TimeField({ label, value, onChange, disabled, error }: TimeField
       onChange={ (event) => { if (event.target.value) onChange(event.target.value); } }
       disabled={ disabled }
       error={ error }
-      sx={ { width: 148, flexShrink: 0 } }
+      sx={ {
+        width: { xs: 112, sm: 148 }, flexShrink: 0,
+        // On a phone the field itself opens the picker, and the clock icon would crowd out AM/PM
+        '& input::-webkit-calendar-picker-indicator': { display: { xs: 'none', sm: 'block' } },
+      } }
       slotProps={ { htmlInput: { 'aria-label': label } } }
     />
   );
@@ -50,7 +54,7 @@ export function TemperatureSelect({ label, value, onChange, disabled }: Temperat
       value={ value }
       onChange={ (event) => onChange(Number(event.target.value)) }
       disabled={ disabled }
-      sx={ { width: 104, flexShrink: 0 } }
+      sx={ { width: { xs: 92, sm: 104 }, flexShrink: 0 } }
       slotProps={ { htmlInput: { 'aria-label': label } } }
     >
       { temperatureOptions.map(temperatureF => (
