@@ -13,7 +13,8 @@ Two separate problems:
 | `.local` name | On by default. `http://eight-pod.local:3000` loads from a Mac on the home network. |
 | Tailscale on the Pod | Installed and running with the internet block on. The Pod reaches Tailscale's sign-in servers and two relay regions, and nothing else (`example.com` and `github.com` time out). |
 | Daily refresh of the relay addresses | Works with the block on. |
-| Signing in and opening the page from a phone away from home | **Not done yet.** It needs the owner's Tailscale account. |
+| Signing in and opening the page from a phone away from home | Signed in, and an iPhone on cellular reached the Pod through the Los Angeles relay. The page was blank at first because the server refused the app's own files under the name `eight-pod`; that is fixed (PR 44) and checked with the same request headers, but the phone has not been tried again since. |
+| Reboot | Tailscale comes back signed in, and the bed's firmware starts within a minute. |
 
 ## 1. A stable address at home
 
