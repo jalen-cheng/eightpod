@@ -4,6 +4,8 @@ Usage:
   tailscale_relay_addresses.py sfo sea     Print the IPv4 address of every relay in those regions
   tailscale_relay_addresses.py --list      Print every region code and name
   tailscale_relay_addresses.py --nearest 2 Print the codes of the regions that answer fastest
+  tailscale_relay_addresses.py --policy sfo sea
+                                           Print the tailnet policy entry that switches off every other region
 """
 
 from concurrent.futures import ThreadPoolExecutor
@@ -60,6 +62,16 @@ def nearest_regions(regions, region_count):
     return [region_code for _seconds, region_code in sorted(reachable)[:region_count]]
 
 
+def region_policy(regions, region_codes):
+    """Return the "derpMap" policy entry that leaves only the chosen regions switched on."""
+    kept_codes = {region_code.lower() for region_code in region_codes}
+    unknown_codes = kept_codes - set(regions)
+    if unknown_codes:
+        raise ValueError(f"Unknown relay region: {', '.join(sorted(unknown_codes))}")
+    switched_off = sorted(region['RegionID'] for region_code, region in regions.items() if region_code not in kept_codes)
+    return json.dumps({'derpMap': {'Regions': {str(region_id): None for region_id in switched_off}}})
+
+
 def main(arguments):
     regions = load_regions(sys.stdin.read())
     if arguments[:1] == ['--list']:
@@ -67,6 +79,8 @@ def main(arguments):
             print(f"{region_code}\t{regions[region_code].get('RegionName', '')}")
     elif arguments[:1] == ['--nearest']:
         print(' '.join(nearest_regions(regions, int(arguments[1]))))
+    elif arguments[:1] == ['--policy']:
+        print(region_policy(regions, arguments[1:]))
     elif arguments:
         print('\n'.join(relay_addresses(regions, arguments)))
     else:

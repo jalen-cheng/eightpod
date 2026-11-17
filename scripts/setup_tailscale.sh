@@ -16,6 +16,8 @@
 #   sh setup_tailscale.sh login         Sign the Pod in (prints a link to open on your phone)
 #   sh setup_tailscale.sh status        Show the connection, regions and allowed relay addresses
 #   sh setup_tailscale.sh regions       List every relay region code
+#   sh setup_tailscale.sh policy        Print the entry for your Tailscale policy file that makes
+#                                       all your devices use the Pod's relay regions
 #   sh setup_tailscale.sh sync-scripts  Refresh the root-owned script copies (run by install.sh)
 #   sh setup_tailscale.sh remove        Sign out and remove everything this script added
 #
@@ -270,6 +272,11 @@ case "$ACTION" in
   regions)
     curl -fsS --max-time 30 "$TAILSCALE_RELAY_MAP_URL" | python3 "$SCRIPT_DIR/tailscale_relay_addresses.py" --list
     ;;
+  policy)
+    # shellcheck disable=SC2046 # the saved region codes are separate arguments on purpose
+    curl -fsS --max-time 30 "$TAILSCALE_RELAY_MAP_URL" \
+      | python3 "$SCRIPT_DIR/tailscale_relay_addresses.py" --policy $(head -n 1 "$TAILSCALE_REGIONS_FILE")
+    ;;
   sync-scripts)
     # Nothing to do on a Pod without Tailscale
     if [ -d "$TAILSCALE_SCRIPTS_DIR" ]; then
@@ -280,7 +287,7 @@ case "$ACTION" in
     remove_tailscale
     ;;
   *)
-    echo "Unknown action '$ACTION'. Use install, upgrade, login, status, regions, sync-scripts or remove." >&2
+    echo "Unknown action '$ACTION'. Use install, upgrade, login, status, regions, policy, sync-scripts or remove." >&2
     exit 1
     ;;
 esac

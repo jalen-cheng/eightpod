@@ -279,7 +279,8 @@ sh /home/dac/free-sleep/scripts/block_internet_access.sh
 - Remote access over Tailscale: `ALLOW_TAILSCALE=true sh /home/dac/free-sleep/scripts/block_internet_access.sh` also allows `100.64.0.0/10`.
   This only opens the tailnet address range. It is meant for reaching the Pod through a Tailscale subnet router elsewhere on your LAN
   that forwards tailnet source addresses (`--snat-subnet-routes=false`); with the default subnet router settings traffic already arrives from a LAN address and you don't need it.
-  Running Tailscale on the Pod itself would need internet access to Tailscale's coordination and relay servers, which this firewall blocks.
+  To run Tailscale on the Pod itself, use `sh /home/dac/free-sleep/scripts/setup_tailscale.sh`: it opens the block for Tailscale's sign-in servers
+  and the relays of two regions only, and keeps that list current. See [docs/REMOTE_ACCESS.md](docs/REMOTE_ACCESS.md).
 - Preview the rules without changing anything: `sh /home/dac/free-sleep/scripts/block_internet_access.sh --print-rules`
 
 Verify after a reboot:
