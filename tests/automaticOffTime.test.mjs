@@ -9,10 +9,13 @@ test('minutes are added to a time of day, wrapping past midnight', () => {
   assert.equal(addMinutesToTime('00:10', -30), '23:40');
 });
 
-test('a night with an alarm turns off 30 minutes after it; one without keeps its off time', () => {
+test('the bed turns off 30 minutes after the wake-up time, alarm or not', () => {
   assert.equal(offTimeAfterAlarm('06:30'), '07:00');
   const withAlarm = { alarm: { enabled: true, time: '08:45' }, power: { off: '10:00' } };
   assert.equal(applyAutomaticOffTime(withAlarm).power.off, '09:15');
+
+  // A night saved without an alarm keeps its off time; its wake-up time is taken from it, once
   const withoutAlarm = { alarm: { enabled: false, time: '08:45' }, power: { off: '10:00' } };
-  assert.equal(applyAutomaticOffTime(withoutAlarm).power.off, '10:00');
+  assert.deepEqual(applyAutomaticOffTime(withoutAlarm), { alarm: { enabled: false, time: '09:30' }, power: { off: '10:00' } });
+  assert.deepEqual(applyAutomaticOffTime(withoutAlarm), { alarm: { enabled: false, time: '09:30' }, power: { off: '10:00' } });
 });

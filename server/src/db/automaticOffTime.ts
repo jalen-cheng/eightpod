@@ -1,8 +1,10 @@
-// When a night has an alarm, the bed's off time is not chosen: it follows the alarm.
+// A night has a bedtime and a wake-up time. The wake-up time is stored as the alarm's time,
+// whether or not the alarm is switched on to vibrate, and the bed's off time is never chosen:
+// it follows the wake-up time.
 // WARNING! This file is shared with the app (app/src/api/automaticOffTime.ts), so it must not
 // import anything.
 
-// The bed turns off this long after the alarm time. A one-off alarm moves it: this long after
+// The bed turns off this long after the wake-up time. A one-off alarm moves it: this long after
 // that alarm goes off (see scheduleAlarmOverride in jobs/alarmScheduler.ts).
 export const OFF_AFTER_ALARM_MINUTES = 30;
 
@@ -24,9 +26,16 @@ type NightWithAlarm = {
   power: { off: string };
 };
 
-// Sets a night's off time from its alarm when the alarm is on. A night without an alarm keeps
-// the off time that was chosen for it. Changes the night in place and returns it.
+// Keeps a night's off time OFF_AFTER_ALARM_MINUTES after its wake-up time. Changes the night in
+// place and returns it.
+// - Alarm on: the alarm's time is the wake-up time, and the off time follows it.
+// - Alarm off: nights saved before there was a wake-up time only have an off time worth keeping,
+//   so the wake-up time is taken from it. Once the two agree this changes nothing.
 export function applyAutomaticOffTime<Night extends NightWithAlarm>(night: Night): Night {
-  if (night.alarm.enabled) night.power.off = offTimeAfterAlarm(night.alarm.time);
+  if (night.alarm.enabled) {
+    night.power.off = offTimeAfterAlarm(night.alarm.time);
+  } else if (night.power.off !== offTimeAfterAlarm(night.alarm.time)) {
+    night.alarm.time = addMinutesToTime(night.power.off, -OFF_AFTER_ALARM_MINUTES);
+  }
   return night;
 }
