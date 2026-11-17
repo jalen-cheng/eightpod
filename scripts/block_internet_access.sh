@@ -54,6 +54,10 @@ build_ipv4_rules() {
   # Without this the Pod could fail to get an address and drop off the network.
   echo "-A OUTPUT -p udp --sport 68 --dport 67 -j ACCEPT"
   echo "-A INPUT -p udp --sport 67 --dport 68 -j ACCEPT"
+  # mDNS: lets phones and computers at home find the Pod by name (<hostname>.local, see
+  # setup_local_name.sh). The address is link-local multicast, which routers do not forward.
+  echo "-A INPUT -p udp -d 224.0.0.251 --dport 5353 -j ACCEPT"
+  echo "-A OUTPUT -p udp -d 224.0.0.251 --dport 5353 -j ACCEPT"
   # Loopback lets local services talk to each other
   echo "-A INPUT -i lo -j ACCEPT"
   echo "-A OUTPUT -o lo -j ACCEPT"
