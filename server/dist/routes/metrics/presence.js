@@ -1,11 +1,11 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="f6198415-6cde-559b-9a05-20cf1e4a4079")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="aeadc0bb-6b15-5e7b-8c7d-ab5130b6e1e3")}catch(e){}}();
 import express from 'express';
 import moment from 'moment-timezone';
 import { z } from 'zod';
 import logger from '../../logger.js';
 import settingsDB from '../../db/settings.js';
-import { getPresenceSnapshot } from '../../8sleep/presenceMonitor.js';
+import { getPresenceSnapshot } from '../../8sleep/bedSensorMonitor.js';
 const router = express.Router();
 const PresenceSideSchema = z.object({
     present: z.boolean(),
@@ -87,4 +87,4 @@ router.get('/presence/sensors', (req, res) => {
 });
 export default router;
 //# sourceMappingURL=presence.js.map
-//# debugId=f6198415-6cde-559b-9a05-20cf1e4a4079
+//# debugId=aeadc0bb-6b15-5e7b-8c7d-ab5130b6e1e3

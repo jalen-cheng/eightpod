@@ -6,7 +6,7 @@ import logger from './logger.js';
 import { connectFranken, disconnectFranken } from './8sleep/frankenServer.js';
 import { FrankenMonitor } from './8sleep/frankenMonitor.js';
 import { ButtonMonitor } from './8sleep/buttonMonitor.js';
-import { PresenceMonitor } from './8sleep/presenceMonitor.js';
+import { BedSensorMonitor } from './8sleep/bedSensorMonitor.js';
 import './jobs/jobScheduler.js';
 
 
@@ -24,7 +24,7 @@ const app = express();
 let server: Server | undefined;
 let frankenMonitor: FrankenMonitor | undefined;
 let buttonMonitor: ButtonMonitor | undefined;
-let presenceMonitor: PresenceMonitor | undefined;
+let bedSensorMonitor: BedSensorMonitor | undefined;
 
 async function disconnectPrisma() {
   try {
@@ -77,7 +77,7 @@ async function gracefulShutdown(signal: string) {
     if (!config.remoteDevMode) {
       frankenMonitor?.stop();
       buttonMonitor?.stop();
-      await presenceMonitor?.stop();
+      await bedSensorMonitor?.stop();
       await disconnectFranken();
       logger.debug('Successfully closed Franken components.');
     }
@@ -110,9 +110,10 @@ const initFrankenMonitor = () => {
   // Pod 5 buttons are read from the firmware log; it only begins once a Pod 5 cover is attached
   buttonMonitor = new ButtonMonitor();
   buttonMonitor.start();
-  // In-bed detection from the bed's own sensors; quietly unavailable on Pods that lack them
-  presenceMonitor = new PresenceMonitor();
-  presenceMonitor.start();
+  // In-bed detection and measured water temperature from the bed's own sensors; quietly
+  // unavailable on Pods that do not report them
+  bedSensorMonitor = new BedSensorMonitor();
+  bedSensorMonitor.start();
   logger.info('Frank monitor started!');
 };
 

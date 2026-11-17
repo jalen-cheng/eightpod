@@ -3,7 +3,7 @@ import moment from 'moment-timezone';
 import { z } from 'zod';
 import logger from '../../logger.js';
 import settingsDB from '../../db/settings.js';
-import { getPresenceSnapshot } from '../../8sleep/presenceMonitor.js';
+import { getPresenceSnapshot } from '../../8sleep/bedSensorMonitor.js';
 
 const router: Router = express.Router();
 

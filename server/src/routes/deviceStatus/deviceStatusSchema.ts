@@ -12,6 +12,8 @@ const MAX_ACCEPTED_TEMPERATURE_F = 110;
 const SideStatusSchema = z.object({
   currentTemperatureLevel: z.number(),
   currentTemperatureF: z.number(),
+  // The water temperature the bed measures on this side, where the firmware reports it (Pod 5)
+  measuredTemperatureF: z.number().optional(),
   targetTemperatureF: z.number()
     .min(MIN_TARGET_TEMPERATURE_F, { message: `Temperature must be at least ${MIN_TARGET_TEMPERATURE_F}°F` })
     .max(MAX_ACCEPTED_TEMPERATURE_F, { message: `Temperature cannot exceed ${MAX_ACCEPTED_TEMPERATURE_F}°F` }),

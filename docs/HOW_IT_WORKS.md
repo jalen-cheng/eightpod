@@ -110,6 +110,13 @@ Device settings; 12 is the default. The Temperature page waits 0.7 seconds after
 sending, so several taps become one request, and it ignores the Pod's reported value while you are
 still tapping.
 
+**Measured water temperature.** A Pod 5 also reports the water temperature it measures on each
+side. The Temperature page shows it under the target ("Water at 70°F"), and `/api/deviceStatus`
+carries it as `measuredTemperatureF`. On a Pod that does not report it, the page shows the
+firmware's own estimate as before ("Currently at"). In a two-hour run on the test Pod the water
+settled within 2°F of the target from level -5 to +10; at the coldest level it reached 63°F
+against a 50°F target in 20 minutes.
+
 **The dial endpoints** exist for phone shortcuts: `POST /api/deviceStatus/dial {"dial": -3}` turns
 the bed on at that level, and `GET /api/deviceStatus/dial` answers with a sentence such as "Both
 sides set to -2, now at -3".

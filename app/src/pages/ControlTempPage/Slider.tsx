@@ -84,6 +84,7 @@ export default function Slider({ isOn, currentTargetTemp, refetch, currentTemper
               sliderColor={ sliderColor }
               currentTargetTemp={ currentTargetTemp }
               currentTemperatureF={ currentTemperatureF }
+              measuredTemperatureF={ sideStatus?.measuredTemperatureF }
               temperatureFormat={ temperatureFormat }
             />
           </CircularSliderWithChildren>
