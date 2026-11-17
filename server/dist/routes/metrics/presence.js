@@ -1,10 +1,11 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="6dcd1266-33cc-5dfb-ad5f-e36b224a551c")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="f6198415-6cde-559b-9a05-20cf1e4a4079")}catch(e){}}();
 import express from 'express';
 import moment from 'moment-timezone';
 import { z } from 'zod';
 import logger from '../../logger.js';
 import settingsDB from '../../db/settings.js';
+import { getPresenceSnapshot } from '../../8sleep/presenceMonitor.js';
 const router = express.Router();
 const PresenceSideSchema = z.object({
     present: z.boolean(),
@@ -77,6 +78,13 @@ router.post('/presence', async (req, res) => {
 router.get('/presence', (req, res) => {
     return res.status(200).json(presenceData);
 });
+/**
+ * GET /presence/sensors
+ * What the bed's own presence sensors say right now, with the numbers behind it
+ */
+router.get('/presence/sensors', (req, res) => {
+    return res.status(200).json(getPresenceSnapshot());
+});
 export default router;
 //# sourceMappingURL=presence.js.map
-//# debugId=6dcd1266-33cc-5dfb-ad5f-e36b224a551c
+//# debugId=f6198415-6cde-559b-9a05-20cf1e4a4079

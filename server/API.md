@@ -602,3 +602,19 @@ Timestamps are server-generated.
 }
 ```
 
+
+## In-bed detection
+
+`GET /api/metrics/presence/sensors` reports what the bed's own presence sensors say (Pod 5):
+
+```json
+{
+  "available": true,
+  "left": { "present": true, "signal": 4310, "baseline": 3890, "changedAt": "2026-11-17T22:41:07.000Z" },
+  "right": { "present": false, "signal": 3955, "baseline": 3950, "changedAt": "2026-11-17T21:02:11.000Z" }
+}
+```
+
+`signal` is the smoothed sum of a side's three zones and `baseline` the level taken as an empty
+bed. `available` is false on a Pod that does not report the sensors. The settings that act on
+presence are under `presence` in `/api/settings`.

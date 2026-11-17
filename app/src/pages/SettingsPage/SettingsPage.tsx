@@ -16,6 +16,7 @@ import DiscordLink from './DiscordLink.tsx';
 import FeaturesSection from './FeaturesSection/FeaturesSection.tsx';
 import Section from './Section.tsx';
 import TapGesturesSection from './TapGesturesSection/TapGesturesSection.tsx';
+import PresenceSection from './PresenceSection.tsx';
 import DeviceSettingsSection from './DeviceSettingsSection/DeviceSettingsSection.tsx';
 import DeviceInfo from './DeviceSettingsSection/DeviceInfo.tsx';
 import DailyReboot from './DeviceSettingsSection/DailyReboot.tsx';
@@ -65,6 +66,9 @@ export default function SettingsPage() {
             <Box sx={ { '& > .MuiButton-root': { width: '100%' } } }><PrimeControl/></Box>
           </Box>
         </Section>
+      </ErrorBoundary>
+      <ErrorBoundary componentName="In-bed detection">
+        <PresenceSection settings={ settings } updateSettings={ updateSettings }/>
       </ErrorBoundary>
       <FeaturesSection/>
       <ErrorBoundary componentName="Device info">

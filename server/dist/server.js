@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="5befa9c5-4d1b-5d93-9be0-de120865d820")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="418f222b-79cc-57e9-8bc0-9d5dc92f0b74")}catch(e){}}();
 import './instrument.js';
 import express from 'express';
 import schedule from 'node-schedule';
@@ -7,6 +7,7 @@ import logger from './logger.js';
 import { connectFranken, disconnectFranken } from './8sleep/frankenServer.js';
 import { FrankenMonitor } from './8sleep/frankenMonitor.js';
 import { ButtonMonitor } from './8sleep/buttonMonitor.js';
+import { PresenceMonitor } from './8sleep/presenceMonitor.js';
 import './jobs/jobScheduler.js';
 // Setup code
 import setupMiddleware from './setup/middleware.js';
@@ -21,6 +22,7 @@ const app = express();
 let server;
 let frankenMonitor;
 let buttonMonitor;
+let presenceMonitor;
 async function disconnectPrisma() {
     try {
         logger.debug('Flushing SQLite');
@@ -69,6 +71,7 @@ async function gracefulShutdown(signal) {
         if (!config.remoteDevMode) {
             frankenMonitor?.stop();
             buttonMonitor?.stop();
+            await presenceMonitor?.stop();
             await disconnectFranken();
             logger.debug('Successfully closed Franken components.');
         }
@@ -97,6 +100,9 @@ const initFrankenMonitor = () => {
     // Pod 5 buttons are read from the firmware log; it only begins once a Pod 5 cover is attached
     buttonMonitor = new ButtonMonitor();
     buttonMonitor.start();
+    // In-bed detection from the bed's own sensors; quietly unavailable on Pods that lack them
+    presenceMonitor = new PresenceMonitor();
+    presenceMonitor.start();
     logger.info('Frank monitor started!');
 };
 // Main startup function
@@ -145,4 +151,4 @@ startServer().catch((err) => {
     process.exit(1);
 });
 //# sourceMappingURL=server.js.map
-//# debugId=5befa9c5-4d1b-5d93-9be0-de120865d820
+//# debugId=418f222b-79cc-57e9-8bc0-9d5dc92f0b74

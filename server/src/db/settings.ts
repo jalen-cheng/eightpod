@@ -56,6 +56,12 @@ const defaultData: Settings = {
   },
   // The firmware's own length for a side switched on, and the schedule carries on as usual
   manualOn: { hours: 12, overridesSchedule: false },
+  // Detection always runs where the sensors exist; both actions are off until switched on
+  presence: {
+    sensitivity: 'medium',
+    wakeAfterHours: { enabled: false, hours: 9 },
+    turnOnWhenInBed: { enabled: false, after: '21:00', hours: 8 },
+  },
   primePodDaily: {
     enabled: true,
     time: '14:00',

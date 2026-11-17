@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="2c847358-ab5c-520b-a74f-b7b51e34c4ab")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="41fe7e57-3f8d-5488-884e-9a18af7bdc55")}catch(e){}}();
 import { z } from 'zod';
 import { TIME_ZONES } from './timeZones.js';
 import { TimeSchema } from './schedulesSchema.js';
@@ -63,7 +63,17 @@ export const SettingsSchema = z.object({
         // temperature changes or warm-up. Alarms still go off.
         overridesSchedule: z.boolean(),
     }),
+    // What being in bed sets off, using the bed's own presence sensors (Pod 5)
+    presence: z.object({
+        // How easily a rise in the sensors counts as someone in bed
+        sensitivity: z.enum(['low', 'medium', 'high']),
+        // Vibrate the alarm once someone has been in bed this many hours in one stay
+        wakeAfterHours: z.object({ enabled: z.boolean(), hours: z.number().int().min(1).max(14) }),
+        // Turn the bed on, at tonight's bedtime temperature and for this many hours, when someone
+        // gets in at or after this time of the evening
+        turnOnWhenInBed: z.object({ enabled: z.boolean(), after: TimeSchema, hours: z.number().int().min(1).max(12) }),
+    }),
 }).strict();
 export const MANUAL_ON_HOUR_CHOICES = [3, 6, 12];
 //# sourceMappingURL=settingsSchema.js.map
-//# debugId=2c847358-ab5c-520b-a74f-b7b51e34c4ab
+//# debugId=41fe7e57-3f8d-5488-884e-9a18af7bdc55

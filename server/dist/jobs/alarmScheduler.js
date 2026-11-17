@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="8f4993d9-def0-5489-8176-d47ede304f1c")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="9c35d295-356e-58bd-a98b-d6e8faeba476")}catch(e){}}();
 import schedule from 'node-schedule';
 import cbor from 'cbor';
 import moment from 'moment-timezone';
@@ -129,7 +129,7 @@ const runPreWarm = async (side, preWarmMinutes, alarmTemperatureF) => {
     await updateDeviceStatus({ [side]: { targetTemperatureF: alarmTemperatureF } });
 };
 // How a one-off alarm vibrates: the settings of the weekly alarm on the day it goes off
-const getOneOffAlarmSettings = (settingsData, side, firesAt) => {
+export const getOneOffAlarmSettings = (settingsData, side, firesAt) => {
     const dayKey = firesAt.clone().tz(settingsData.timeZone).format('dddd').toLowerCase();
     return schedulesDB.data?.[side]?.[dayKey]?.alarm ?? {
         vibrationIntensity: 100,
@@ -294,4 +294,4 @@ export const scheduleAlarmPreWarm = (settingsData, side, day, dailySchedule) => 
     });
 };
 //# sourceMappingURL=alarmScheduler.js.map
-//# debugId=8f4993d9-def0-5489-8176-d47ede304f1c
+//# debugId=9c35d295-356e-58bd-a98b-d6e8faeba476

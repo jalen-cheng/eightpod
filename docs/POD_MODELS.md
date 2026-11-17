@@ -20,6 +20,7 @@ takes you back to the original.
 | Dismissing an alarm | From the app or a shortcut | App, shortcut, or four taps | App, shortcut, or any button |
 | Taps (Pod 4) / buttons (Pod 5) | None: a Pod 3 has no tap sensors | Double and triple tap: cooler and warmer. Four taps: changed (below) | -, + and middle buttons |
 | Linked sides, one-time alarm, warm-up, shortcuts | Not model-specific | Not model-specific | Tested |
+| In-bed detection and its actions | Not available: needs sensor data only a Pod 5 was seen to publish. The section is hidden | Same | Built; detection not yet checked with someone in the bed |
 | Sleep tracking (Biometrics) | Code unchanged from the original | Code unchanged from the original | Does not work: this firmware publishes sensor data elsewhere |
 | Internet block, updater lock-out | Not tested on this model | Not tested on this model | Tested |
 | `.local` name, Tailscale on the Pod | Not tested; both need parts of the system a Pod 3 or 4 may lack | Same | Tested |

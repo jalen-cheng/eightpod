@@ -45,6 +45,16 @@ const toFilters = (request: Request): Filters => {
 const notFound = (message: string) => HttpResponse.json({ message }, { status: 404 });
 
 export const handlers = [
+  // The bed's presence sensors: someone on the left, nobody on the right
+  http.get('/api/metrics/presence/sensors', async () => {
+    await delay(60);
+    const changedAt = new Date().toISOString();
+    return HttpResponse.json({
+      available: true,
+      left: { present: true, signal: 4310, baseline: 3890, changedAt },
+      right: { present: false, signal: 3955, baseline: 3950, changedAt },
+    });
+  }),
   http.get('/api/services', async () => {
     await delay(120);
     return HttpResponse.json(deepClone(getServices()));

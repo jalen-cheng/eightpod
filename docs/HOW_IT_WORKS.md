@@ -13,6 +13,7 @@ For the list of changes by pull request and what was tested on a Pod, see [FORK_
 - [5. Alarms](#5-alarms)
 - [6. Pod 5 buttons and Pod 4 taps](#6-pod-5-buttons-and-pod-4-taps)
 - [7. Linked sides and away mode](#7-linked-sides-and-away-mode)
+- [In-bed detection (Pod 5)](#in-bed-detection-pod-5)
 - [8. Daily housekeeping: priming, reboot, calibration](#8-daily-housekeeping-priming-reboot-calibration)
 - [9. The app, page by page](#9-the-app-page-by-page)
 - [10. The API and phone shortcuts](#10-the-api-and-phone-shortcuts)
@@ -259,6 +260,36 @@ warm-up do not run, and its controls are hidden. While either side is away, ever
 power change to the other side is **mirrored to the away side**, so the whole bed follows the
 person who is there. One-time alarms and the alarm test still vibrate an away side.
 
+## In-bed detection (Pod 5)
+
+The bed has capacitive sensors under each side, three zones per side, and a Pod 5's firmware
+publishes their readings twice a second on its local message bus. Free Sleep listens to them
+(`server/src/8sleep/presenceMonitor.ts`) and works out whether someone is in bed
+(`server/src/8sleep/presenceDetector.ts`):
+
+- The three zones are added up and smoothed over 5 seconds.
+- The **empty level is learned**, not fixed: it drops at once to any lower reading and creeps up
+  slowly while the bed looks empty. A sleeper is never learned as "empty".
+- Someone is **in bed** when the signal stays above the empty level by the sensitivity's margin for
+  30 seconds, and **out** when it has dropped for a minute. Sensitivity (Low, Medium, High) is in
+  Settings > In-bed detection, which also shows what each side reads right now.
+- A **stay** bridges gaps of up to 15 minutes, so getting up briefly does not end it.
+
+Two optional actions, both off by default, each run once per stay:
+
+| Setting | What it does |
+|---|---|
+| Turn on when I get into bed | If the bed is off and someone gets in at or after the chosen time (until 6 AM), it turns on at tonight's bedtime temperature for the chosen hours |
+| Alarm after a long time in bed | After the chosen hours in one stay, vibrates like that day's alarm |
+
+With the sides linked, someone on either side counts for the whole bed and both sides act. A side
+in away mode is ignored.
+
+**Not yet verified:** the margins were set from an empty bed only (it wobbles by about 100 on a
+total near 3,900). Nobody has been measured in the bed, so detection may need its sensitivity
+changed, or its margins changed in code, once real readings are in.
+`GET /api/metrics/presence/sensors` returns the live signal and empty level for that.
+
 ## 8. Daily housekeeping: priming, reboot, calibration
 
 All three are timed from Settings > "Prime daily" (default 14:00, on by default in this fork).
@@ -394,6 +425,7 @@ The cases where one feature changes what another does:
 | Daily priming is switched off | The daily reboot still runs, at the same time |
 | The Pod reboots or Free Sleep restarts during an alarm | The alarm is forgotten: the current stretch (up to three minutes) finishes and nothing follows |
 | A side is switched on by hand with "Ignore the schedule until it turns off" set | The schedule skips that side until it turns off: no scheduled power on or off, temperature changes or warm-up. Alarms still go off. A restart of Free Sleep ends it early |
+| Someone gets into a bed that is off, with "Turn on when I get into bed" set | The bed turns on as if by hand, so the manual-on settings apply, but for the hours chosen for this setting |
 | An update is running | Nothing scheduled fires for about four minutes |
 | Tailscale is down | Only remote access is affected |
 

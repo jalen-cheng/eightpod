@@ -200,6 +200,11 @@ const createSettings = (): Settings => ({
   temperatureFormat: 'fahrenheit',
   linkSides: false,
   manualOn: { hours: 12, overridesSchedule: false },
+  presence: {
+    sensitivity: 'medium',
+    wakeAfterHours: { enabled: false, hours: 9 },
+    turnOnWhenInBed: { enabled: true, after: '21:00', hours: 8 },
+  },
   rebootDaily: true,
   left: {
     name: 'Left side',
