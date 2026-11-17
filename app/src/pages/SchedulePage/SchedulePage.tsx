@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Box, Button, FormControlLabel, Switch } from '@mui/material';
+import { Box, Button, Paper, Switch, Typography } from '@mui/material';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { DeepPartial } from 'ts-essentials';
 import moment from 'moment-timezone';
 
@@ -14,7 +15,7 @@ import { useAppStore } from '@state/appStore.tsx';
 import { useSchedules } from '@api/schedules';
 import { useScheduleStore } from './scheduleStore.tsx';
 import { LOWERCASE_DAYS } from './days.ts';
-import { SHORT_DAY_NAMES } from './scheduleDays.ts';
+import { DAY_NAMES, SHORT_DAY_NAMES } from './scheduleDays.ts';
 import TemperatureScheduleChart from './ScheduleChart.tsx';
 import ErrorBoundary from '@components/ErrorBoundary.tsx';
 import PageHeader from '@components/PageHeader.tsx';
@@ -22,6 +23,8 @@ import { buildSidesPayload, getControlledSides } from '@lib/sides.ts';
 
 // The Pod takes a moment to write a schedule before it can be read back
 const SAVE_SETTLE_MS = 1_000;
+// Height of the phone navigation bar, which the save bar has to sit above
+const MOBILE_NAV_HEIGHT_PX = 68;
 
 // A night belongs to the day it starts on, so before noon "tonight's schedule" is yesterday's
 const getAdjustedDayOfWeek = (): DayOfWeek => {
@@ -64,6 +67,7 @@ export default function SchedulePage() {
   }, [linkSides]);
 
   const [isChoosingDays, setIsChoosingDays] = useState(false);
+  const isScheduleOn = selectedSchedule?.power.enabled || false;
 
   // Writes the schedule on screen to the given days, on both sides when they are linked
   const handleSave = async (saveDays: DayOfWeek[]) => {
@@ -85,35 +89,57 @@ export default function SchedulePage() {
       <SideControl linkedHint="Sides linked: saving applies this schedule to both."/>
       <DayPicker/>
 
+      { /* The night being edited, and whether its schedule runs at all */ }
+      <Box sx={ { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, width: '100%' } }>
+        <Box sx={ { minWidth: 0 } }>
+          <Typography component="h2" variant="body1" sx={ { fontWeight: 500 } }>{ DAY_NAMES[selectedDay] } night</Typography>
+          <Typography variant="caption" sx={ { color: 'text.secondary' } }>
+            { isScheduleOn ? 'Schedule on' : 'Schedule off for this night' }
+          </Typography>
+        </Box>
+        <Switch
+          checked={ isScheduleOn }
+          onChange={ (event) => updateSelectedSchedule({ power: { enabled: event.target.checked } }) }
+          disabled={ isUpdating }
+          slotProps={ { input: { 'aria-label': `Schedule for ${DAY_NAMES[selectedDay]} night` } } }
+        />
+      </Box>
+
       <ErrorBoundary componentName="Scheduling chart">
         <TemperatureScheduleChart/>
       </ErrorBoundary>
 
       <NightTimeline/>
 
-      <Box sx={ { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, width: '100%', flexWrap: 'wrap' } }>
-        <FormControlLabel
-          sx={ { whiteSpace: 'nowrap' } }
-          label="Schedule on"
-          control={
-            <Switch
-              checked={ selectedSchedule?.power.enabled || false }
-              onChange={ (event) => updateSelectedSchedule({ power: { enabled: event.target.checked } }) }
-              disabled={ isUpdating }
-            />
-          }
-        />
-        { /* With nothing to save, the only thing left to do with this night is copy it elsewhere */ }
-        { !changesPresent && (
-          <Button size="small" onClick={ () => setIsChoosingDays(true) } disabled={ isUpdating || !isValid() } sx={ { whiteSpace: 'nowrap' } }>
-            Copy to other days
+      { /* With nothing to save, the only thing left to do with this night is copy it elsewhere */ }
+      { !changesPresent && (
+        <Box>
+          <Button
+            size="small"
+            startIcon={ <ContentCopyIcon fontSize="small"/> }
+            onClick={ () => setIsChoosingDays(true) }
+            disabled={ isUpdating || !isValid() }
+          >
+            Copy this night to other days
           </Button>
-        ) }
-      </Box>
+        </Box>
+      ) }
 
+      { /* Unsaved changes: a bar that stays in view, so saving never needs a scroll to the bottom.
+           Discard sits apart on the left; the two ways to save sit together on the right. */ }
       { changesPresent && (
-        <Box sx={ { display: 'flex', justifyContent: 'flex-end', gap: 1, width: '100%' } }>
-          { hasEdits && <Button onClick={ reloadScheduleData } disabled={ isUpdating }>Discard</Button> }
+        <Paper
+          elevation={ 6 }
+          role="region"
+          aria-label="Unsaved changes"
+          sx={ {
+            position: 'sticky', zIndex: 1000,
+            bottom: { xs: `calc(${MOBILE_NAV_HEIGHT_PX}px + env(safe-area-inset-bottom) + 8px)`, md: 16 },
+            display: 'flex', alignItems: 'center', gap: 1, width: '100%', p: 1,
+          } }
+        >
+          { hasEdits && <Button color="inherit" onClick={ reloadScheduleData } disabled={ isUpdating }>Discard</Button> }
+          <Box sx={ { flex: 1 } }/>
           <Button
             variant="outlined"
             onClick={ () => setIsChoosingDays(true) }
@@ -130,7 +156,7 @@ export default function SchedulePage() {
           >
             Save for { SHORT_DAY_NAMES[selectedDay] }
           </Button>
-        </Box>
+        </Paper>
       ) }
 
       <SaveDaysDialog open={ isChoosingDays } openDay={ selectedDay } onClose={ () => setIsChoosingDays(false) } onSave={ handleSave }/>

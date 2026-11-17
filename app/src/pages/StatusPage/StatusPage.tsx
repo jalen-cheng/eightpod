@@ -9,6 +9,8 @@ import {
 import PageContainer from '../PageContainer.tsx';
 import PageHeader from '@components/PageHeader.tsx';
 import StatusRow from './StatusRow.tsx';
+import WifiStrength from '@components/WifiStrength.tsx';
+import VersionStatus from '@components/VersionStatus.tsx';
 import { ServerStatusKey, StatusInfo } from '@api/serverStatusSchema.ts';
 
 export default function StatusPage() {
@@ -18,7 +20,12 @@ export default function StatusPage() {
   return (
     <PageContainer sx={ { width: '100%', maxWidth: 760, mx: 'auto' } }>
       <Box>
-        <PageHeader title="Server Status"/>
+        <PageHeader title="Server Status">
+          <Box sx={ { display: 'flex', flexWrap: 'wrap', gap: 0.75 } }>
+            <WifiStrength/>
+            <VersionStatus variant="chip"/>
+          </Box>
+        </PageHeader>
         <Typography
           variant="caption"
           sx={ {

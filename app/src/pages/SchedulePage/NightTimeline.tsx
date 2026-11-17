@@ -3,6 +3,7 @@ import { Box, Button, IconButton, MenuItem, Paper, Switch, TextField, Typography
 import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
 import TuneIcon from '@mui/icons-material/Tune';
+import _ from 'lodash';
 import moment from 'moment-timezone';
 import { PropsWithChildren, ReactNode, useState } from 'react';
 import { DailySchedule, LATE_ALARM_WINDOW_HOURS, MAX_ALARM_SECONDS, Time } from '@api/schedulesSchema.ts';
@@ -27,7 +28,8 @@ const formatClockTime = (time: Time) => moment(time, 'HH:mm').format('h:mm A');
 
 type TimelineRowProps = PropsWithChildren<{
   title: string;
-  subtitle?: string;
+  // One line, or several shown one under another
+  subtitle?: string | string[];
   // The dot's colour; the night's main events get a larger, hollow dot
   color: string;
   isMainEvent?: boolean;
@@ -39,6 +41,7 @@ type TimelineRowProps = PropsWithChildren<{
 // Stacked rather than side by side so the label never has to wrap on a phone.
 const TimelineRow = ({ title, subtitle, color, isMainEvent, headerAction, children }: TimelineRowProps) => {
   const dotSize = isMainEvent ? 16 : 10;
+  const subtitleLines = _.castArray(subtitle ?? []);
   return (
     <Box sx={ { position: 'relative', display: 'flex', flexDirection: 'column', gap: 0.75 } }>
       <Box
@@ -48,14 +51,19 @@ const TimelineRow = ({ title, subtitle, color, isMainEvent, headerAction, childr
         } }
       />
       <Box sx={ { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, minHeight: 24 } }>
-        <Box sx={ { minWidth: 0 } }>
-          <Typography variant="body2" sx={ { fontWeight: isMainEvent ? 500 : 400, color: isMainEvent ? 'text.primary' : 'text.secondary' } }>
-            { title }
-          </Typography>
-          { subtitle && <Typography variant="caption" sx={ { color: 'text.secondary', display: 'block' } }>{ subtitle }</Typography> }
-        </Box>
+        <Typography variant="body2" sx={ { fontWeight: isMainEvent ? 500 : 400, color: isMainEvent ? 'text.primary' : 'text.secondary' } }>
+          { title }
+        </Typography>
         { headerAction }
       </Box>
+      { /* Under the title line and full width, so a switch beside the title never squeezes the text */ }
+      { subtitleLines.length > 0 && (
+        <Box sx={ { mt: -0.5 } }>
+          { subtitleLines.map(line => (
+            <Typography key={ line } variant="caption" sx={ { color: 'text.secondary', display: 'block' } }>{ line }</Typography>
+          )) }
+        </Box>
+      ) }
       { children && <Box sx={ { display: 'flex', alignItems: 'center', gap: 0.75 } }>{ children }</Box> }
     </Box>
   );
@@ -163,11 +171,13 @@ export default function NightTimeline() {
     );
   };
 
-  const alarmSummary = [
-    `${PATTERN_NAMES[alarm.vibrationPattern]}, up to ${formatAlarmLength(alarm.duration)}`,
-    preWarmMinutes > 0 && `warms to ${describeTemperature(alarm.alarmTemperature, temperatureFormat)} ${preWarmMinutes} min before`,
-    isAlarmAfterOff && 'bed stays on for it',
-  ].filter(Boolean).join(' · ');
+  // One fact per line: how it vibrates, the warm-up before it, and whether the bed waits for it
+  const warmUpStart = formatClockTime(addMinutes(alarm.time, -preWarmMinutes));
+  const alarmSummary = _.compact([
+    `${PATTERN_NAMES[alarm.vibrationPattern]} for up to ${formatAlarmLength(alarm.duration)}, until dismissed`,
+    preWarmMinutes > 0 && `Bed warms to ${describeTemperature(alarm.alarmTemperature, temperatureFormat)} from ${warmUpStart}`,
+    isAlarmAfterOff && 'Bed stays on until it has gone off',
+  ]);
 
   const lateAlarmError = `Too long after the bed turns off (over ${LATE_ALARM_WINDOW_HOURS} hours)`;
   const alarmSubtitle = !alarm.enabled ? 'Off' : isAlarmTimeValid ? alarmSummary : lateAlarmError;

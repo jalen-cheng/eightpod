@@ -2,7 +2,7 @@ import { Box, Chip, Divider, Typography } from '@mui/material';
 import { useDeviceStatus } from '@api/deviceStatus.ts';
 import { Version } from '@api/deviceStatusSchema';
 import VersionStatus from '@components/VersionStatus.tsx';
-import WifiStrength from './WifiStrength.tsx';
+import WifiStrength from '@components/WifiStrength.tsx';
 import RebootButton from './RebootButton.tsx';
 
 export default function DeviceInfo() {
@@ -14,6 +14,13 @@ export default function DeviceInfo() {
   return (
     <Box sx={ { display: 'flex', flexDirection: 'column', gap: 2 } }>
       <Box sx={ { display: 'flex', flexDirection: 'column', gap: 1.5 } }>
+        <Box sx={ { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 1 } }>
+          <Typography variant="body2" sx={ { color: 'text.secondary' } }>Status</Typography>
+          <Box sx={ { display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-end', gap: 0.75 } }>
+            <WifiStrength/>
+            <VersionStatus variant="chip"/>
+          </Box>
+        </Box>
         <Box sx={ { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 1 } }>
           <Typography variant="body2" sx={ { color: 'text.secondary' } }>Device</Typography>
           <Box sx={ { display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-end', gap: 0.75 } }>
@@ -28,7 +35,6 @@ export default function DeviceInfo() {
             <Chip label={ deviceStatus?.freeSleep?.branch } size="small"/>
           </Box>
         </Box>
-        <Box sx={ { display: 'flex', '& .MuiChip-root': { mb: 0 } } }><WifiStrength/></Box>
       </Box>
       <Box
         sx={ {
@@ -39,7 +45,7 @@ export default function DeviceInfo() {
           '& .MuiAlert-root .MuiButton-root': { mt: 1 },
         } }
       >
-        <VersionStatus/>
+        <VersionStatus variant="alert"/>
       </Box>
       <Divider/>
       <RebootButton/>

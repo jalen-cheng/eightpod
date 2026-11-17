@@ -25,12 +25,26 @@ export const PATTERN_NAMES: Record<AlarmSchedule['vibrationPattern'], string> = 
   double: 'Pulses',
 };
 
-// One labelled line of the options: the label on the left, its control on the right
-const OptionRow = ({ label, hint, children }: PropsWithChildren<{ label: string; hint?: string }>) => (
-  <Box sx={ { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, minHeight: 44 } }>
+type OptionRowProps = PropsWithChildren<{
+  label: string;
+  hint?: string;
+  // Puts the control under the label at full width, for controls too wide to share a line on a phone
+  isStacked?: boolean;
+}>;
+
+// One labelled option: the label on the left and its control on the right, or stacked
+const OptionRow = ({ label, hint, isStacked, children }: OptionRowProps) => (
+  <Box
+    sx={ {
+      display: 'flex', gap: isStacked ? 1 : 2, minHeight: 44,
+      flexDirection: isStacked ? 'column' : 'row',
+      alignItems: isStacked ? 'stretch' : 'center',
+      justifyContent: 'space-between',
+    } }
+  >
     <Box sx={ { minWidth: 0 } }>
       <Typography variant="body2" sx={ { fontWeight: 500 } }>{ label }</Typography>
-      { hint && <Typography variant="caption" sx={ { color: 'text.secondary' } }>{ hint }</Typography> }
+      { hint && <Typography variant="caption" sx={ { color: 'text.secondary', display: 'block' } }>{ hint }</Typography> }
     </Box>
     <Box sx={ { flexShrink: 0 } }>{ children }</Box>
   </Box>
@@ -86,9 +100,10 @@ export default function AlarmOptionsDialog({ open, onClose }: AlarmOptionsDialog
     <Dialog open={ open } onClose={ onClose } fullWidth maxWidth="xs">
       <DialogTitle>Alarm options</DialogTitle>
       <DialogContent sx={ { display: 'flex', flexDirection: 'column', gap: 1.5 } }>
-        <OptionRow label="Vibration" hint="Ramp up builds over 40 seconds">
+        <OptionRow label="Vibration" hint="Ramp up builds to full strength over 40 seconds" isStacked>
           <ToggleButtonGroup
             exclusive
+            fullWidth
             size="small"
             value={ alarm.vibrationPattern }
             onChange={ (_event, vibrationPattern: AlarmSchedule['vibrationPattern'] | null) => {
@@ -112,28 +127,28 @@ export default function AlarmOptionsDialog({ open, onClose }: AlarmOptionsDialog
           />
         </Box>
 
-        <OptionRow label="Keeps going for" hint="Until you dismiss it">
+        <OptionRow label="Keeps going for" hint="Or until dismissed">
           <TextField
             select
             size="small"
             value={ lengthMinutes }
             onChange={ (event) => updateAlarm({ duration: Number(event.target.value) * SECONDS_PER_MINUTE }) }
-            sx={ { width: 112 } }
+            sx={ { width: 132 } }
             slotProps={ { htmlInput: { 'aria-label': 'Alarm length' } } }
           >
             { lengthOptions.map(minutes => (
-              <MenuItem key={ minutes } value={ minutes }>{ minutes < 1 ? 'Under a minute' : `${minutes} min` }</MenuItem>
+              <MenuItem key={ minutes } value={ minutes }>{ minutes < 1 ? 'Under 1 min' : `${minutes} min` }</MenuItem>
             )) }
           </TextField>
         </OptionRow>
 
-        <OptionRow label="Warm the bed before" hint="Pick a time, then the temperature">
+        <OptionRow label="Warm the bed first" hint="Starts this long before">
           <TextField
             select
             size="small"
             value={ preWarmMinutes }
             onChange={ (event) => updateAlarm({ preWarmMinutes: Number(event.target.value) }) }
-            sx={ { width: 112 } }
+            sx={ { width: 132 } }
             slotProps={ { htmlInput: { 'aria-label': 'Warm up before the alarm' } } }
           >
             { WARM_UP_MINUTES.map(minutes => (
