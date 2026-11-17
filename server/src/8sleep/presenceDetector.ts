@@ -11,9 +11,10 @@ export type CapacitiveReading = { out: number; cen: number; in: number };
 export type PresenceSensitivity = 'low' | 'medium' | 'high';
 
 // How far above the empty baseline the three zones together must rise to count as someone in
-// bed. An empty bed was seen to wobble by about 100; nobody has been measured in the bed yet,
-// so these are starting points to be adjusted from real readings.
-export const PRESENCE_DELTAS: Record<PresenceSensitivity, number> = { low: 300, medium: 150, high: 80 };
+// bed. Measured on one Pod 5 with one person (17 Nov 2026): an empty side read about 3,900 and
+// moved by up to 140 as the water went from coldest to hottest; lying on a side raised it by
+// 1,800 to 3,000, and lying on the other side raised it by up to 1,200 for a moment.
+export const PRESENCE_DELTAS: Record<PresenceSensitivity, number> = { low: 1400, medium: 800, high: 400 };
 
 // Readings are noisy one by one, so the middle of the last few is used (5 seconds' worth)
 const SMOOTHING_SAMPLES = 10;

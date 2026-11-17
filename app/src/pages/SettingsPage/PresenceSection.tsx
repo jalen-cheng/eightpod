@@ -10,7 +10,7 @@ import { useAppStore } from '@state/appStore.tsx';
 import InfoTip from '@components/InfoTip.tsx';
 import Section from './Section.tsx';
 import SettingToggle from './SettingToggle.tsx';
-import { TimeField } from '../SchedulePage/ScheduleFields.tsx';
+import { TemperatureSelect } from '../SchedulePage/ScheduleFields.tsx';
 
 type PresenceSectionProps = {
   settings?: Settings;
@@ -26,12 +26,18 @@ const SENSITIVITY_INFO = 'How easily the sensors count someone as in bed. Raise 
   + 'empty bed shows as occupied.';
 const WAKE_INFO = 'Vibrates like that day\'s alarm once someone has been in bed this long in one stay. Getting up for less '
   + 'than 15 minutes does not restart the count.';
-const TURN_ON_INFO = 'When someone gets into a bed that is off, at or after this time and before 6 AM, it turns on at '
-  + 'tonight\'s bedtime temperature for the hours chosen.';
+const TURN_ON_INFO = 'When someone gets into a bed that is off, it turns on at this temperature. It turns off again after '
+  + 'the hours chosen, or 15 minutes after they get out.';
+const UNTIL_OUT_OF_BED = 'untilOutOfBed';
+
+// The picked "stay on" choice as it is saved: a number of hours, or until out of bed
+const readStayOn = (value: unknown): Settings['presence']['turnOnWhenInBed']['stayOn'] => (
+  value === UNTIL_OUT_OF_BED ? UNTIL_OUT_OF_BED : Number(value)
+);
 
 // A setting's own controls, shown under its switch while it is on
 const SettingDetail = ({ children }: PropsWithChildren) => (
-  <Box sx={ { display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 1, mt: 1 } }>{ children }</Box>
+  <Box sx={ { display: 'flex', alignItems: 'center', justifyContent: 'flex-end', flexWrap: 'wrap', gap: 1, mt: 1 } }>{ children }</Box>
 );
 
 type HoursSelectProps = {
@@ -114,21 +120,25 @@ export default function PresenceSection({ settings, updateSettings }: PresenceSe
         >
           { turnOnWhenInBed.enabled && (
             <SettingDetail>
-              <Typography variant="body2">from</Typography>
-              <TimeField
-                label="Earliest time the bed turns on when someone gets in"
-                value={ turnOnWhenInBed.after }
-                onChange={ (after) => updatePresence({ turnOnWhenInBed: { after } }) }
+              <Typography variant="body2">at</Typography>
+              <TemperatureSelect
+                label="Temperature the bed turns on at"
+                value={ turnOnWhenInBed.temperatureF }
+                onChange={ (temperatureF) => updatePresence({ turnOnWhenInBed: { temperatureF } }) }
                 disabled={ isUpdating }
               />
-              <Typography variant="body2">for</Typography>
-              <HoursSelect
-                label="How long the bed stays on"
-                value={ turnOnWhenInBed.hours }
-                choices={ TURN_ON_HOUR_CHOICES }
-                onChange={ (hours) => updatePresence({ turnOnWhenInBed: { hours } }) }
+              <TextField
+                select
+                size="small"
+                value={ turnOnWhenInBed.stayOn }
+                onChange={ (event) => updatePresence({ turnOnWhenInBed: { stayOn: readStayOn(event.target.value) } }) }
                 disabled={ isUpdating }
-              />
+                sx={ { minWidth: 96, flexShrink: 1 } }
+                slotProps={ { htmlInput: { 'aria-label': 'How long the bed stays on' } } }
+              >
+                <MenuItem value={ UNTIL_OUT_OF_BED }>until I get out of bed</MenuItem>
+                { TURN_ON_HOUR_CHOICES.map(hours => <MenuItem key={ hours } value={ hours }>for { hours } h</MenuItem>) }
+              </TextField>
             </SettingDetail>
           ) }
         </SettingToggle>

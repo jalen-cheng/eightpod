@@ -11,14 +11,16 @@ import moment from 'moment-timezone';
 import { Msg, NatsConnection, NatsError, connect } from 'nats';
 import logger from '../logger.js';
 import settingsDB from '../db/settings.js';
-import schedulesDB from '../db/schedules.js';
-import { DayOfWeek, Side } from '../db/schedulesSchema.js';
+import { Side } from '../db/schedulesSchema.js';
 import { connectFranken } from './frankenServer.js';
 import { CapacitiveReading, PRESENCE_DELTAS, PresenceSnapshot, SidePresence, createPresenceDetector } from './presenceDetector.js';
-import { BedSession, PresenceAction, createBedSession, takeDueActions, trackBedSession } from '../jobs/presenceActions.js';
+import {
+  BedSession, PresenceAction, UNTIL_OUT_OF_BED, createBedSession, takeDueActions, trackBedSession,
+} from '../jobs/presenceActions.js';
 import { executeAlarm, getOneOffAlarmSettings } from '../jobs/alarmScheduler.js';
 import { updateDeviceStatus } from '../routes/deviceStatus/updateDeviceStatus.js';
 import { recordWaterReading } from './measuredWater.js';
+import { toFirmwareSide } from './sideMapping.js';
 
 const NATS_SERVER = process.env.NATS_SERVER || '127.0.0.1:4222';
 const CAPACITIVE_SUBJECT = 'rawmem.sens.capsense';
@@ -30,6 +32,8 @@ const ACTION_CHECK_INTERVAL_MS = 10_000;
 // A reading older than this means the sensors have gone quiet
 const STALE_READING_MS = 30_000;
 const SECONDS_PER_HOUR = 3_600;
+// The longest the firmware keeps a side on
+const MAX_ON_HOURS = 12;
 
 type CapacitiveMessage = Partial<Record<Side, CapacitiveReading>>;
 // Each side's water temperature, in hundredths of a degree Celsius
@@ -75,7 +79,8 @@ export class BedSensorMonitor {
       this.subscribe<CapacitiveMessage>(CAPACITIVE_SUBJECT, message => this.handleReading(message));
       this.subscribe<WaterMessage>(WATER_SUBJECT, (message) => {
         for (const side of SIDES) {
-          if (typeof message[side] === 'number') recordWaterReading(side, message[side]);
+          const reportedValue = message[toFirmwareSide(side)];
+          if (typeof reportedValue === 'number') recordWaterReading(side, reportedValue);
         }
       });
       logger.info('Bed sensor monitor is listening');
@@ -109,7 +114,7 @@ export class BedSensorMonitor {
     const nowMs = Date.now();
     const presenceDelta = PRESENCE_DELTAS[settingsDB.data.presence.sensitivity];
     for (const side of SIDES) {
-      const reading = message[side];
+      const reading = message[toFirmwareSide(side)];
       if (!reading) continue;
       const estimate = this.detectors[side].update(reading, nowMs, presenceDelta);
       const previous = latest[side];
@@ -140,14 +145,14 @@ export class BedSensorMonitor {
         const activeSides = unit.sides.filter(side => !settings[side].awayMode);
         const isPresentNow = activeSides.some(side => latest[side]?.present);
         const session = trackBedSession(this.sessions[unit.key], isPresentNow, nowMs);
-        if (session.inBedSinceMs === undefined || activeSides.length === 0) continue;
-        if (!wakeAfterHours.enabled && !turnOnWhenInBed.enabled) continue;
+        if (activeSides.length === 0) continue;
+        const isInBed = session.inBedSinceMs !== undefined;
+        if (!session.isTurnOffDue && (!isInBed || (!wakeAfterHours.enabled && !turnOnWhenInBed.enabled))) continue;
 
-        // The firmware is only asked whether the bed is on when turning it on is still possible
-        const mayTurnOn = turnOnWhenInBed.enabled && !session.hasTurnedOn && isPresentNow;
-        const isOn = mayTurnOn ? await this.isAnySideOn(activeSides) : true;
-        const clockTime = moment.tz(settings.timeZone).format('HH:mm');
-        const dueActions = takeDueActions(session, settings.presence, { nowMs, clockTime, isPresentNow, isOn });
+        // The firmware is only asked whether the bed is on when turning it on or off is possible
+        const mayChangePower = session.isTurnOffDue || (turnOnWhenInBed.enabled && !session.hasTurnedOn && isPresentNow);
+        const isOn = mayChangePower ? await this.isAnySideOn(activeSides) : true;
+        const dueActions = takeDueActions(session, settings.presence, { nowMs, isPresentNow, isOn });
         for (const action of dueActions) await this.runAction(action, activeSides);
       }
     } catch (error: unknown) {
@@ -172,14 +177,15 @@ export class BedSensorMonitor {
       }
       return;
     }
-    // Turn on at the temperature tonight's schedule starts with. Before noon, "tonight" began yesterday.
-    await schedulesDB.read();
-    const nightStart = now.hour() < 12 ? now.clone().subtract(1, 'day') : now;
-    const nightDay = nightStart.format('dddd').toLowerCase() as DayOfWeek;
-    const secondsRemaining = settings.presence.turnOnWhenInBed.hours * SECONDS_PER_HOUR;
-    const update = Object.fromEntries(sides.map(side => [
-      side, { isOn: true, targetTemperatureF: schedulesDB.data[side][nightDay].power.onTemperature, secondsRemaining },
-    ]));
+    if (action === 'turnOff') {
+      await updateDeviceStatus(Object.fromEntries(sides.map(side => [side, { isOn: false }])), { isManual: true });
+      return;
+    }
+    // Turn on at the chosen temperature. "Until I get out of bed" uses the firmware's longest
+    // timer; the stay ending is what turns the bed off (the 'turnOff' action above).
+    const { temperatureF, stayOn } = settings.presence.turnOnWhenInBed;
+    const secondsRemaining = (stayOn === UNTIL_OUT_OF_BED ? MAX_ON_HOURS : stayOn) * SECONDS_PER_HOUR;
+    const update = Object.fromEntries(sides.map(side => [side, { isOn: true, targetTemperatureF: temperatureF, secondsRemaining }]));
     await updateDeviceStatus(update, { isManual: true });
   }
 }

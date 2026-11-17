@@ -1,6 +1,7 @@
 import _ from 'lodash';
 import { connectFranken } from './frankenServer.js';
 import logger from '../logger.js';
+import { areSidesFlipped } from './sideMapping.js';
 
 
 export const frankenCommands = {
@@ -30,7 +31,18 @@ export const invertedFrankenCommands = _.invert(frankenCommands);
 export type FrankenCommand = keyof typeof frankenCommands;
 
 
-export async function executeFunction(command: FrankenCommand, arg = 'empty'): Promise<void> {
+// Commands that name a side, each with its opposite, for when the sides are flipped in settings
+const OPPOSITE_SIDE_COMMANDS: Partial<Record<FrankenCommand, FrankenCommand>> = {
+  ALARM_LEFT: 'ALARM_RIGHT',
+  ALARM_RIGHT: 'ALARM_LEFT',
+  LEFT_TEMP_DURATION: 'RIGHT_TEMP_DURATION',
+  RIGHT_TEMP_DURATION: 'LEFT_TEMP_DURATION',
+  TEMP_LEVEL_LEFT: 'TEMP_LEVEL_RIGHT',
+  TEMP_LEVEL_RIGHT: 'TEMP_LEVEL_LEFT',
+};
+
+export async function executeFunction(requestedCommand: FrankenCommand, arg = 'empty'): Promise<void> {
+  const command = areSidesFlipped() ? OPPOSITE_SIDE_COMMANDS[requestedCommand] ?? requestedCommand : requestedCommand;
   logger.debug(`Executing command | command: ${command} | arg: ${arg}`);
 
   const franken = await connectFranken();

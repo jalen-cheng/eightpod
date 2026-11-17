@@ -61,6 +61,8 @@ export const SettingsSchema = z.object({
   rebootDaily: z.boolean(),
   // When true, temperature and power changes made for one side (in the app or at the bed) apply to both
   linkSides: z.boolean(),
+  // When true, Free Sleep's left is the firmware's right and the other way round (see 8sleep/sideMapping.ts)
+  swapSides: z.boolean(),
   // What happens when a side is switched on by hand (app, shortcut, or the buttons on the bed)
   manualOn: z.object({
     // How long it stays on before turning itself off
@@ -75,9 +77,13 @@ export const SettingsSchema = z.object({
     sensitivity: z.enum(['low', 'medium', 'high']),
     // Vibrate the alarm once someone has been in bed this many hours in one stay
     wakeAfterHours: z.object({ enabled: z.boolean(), hours: z.number().int().min(1).max(14) }),
-    // Turn the bed on, at tonight's bedtime temperature and for this many hours, when someone
-    // gets in at or after this time of the evening
-    turnOnWhenInBed: z.object({ enabled: z.boolean(), after: TimeSchema, hours: z.number().int().min(1).max(12) }),
+    // Turn the bed on when someone gets in: at this temperature (°F), and for this many hours or
+    // until they get out again
+    turnOnWhenInBed: z.object({
+      enabled: z.boolean(),
+      temperatureF: z.number().min(50).max(110),
+      stayOn: z.union([z.number().int().min(1).max(12), z.literal('untilOutOfBed')]),
+    }),
   }),
 }).strict();
 

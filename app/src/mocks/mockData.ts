@@ -199,11 +199,12 @@ const createSettings = (): Settings => ({
   timeZone: 'America/Los_Angeles',
   temperatureFormat: 'fahrenheit',
   linkSides: false,
+  swapSides: false,
   manualOn: { hours: 12, overridesSchedule: false },
   presence: {
     sensitivity: 'medium',
     wakeAfterHours: { enabled: false, hours: 9 },
-    turnOnWhenInBed: { enabled: true, after: '21:00', hours: 8 },
+    turnOnWhenInBed: { enabled: true, temperatureF: 81, stayOn: 'untilOutOfBed' },
   },
   rebootDaily: true,
   left: {

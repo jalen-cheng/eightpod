@@ -1,8 +1,9 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="76488c38-e4a2-508b-93c3-6f918049d257")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="cbf69a05-8a02-5943-9be2-ba4988440b37")}catch(e){}}();
 import _ from 'lodash';
 import { connectFranken } from './frankenServer.js';
 import logger from '../logger.js';
+import { areSidesFlipped } from './sideMapping.js';
 export const frankenCommands = {
     HELLO: '0',
     SET_TEMP: '1',
@@ -24,7 +25,17 @@ export const frankenCommands = {
     // STOP_PRIME: "18",
 };
 export const invertedFrankenCommands = _.invert(frankenCommands);
-export async function executeFunction(command, arg = 'empty') {
+// Commands that name a side, each with its opposite, for when the sides are flipped in settings
+const OPPOSITE_SIDE_COMMANDS = {
+    ALARM_LEFT: 'ALARM_RIGHT',
+    ALARM_RIGHT: 'ALARM_LEFT',
+    LEFT_TEMP_DURATION: 'RIGHT_TEMP_DURATION',
+    RIGHT_TEMP_DURATION: 'LEFT_TEMP_DURATION',
+    TEMP_LEVEL_LEFT: 'TEMP_LEVEL_RIGHT',
+    TEMP_LEVEL_RIGHT: 'TEMP_LEVEL_LEFT',
+};
+export async function executeFunction(requestedCommand, arg = 'empty') {
+    const command = areSidesFlipped() ? OPPOSITE_SIDE_COMMANDS[requestedCommand] ?? requestedCommand : requestedCommand;
     logger.debug(`Executing command | command: ${command} | arg: ${arg}`);
     const franken = await connectFranken();
     // const frankenCommand = funcNameToFrankenCommand[name];
@@ -37,4 +48,4 @@ export async function executeFunction(command, arg = 'empty') {
     return response;
 }
 //# sourceMappingURL=deviceApi.js.map
-//# debugId=76488c38-e4a2-508b-93c3-6f918049d257
+//# debugId=cbf69a05-8a02-5943-9be2-ba4988440b37
