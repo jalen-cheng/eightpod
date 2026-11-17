@@ -3,56 +3,9 @@ import cors from 'cors';
 import logger from '../logger.js';
 
 import os from 'os';
+import { isAllowedOrigin } from './allowedOrigin.js';
 
-const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN;
-
-function getLocalIp(): string {
-  const interfaces = os.networkInterfaces();
-  for (const interfaceName in interfaces) {
-    const networkInterface = interfaces[interfaceName];
-    if (!networkInterface) continue;
-
-    for (const network of networkInterface) {
-      if (network.family === 'IPv4' && !network.internal) {
-        return network.address;
-      }
-    }
-  }
-  return 'localhost'; // Default to localhost if LAN IP isn't found
-}
-
-/**
- * Check if the request origin is allowed, i.e., from localhost or LAN IP, or
- * matches the `ALLOWED_ORIGIN` environment variable. The function also allows
- * requests with no origin (e.g., `curl`).
- *
- * If `ALLOWED_ORIGIN` is set to a wildcard (`*`), all origins are allowed.
- *
- * @param origin - The origin to check.
- * @returns True if the origin is allowed, false otherwise.
- */
-function isAllowedOrigin(origin: string | undefined): boolean {
-  if (!origin) {
-    return true;
-  }
-
-  if (ALLOWED_ORIGIN === '*') {
-    return true;
-  }
-
-  if (
-    origin.startsWith(`http://${getLocalIp()}:`) ||
-    origin.startsWith('http://localhost') ||
-    origin.startsWith('http://192.168.') ||
-    origin.startsWith('http://172.16.') ||
-    origin.startsWith('http://10.0.') ||
-    (ALLOWED_ORIGIN && origin.startsWith(ALLOWED_ORIGIN))
-  ) {
-    return true;
-  }
-
-  return false;
-}
+const originRules = { podHostname: os.hostname(), extraAllowedOrigin: process.env.ALLOWED_ORIGIN };
 
 export default function (app: Express) {
   app.use((req, res, next) => {
@@ -73,7 +26,7 @@ export default function (app: Express) {
   app.use(
     cors({
       origin: (origin, callback) => {
-        if (isAllowedOrigin(origin)) {
+        if (isAllowedOrigin(origin, originRules)) {
           return callback(null, true);
         }
 

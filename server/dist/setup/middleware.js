@@ -1,51 +1,11 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="f1167bd7-b29f-5303-9dbd-7361f880d054")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="a4423c2a-5600-51cf-be1e-29820eb75a02")}catch(e){}}();
 import express from 'express';
 import cors from 'cors';
 import logger from '../logger.js';
 import os from 'os';
-const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN;
-function getLocalIp() {
-    const interfaces = os.networkInterfaces();
-    for (const interfaceName in interfaces) {
-        const networkInterface = interfaces[interfaceName];
-        if (!networkInterface)
-            continue;
-        for (const network of networkInterface) {
-            if (network.family === 'IPv4' && !network.internal) {
-                return network.address;
-            }
-        }
-    }
-    return 'localhost'; // Default to localhost if LAN IP isn't found
-}
-/**
- * Check if the request origin is allowed, i.e., from localhost or LAN IP, or
- * matches the `ALLOWED_ORIGIN` environment variable. The function also allows
- * requests with no origin (e.g., `curl`).
- *
- * If `ALLOWED_ORIGIN` is set to a wildcard (`*`), all origins are allowed.
- *
- * @param origin - The origin to check.
- * @returns True if the origin is allowed, false otherwise.
- */
-function isAllowedOrigin(origin) {
-    if (!origin) {
-        return true;
-    }
-    if (ALLOWED_ORIGIN === '*') {
-        return true;
-    }
-    if (origin.startsWith(`http://${getLocalIp()}:`) ||
-        origin.startsWith('http://localhost') ||
-        origin.startsWith('http://192.168.') ||
-        origin.startsWith('http://172.16.') ||
-        origin.startsWith('http://10.0.') ||
-        (ALLOWED_ORIGIN && origin.startsWith(ALLOWED_ORIGIN))) {
-        return true;
-    }
-    return false;
-}
+import { isAllowedOrigin } from './allowedOrigin.js';
+const originRules = { podHostname: os.hostname(), extraAllowedOrigin: process.env.ALLOWED_ORIGIN };
 export default function (app) {
     app.use((req, res, next) => {
         const startTime = Date.now();
@@ -60,7 +20,7 @@ export default function (app) {
     // Allow local development
     app.use(cors({
         origin: (origin, callback) => {
-            if (isAllowedOrigin(origin)) {
+            if (isAllowedOrigin(origin, originRules)) {
                 return callback(null, true);
             }
             return callback(new Error('Not allowed by CORS'));
@@ -76,4 +36,4 @@ export default function (app) {
     });
 }
 //# sourceMappingURL=middleware.js.map
-//# debugId=f1167bd7-b29f-5303-9dbd-7361f880d054
+//# debugId=a4423c2a-5600-51cf-be1e-29820eb75a02
