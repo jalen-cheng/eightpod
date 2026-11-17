@@ -1,9 +1,10 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Box, Button, FormControlLabel, Switch, Typography } from '@mui/material';
 import { DeepPartial } from 'ts-essentials';
 import moment from 'moment-timezone';
 
 import DayPicker from './DayPicker.tsx';
+import SaveDaysDialog from './SaveDaysDialog.tsx';
 import NightTimeline from './NightTimeline.tsx';
 import PageContainer from '../PageContainer.tsx';
 import SideControl from '../../components/SideControl.tsx';
@@ -13,7 +14,7 @@ import { useAppStore } from '@state/appStore.tsx';
 import { useSchedules } from '@api/schedules';
 import { useScheduleStore } from './scheduleStore.tsx';
 import { LOWERCASE_DAYS } from './days.ts';
-import { describeDays } from './scheduleDays.ts';
+import { DAY_NAMES } from './scheduleDays.ts';
 import TemperatureScheduleChart from './ScheduleChart.tsx';
 import ErrorBoundary from '@components/ErrorBoundary.tsx';
 import PageHeader from '@components/PageHeader.tsx';
@@ -29,7 +30,8 @@ const getAdjustedDayOfWeek = (): DayOfWeek => {
   return scheduleDay.format('dddd').toLocaleLowerCase() as DayOfWeek;
 };
 
-// The weekly schedule: pick the days, then edit one night as a sequence of events
+// The weekly schedule: open a day, edit that night as a sequence of events, then save it for
+// that day or for any set of days
 export default function SchedulePage() {
   const { isUpdating, setIsUpdating, side, linkSides } = useAppStore();
   const { data: schedules, refetch } = useSchedules();
@@ -39,7 +41,7 @@ export default function SchedulePage() {
     reloadScheduleData,
     checkForChanges,
     selectDay,
-    getSaveDays,
+    selectedDay,
     changesPresent,
     hasEdits,
     isValid,
@@ -61,9 +63,11 @@ export default function SchedulePage() {
     checkForChanges();
   }, [linkSides]);
 
-  const saveDays = getSaveDays();
+  const [isChoosingDays, setIsChoosingDays] = useState(false);
 
-  const handleSave = async () => {
+  // Writes the schedule on screen to the given days, on both sides when they are linked
+  const handleSave = async (saveDays: DayOfWeek[]) => {
+    setIsChoosingDays(false);
     setIsUpdating(true);
     const daySchedules = Object.fromEntries(saveDays.map(day => [day, selectedSchedule]));
     const payload: DeepPartial<Schedules> = buildSidesPayload(getControlledSides(side, linkSides), daySchedules);
@@ -87,7 +91,7 @@ export default function SchedulePage() {
 
       <NightTimeline/>
 
-      <Box sx={ { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, width: '100%', minHeight: 40 } }>
+      <Box sx={ { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, width: '100%', flexWrap: 'wrap' } }>
         <FormControlLabel
           sx={ { whiteSpace: 'nowrap' } }
           label="Schedule on"
@@ -99,17 +103,37 @@ export default function SchedulePage() {
             />
           }
         />
-        { changesPresent ? (
-          <Box sx={ { display: 'flex', gap: 1 } }>
-            { hasEdits && <Button onClick={ reloadScheduleData } disabled={ isUpdating }>Discard</Button> }
-            <Button variant="contained" onClick={ handleSave } disabled={ isUpdating || !isValid() } sx={ { whiteSpace: 'nowrap' } }>
-              Save for { describeDays(saveDays) }{ linkSides ? ', both sides' : '' }
-            </Button>
-          </Box>
-        ) : (
-          <Typography variant="caption" sx={ { color: 'text.secondary' } }>Saved</Typography>
+        { !changesPresent && <Typography variant="caption" sx={ { color: 'text.secondary' } }>Saved</Typography> }
+      </Box>
+
+      <Box sx={ { display: 'flex', justifyContent: 'flex-end', gap: 1, width: '100%', flexWrap: 'wrap' } }>
+        { hasEdits && <Button onClick={ reloadScheduleData } disabled={ isUpdating }>Discard</Button> }
+        <Button
+          variant={ changesPresent ? 'outlined' : 'text' }
+          onClick={ () => setIsChoosingDays(true) }
+          disabled={ isUpdating || !isValid() }
+          sx={ { whiteSpace: 'nowrap' } }
+        >
+          { changesPresent ? 'Other days…' : 'Copy to other days' }
+        </Button>
+        { changesPresent && (
+          <Button
+            variant="contained"
+            onClick={ () => handleSave([selectedDay]) }
+            disabled={ isUpdating || !isValid() }
+            sx={ { whiteSpace: 'nowrap' } }
+          >
+            Save for { DAY_NAMES[selectedDay] }
+          </Button>
         ) }
       </Box>
+      { linkSides && changesPresent && (
+        <Typography variant="caption" sx={ { color: 'text.secondary', width: '100%', textAlign: 'right' } }>
+          Sides linked: saving writes to both.
+        </Typography>
+      ) }
+
+      <SaveDaysDialog open={ isChoosingDays } openDay={ selectedDay } onClose={ () => setIsChoosingDays(false) } onSave={ handleSave }/>
     </PageContainer>
   );
 }

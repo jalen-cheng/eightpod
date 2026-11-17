@@ -147,6 +147,7 @@ the calibration script on one would show it.
 | [#36](https://github.com/jalen-cheng/free-sleep/pull/36) | Feature | Scheduled and one-time alarms always keep going until dismissed, up to 30 minutes. The length choice is gone from Alarm options. |
 | [#37](https://github.com/jalen-cheng/free-sleep/pull/37) | Docs | README compares the fork with upstream area by area. |
 | [#38](https://github.com/jalen-cheng/free-sleep/pull/38) | Feature | Alarm length choice (10 to 30 minutes) and a one-minute test are back in Alarm options. The one-time alarm is only on the Temperature page, with a cleaner dialog that can also go back to the schedule. The schedule page's two rows of day buttons are one "Schedule for" picker. |
+| [#39](https://github.com/jalen-cheng/free-sleep/pull/39) | Feature | Schedule page: a tab per day replaces the "Schedule for" picker. The week starts on Monday. Saving offers that day, or a dialog to tick any days, and can copy a saved night to other days. |
 
 ## Compared with the Eight Sleep app
 
@@ -156,7 +157,7 @@ The Eight Sleep column is from memory and public material, not from testing the 
 |---|---|---|
 | Temperature | Level -10 to +10, no units | °F, °C or level. The °F and °C figures are the temperatures the firmware aims for, measured on a Pod 5 (see above). |
 | Automatic adjustment | Autopilot changes temperature overnight | None. Fixed times and temperatures per day. |
-| Schedules | Bedtime, night and wake phases | One night as a list of events: bedtime, any number of timed changes, alarm, bed off. One picker chooses what it covers: every day, weekdays, the weekend, or a single day. |
+| Schedules | Bedtime, night and wake phases | One night as a list of events: bedtime, any number of timed changes, alarm, bed off. A tab per day; an edit is saved for that day or for any set of days. |
 | Both sides together | Per account | Link button for temperature, power and schedules. |
 | Alarm | Vibration and thermal, snooze in app | Vibration until dismissed (10 to 30 min) with a stepped ramp-up, a test button, optional warm-up before it, bed off on dismissal, one-time alarms, and the bed stays on for an alarm later than its off time. No snooze. |
 | Side buttons (Pod 5) | + warms, - cools, middle is configurable | + and - step the temperature, any button dismisses a vibrating alarm, and holding the middle button two seconds switches the side on or off. |

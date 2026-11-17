@@ -6,7 +6,6 @@ import { useAppStore } from '@state/appStore.tsx';
 import { LOWERCASE_DAYS } from './days';
 import { isPowerScheduleDurationValid } from './scheduleValidation';
 import { getOtherSide } from '@lib/sides.ts';
-import { DayMode, detectDayMode, getDayGroup } from './scheduleDays.ts';
 
 type Validations = {
   alarmTimeIsValid: boolean;
@@ -23,13 +22,7 @@ type ScheduleStore = {
   selectDay: (selectedDayIndex: number) => void;
   reloadScheduleData: () => void;
 
-  // How the week is split into schedules. A save writes the schedule on screen to every day in
-  // the selected day's group: all seven, the weekdays or the weekend, or just that day.
-  dayMode: DayMode;
-  setDayMode: (dayMode: DayMode) => void;
-  getSaveDays: () => DayOfWeek[];
-
-  // True when a save would change something on the Pod
+  // True when saving the open day would change something on the Pod
   changesPresent: boolean;
   // True when the schedule on screen differs from the opened day's saved one, i.e. there are
   // edits that opening another day would throw away
@@ -66,7 +59,7 @@ export const useScheduleStore = create<ScheduleStore>((set, get) => ({
       changesPresent: false,
       hasEdits: false,
     });
-    // A day in the group that differs (or the other side, when linked) is itself something to save
+    // The other side differing, when linked, is itself something to save
     get().checkForChanges();
   },
 
@@ -76,16 +69,6 @@ export const useScheduleStore = create<ScheduleStore>((set, get) => ({
     const selectedDay = LOWERCASE_DAYS[newSelectedDayIndex];
     set({ selectedDay, selectedDayIndex: newSelectedDayIndex });
     reloadScheduleData();
-  },
-
-  dayMode: 'eachDay',
-  setDayMode: (dayMode) => {
-    set({ dayMode });
-    get().checkForChanges();
-  },
-  getSaveDays: () => {
-    const { selectedDay, dayMode } = get();
-    return getDayGroup(selectedDay, dayMode);
   },
 
   validations: { ...DEFAULT_VALIDATIONS },
@@ -102,16 +85,14 @@ export const useScheduleStore = create<ScheduleStore>((set, get) => ({
 
   hasEdits: false,
   changesPresent: false,
-  // There is something to save when any day the save would write to (on this side, or on the
-  // other side too when the sides are linked) does not already hold the schedule on screen.
+  // There is something to save when the open day (on this side, or on the other side too when
+  // the sides are linked) does not already hold the schedule on screen.
   checkForChanges: () => {
-    const { selectedSchedule, selectedDay, originalSchedules, getSaveDays } = get();
+    const { selectedSchedule, selectedDay, originalSchedules } = get();
     if (!originalSchedules) return;
     const { side, linkSides } = useAppStore.getState();
     const sides = linkSides ? [side, getOtherSide(side)] : [side];
-    const changesPresent = sides.some(saveSide => (
-      getSaveDays().some(day => !_.isEqual(originalSchedules[saveSide][day], selectedSchedule))
-    ));
+    const changesPresent = sides.some(saveSide => !_.isEqual(originalSchedules[saveSide][selectedDay], selectedSchedule));
     set({ changesPresent, hasEdits: !_.isEqual(originalSchedules[side][selectedDay], selectedSchedule) });
   },
 
@@ -132,15 +113,13 @@ export const useScheduleStore = create<ScheduleStore>((set, get) => ({
   },
 
   originalSchedules: undefined,
-  // Takes schedules freshly loaded from the Pod. The first time, the week's split is worked out
-  // from what is saved; after that the user's choice of split is kept.
+  // Takes schedules freshly loaded from the Pod
   setOriginalSchedules: (originalSchedules) => {
     const { side } = useAppStore.getState();
-    const { selectedDay, originalSchedules: previousSchedules } = get();
+    const { selectedDay } = get();
     if (originalSchedules[side] === undefined) return;
     const selectedSchedule = _.cloneDeep(originalSchedules[side][selectedDay]);
 
     set({ originalSchedules, selectedSchedule });
-    if (!previousSchedules) set({ dayMode: detectDayMode(originalSchedules[side]) });
   },
 }));
