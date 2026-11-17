@@ -195,6 +195,7 @@ function HorizontalTempGradient({
 export default function TemperatureScheduleChart() {
   const { selectedSchedule } = useScheduleStore();
   const theme = useTheme();
+  const Y_AXIS_WIDTH_PX = 48;
 
   const temperatureFormat = useTemperatureFormat();
   // The chart is drawn in the display unit, so the axis and the color threshold are converted too
@@ -216,7 +217,7 @@ export default function TemperatureScheduleChart() {
   const axisColor = theme.palette.grey['600'];
 
   return (
-    <Paper sx={ { width: '100%', height: 300, p: 2 } }>
+    <Paper sx={ { width: '100%', height: { xs: 200, sm: 280 }, p: { xs: 1.5, sm: 2 } } }>
       <LineChart
         xAxis={ [{
           scaleType: 'time',
@@ -231,6 +232,9 @@ export default function TemperatureScheduleChart() {
           tickLabelStyle: { fill: axisColor },
         }] }
         yAxis={ [{
+          // The axis takes its own room on the left; the margins below add the same on the
+          // right, so the plot sits in the middle of the card
+          width: Y_AXIS_WIDTH_PX,
           min: yMin,
           max: yMax,
           tickLabelStyle: { fill: axisColor },
@@ -244,12 +248,7 @@ export default function TemperatureScheduleChart() {
           showMark: false,
           curve: 'stepAfter',
         }] }
-        margin={ {
-          right: 0,
-          left: 50,
-          top: 5,
-          bottom: 19
-        } }
+        margin={ { left: 0, right: Y_AXIS_WIDTH_PX / 2, top: 8, bottom: 4 } }
         sx={ {
           pt: 0,
           [`& .${lineClasses.line}`]: { stroke: `url(#${gradLineId})` },
