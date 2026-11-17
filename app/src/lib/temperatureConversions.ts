@@ -1,6 +1,8 @@
 import _ from 'lodash';
 import type { TemperatureFormat } from '@api/settingsSchema.ts';
-import { MAX_TEMPERATURE_F, MIN_TEMPERATURE_F, levelToTemperatureF, temperatureFToLevel } from '@api/temperatureCurve.ts';
+import {
+  MAX_TEMPERATURE_F, MIN_TEMPERATURE_F, levelToTemperatureF, stepTemperatureF, temperatureFToLevel,
+} from '@api/temperatureCurve.ts';
 
 // Every temperature in the app, the API and the saved schedules is a whole number of °F.
 // The display unit only changes how those numbers are shown and which values can be picked.
@@ -85,7 +87,7 @@ export function formatTemperatureDelta(deltaF: number, format: TemperatureFormat
 // (°C uses the 1°F step too, as the Pod cannot be set more finely than that.)
 export function stepTemperature(tempF: number, steps: number, format: TemperatureFormat): number {
   if (format === 'level') return levelToTemperature(_.clamp(temperatureToLevel(tempF) + steps, MIN_LEVEL, MAX_LEVEL));
-  return _.clamp(Math.round(tempF) + steps, MIN_TEMP_F, MAX_TEMP_F);
+  return stepTemperatureF(Math.round(tempF), steps, MIN_TEMP_F, MAX_TEMP_F);
 }
 
 // The size of one such step in °F, for labelling the step

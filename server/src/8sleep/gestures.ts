@@ -12,7 +12,14 @@ export type TapCounts = Partial<Record<Gesture, number>>;
 export type TemperatureLimits = {
   minTemperatureF: number;
   maxTemperatureF: number;
+  // How one step is taken. The server passes the curve-aware step (stepTemperatureF), which never
+  // lands back on the level it started from. Left out, a step is plain arithmetic within the range.
+  stepTemperature?: (temperatureF: number, deltaF: number, minTemperatureF: number, maxTemperatureF: number) => number;
 };
+
+const stepWithinRange = (temperatureF: number, deltaF: number, minTemperatureF: number, maxTemperatureF: number) => (
+  Math.min(maxTemperatureF, Math.max(minTemperatureF, temperatureF + deltaF))
+);
 
 export type GestureActions = {
   setTargetTemperature: (temperatureF: number) => Promise<void>;
@@ -34,11 +41,10 @@ export function countNewGestures(previousCount: number | undefined, nextCount: n
 export function stepTargetTemperature(
   targetTemperatureF: number,
   tapConfig: TemperatureTapConfig,
-  { minTemperatureF, maxTemperatureF }: TemperatureLimits,
+  { minTemperatureF, maxTemperatureF, stepTemperature = stepWithinRange }: TemperatureLimits,
 ): number {
   const direction = tapConfig.change === 'increment' ? 1 : -1;
-  const steppedTemperatureF = targetTemperatureF + direction * tapConfig.amount;
-  return Math.min(maxTemperatureF, Math.max(minTemperatureF, steppedTemperatureF));
+  return stepTemperature(targetTemperatureF, direction * tapConfig.amount, minTemperatureF, maxTemperatureF);
 }
 
 type ProcessSideGesturesArgs = {

@@ -1,11 +1,12 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="d9e0ff8b-cb13-50b7-9347-2d2fc49d25fd")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="e33504c5-159e-5038-aef2-21d6c7c3d738")}catch(e){}}();
 import logger from '../logger.js';
 import settingsDB from '../db/settings.js';
 import { MAX_TARGET_TEMPERATURE_F, MIN_TARGET_TEMPERATURE_F, } from '../routes/deviceStatus/deviceStatusSchema.js';
 import { dismissAlarm, updateDeviceStatus } from '../routes/deviceStatus/updateDeviceStatus.js';
 import { handleAlarmGesture } from '../jobs/alarmSession.js';
 import { processSideGestures } from './gestures.js';
+import { stepTemperatureF } from '../db/temperatureCurve.js';
 // One press can reach us twice: through the tap counters and through the Pod 5 button log, or as
 // a long hold that the firmware follows with a second, shorter event. Running an alarm or power
 // gesture twice would undo it (a power toggle flips back), so a second one for the same side
@@ -38,7 +39,9 @@ export async function runSideGestures(side, deviceStatus, previousTaps, nextTaps
             nextTaps,
             tapSettings: settingsDB.data[side].taps,
             targetTemperatureF: deviceStatus[side].targetTemperatureF,
-            temperatureLimits: { minTemperatureF: MIN_TARGET_TEMPERATURE_F, maxTemperatureF: MAX_TARGET_TEMPERATURE_F },
+            temperatureLimits: {
+                minTemperatureF: MIN_TARGET_TEMPERATURE_F, maxTemperatureF: MAX_TARGET_TEMPERATURE_F, stepTemperature: stepTemperatureF,
+            },
             actions: {
                 setTargetTemperature: async (temperatureF) => {
                     logger.debug(`Processing gesture temperature change for ${side} -> ${temperatureF}`);
@@ -68,4 +71,4 @@ export async function runSideGestures(side, deviceStatus, previousTaps, nextTaps
     }
 }
 //# sourceMappingURL=gestureActions.js.map
-//# debugId=d9e0ff8b-cb13-50b7-9347-2d2fc49d25fd
+//# debugId=e33504c5-159e-5038-aef2-21d6c7c3d738

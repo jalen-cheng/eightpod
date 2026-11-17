@@ -234,6 +234,14 @@ SERVICE_FILE="/etc/systemd/system/free-sleep.service"
 
 echo "Creating systemd service file at $SERVICE_FILE..."
 
+# Reading the firmware journal is how a Pod 5 reports its button presses. It needs the
+# systemd-journal group; naming a group that does not exist would stop the service from starting,
+# so the line is only written where the group exists.
+JOURNAL_GROUP_LINE=""
+if getent group systemd-journal > /dev/null 2>&1; then
+  JOURNAL_GROUP_LINE="SupplementaryGroups=systemd-journal"
+fi
+
 cat > "$SERVICE_FILE" <<EOF
 [Unit]
 Description=Free Sleep Server
@@ -244,8 +252,7 @@ ExecStart=/home/$USERNAME/.volta/bin/npm run start
 WorkingDirectory=$SERVER_DIR
 Restart=always
 User=$USERNAME
-# Lets the server read the firmware journal, where a Pod 5 reports its button presses
-SupplementaryGroups=systemd-journal
+$JOURNAL_GROUP_LINE
 Environment=NODE_ENV=production
 Environment=VOLTA_HOME=/home/$USERNAME/.volta
 Environment=PATH=/home/$USERNAME/.volta/bin:/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin

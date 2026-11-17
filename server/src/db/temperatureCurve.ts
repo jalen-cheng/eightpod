@@ -48,6 +48,21 @@ export function temperatureFToLevel(temperatureF: number): number {
   return Math.round(interpolate(CURVE_POINTS_F, temperatureF, 1, 0)) || 0;
 }
 
+// Moves a temperature by some °F (negative: cooler), within a range, and makes sure the firmware
+// level moves with it. On most of the curve a degree is several levels. But the coldest level
+// sits 9°F below the next one, so a 1°F step from either side of that gap would land back on the
+// level it started from and the bed would never move; such a step goes one level instead.
+export function stepTemperatureF(temperatureF: number, deltaF: number, minTemperatureF: number, maxTemperatureF: number): number {
+  const clamp = (value: number) => Math.min(maxTemperatureF, Math.max(minTemperatureF, value));
+  const steppedF = clamp(temperatureF + deltaF);
+  const currentLevel = temperatureFToLevel(temperatureF);
+  if (deltaF === 0 || temperatureFToLevel(steppedF) !== currentLevel) return steppedF;
+  const nextLevel = currentLevel + Math.sign(deltaF);
+  // Already at the coldest or hottest level
+  if (nextLevel < MIN_FIRMWARE_LEVEL || nextLevel > MAX_FIRMWARE_LEVEL) return steppedF;
+  return clamp(Math.round(levelToTemperatureF(nextLevel)));
+}
+
 // Before the curve was measured, levels were spread evenly over 55-110°F. Converts a whole °F
 // saved under that assumption to the whole °F that means the same level now, so a saved schedule
 // keeps setting the bed exactly as it did.

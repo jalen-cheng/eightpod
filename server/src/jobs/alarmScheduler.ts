@@ -17,6 +17,7 @@ import { startPreWarm } from './preWarmState.js';
 import { updateDeviceStatus } from '../routes/deviceStatus/updateDeviceStatus.js';
 import { connectFranken } from '../8sleep/frankenServer.js';
 import { Settings } from '../db/settingsSchema.js';
+import { Version } from '../routes/deviceStatus/deviceStatusSchema.js';
 import { createAlarmSession, planAlarmStretch } from './alarmSession.js';
 import { OFF_AFTER_ALARM_MINUTES } from '../db/automaticOffTime.js';
 
@@ -32,7 +33,6 @@ export const executeAlarm = async (
 ) => {
   const { vibrationPattern, side, force = false } = alarmJob;
   try {
-    const { strength, seconds: min10Duration, continuation } = planAlarmStretch(alarmJob, MAX_FIRMWARE_ALARM_SECONDS);
     // Exit is side is in away mode
     await settingsDB.read();
     if (settingsDB.data[side].awayMode && !force) {
@@ -49,6 +49,9 @@ export const executeAlarm = async (
       logger.debug('Not executing alarm, side is off!');
       return;
     }
+    // The ramp built from short stretches was worked out on a Pod 5, whose firmware "rise" is flat
+    const rampInSteps = resp.coverVersion === Version.Pod5;
+    const { strength, seconds: min10Duration, continuation } = planAlarmStretch(alarmJob, MAX_FIRMWARE_ALARM_SECONDS, { rampInSteps });
 
     const currentTime = moment.tz(settingsDB.data.timeZone);
     const alarmTimeEpoch = currentTime.unix();

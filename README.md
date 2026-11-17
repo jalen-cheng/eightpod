@@ -11,6 +11,8 @@ Start here:
 | If you want to | Read |
 |---|---|
 | Install on a Pod 5, step by step | [docs/POD5_FIRST_DAY.md](docs/POD5_FIRST_DAY.md) |
+| Know what works on a Pod 3 or Pod 4 | [docs/POD_MODELS.md](docs/POD_MODELS.md) (reviewed against the original project; not run on either) |
+| Understand how every part works | [docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md) |
 | Control the bed from iPhone Shortcuts | [docs/IOS_SHORTCUTS.md](docs/IOS_SHORTCUTS.md) |
 | Keep the Pod's address stable, or reach it away from home | [docs/REMOTE_ACCESS.md](docs/REMOTE_ACCESS.md) (Tailscale on the Pod, set up with one script) |
 | See every change, what was tested on a Pod, and what is not done | [docs/FORK_STATUS.md](docs/FORK_STATUS.md) |
@@ -68,7 +70,8 @@ Open pull requests on the original project, each a small fix that stands on its 
 ### Things to know before using it
 
 - **Tested on one Pod 5 only.** Pod 3 and Pod 4 run the same code but have not been tried with this
-  fork. The temperature figures were measured on that one Pod and are used for every model.
+  fork. [docs/POD_MODELS.md](docs/POD_MODELS.md) lists, per model, what is unchanged from the
+  original project, what was changed on purpose, and what nobody has checked.
 - **Sleep tracking (Biometrics) does not work on the tested Pod 5**: its firmware publishes sensor
   data somewhere the analysis does not read. This is the same upstream.
 - **Some newer Pod 5 units cannot be opened up this way.** See the first section of the walkthrough.

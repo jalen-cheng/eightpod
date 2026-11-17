@@ -10,6 +10,7 @@ import {
 import { dismissAlarm, updateDeviceStatus } from '../routes/deviceStatus/updateDeviceStatus.js';
 import { handleAlarmGesture } from '../jobs/alarmSession.js';
 import { TapCounts, processSideGestures } from './gestures.js';
+import { stepTemperatureF } from '../db/temperatureCurve.js';
 
 // One press can reach us twice: through the tap counters and through the Pod 5 button log, or as
 // a long hold that the firmware follows with a second, shorter event. Running an alarm or power
@@ -54,7 +55,9 @@ export async function runSideGestures(
       nextTaps,
       tapSettings: settingsDB.data[side].taps,
       targetTemperatureF: deviceStatus[side].targetTemperatureF,
-      temperatureLimits: { minTemperatureF: MIN_TARGET_TEMPERATURE_F, maxTemperatureF: MAX_TARGET_TEMPERATURE_F },
+      temperatureLimits: {
+        minTemperatureF: MIN_TARGET_TEMPERATURE_F, maxTemperatureF: MAX_TARGET_TEMPERATURE_F, stepTemperature: stepTemperatureF,
+      },
       actions: {
         setTargetTemperature: async (temperatureF) => {
           logger.debug(`Processing gesture temperature change for ${side} -> ${temperatureF}`);

@@ -150,7 +150,8 @@ sides' jobs do the same thing at the same time.
 
 1. **Warm-up** (optional, 15 to 45 minutes before): the bed goes to the warm-up temperature.
 2. **Vibration starts** at the alarm time, if the side is on.
-3. **Ramp up** (if the pattern is "Ramp up"): 10 seconds each at 20%, 40%, 60% and 80% of the set
+3. **Ramp up** (if the pattern is "Ramp up", on a Pod 5; a Pod 3 or 4 gets the firmware's own
+   pattern, see [POD_MODELS.md](POD_MODELS.md)): 10 seconds each at 20%, 40%, 60% and 80% of the set
    strength, then full strength. "Pulses" starts at full strength.
 4. **It keeps going** until dismissed, up to the length you chose (10, 15, 20 or 30 minutes).
 5. **Dismiss it** with any button on a Pod 5, a four-tap on a Pod 4, the dialog in the app, or a
@@ -430,6 +431,7 @@ Found while writing this guide. None is new; they are listed so nothing here is 
   21:55 fires the following evening.
 - **Two saves in quick succession** can leave the jobs built from the first; any later save fixes it.
 - **Priming and the daily reboot do not check whether the bed is in use.** Keep their time in the afternoon.
+- **Not run on a Pod 3 or Pod 4.** [POD_MODELS.md](POD_MODELS.md) has the per-model detail.
 - **Holding the middle button during an alarm** turns the bed off or on but does not dismiss the
   alarm; a short press does.
 - **`server/API.md` is missing some endpoints** (starting an alarm now, raw status, jobs, logs) and

@@ -176,6 +176,10 @@ test('pulses do not ramp, a weaker alarm ramps to its own strength, and a short 
   const gentle = planAlarmStretch({ side: 'left', vibrationIntensity: 50, vibrationPattern: 'rise', duration: 300 }, 180);
   assert.deepEqual([gentle.strength, gentle.seconds, gentle.continuation.rampStep], [10, 10, 1]);
 
+  // Pods other than a Pod 5 get the firmware's own "rise", at the set strength, as upstream sent it
+  const upstreamStyle = planAlarmStretch({ side: 'left', vibrationIntensity: 50, vibrationPattern: 'rise', duration: 300 }, 180, { rampInSteps: false });
+  assert.deepEqual([upstreamStyle.strength, upstreamStyle.seconds, upstreamStyle.continuation.duration], [50, 180, 120]);
+
   const short = planAlarmStretch({ side: 'left', vibrationIntensity: 100, vibrationPattern: 'rise', duration: 5 }, 180);
   assert.deepEqual([short.strength, short.seconds, short.continuation], [100, 10, undefined]);
 });
