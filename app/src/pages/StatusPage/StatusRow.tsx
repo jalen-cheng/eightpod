@@ -24,6 +24,7 @@ export default function StatusRow({ job, statusInfo }: StatusRowProps) {
     isRunnable = true;
   }
   const [disabled, setDisabled] = useState(false);
+  const hasFailed = statusInfo.status === 'failed';
   const startJob = () => {
     setDisabled(true);
     postJobs([job] as Jobs)
@@ -50,13 +51,15 @@ export default function StatusRow({ job, statusInfo }: StatusRowProps) {
       <Typography variant="body2" sx={ { color: 'text.secondary', whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' } }>
         { statusInfo.description }
       </Typography>
+      { /* A message is only an error when the service has failed; otherwise it is a note */ }
       { statusInfo.message && (
         <Typography
           variant="body2"
-          color="error"
+          color={ hasFailed ? 'error' : 'text.secondary' }
+          role={ hasFailed ? 'alert' : undefined }
           sx={ { whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' } }
         >
-          Error: { statusInfo.message }
+          { hasFailed ? 'Error: ' : '' }{ statusInfo.message }
         </Typography>
       ) }
       { (timestamp || isRunnable) && (
@@ -75,6 +78,7 @@ export default function StatusRow({ job, statusInfo }: StatusRowProps) {
               size="small"
               disabled={ disabled || statusInfo.status === 'started' }
               startIcon={ <PlayArrowIcon/> }
+              aria-label={ `Run ${statusInfo.name} now` }
               sx={ { ml: 'auto', px: 1.5 } }
             >
               Run

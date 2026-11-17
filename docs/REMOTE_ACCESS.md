@@ -108,7 +108,7 @@ Other commands:
 | `setup_tailscale.sh status` | Shows the connection, the regions and the relay addresses the block allows |
 | `setup_tailscale.sh regions` | Lists every relay region code |
 | `TAILSCALE_RELAY_REGIONS="sfo sea" sh setup_tailscale.sh` | Chooses the regions yourself |
-| `setup_tailscale.sh upgrade` | Downloads the newest Tailscale and restarts it |
+| `setup_tailscale.sh upgrade` | Downloads the newest Tailscale and restarts it. Updating Free Sleep (`fs-update`) does this too, so it is rarely needed |
 | `setup_tailscale.sh remove` | Signs out and removes everything the script added |
 
 ### How it stays locked down

@@ -18,7 +18,8 @@
 #   sh setup_tailscale.sh regions       List every relay region code
 #   sh setup_tailscale.sh policy        Print the entry for your Tailscale policy file that makes
 #                                       all your devices use the Pod's relay regions
-#   sh setup_tailscale.sh sync-scripts  Refresh the root-owned script copies and the units (run by install.sh)
+#   sh setup_tailscale.sh sync-scripts  Refresh the root-owned script copies and the units, and install a
+#                                       newer Tailscale if one is out (run by install.sh on every update)
 #   sh setup_tailscale.sh remove        Sign out and remove everything this script added
 #
 # Options (environment variables):
@@ -103,6 +104,21 @@ download_tailscale() {
   done
   chown -R root:root "$TAILSCALE_BIN_DIR"
   rm -rf "$download_dir"
+}
+
+# Installs a newer Tailscale when one is out. Called while the internet is open (install.sh runs
+# during a Free Sleep update), so Tailscale is kept current by the same step that updates Free Sleep.
+upgrade_if_newer() {
+  installed_version=$("$TAILSCALE_BIN_DIR/tailscale" version | head -n 1)
+  latest_version=$(curl -fsSL --max-time 30 "$TAILSCALE_PACKAGES_URL/?mode=json" \
+    | python3 -c 'import json, sys; print(json.load(sys.stdin)["TarballsVersion"])') || return 0
+  if [ -z "$latest_version" ] || [ "$latest_version" = "$installed_version" ]; then
+    echo "Tailscale $installed_version is current."
+    return 0
+  fi
+  echo "Upgrading Tailscale from $installed_version to $latest_version..."
+  download_tailscale
+  systemctl restart "$TAILSCALE_SERVICE_NAME"
 }
 
 # Copies the scripts the daily refresh needs to a root-owned folder
@@ -284,6 +300,7 @@ case "$ACTION" in
       copy_refresh_scripts
       # Rewritten too, so a fix to the units reaches Pods that already have Tailscale
       write_units
+      upgrade_if_newer || echo "WARNING: could not check for a newer Tailscale" >&2
     fi
     ;;
   remove)

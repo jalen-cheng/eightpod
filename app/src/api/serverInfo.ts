@@ -14,10 +14,11 @@ type LatestVersion = {
   branch: string;
 }
 
+// Where updates come from: this fork, the same place scripts/update.sh installs from by default
+const LATEST_VERSION_URL = 'https://raw.githubusercontent.com/jalen-cheng/free-sleep/main/server/src/serverInfo.json';
+
 export const getLatestVersion = async () => {
-  return axios.get<LatestVersion>(
-    'https://raw.githubusercontent.com/throwaway31265/free-sleep/main/server/src/serverInfo.json'
-  );
+  return axios.get<LatestVersion>(LATEST_VERSION_URL);
 };
 
 
