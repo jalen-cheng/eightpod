@@ -1,6 +1,6 @@
 // LowDB, stores the schedules in /persistent/free-sleep-data/lowdb/settingsDB.json
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="d64f39d9-ff3b-5a81-af7b-482cd9f826b1")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="7ff62e20-a033-5014-bd81-df6cf3b5ef16")}catch(e){}}();
 import _ from 'lodash';
 import { Low } from 'lowdb';
 import { JSONFile } from 'lowdb/node';
@@ -52,6 +52,8 @@ const defaultData = {
         ..._.cloneDeep(defaultSideSettings),
         name: 'Right',
     },
+    // The firmware's own length for a side switched on, and the schedule carries on as usual
+    manualOn: { hours: 12, overridesSchedule: false },
     primePodDaily: {
         enabled: true,
         time: '14:00',
@@ -65,4 +67,4 @@ settingsDB.data = _.merge({}, defaultData, settingsDB.data);
 await settingsDB.write();
 export default settingsDB;
 //# sourceMappingURL=settings.js.map
-//# debugId=d64f39d9-ff3b-5a81-af7b-482cd9f826b1
+//# debugId=7ff62e20-a033-5014-bd81-df6cf3b5ef16

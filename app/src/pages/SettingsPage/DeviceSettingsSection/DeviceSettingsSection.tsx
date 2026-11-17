@@ -6,6 +6,7 @@ import Section from '../Section.tsx';
 import TimeZoneSelector from './TimeZoneSelector.tsx';
 import TemperatureFormatSelector from './TemperatureFormatSelector.tsx';
 import LedBrightnessSlider from './LedBrightnessSlider.tsx';
+import ManualOnSettings from './ManualOnSettings.tsx';
 import { useSettings } from '@api/settings.ts';
 
 type UpdateSettingsFn = (settings: DeepPartial<Settings>) => void;
@@ -19,6 +20,8 @@ export default function DeviceSettingsSection({ updateSettings }: DeviceSettings
       <Box sx={ { display: 'flex', flexDirection: 'column', gap: 2.5 } }>
         <TimeZoneSelector settings={ settings } updateSettings={ updateSettings }/>
         <TemperatureFormatSelector settings={ settings } updateSettings={ updateSettings }/>
+        <Divider/>
+        <ManualOnSettings settings={ settings } updateSettings={ updateSettings }/>
         <Divider/>
         <LedBrightnessSlider/>
       </Box>

@@ -35,7 +35,7 @@ router.post('/deviceStatus', async (req: Request, res: Response) => {
     return;
   }
 
-  await updateDeviceStatus(body as DeepPartial<DeviceStatus>);
+  await updateDeviceStatus(body as DeepPartial<DeviceStatus>, { isManual: true });
   res.status(204).end();
 });
 
@@ -79,7 +79,7 @@ router.post('/deviceStatus/dial', async (req: Request, res: Response) => {
   const { side, dial } = validationResult.data;
   const sideStatus = { isOn: true, targetTemperatureF: levelToTemperatureF(dial * FIRMWARE_LEVELS_PER_DIAL_STEP) };
   const sides = await resolveSides(side);
-  await updateDeviceStatus(Object.fromEntries(sides.map(dialSide => [dialSide, sideStatus])));
+  await updateDeviceStatus(Object.fromEntries(sides.map(dialSide => [dialSide, sideStatus])), { isManual: true });
   res.status(200).json({ sides, dial, targetTemperatureF: sideStatus.targetTemperatureF });
 });
 

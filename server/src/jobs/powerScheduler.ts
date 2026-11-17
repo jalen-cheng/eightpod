@@ -11,6 +11,7 @@ import logger from '../logger.js';
 import servicesDB from '../db/services.js';
 import memoryDB from '../db/memoryDB.js';
 import { findLateAlarmEnd } from './alarmScheduler.js';
+import { isManualHoldActive } from './manualHold.js';
 import { connectFranken } from '../8sleep/frankenServer.js';
 
 // How long the bed stays on after an alarm that was later than the schedule's off time
@@ -35,6 +36,10 @@ export const schedulePowerOn = (settingsData: Settings, side: Side, day: DayOfWe
   logJob('Scheduling power on job', side, day, dayOfWeekIndex, time);
   schedule.scheduleJob(`${side}-${day}-${time}-power-on`, onRule, async () => {
     try {
+      if (isManualHoldActive(side)) {
+        logJob('Skipping power on job, the side was switched on by hand', side, day, dayOfWeekIndex, time);
+        return;
+      }
       logJob('Executing power on job', side, day, dayOfWeekIndex, time);
 
       await updateDeviceStatus({
@@ -109,6 +114,10 @@ export const schedulePowerOffAndSleepAnalysis = (settingsData: Settings, side: S
 
   schedule.scheduleJob(`${side}-${day}-${time}-power-off`, offRule, async () => {
     try {
+      if (isManualHoldActive(side)) {
+        logJob('Skipping power off job, the side was switched on by hand', side, day, dayOfWeekIndex, time);
+        return;
+      }
       logJob('Executing power off job', side, day, dayOfWeekIndex, time);
       // An alarm still to come keeps the bed on: the firmware is told to switch the side off
       // itself shortly after the alarm ends, which holds even if the jobs are rebuilt meanwhile

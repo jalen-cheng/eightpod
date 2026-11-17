@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="1c3f0117-35d2-58f5-89c3-752d9e1042ba")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="8f4993d9-def0-5489-8176-d47ede304f1c")}catch(e){}}();
 import schedule from 'node-schedule';
 import cbor from 'cbor';
 import moment from 'moment-timezone';
@@ -13,6 +13,7 @@ import { minutesAlarmIsAfterOff } from './scheduleTiming.js';
 import { executeFunction } from '../8sleep/deviceApi.js';
 import { getDayIndexForSchedule, logJob, subtractMinutesFromTime } from './utils.js';
 import { startPreWarm } from './preWarmState.js';
+import { isManualHoldActive } from './manualHold.js';
 import { updateDeviceStatus } from '../routes/deviceStatus/updateDeviceStatus.js';
 import { connectFranken } from '../8sleep/frankenServer.js';
 import { Version } from '../routes/deviceStatus/deviceStatusSchema.js';
@@ -114,6 +115,10 @@ const isScheduledAlarmReplaced = (settingsData, side, scheduledAlarmAt) => {
 // Warms a side for an alarm that is `preWarmMinutes` away, if the side is on. Scheduled
 // temperature changes are then skipped until the alarm.
 const runPreWarm = async (side, preWarmMinutes, alarmTemperatureF) => {
+    if (isManualHoldActive(side)) {
+        logger.debug(`Not warming up ${side} for its alarm, the side was switched on by hand`);
+        return;
+    }
     const franken = await connectFranken();
     const deviceStatus = await franken.getDeviceStatus();
     if (!deviceStatus[side].isOn) {
@@ -163,7 +168,7 @@ const moveOffTimeToOneOffAlarm = async (side) => {
     try {
         const franken = await connectFranken();
         const deviceStatus = await franken.getDeviceStatus();
-        if (!deviceStatus[side].isOn)
+        if (!deviceStatus[side].isOn || isManualHoldActive(side))
             return;
         await updateDeviceStatus({ [side]: { secondsRemaining: OFF_AFTER_ALARM_MINUTES * SECONDS_PER_MINUTE } });
     }
@@ -289,4 +294,4 @@ export const scheduleAlarmPreWarm = (settingsData, side, day, dailySchedule) => 
     });
 };
 //# sourceMappingURL=alarmScheduler.js.map
-//# debugId=1c3f0117-35d2-58f5-89c3-752d9e1042ba
+//# debugId=8f4993d9-def0-5489-8176-d47ede304f1c

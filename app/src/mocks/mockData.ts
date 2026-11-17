@@ -199,6 +199,7 @@ const createSettings = (): Settings => ({
   timeZone: 'America/Los_Angeles',
   temperatureFormat: 'fahrenheit',
   linkSides: false,
+  manualOn: { hours: 12, overridesSchedule: false },
   rebootDaily: true,
   left: {
     name: 'Left side',

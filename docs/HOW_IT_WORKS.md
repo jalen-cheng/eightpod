@@ -104,7 +104,8 @@ temperature was converted to keep its *level*. The originals are in
 degree.
 
 **Setting a temperature.** The server turns °F into the nearest level and sends it. Turning a side
-on sets its timer to 12 hours. The Temperature page waits 0.7 seconds after your last tap before
+on by hand (app, shortcut or buttons) sets its timer to 3, 6 or 12 hours, chosen in Settings >
+Device settings; 12 is the default. The Temperature page waits 0.7 seconds after your last tap before
 sending, so several taps become one request, and it ignores the Pod's reported value while you are
 still tapping.
 
@@ -298,7 +299,8 @@ offers to dismiss it.
 **Status.** Wi-Fi strength and whether Free Sleep is up to date, then each internal service with
 its state. Services that are jobs have a Run button.
 
-**Settings.** Time zone (set this first: the schedule runs in it), temperature format, LED
+**Settings.** Time zone (set this first: the schedule runs in it), temperature format, how long
+the bed stays on when turned on by hand and whether the schedule is ignored meanwhile, LED
 brightness, side names and away mode, side buttons, priming, biometrics and error reporting, and
 the device: Wi-Fi, versions, update, reboot.
 
@@ -391,6 +393,7 @@ The cases where one feature changes what another does:
 | One side is in away mode | The other side's changes are mirrored to it; its own schedule and alarm do not run |
 | Daily priming is switched off | The daily reboot still runs, at the same time |
 | The Pod reboots or Free Sleep restarts during an alarm | The alarm is forgotten: the current stretch (up to three minutes) finishes and nothing follows |
+| A side is switched on by hand with "Ignore the schedule until it turns off" set | The schedule skips that side until it turns off: no scheduled power on or off, temperature changes or warm-up. Alarms still go off. A restart of Free Sleep ends it early |
 | An update is running | Nothing scheduled fires for about four minutes |
 | Tailscale is down | Only remote access is affected |
 

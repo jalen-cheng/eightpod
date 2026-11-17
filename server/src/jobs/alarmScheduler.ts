@@ -14,6 +14,7 @@ import { minutesAlarmIsAfterOff } from './scheduleTiming.js';
 import { executeFunction } from '../8sleep/deviceApi.js';
 import { getDayIndexForSchedule, logJob, subtractMinutesFromTime } from './utils.js';
 import { startPreWarm } from './preWarmState.js';
+import { isManualHoldActive } from './manualHold.js';
 import { updateDeviceStatus } from '../routes/deviceStatus/updateDeviceStatus.js';
 import { connectFranken } from '../8sleep/frankenServer.js';
 import { Settings } from '../db/settingsSchema.js';
@@ -132,6 +133,10 @@ const isScheduledAlarmReplaced = (settingsData: Settings, side: Side, scheduledA
 // Warms a side for an alarm that is `preWarmMinutes` away, if the side is on. Scheduled
 // temperature changes are then skipped until the alarm.
 const runPreWarm = async (side: Side, preWarmMinutes: number, alarmTemperatureF: number) => {
+  if (isManualHoldActive(side)) {
+    logger.debug(`Not warming up ${side} for its alarm, the side was switched on by hand`);
+    return;
+  }
   const franken = await connectFranken();
   const deviceStatus = await franken.getDeviceStatus();
   if (!deviceStatus[side].isOn) {
@@ -184,7 +189,7 @@ const moveOffTimeToOneOffAlarm = async (side: Side) => {
   try {
     const franken = await connectFranken();
     const deviceStatus = await franken.getDeviceStatus();
-    if (!deviceStatus[side].isOn) return;
+    if (!deviceStatus[side].isOn || isManualHoldActive(side)) return;
     await updateDeviceStatus({ [side]: { secondsRemaining: OFF_AFTER_ALARM_MINUTES * SECONDS_PER_MINUTE } });
   } catch (error: unknown) {
     logger.error(error);
