@@ -20,6 +20,9 @@ import { useSettings } from '@api/settings.ts';
 // The Pod takes a moment to report a change back
 const STATUS_SETTLE_MS = 1_000;
 
+// The room the layout keeps free at the bottom of a phone screen for the navigation bar
+const MOBILE_NAV_SPACE_PX = 88;
+
 export default function ControlTempPage() {
   const { isError, isPending, refetch, data: deviceStatus } = useDeviceStatus();
   const setDeviceStatus = useControlTempStore(state => state.setDeviceStatus);
@@ -51,14 +54,21 @@ export default function ControlTempPage() {
   };
 
   return (
-    <PageContainer sx={ { maxWidth: 600, gap: 2, pt: { xs: 2.5, md: 5 } } }>
+    <PageContainer
+      sx={ {
+        maxWidth: 600, gap: 2, pt: { xs: 2.5, md: 5 },
+        // On a phone the page fills the screen above the navigation bar, so the dial can sit in
+        // the middle of it and the notices (the next alarm among them) at the bottom
+        minHeight: { xs: `calc(100dvh - ${MOBILE_NAV_SPACE_PX}px - env(safe-area-inset-bottom))`, md: 0 },
+      } }
+    >
       <SideControl
         showTemp
         onLinkSidesChange={ handleLinkSidesChange }
       />
       <Paper
         sx={ {
-          px: { xs: 0, sm: 3 }, py: { xs: 1.5, sm: 3 }, overflow: 'hidden',
+          px: { xs: 0, sm: 3 }, py: { xs: 1.5, sm: 3 }, overflow: 'hidden', my: { xs: 'auto', md: 0 },
           bgcolor: { xs: 'transparent', sm: 'background.paper' },
           borderWidth: { xs: 0, sm: 1 }, borderRadius: { xs: 0, sm: 3 },
         } }>

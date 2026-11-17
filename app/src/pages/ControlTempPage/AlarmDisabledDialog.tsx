@@ -1,14 +1,5 @@
 import { Dispatch, SetStateAction, useState } from 'react';
-import {
-  Box,
-  Button,
-  CircularProgress,
-  Dialog,
-  DialogActions,
-  Typography,
-  useMediaQuery,
-  useTheme,
-} from '@mui/material';
+import { Button, Dialog, DialogActions, DialogTitle } from '@mui/material';
 import moment from 'moment-timezone';
 import { postSettings, useSettings } from '@api/settings.ts';
 import { useAppStore } from '@state/appStore.tsx';
@@ -27,8 +18,6 @@ export default function AlarmDisabledDialog({
   scheduledAlarmTimeHhMm,
   alarmDisabled,
 }: AlarmDisabledDialogProps) {
-  const theme = useTheme();
-  const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
   const [isSaving, setIsSaving] = useState(false);
   const { data: settings, refetch } = useSettings();
   const side = useAppStore(state => state.side);
@@ -83,53 +72,13 @@ export default function AlarmDisabledDialog({
   };
 
   return (
-    <Dialog
-      open={ open }
-      fullScreen={ isSmallScreen }
-      slotProps={ {
-        paper: {
-          sx: isSmallScreen
-            ? {
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              textAlign: 'center',
-              maxWidth: '85vw',
-              maxHeight: '35vh',
-              borderRadius: '10px',
-              margin: 0,
-              p: 4,
-            }
-            : {
-              p: 4,
-              width: '50%',
-              height: '150px',
-            },
-        }
-      } }
-    >
-      <Typography variant="h5" sx={ { textAlign: 'center' } }>
-        { alarmDisabled ? 'Enable' : 'Disable' } alarm for tonight?
-      </Typography>
-
-      <DialogActions sx={ { display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' } }>
-
-        { isSaving ? (
-          <CircularProgress size={ 10 }/>
-        ) : (
-          <Box sx={ { display: 'flex', gap: 1 } }>
-            <Button variant="contained" color="error" size="small" onClick={ handleCancel }>
-              Cancel
-            </Button>
-            <Button
-              variant="contained"
-              size="small"
-              onClick={ handleSave }
-            >
-              Yes
-            </Button>
-          </Box>
-        ) }
+    <Dialog open={ open } onClose={ handleCancel } fullWidth maxWidth="xs">
+      <DialogTitle>{ alarmDisabled ? 'Enable' : 'Disable' } the alarm for tonight?</DialogTitle>
+      <DialogActions sx={ { px: 3, pb: 2 } }>
+        <Button onClick={ handleCancel } disabled={ isSaving } sx={ { mr: 'auto' } }>Cancel</Button>
+        <Button variant="contained" onClick={ handleSave } disabled={ isSaving }>
+          { alarmDisabled ? 'Enable' : 'Disable' }
+        </Button>
       </DialogActions>
     </Dialog>
   );

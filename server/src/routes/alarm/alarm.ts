@@ -8,6 +8,7 @@ import { DAYS_OF_WEEK } from '../../jobs/utils.js';
 import { SideChoiceSchema, resolveSides } from '../sideChoice.js';
 import { findAlarmReplacedByOneOff, findNextScheduledAlarm, parseClockTime } from '../../jobs/scheduleTiming.js';
 import logger from '../../logger.js';
+import { applyAutomaticOffTime } from '../../db/automaticOffTime.js';
 import schedulesDB from '../../db/schedules.js';
 import settingsDB from '../../db/settings.js';
 import { executeAlarm, getPendingOneOffAlarm, nextOccurrenceHhMm } from '../../jobs/alarmScheduler.js';
@@ -115,6 +116,7 @@ router.post('/alarm/time', async (req: Request, res: Response) => {
       for (const day of days) {
         schedulesDB.data[alarmSide][day].alarm.time = time;
         schedulesDB.data[alarmSide][day].alarm.enabled = enabled;
+        applyAutomaticOffTime(schedulesDB.data[alarmSide][day]);
       }
     }
     // Writing the file makes the job scheduler pick up the new time

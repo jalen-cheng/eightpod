@@ -51,8 +51,8 @@ export default function AlarmOverride({
 
   return (
     <Dialog open={ open } onClose={ close } fullWidth maxWidth="xs">
-      <DialogTitle>
-        Change the next alarm{ ' ' }
+      <DialogTitle sx={ { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 } }>
+        Change the next alarm
         <InfoTip text="Just this once. It goes off the next time the clock shows this time, and your weekly schedule stays as it is."/>
       </DialogTitle>
       <DialogContent>

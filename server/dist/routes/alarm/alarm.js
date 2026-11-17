@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="755aebf1-d9b2-575b-9809-d199a297f2d4")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="5e590837-7557-5728-baf1-2c606c3eac24")}catch(e){}}();
 import express from 'express';
 import { z } from 'zod';
 import moment from 'moment-timezone';
@@ -8,6 +8,7 @@ import { DAYS_OF_WEEK } from '../../jobs/utils.js';
 import { SideChoiceSchema, resolveSides } from '../sideChoice.js';
 import { findAlarmReplacedByOneOff, findNextScheduledAlarm, parseClockTime } from '../../jobs/scheduleTiming.js';
 import logger from '../../logger.js';
+import { applyAutomaticOffTime } from '../../db/automaticOffTime.js';
 import schedulesDB from '../../db/schedules.js';
 import settingsDB from '../../db/settings.js';
 import { executeAlarm, getPendingOneOffAlarm, nextOccurrenceHhMm } from '../../jobs/alarmScheduler.js';
@@ -108,6 +109,7 @@ router.post('/alarm/time', async (req, res) => {
             for (const day of days) {
                 schedulesDB.data[alarmSide][day].alarm.time = time;
                 schedulesDB.data[alarmSide][day].alarm.enabled = enabled;
+                applyAutomaticOffTime(schedulesDB.data[alarmSide][day]);
             }
         }
         // Writing the file makes the job scheduler pick up the new time
@@ -152,4 +154,4 @@ router.post('/alarm/time/cancel', async (req, res) => {
 });
 export default router;
 //# sourceMappingURL=alarm.js.map
-//# debugId=755aebf1-d9b2-575b-9809-d199a297f2d4
+//# debugId=5e590837-7557-5728-baf1-2c606c3eac24
