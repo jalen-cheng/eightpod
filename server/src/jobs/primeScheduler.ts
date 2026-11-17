@@ -61,18 +61,22 @@ const scheduleCalibrationJob = (onHour: number, onMinute: number, timeZone: Time
 };
 
 
+const HOURS_PER_DAY = 24;
+
 export const schedulePrimingRebootAndCalibration = (settingsData: Settings) => {
   const { timeZone, primePodDaily } = settingsData;
   if (timeZone === null) return;
-  if (!primePodDaily.enabled) return;
-  const dailyRule = new schedule.RecurrenceRule();
   const { time } = primePodDaily;
   const [onHour, onMinute] = time.split(':').map(Number);
+  // The reboot has its own switch (rebootDaily, checked when it runs), so it is scheduled whether
+  // or not priming is on: an hour before the priming time, wrapping past midnight.
+  scheduleRebootJob((onHour + HOURS_PER_DAY - 1) % HOURS_PER_DAY, onMinute, timeZone);
+  if (!primePodDaily.enabled) return;
+  const dailyRule = new schedule.RecurrenceRule();
   dailyRule.hour = onHour;
   dailyRule.minute = onMinute;
   dailyRule.tz = timeZone;
 
-  scheduleRebootJob(onHour - 1, onMinute, timeZone);
   scheduleCalibrationJob(onHour, 0, timeZone, 'left');
   scheduleCalibrationJob(onHour, 30, timeZone, 'right');
 

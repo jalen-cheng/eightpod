@@ -1,5 +1,6 @@
 import { Dispatch, SetStateAction, useState } from 'react';
-import { Button, Dialog, DialogActions, DialogContent, DialogTitle, Typography } from '@mui/material';
+import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
+import InfoTip from '@components/InfoTip.tsx';
 import { cancelOneTimeAlarm, postOneTimeAlarm } from '@api/alarm.ts';
 import { useSettings } from '@api/settings.ts';
 import { useAppStore } from '@state/appStore.tsx';
@@ -50,25 +51,27 @@ export default function AlarmOverride({
 
   return (
     <Dialog open={ open } onClose={ close } fullWidth maxWidth="xs">
-      <DialogTitle>Change the next alarm</DialogTitle>
-      <DialogContent sx={ { display: 'flex', flexDirection: 'column', gap: 2 } }>
-        <Typography variant="body2" sx={ { color: 'text.secondary' } }>
-          Just this once. It goes off the next time the clock shows this time, and your weekly schedule stays as it is.
-        </Typography>
-        <TimeField
-          label="Alarm time"
-          value={ alarmTimeLocalOverride || scheduledAlarmTimeHhMm }
-          onChange={ setAlarmTimeLocalOverride }
-          disabled={ isSaving }
-        />
+      <DialogTitle>
+        Change the next alarm{ ' ' }
+        <InfoTip text="Just this once. It goes off the next time the clock shows this time, and your weekly schedule stays as it is."/>
+      </DialogTitle>
+      <DialogContent>
+        <Box sx={ { display: 'flex', justifyContent: 'center', py: 1 } }>
+          <TimeField
+            label="Alarm time"
+            value={ alarmTimeLocalOverride || scheduledAlarmTimeHhMm }
+            onChange={ setAlarmTimeLocalOverride }
+            disabled={ isSaving }
+          />
+        </Box>
       </DialogContent>
       <DialogActions sx={ { px: 3, pb: 2 } }>
+        <Button onClick={ close } disabled={ isSaving } sx={ { mr: 'auto' } }>Cancel</Button>
         { hasOneTimeAlarm && (
-          <Button onClick={ () => send(cancelOneTimeAlarm(targetSide)) } disabled={ isSaving } sx={ { mr: 'auto' } }>
+          <Button onClick={ () => send(cancelOneTimeAlarm(targetSide)) } disabled={ isSaving }>
             Back to schedule
           </Button>
         ) }
-        <Button onClick={ close } disabled={ isSaving }>Cancel</Button>
         <Button
           variant="contained"
           onClick={ () => send(postOneTimeAlarm(targetSide, alarmTimeLocalOverride)) }

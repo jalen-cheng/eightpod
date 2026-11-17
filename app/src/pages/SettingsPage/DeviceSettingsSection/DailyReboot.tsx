@@ -14,6 +14,7 @@ export default function DailyReboot({ settings, updateSettings }: DailyRebootPro
   return (
     <SettingToggle
       label="Reboot once a day"
+      info="Restarts the Pod once a day to keep it running smoothly, one hour before the daily priming time."
       control={
         <Switch
           disabled={ isUpdating }
@@ -21,9 +22,6 @@ export default function DailyReboot({ settings, updateSettings }: DailyRebootPro
           onChange={ (event) => updateSettings({ rebootDaily: event.target.checked }) }
         />
       }
-    >
-      Automatically reboot the Pod once per day to keep it running smoothly.
-      Reboot time is scheduled 1 hour before the daily prime time.
-    </SettingToggle>
+    />
   );
 }

@@ -56,9 +56,8 @@ export default function FeaturesSection() {
               />
             }
             label="Enable Sentry error reporting"
-          >
-            Help improve stability by sending anonymous error reports to the free-sleep maintainers.
-          </SettingToggle>
+            info="Sends anonymous error reports to the Free Sleep maintainers. Nothing is sent while the internet block is on."
+          />
         </Box>
       </Box>
     </Section>

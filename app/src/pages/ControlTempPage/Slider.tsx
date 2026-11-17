@@ -1,5 +1,5 @@
 import { CircularSliderWithChildren } from 'react-circular-slider-svg';
-import { Box, Typography } from '@mui/material';
+import { Typography } from '@mui/material';
 import { useAppStore } from '@state/appStore';
 import styles from './Slider.module.scss';
 import TemperatureLabel from './TemperatureLabel.tsx';
@@ -107,16 +107,6 @@ export default function Slider({ isOn, currentTargetTemp, refetch, currentTemper
           />
         ) }
       </div>
-      { isOn && (
-        <Box sx={ { textAlign: 'center', mb: 1.5 } }>
-          <Typography variant="caption" sx={ { color: 'text.secondary' } }>
-            { /* Shows the target in the other scale, so levels and degrees can be matched up */ }
-            { temperatureFormat === 'level'
-              ? `About ${formatTemperature(targetTemperatureF, 'fahrenheit')}`
-              : `About ${formatTemperature(targetTemperatureF, 'level')} in the Eight Sleep app` }
-          </Typography>
-        </Box>
-      ) }
     </div>
   );
 };

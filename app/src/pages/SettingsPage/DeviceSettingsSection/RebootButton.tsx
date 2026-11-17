@@ -52,7 +52,7 @@ export default function RebootButton() {
       >
         <DialogTitle>Reboot pod now?</DialogTitle>
         <DialogActions>
-          <Button onClick={ handleClose }>Cancel</Button>
+          <Button onClick={ handleClose } sx={ { mr: 'auto' } }>Cancel</Button>
           <Button onClick={ reboot }>Confirm</Button>
         </DialogActions>
       </Dialog>

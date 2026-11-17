@@ -1,13 +1,20 @@
 import { PropsWithChildren, ReactElement } from 'react';
 import { Box, FormControlLabel } from '@mui/material';
+import InfoTip from '@components/InfoTip.tsx';
 
-type SettingToggleProps = PropsWithChildren<{ label: string; control: ReactElement }>;
+type SettingToggleProps = PropsWithChildren<{
+  label: string;
+  control: ReactElement;
+  // A sentence of explanation, shown from an "i" beside the label instead of taking a line
+  info?: string;
+}>;
 
-export default function SettingToggle({ label, control, children }: SettingToggleProps) {
+// A labelled switch. Children are for content that has to stay visible, such as a command to copy.
+export default function SettingToggle({ label, control, info, children }: SettingToggleProps) {
   return (
     <Box sx={ { minWidth: 0 } }>
       <FormControlLabel
-        label={ label }
+        label={ info ? <>{ label }{ ' ' }<InfoTip text={ info }/></> : label }
         labelPlacement="start"
         control={ control }
         sx={ {

@@ -135,8 +135,8 @@ morning (`getDayIndexForSchedule` in `server/src/jobs/scheduleTiming.ts`).
 | Job | When | What it does | Skipped when |
 |---|---|---|---|
 | Power on | Bedtime | Turns the side on at the bedtime temperature | Schedule off, or the side is away |
-| Temperature change | Each change time | Sets the temperature. Does not turn the side on | Side away; or a warm-up is running |
-| Warm-up | Alarm time minus the warm-up minutes | Sets the warm-up temperature and holds off scheduled changes until the alarm | Schedule off, alarm off, away, or the side is off at that moment |
+| Temperature change | Each change time | Sets the temperature. Does not turn the side on | Schedule off, side away, or a warm-up is running |
+| Warm-up | Alarm time minus the warm-up minutes | Sets the warm-up temperature and holds off scheduled changes until the alarm | Schedule off, alarm off, away, the side is off at that moment, or a one-time alarm stands in for the alarm |
 | Alarm | Alarm time | Starts the vibration (section 5) | Schedule off, alarm off, away, the side is off, or a one-time alarm stands in for it |
 | Power off | Off time | Turns the side off, **unless an alarm is still to come** (section 5) | Schedule off, or away |
 
@@ -195,7 +195,8 @@ expiry, and the weekly schedule is not touched.
 - **It replaces the scheduled alarm of the same morning.** The scheduled alarm is skipped if it
   falls before the one-time alarm, or up to 6 hours after it. An afternoon one-time alarm therefore
   leaves tomorrow morning's alarm alone.
-- **It has no warm-up of its own.** The scheduled alarm's warm-up still runs at its usual time.
+- **The warm-up moves with it.** The replaced alarm's warm-up is skipped, and the one-time alarm gets the
+  same warm-up (that weekday's minutes and temperature) before its own time, if the bed is on then.
 - `{"shiftMinutes": 30}` moves the next alarm later (or earlier with a negative number) the same way.
 - "Back to schedule" in the app, or `POST /api/alarm/time/cancel`, removes it.
 
@@ -234,7 +235,8 @@ installer. A **Pod 4** reports double, triple and quadruple taps as counters, re
 
 ## 7. Linked sides and away mode
 
-**Linked sides** (the chain button beside the side picker) make the bed behave as one:
+**Linked sides** (the chain button beside the side picker) make the bed behave as one. While linked, the
+side picker is replaced by a single "Left ⛓ Right" control, since there is no side left to pick:
 
 | What | When linked |
 |---|---|
@@ -255,12 +257,12 @@ person who is there. One-time alarms and the alarm test still vibrate an away si
 
 ## 8. Daily housekeeping: priming, reboot, calibration
 
-All three hang off Settings > "Prime daily" and its time (default 14:00, on by default in this fork).
+All three are timed from Settings > "Prime daily" (default 14:00, on by default in this fork).
 
 | Job | When | Notes |
 |---|---|---|
-| Daily reboot | One hour before the priming time (13:00) | Only if "Reboot once a day" is on. **Does not exist if daily priming is off** |
-| Priming | The priming time (14:00) | Runs the water cycle. It does not check whether the bed is in use |
+| Daily reboot | One hour before the priming time (13:00) | Only if "Reboot once a day" is on. Runs whether or not daily priming is on |
+| Priming | The priming time (14:00) | Only if "Prime daily" is on. Runs the water cycle. It does not check whether the bed is in use |
 | Sensor calibration | Left at 14:00, right at 14:30 | Biometrics only; does nothing when biometrics is off |
 
 A reboot takes under a minute. After it, the internet block, the `.local` name and Tailscale come
@@ -278,12 +280,11 @@ offers to dismiss it.
 **Schedules.**
 - A tab per day, Monday first. It opens on tonight (before noon, that is yesterday's entry,
   because a night belongs to the day it started).
-- "Monday night" with a switch: whether that night's schedule runs at all.
+- "Monday night" with a copy button (save this night to other days) and a switch: whether that night's schedule runs at all.
 - A chart of the night, then the night as a list from top to bottom: bedtime, each temperature
   change, the alarm with its Options, and when the bed turns off.
 - Editing anything brings up a bar that stays in view: **Discard**, **Other days…** (tick any days
   to save this night to) and **Save for Mon**. Other day tabs are locked until you save or discard.
-- With nothing to save, "Copy this night to other days" does the same without an edit.
 - Saving always writes the whole night shown, to each chosen day, on both sides when linked.
 
 **Data.** Sleep records and logs. Sleep needs biometrics.
@@ -372,17 +373,17 @@ The cases where one feature changes what another does:
 | If | Then |
 |---|---|
 | You save any setting or schedule | Every job is rebuilt. A vibrating alarm and a running warm-up carry on |
-| A one-time alarm is set | The same morning's scheduled alarm is skipped. Its warm-up still runs. The one-time alarm uses that weekday's saved pattern, strength and length |
+| A one-time alarm is set | The same morning's scheduled alarm and its warm-up are skipped. The one-time alarm uses that weekday's saved pattern, strength, length and warm-up |
 | A one-time alarm is set and the bed is off | It still vibrates; the bed stays off |
 | An alarm is due after the off time | The bed stays on until two minutes after the alarm would end |
 | "Bed turns off when the alarm is dismissed" is on | The off time shown is only a fallback an hour after the alarm, used if nobody dismisses it |
 | A warm-up is running | Scheduled temperature changes are skipped until the alarm. Changes you make by hand are not |
-| The night's schedule is switched off | No power on or off, no alarm, no warm-up. **Saved temperature changes still fire**, but they never turn the bed on |
+| The night's schedule is switched off | Nothing runs that night: no power on or off, no temperature changes, no alarm, no warm-up |
 | The bed is off at the alarm time | A scheduled alarm does not vibrate. A one-time alarm and a test do |
 | Sides are linked and one side dismisses | Both stop |
 | Sides are not linked and one side dismisses | The other side's alarm restarts from the beginning |
 | One side is in away mode | The other side's changes are mirrored to it; its own schedule and alarm do not run |
-| Daily priming is switched off | The daily reboot stops too |
+| Daily priming is switched off | The daily reboot still runs, at the same time |
 | The Pod reboots or Free Sleep restarts during an alarm | The alarm is forgotten: the current stretch (up to three minutes) finishes and nothing follows |
 | An update is running | Nothing scheduled fires for about four minutes |
 | Tailscale is down | Only remote access is affected |
@@ -419,13 +420,10 @@ answered yet. That has no effect on this fork.
 
 Found while writing this guide. None is new; they are listed so nothing here is a surprise.
 
-- **Temperature changes still fire when a night's schedule is switched off** (they never turn the bed on).
-- **A scheduled alarm's warm-up still runs when a one-time alarm replaces that alarm**, at the old time.
 - **A restarted alarm starts over**, ramp included (the unlinked two-sides case).
 - **A time just before bedtime is treated as the next day.** With bedtime at 22:00, a change at
   21:55 fires the following evening.
 - **Two saves in quick succession** can leave the jobs built from the first; any later save fixes it.
-- **Daily reboot depends on daily priming being on.**
 - **Priming and the daily reboot do not check whether the bed is in use.** Keep their time in the afternoon.
 - **Holding the middle button during an alarm** turns the bed off or on but does not dismiss the
   alarm; a short press does.

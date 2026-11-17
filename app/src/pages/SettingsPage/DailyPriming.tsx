@@ -29,7 +29,7 @@ export default function DailyPriming({ settings, updateSettings }: PrimePodSched
               onChange={ (event) => updateSettings({ primePodDaily: { enabled: event.target.checked } }) }
             />
           }
-          label="Prime daily?"
+          label="Prime daily"
         />
         <TextField
           label="Prime time"

@@ -16,7 +16,6 @@ import DiscordLink from './DiscordLink.tsx';
 import FeaturesSection from './FeaturesSection/FeaturesSection.tsx';
 import Section from './Section.tsx';
 import TapGesturesSection from './TapGesturesSection/TapGesturesSection.tsx';
-import SettingsHint from './SettingsHint.tsx';
 import DeviceSettingsSection from './DeviceSettingsSection/DeviceSettingsSection.tsx';
 import DeviceInfo from './DeviceSettingsSection/DeviceInfo.tsx';
 import DailyReboot from './DeviceSettingsSection/DailyReboot.tsx';
@@ -53,14 +52,6 @@ export default function SettingsPage() {
             <SideSettings side="left" settings={ settings } updateSettings={ updateSettings }/>
             <SideSettings side="right" settings={ settings } updateSettings={ updateSettings }/>
           </Box>
-          <Box sx={ { mt: 2 } }>
-            <SettingsHint>
-              Away mode:
-              Disables schedules and temperature control for one side.
-              That side will mirror any temperature or schedule changes from the active side.
-              If both sides are in away mode, no schedules will apply.
-            </SettingsHint>
-          </Box>
         </Section>
       </ErrorBoundary>
       <ErrorBoundary componentName="Tap gestures">
@@ -72,10 +63,6 @@ export default function SettingsPage() {
             <DailyPriming settings={ settings } updateSettings={ updateSettings }/>
             <Divider/>
             <Box sx={ { '& > .MuiButton-root': { width: '100%' } } }><PrimeControl/></Box>
-            <SettingsHint>
-              Regular priming helps prevent air bubbles, ensures even cooling and heating.
-              Schedule priming during a time that you're not on the bed.
-            </SettingsHint>
           </Box>
         </Section>
       </ErrorBoundary>

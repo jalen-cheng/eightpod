@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="9414229f-f055-57da-8976-4a43b4c3d5cf")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="867ddcc7-73b3-5f02-8d80-2d69b7b5a319")}catch(e){}}();
 import schedule from 'node-schedule';
 import cbor from 'cbor';
 import moment from 'moment-timezone';
@@ -100,6 +100,24 @@ export function getPendingOneOffAlarm(settingsData, side, now) {
     // Already gone off: the override is only still in force to hold back a scheduled alarm
     return next.isAfter(expiresAt) ? undefined : next;
 }
+// True while a one-off alarm is standing in for the scheduled alarm due at `scheduledAlarmAt`:
+// the scheduled alarm will skip itself, so nothing else should prepare for it either
+const isScheduledAlarmReplaced = (settingsData, side, scheduledAlarmAt) => {
+    const { expiresAt } = settingsData[side].scheduleOverrides.alarm;
+    return Boolean(expiresAt) && moment(expiresAt).isAfter(scheduledAlarmAt);
+};
+// Warms a side for an alarm that is `preWarmMinutes` away, if the side is on. Scheduled
+// temperature changes are then skipped until the alarm.
+const runPreWarm = async (side, preWarmMinutes, alarmTemperatureF) => {
+    const franken = await connectFranken();
+    const deviceStatus = await franken.getDeviceStatus();
+    if (!deviceStatus[side].isOn) {
+        logger.debug(`Not warming up ${side} for its alarm, side is off`);
+        return;
+    }
+    startPreWarm(side, preWarmMinutes);
+    await updateDeviceStatus({ [side]: { targetTemperatureF: alarmTemperatureF } });
+};
 // How a one-off alarm vibrates: the settings of the weekly alarm on the day it goes off
 const getOneOffAlarmSettings = (settingsData, side, firesAt) => {
     const dayKey = firesAt.clone().tz(settingsData.timeZone).format('dddd').toLowerCase();
@@ -108,6 +126,8 @@ const getOneOffAlarmSettings = (settingsData, side, firesAt) => {
         duration: MAX_ALARM_SECONDS,
         vibrationPattern: 'rise',
         turnOffAfterDismiss: undefined,
+        preWarmMinutes: 0,
+        alarmTemperature: undefined,
     };
 };
 // When the last alarm that falls after a night's off time will finish, if there is one within
@@ -138,6 +158,21 @@ export function scheduleAlarmOverride(settingsData, side) {
         return null;
     const { timeOverride } = settingsData[side].scheduleOverrides.alarm;
     logger.debug(`Alarm override is set! Scheduling alarm for ${next.format()}`);
+    // The one-off gets the warm-up the alarm it replaces would have had, moved to its own time.
+    // Skipped when that moment has already passed.
+    const { preWarmMinutes = 0, alarmTemperature } = getOneOffAlarmSettings(settingsData, side, next);
+    const preWarmAt = next.clone().subtract(preWarmMinutes, 'minutes');
+    if (preWarmMinutes > 0 && alarmTemperature !== undefined && preWarmAt.isAfter(moment())) {
+        schedule.scheduleJob(`${side}-alarm-override-${timeOverride}-pre-warm`, preWarmAt.toDate(), async () => {
+            try {
+                logger.debug(`Executing warm-up for the one-off alarm on ${side}`);
+                await runPreWarm(side, preWarmMinutes, alarmTemperature);
+            }
+            catch (error) {
+                logger.error(error);
+            }
+        });
+    }
     schedule.scheduleJob(`${side}-alarm-override-${timeOverride}`, next.toDate(), async () => {
         const { vibrationIntensity, duration, vibrationPattern, turnOffAfterDismiss } = getOneOffAlarmSettings(settingsData, side, next);
         // Asked for by hand, so it goes off even if the side is off by then (for example after
@@ -219,15 +254,14 @@ export const scheduleAlarmPreWarm = (settingsData, side, day, dailySchedule) => 
     logJob('Scheduling alarm warm-up job', side, day, dayIndex, preWarmTime);
     schedule.scheduleJob(`${side}-${day}-${preWarmTime}-alarm-pre-warm`, preWarmRule, async () => {
         try {
-            const franken = await connectFranken();
-            const deviceStatus = await franken.getDeviceStatus();
-            if (!deviceStatus[side].isOn) {
-                logger.debug(`Not warming up ${side} for its alarm, side is off`);
+            await settingsDB.read();
+            const scheduledAlarmAt = moment().add(preWarmMinutes, 'minutes');
+            if (isScheduledAlarmReplaced(settingsDB.data, side, scheduledAlarmAt)) {
+                logJob('A one-off alarm replaces this alarm, skipping its warm-up', side, day, dayIndex, preWarmTime);
                 return;
             }
             logJob('Executing alarm warm-up job', side, day, dayIndex, preWarmTime);
-            startPreWarm(side, preWarmMinutes);
-            await updateDeviceStatus({ [side]: { targetTemperatureF: dailySchedule.alarm.alarmTemperature } });
+            await runPreWarm(side, preWarmMinutes, dailySchedule.alarm.alarmTemperature);
         }
         catch (error) {
             logger.error(error);
@@ -235,4 +269,4 @@ export const scheduleAlarmPreWarm = (settingsData, side, day, dailySchedule) => 
     });
 };
 //# sourceMappingURL=alarmScheduler.js.map
-//# debugId=9414229f-f055-57da-8976-4a43b4c3d5cf
+//# debugId=867ddcc7-73b3-5f02-8d80-2d69b7b5a319

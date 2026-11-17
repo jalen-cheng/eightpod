@@ -153,7 +153,7 @@ export default function SleepRecordCard({ sleepRecord, refetch }: SleepRecordPro
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={ () => setEditOpen(false) } color="secondary">
+          <Button onClick={ () => setEditOpen(false) } color="secondary" sx={ { mr: 'auto' } }>
             Cancel
           </Button>
           <Button onClick={ handleSave } variant="contained" color="primary">

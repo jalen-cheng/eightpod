@@ -154,6 +154,7 @@ the calibration script on one would show it.
 | [#41](https://github.com/jalen-cheng/free-sleep/pull/41), [#42](https://github.com/jalen-cheng/free-sleep/pull/42) | Feature, docs | `scripts/setup_tailscale.sh` puts Tailscale on the Pod with the internet block on: only its sign-in range and two relay regions are opened, and a daily timer keeps the relay addresses current. The `.local` name and daily priming (2:00 PM) are on by default for new installs. |
 | [#43](https://github.com/jalen-cheng/free-sleep/pull/43), [#44](https://github.com/jalen-cheng/free-sleep/pull/44), [#45](https://github.com/jalen-cheng/free-sleep/pull/45) | Fix, docs | The Tailscale unit no longer delays boot by two minutes. The app loads when opened as `eight-pod`, `eight-pod.local` or the Tailscale address (it was a blank page: the server refused its own script files under those names). The fork installs and updates from itself by default, and the README has current screenshots. |
 | [#46](https://github.com/jalen-cheng/free-sleep/pull/46), [#47](https://github.com/jalen-cheng/free-sleep/pull/47) | Feature, fix, docs | Schedule page: a night switch under the day tabs and a save bar that stays in view. Clearer alarm text. Wi-Fi and version chips on Status. A one-time alarm now also replaces a scheduled alarm up to 6 hours after it (before, both went off). The alarm dialog shows again for the next alarm. Tailscale upgrades with Free Sleep updates. [HOW_IT_WORKS.md](HOW_IT_WORKS.md) explains every part. |
+| [#48](https://github.com/jalen-cheng/free-sleep/pull/48) | Fix, feature | A night switched off no longer runs its temperature changes. A one-time alarm takes the warm-up with it. The daily reboot no longer needs daily priming on. App: linked sides show as one control, explanatory text moved behind "i" tips, Cancel sits on the left of every dialog, the copy button sits beside the night's switch. |
 
 ## Compared with the Eight Sleep app
 
@@ -273,7 +274,6 @@ Searched 2026-11-13. These are other people's reports, not verified here.
 - [ ] On a Pod 4, a four-tap just after an alarm stops vibrating toggles power; a short grace period would avoid it. (A Pod 5 is not affected.)
 - [ ] In Level, tap steps are stored as whole °F (3, 6 or 8), so many presses in a row can drift by a level.
 - [ ] An alarm restarted because the other side dismissed theirs starts over from its full length.
-- [ ] A one-time alarm has no warm-up.
 - [ ] Node tests (`tests/*.test.mjs`) do not run in CI, and no CI runs on the fork.
 - [ ] Hardware differences between Pod 3, 4 and 5 are checked ad hoc; one capabilities table per model would replace those checks.
 - [ ] Not started, by choice: an iOS app wrapper.

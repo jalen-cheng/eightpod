@@ -9,6 +9,7 @@ import { postDeviceStatus } from '@api/deviceStatus.ts';
 import { useAppStore } from '@state/appStore.tsx';
 import { buildSidesPayload, getControlledSides } from '@lib/sides.ts';
 import { AlarmSchedule } from '@api/schedulesSchema.ts';
+import InfoTip from '@components/InfoTip.tsx';
 import { useScheduleStore } from './scheduleStore.tsx';
 import { TemperatureSelect } from './ScheduleFields.tsx';
 
@@ -27,13 +28,14 @@ export const PATTERN_NAMES: Record<AlarmSchedule['vibrationPattern'], string> = 
 
 type OptionRowProps = PropsWithChildren<{
   label: string;
-  hint?: string;
+  // Extra detail, shown from an "i" beside the label
+  info?: string;
   // Puts the control under the label at full width, for controls too wide to share a line on a phone
   isStacked?: boolean;
 }>;
 
 // One labelled option: the label on the left and its control on the right, or stacked
-const OptionRow = ({ label, hint, isStacked, children }: OptionRowProps) => (
+const OptionRow = ({ label, info, isStacked, children }: OptionRowProps) => (
   <Box
     sx={ {
       display: 'flex', gap: isStacked ? 1 : 2, minHeight: 44,
@@ -42,10 +44,10 @@ const OptionRow = ({ label, hint, isStacked, children }: OptionRowProps) => (
       justifyContent: 'space-between',
     } }
   >
-    <Box sx={ { minWidth: 0 } }>
-      <Typography variant="body2" sx={ { fontWeight: 500 } }>{ label }</Typography>
-      { hint && <Typography variant="caption" sx={ { color: 'text.secondary', display: 'block' } }>{ hint }</Typography> }
-    </Box>
+    <Typography variant="body2" sx={ { fontWeight: 500, minWidth: 0 } }>
+      { label }
+      { info && <>{ ' ' }<InfoTip text={ info }/></> }
+    </Typography>
     <Box sx={ { flexShrink: 0 } }>{ children }</Box>
   </Box>
 );
@@ -100,7 +102,7 @@ export default function AlarmOptionsDialog({ open, onClose }: AlarmOptionsDialog
     <Dialog open={ open } onClose={ onClose } fullWidth maxWidth="xs">
       <DialogTitle>Alarm options</DialogTitle>
       <DialogContent sx={ { display: 'flex', flexDirection: 'column', gap: 1.5 } }>
-        <OptionRow label="Vibration" hint="Ramp up builds to full strength over 40 seconds" isStacked>
+        <OptionRow label="Vibration" info="Ramp up builds to full strength over 40 seconds. Pulses start at full strength." isStacked>
           <ToggleButtonGroup
             exclusive
             fullWidth
@@ -127,7 +129,7 @@ export default function AlarmOptionsDialog({ open, onClose }: AlarmOptionsDialog
           />
         </Box>
 
-        <OptionRow label="Keeps going for" hint="Or until dismissed">
+        <OptionRow label="Keeps going for" info="It stops sooner if you dismiss it.">
           <TextField
             select
             size="small"
@@ -142,7 +144,7 @@ export default function AlarmOptionsDialog({ open, onClose }: AlarmOptionsDialog
           </TextField>
         </OptionRow>
 
-        <OptionRow label="Warm the bed first" hint="Starts this long before">
+        <OptionRow label="Warm the bed first" info="The bed goes to the warm-up temperature this long before the alarm.">
           <TextField
             select
             size="small"
