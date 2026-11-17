@@ -338,25 +338,15 @@ From the UI on your phone.
    The dial and the schedule page should follow each time.
 4. **Schedule.** Create a schedule for today that powers on three minutes from now, save it,
    turn the side off, and wait. Record whether it turned on at the right minute.
-5. **Alarm.** Set an alarm for three minutes from now. When it vibrates:
-   - Does the Dismiss button in the app stop it, or does the bed keep vibrating after the dialog closes?
-     Upstream [issue #54](https://github.com/throwaway31265/free-sleep/issues/54) found that on a
-     Pod 3 the dismiss command does nothing to an alarm that is already vibrating. If yours keeps
-     vibrating, try these two while it is going, one per alarm, and record which one stops it
-     and how fast. First, the dismiss command with a side, as a related project sends it
-     (`0` is left, `1` is right):
-     ```
-     curl -s -X POST localhost:3000/api/execute -H 'Content-Type: application/json' -d '{"command":"ALARM_CLEAR","arg":"0"}'
-     ```
-     Second, a new one-second alarm on the side that is vibrating:
-     ```
-     curl -s -X POST localhost:3000/api/alarm -H 'Content-Type: application/json' -d '{"side":"left","vibrationIntensity":1,"vibrationPattern":"double","duration":1}'
-     ```
-   - Run it again with alarms on both sides: does dismissing one side stop the other?
-   - Run it once more: does turning the side off stop the vibration?
-6. **Alarm from the bed.** Only if Part 4 showed `Button press:` lines: press the middle button
-   while the alarm vibrates. Record whether the vibration stops, and whether pressing + or -
-   also stops it (other owners say the firmware stops an alarm on any press by itself).
+5. **Alarm.** On the Schedules page, switch the alarm on, open **Options** and press
+   **Test for a minute**. With "Ramp up" the bed should build in four steps over 40 seconds and
+   then stay at full strength; **Stop test** should end it at once.
+6. **Alarm from the bed.** Run the test again and press any button on the side of the bed. The
+   vibration should stop. Dismissing stops both sides, because the firmware's command has no side;
+   Free Sleep starts the other side's alarm again unless the sides are linked.
+7. **A real alarm.** Set the alarm for three minutes from now and save. It should go off on the
+   minute and keep going until dismissed. If "Bed turns off" is set to follow the alarm, the side
+   should switch off when you dismiss it.
 
 ## Part 7: running cost and updates
 

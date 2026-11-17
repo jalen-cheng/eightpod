@@ -24,12 +24,12 @@ Start here:
 | **Temperatures** | Levels spread evenly over 55-110°F, off by up to 5°F | What the firmware aims for at each level, measured on a Pod 5. Range is 50-108°F. |
 | **Display units** | °F or °C | °F, °C, or the -10 to +10 scale of Eight Sleep's app |
 | **Both sides at once** | Each side set separately | A link switch: temperature, power, schedules, buttons and shortcuts apply to both sides |
-| **Schedule page** | Separate sections per setting, one day at a time | One night as a list of events in order. Save for every day, weekdays / weekend, or each day. |
-| **Alarm length** | A set time, 3 minutes at most | Keeps going until dismissed, up to 30 minutes |
+| **Schedule page** | Separate sections per setting, one day at a time | One night as a list of events in order. One picker chooses what it covers: every day, weekdays, the weekend, or a single day. |
+| **Alarm length** | A set time, 3 minutes at most | Keeps going until dismissed, for 10 to 30 minutes |
 | **Alarm ramp-up** | The firmware's "rise" pattern, which on a Pod 5 is one steady strength | A real ramp: 20, 40, 60, 80% of the chosen strength, then full |
 | **Before the alarm** | Nothing | Optional warm-up to a chosen temperature 15, 30 or 45 minutes before |
 | **After the alarm** | Bed stays on until its off time | Optionally switches off when the alarm is dismissed |
-| **One-time alarm** | "Override tonight's alarm" on the temperature page | Set from the schedule page or one request, for the next time the clock shows that time. Goes off even if the bed is off. |
+| **One-time alarm** | "Override tonight's alarm" on the temperature page | Same place, or one request from a shortcut. For the next time the clock shows that time; goes off even if the bed is off. |
 | **Alarm after the off time** | Skipped, because the bed is off | The bed stays on until the alarm has gone off (up to 6 hours past the off time) |
 | **Two sleepers' alarms** | Dismissing one stops both (the firmware's doing), so the other is lost | The other side's alarm is started again |
 | **iPhone Shortcuts** | Possible with the general API | Three short requests: set by -10..+10, set an alarm by time ("6:30 AM" works), read the bed in one sentence |
@@ -43,6 +43,7 @@ Start here:
   the bed's state every 5 seconds.
 - The dial is blue when cooling and red when warming, and labels its range and step size.
 - The power button waits for the Pod's state instead of acting on a guess.
+- Alarm options has a one-minute test that vibrates the bed as currently set.
 - Schedule changes save with one button that says what it will save ("Save for weekdays, both sides").
 - The schedule chart's time axis marks the events you set, and its temperature axis is right in °C.
 - Tap and button settings are one short set of choices for both sides, named for the buttons on a Pod 5.
@@ -52,7 +53,6 @@ Start here:
 ### Removed
 
 - Snooze. Upstream defines the setting but never acts on it; this fork briefly did, then took it out.
-- The alarm test button and the alarm length choice.
 
 ### Sent back to upstream
 
