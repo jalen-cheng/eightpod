@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="867ddcc7-73b3-5f02-8d80-2d69b7b5a319")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="b838ceac-a0bd-5628-a0f0-d5eb1c94a250")}catch(e){}}();
 import schedule from 'node-schedule';
 import cbor from 'cbor';
 import moment from 'moment-timezone';
@@ -16,6 +16,8 @@ import { startPreWarm } from './preWarmState.js';
 import { updateDeviceStatus } from '../routes/deviceStatus/updateDeviceStatus.js';
 import { connectFranken } from '../8sleep/frankenServer.js';
 import { createAlarmSession, planAlarmStretch } from './alarmSession.js';
+import { OFF_AFTER_ALARM_MINUTES } from '../db/automaticOffTime.js';
+const SECONDS_PER_MINUTE = 60;
 // Sends an alarm to the Pod, one stretch at a time: the ramp-up steps of a "rise" alarm, then
 // stretches as long as the firmware allows. The rest of the alarm is handed to the alarm session
 // to start when this stretch ends.
@@ -152,6 +154,20 @@ export async function findLateAlarmEnd(side, day) {
     }
     return alarmEnds.length > 0 ? moment.max(alarmEnds) : undefined;
 }
+// A one-off alarm brings the bed's off time with it: a side that is on turns off
+// OFF_AFTER_ALARM_MINUTES after the alarm goes off, whatever the night's schedule said.
+const moveOffTimeToOneOffAlarm = async (side) => {
+    try {
+        const franken = await connectFranken();
+        const deviceStatus = await franken.getDeviceStatus();
+        if (!deviceStatus[side].isOn)
+            return;
+        await updateDeviceStatus({ [side]: { secondsRemaining: OFF_AFTER_ALARM_MINUTES * SECONDS_PER_MINUTE } });
+    }
+    catch (error) {
+        logger.error(error);
+    }
+};
 export function scheduleAlarmOverride(settingsData, side) {
     const next = getPendingOneOffAlarm(settingsData, side, moment.tz(settingsData.timeZone));
     if (!next)
@@ -185,6 +201,7 @@ export function scheduleAlarmOverride(settingsData, side) {
             turnOffAfterDismiss,
             force: true,
         });
+        await moveOffTimeToOneOffAlarm(side);
     });
 }
 export const scheduleAlarm = (settingsData, side, day, dailySchedule) => {
@@ -269,4 +286,4 @@ export const scheduleAlarmPreWarm = (settingsData, side, day, dailySchedule) => 
     });
 };
 //# sourceMappingURL=alarmScheduler.js.map
-//# debugId=867ddcc7-73b3-5f02-8d80-2d69b7b5a319
+//# debugId=b838ceac-a0bd-5628-a0f0-d5eb1c94a250

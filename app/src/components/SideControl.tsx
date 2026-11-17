@@ -31,22 +31,7 @@ export default function SideControl({ showTemp, onLinkSidesChange }: SideControl
   return (
     <Box sx={ { display: 'flex', flexDirection: 'column', gap: 0.75 } }>
       <Box sx={ { display: 'flex', gap: 1 } }>
-        { /* Linked: the two sides are drawn as one, since there is no longer a side to pick */ }
-        { linkSides && (
-          <Box
-            role="status"
-            aria-label={ `${sideName('left')} and ${sideName('right')} are linked and controlled together` }
-            sx={ {
-              flex: 1, minWidth: 0, minHeight: 40, px: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.25,
-              border: '1px solid', borderColor: 'primary.main', borderRadius: 1, bgcolor: 'action.selected',
-            } }
-          >
-            <Typography component="span" variant="body2" noWrap>{ sideName('left') }</Typography>
-            <LinkIcon fontSize="small" color="primary" aria-hidden/>
-            <Typography component="span" variant="body2" noWrap>{ sideName('right') }</Typography>
-          </Box>
-        ) }
-        { !linkSides && <ToggleButtonGroup
+        <ToggleButtonGroup
           exclusive
           value={ side }
           onChange={ (_, selectedSide: unknown) => {
@@ -57,12 +42,18 @@ export default function SideControl({ showTemp, onLinkSidesChange }: SideControl
           sx={ { flex: 1, minWidth: 0, '& .MuiToggleButton-root': { flex: 1, minWidth: 0 } } }
         >
           { (['left', 'right'] as const).map(bedSide => (
-            <ToggleButton key={ bedSide } value={ bedSide } aria-label={ `${bedSide} side` }>
+            <ToggleButton
+              key={ bedSide }
+              value={ bedSide }
+              // Linked: both halves are lit, since both are being controlled
+              selected={ linkSides || side === bedSide }
+              aria-label={ linkSides ? `${bedSide} side, linked with the other side` : `${bedSide} side` }
+            >
               <Box component="span" sx={ { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, minWidth: 0 } }>
                 <Typography component="span" variant="body2" sx={ { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }>
                   { sideName(bedSide) }
                 </Typography>
-                { showTemp && side !== bedSide && (
+                { showTemp && !linkSides && side !== bedSide && (
                   <Typography component="span" variant="caption" sx={ { color: 'text.secondary', flexShrink: 0 } }>
                     { deviceStatus?.[bedSide]?.isOn ? formatTemperature(deviceStatus[bedSide].targetTemperatureF, temperatureFormat) : 'Off' }
                   </Typography>
@@ -70,7 +61,7 @@ export default function SideControl({ showTemp, onLinkSidesChange }: SideControl
               </Box>
             </ToggleButton>
           )) }
-        </ToggleButtonGroup> }
+        </ToggleButtonGroup>
         <ToggleButton
           value="linkSides"
           size="small"

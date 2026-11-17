@@ -24,7 +24,7 @@ export function TimeField({ label, value, onChange, disabled, error }: TimeField
       disabled={ disabled }
       error={ error }
       sx={ {
-        width: { xs: 112, sm: 148 }, flexShrink: 0,
+        width: { xs: 108, sm: 148 }, flexShrink: 0,
         // On a phone the field itself opens the picker, and the clock icon would crowd out AM/PM
         '& input::-webkit-calendar-picker-indicator': { display: { xs: 'none', sm: 'block' } },
       } }

@@ -12,7 +12,6 @@ import { AlarmSchedule } from '@api/schedulesSchema.ts';
 import InfoTip from '@components/InfoTip.tsx';
 import { useScheduleStore } from './scheduleStore.tsx';
 import { TemperatureSelect } from './ScheduleFields.tsx';
-import { offTimeFor } from './alarmOffTime.ts';
 
 const SECONDS_PER_MINUTE = 60;
 // An alarm keeps going until it is dismissed, up to this long
@@ -74,18 +73,13 @@ export default function AlarmOptionsDialog({ open, onClose }: AlarmOptionsDialog
   }, [isTesting]);
   if (!selectedSchedule) return null;
 
-  const { alarm, power } = selectedSchedule;
+  const { alarm } = selectedSchedule;
   const updateAlarm = (changes: Partial<AlarmSchedule>) => updateSelectedSchedule({ alarm: changes });
   const preWarmMinutes = alarm.preWarmMinutes ?? 0;
   const lengthMinutes = Math.round(alarm.duration / SECONDS_PER_MINUTE);
   // An alarm saved with some other length keeps it until a new one is picked
   const lengthOptions = _.sortBy(_.union(ALARM_LENGTH_MINUTES, [lengthMinutes]));
   const testSides = getControlledSides(side, linkSides);
-
-  // With this on, the saved off time becomes a fallback an hour after the alarm
-  const setTurnsOffWithAlarm = (turnOffAfterDismiss: boolean) => {
-    updateSelectedSchedule({ alarm: { turnOffAfterDismiss }, power: { off: offTimeFor(turnOffAfterDismiss, alarm.time, power.off) } });
-  };
 
   // Vibrates the bed now, whether or not the side is on, so the settings can be felt
   const startTest = () => {
@@ -175,10 +169,10 @@ export default function AlarmOptionsDialog({ open, onClose }: AlarmOptionsDialog
           </OptionRow>
         ) }
 
-        <OptionRow label="Bed off on dismiss" info="The bed turns off the moment you dismiss the alarm, instead of at a set time.">
+        <OptionRow label="Bed off on dismiss" info="The bed turns off the moment you dismiss the alarm, instead of 30 minutes after it.">
           <Switch
             checked={ alarm.turnOffAfterDismiss ?? false }
-            onChange={ (event) => setTurnsOffWithAlarm(event.target.checked) }
+            onChange={ (event) => updateAlarm({ turnOffAfterDismiss: event.target.checked }) }
             slotProps={ { input: { 'aria-label': 'Turn the bed off when the alarm is dismissed' } } }
           />
         </OptionRow>

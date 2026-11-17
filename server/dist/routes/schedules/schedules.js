@@ -1,6 +1,7 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="d9f2b914-c978-50c5-8fd9-eeb996165cc7")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="6eb7987f-6e8a-5d7d-b0ae-e1289ccb0437")}catch(e){}}();
 import _ from 'lodash';
+import { applyAutomaticOffTime } from '../../db/automaticOffTime.js';
 import express from 'express';
 import logger from '../../logger.js';
 import schedulesDB from '../../db/schedules.js';
@@ -33,6 +34,8 @@ router.post('/schedules', async (req, res) => {
             // Merged, like power: a request with only some alarm fields must keep the others
             if (schedule.alarm)
                 _.merge(schedulesDB.data[side][day].alarm, schedule.alarm);
+            // Whatever off time was sent, a night with an alarm turns off by rule
+            applyAutomaticOffTime(schedulesDB.data[side][day]);
         });
     });
     await schedulesDB.write();
@@ -40,4 +43,4 @@ router.post('/schedules', async (req, res) => {
 });
 export default router;
 //# sourceMappingURL=schedules.js.map
-//# debugId=d9f2b914-c978-50c5-8fd9-eeb996165cc7
+//# debugId=6eb7987f-6e8a-5d7d-b0ae-e1289ccb0437

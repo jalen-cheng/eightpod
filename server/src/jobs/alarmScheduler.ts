@@ -18,6 +18,9 @@ import { updateDeviceStatus } from '../routes/deviceStatus/updateDeviceStatus.js
 import { connectFranken } from '../8sleep/frankenServer.js';
 import { Settings } from '../db/settingsSchema.js';
 import { createAlarmSession, planAlarmStretch } from './alarmSession.js';
+import { OFF_AFTER_ALARM_MINUTES } from '../db/automaticOffTime.js';
+
+const SECONDS_PER_MINUTE = 60;
 
 
 // Sends an alarm to the Pod, one stretch at a time: the ramp-up steps of a "rise" alarm, then
@@ -172,6 +175,19 @@ export async function findLateAlarmEnd(side: Side, day: DayOfWeek): Promise<mome
   return alarmEnds.length > 0 ? moment.max(alarmEnds) : undefined;
 }
 
+// A one-off alarm brings the bed's off time with it: a side that is on turns off
+// OFF_AFTER_ALARM_MINUTES after the alarm goes off, whatever the night's schedule said.
+const moveOffTimeToOneOffAlarm = async (side: Side) => {
+  try {
+    const franken = await connectFranken();
+    const deviceStatus = await franken.getDeviceStatus();
+    if (!deviceStatus[side].isOn) return;
+    await updateDeviceStatus({ [side]: { secondsRemaining: OFF_AFTER_ALARM_MINUTES * SECONDS_PER_MINUTE } });
+  } catch (error: unknown) {
+    logger.error(error);
+  }
+};
+
 export function scheduleAlarmOverride(settingsData: Settings, side: Side) {
   const next = getPendingOneOffAlarm(settingsData, side, moment.tz(settingsData.timeZone));
   if (!next) return null;
@@ -206,6 +222,7 @@ export function scheduleAlarmOverride(settingsData: Settings, side: Side) {
       turnOffAfterDismiss,
       force: true,
     });
+    await moveOffTimeToOneOffAlarm(side);
   });
 }
 

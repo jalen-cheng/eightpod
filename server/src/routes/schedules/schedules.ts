@@ -1,4 +1,5 @@
 import _ from 'lodash';
+import { applyAutomaticOffTime } from '../../db/automaticOffTime.js';
 import express, { Request, Response } from 'express';
 import type { DeepPartial } from 'ts-essentials';
 import { Schedules } from '../../db/schedulesSchema.js';
@@ -45,6 +46,8 @@ router.post('/schedules', async (req: Request, res: Response) => {
       if (schedule.temperatures) schedulesDB.data[side][day].temperatures = schedule.temperatures;
       // Merged, like power: a request with only some alarm fields must keep the others
       if (schedule.alarm) _.merge(schedulesDB.data[side][day].alarm, schedule.alarm);
+      // Whatever off time was sent, a night with an alarm turns off by rule
+      applyAutomaticOffTime(schedulesDB.data[side][day]);
     });
   });
   await schedulesDB.write();
