@@ -192,15 +192,18 @@ nmcli connection reload
 
 
 ## 13. Install the free-sleep app, this will set up a systemctl service that auto runs on boot
+This installs this fork (`jalen-cheng/free-sleep`), and later updates come from it too:
 ```
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/throwaway31265/free-sleep/main/scripts/install.sh)"
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/jalen-cheng/free-sleep/main/scripts/install.sh)"
 ```
 
-Installing a fork? Set the source once. It is saved to `/etc/free-sleep/update_source.conf` and reused by every later update, including the update button in the app:
+To install the original project or another fork instead, set the source once. It is saved to `/etc/free-sleep/update_source.conf` and reused by every later update:
 ```
-export FREE_SLEEP_REPO=<github-user>/free-sleep FREE_SLEEP_BRANCH=main
+export FREE_SLEEP_REPO=throwaway31265/free-sleep FREE_SLEEP_BRANCH=main
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/$FREE_SLEEP_REPO/$FREE_SLEEP_BRANCH/scripts/install.sh)"
 ```
+
+After the install the Pod also answers at `http://eight-pod.local:3000` on your home network (the name is the Pod's hostname), so step 14 is only needed if that name does not load.
 
 ---
 

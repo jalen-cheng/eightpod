@@ -62,7 +62,8 @@ read_saved_update_source() {
   fi
 }
 FREE_SLEEP_REPO="${FREE_SLEEP_REPO:-$(read_saved_update_source FREE_SLEEP_REPO)}"
-FREE_SLEEP_REPO="${FREE_SLEEP_REPO:-throwaway31265/free-sleep}"
+# This fork installs and updates from itself unless told otherwise
+FREE_SLEEP_REPO="${FREE_SLEEP_REPO:-jalen-cheng/free-sleep}"
 FREE_SLEEP_BRANCH="${FREE_SLEEP_BRANCH:-$(read_saved_update_source FREE_SLEEP_BRANCH)}"
 FREE_SLEEP_BRANCH="${FREE_SLEEP_BRANCH:-main}"
 export FREE_SLEEP_REPO FREE_SLEEP_BRANCH

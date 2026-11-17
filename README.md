@@ -12,7 +12,7 @@ Start here:
 |---|---|
 | Install on a Pod 5, step by step | [docs/POD5_FIRST_DAY.md](docs/POD5_FIRST_DAY.md) |
 | Control the bed from iPhone Shortcuts | [docs/IOS_SHORTCUTS.md](docs/IOS_SHORTCUTS.md) |
-| Keep the Pod's address stable, or reach it away from home | [docs/REMOTE_ACCESS.md](docs/REMOTE_ACCESS.md) (Tailscale on the Pod; installed on the test Pod, phone sign-in not yet tried) |
+| Keep the Pod's address stable, or reach it away from home | [docs/REMOTE_ACCESS.md](docs/REMOTE_ACCESS.md) (Tailscale on the Pod, set up with one script) |
 | See every change, what was tested on a Pod, and what is not done | [docs/FORK_STATUS.md](docs/FORK_STATUS.md) |
 | Use the API directly | [server/API.md](server/API.md) |
 
@@ -113,7 +113,15 @@ Each Pod actually runs a small Linux computer inside it. Free Sleep installs a l
 - Pod 5 ✅
 
 ---  
-![App](docs/app.gif)
+Taken from the test Pod 5 on 17 Nov 2026:
+
+<table><tr>
+<td align="center"><img src="docs/screenshots/temperature.png" width="230" alt="Temperature, with the next alarm"><br>Temperature, with the next alarm</td>
+<td align="center"><img src="docs/screenshots/schedule.png" width="230" alt="A night, one tab per day"><br>A night, one tab per day</td>
+<td align="center"><img src="docs/screenshots/schedule_alarm.png" width="230" alt="Bedtime, changes, alarm and off time"><br>Bedtime, changes, alarm and off time</td>
+<td align="center"><img src="docs/screenshots/alarm_options.png" width="230" alt="Alarm options"><br>Alarm options</td>
+<td align="center"><img src="docs/screenshots/settings.png" width="230" alt="Side buttons on a Pod 5"><br>Side buttons on a Pod 5</td>
+</tr></table>
 
 ---
 ## FAQ
@@ -220,18 +228,12 @@ This project is licensed under the MIT License. See the `LICENSE.md` file for de
 
 ---
 
-## App screenshots
-![Device on](docs/on.PNG)
-![Device off](docs/off.PNG)
-![Scheduled temperature adjustments](docs/schedules.PNG)
-![Alarms](docs/alarm.PNG)
+## Screenshots from the original project
+The Data and Status pages are unchanged in this fork. Data needs biometrics, which does not work on a Pod 5 yet.
+
 ![Health status](docs/health_status.PNG)
-![Settings](docs/settings.PNG)
 ![Biometrics - 1](docs/sleep_data.PNG)
 ![Biometrics - 2](docs/metrics.PNG)
 ![Biometrics - 3](docs/movement.PNG)
-![Settings](docs/settings.PNG)
-![Settings](docs/settings_2.PNG)
-![Support](docs/support.PNG)
 
 

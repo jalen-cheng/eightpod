@@ -40,6 +40,7 @@ Pod 5, control board 830-00067-00 REV-17. Last updated 2026-11-16.
 - [x] **Calibration run done.** See [Calibration results](#calibration-results).
 - [x] The firewall on this Pod cannot filter by program (`iptables -m owner` is missing), which shapes the [remote access](REMOTE_ACCESS.md) options.
 - [x] **The `.local` name works.** After the update, `http://eight-pod.local:3000` loads from a Mac on the home network, with the internet block on.
+- [x] **The bed stays on for an alarm set after the off time.** With off at 12:03 AM and the alarm at 12:06 AM, the off job kept both sides on until the alarm's end plus two minutes, then the firmware switched them off. The alarm itself was skipped in that run because a one-time alarm was set for the same day, which replaces the scheduled one by design.
 - [x] **Tailscale runs on the Pod with the internet block on.** It reaches its sign-in servers and its two relay regions (Los Angeles, San Francisco) and nothing else; the daily relay refresh works while blocked. Signing in and opening the page from a phone are still to do.
 - [x] **The measured temperature curve matches the firmware** at every level tried after it was applied, once one error was fixed: only level -100 drops to 10°C; -99 to -91 stay on the main line.
 - [x] **Alarms, checked against the firmware's own log:**
@@ -152,6 +153,7 @@ the calibration script on one would show it.
 | [#39](https://github.com/jalen-cheng/free-sleep/pull/39) | Feature | Schedule page: a tab per day replaces the "Schedule for" picker. The week starts on Monday. Saving offers that day, or a dialog to tick any days, and can copy a saved night to other days. |
 | [#40](https://github.com/jalen-cheng/free-sleep/pull/40) | Feature, docs | `scripts/setup_local_name.sh` makes the Pod answer to `eight-pod.local` (opt-in), and the internet block allows the lookups. Remote access write-up extended: a stable address three ways, and options that need no other device at home. Schedule page: "Copy to other days" sits where "Saved" was, and the save buttons fit one row. |
 | [#41](https://github.com/jalen-cheng/free-sleep/pull/41), [#42](https://github.com/jalen-cheng/free-sleep/pull/42) | Feature, docs | `scripts/setup_tailscale.sh` puts Tailscale on the Pod with the internet block on: only its sign-in range and two relay regions are opened, and a daily timer keeps the relay addresses current. The `.local` name and daily priming (2:00 PM) are on by default for new installs. |
+| [#43](https://github.com/jalen-cheng/free-sleep/pull/43), [#44](https://github.com/jalen-cheng/free-sleep/pull/44), [#45](https://github.com/jalen-cheng/free-sleep/pull/45) | Fix, docs | The Tailscale unit no longer delays boot by two minutes. The app loads when opened as `eight-pod`, `eight-pod.local` or the Tailscale address (it was a blank page: the server refused its own script files under those names). The fork installs and updates from itself by default, and the README has current screenshots. |
 
 ## Compared with the Eight Sleep app
 
@@ -264,7 +266,7 @@ Searched 2026-11-13. These are other people's reports, not verified here.
 ### Depends on what the Pod shows
 - [ ] **Pod 4 tap fields.** Treat a large jump in a tap field as one tap, for firmware that reports a time instead of a count.
 - [ ] **Calibration, second half.** Run the script with `--measure` on an empty bed to see whether the water reaches what the firmware aims for, especially at -10 and +10.
-- [ ] **Remote access.** Tailscale is installed on the test Pod with the block on. Still to do: sign in, then open the page from a phone away from home ([REMOTE_ACCESS.md](REMOTE_ACCESS.md)).
+- [ ] **Remote access.** Tailscale on the Pod is signed in and survives a reboot. Still to do: confirm the page loads on a phone over cellular after the blank-page fix ([REMOTE_ACCESS.md](REMOTE_ACCESS.md)).
 - [ ] **Biometrics.** Point the sleep analysis at the `rawmem.*` subjects this firmware publishes.
 
 ### Known gaps
