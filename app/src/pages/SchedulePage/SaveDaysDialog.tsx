@@ -1,14 +1,7 @@
 import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, ToggleButton, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { DayOfWeek } from '@api/schedulesSchema.ts';
-import { LOWERCASE_DAYS } from './days.ts';
-import { SHORT_DAY_NAMES, WEEKDAYS, WEEKEND, describeDays } from './scheduleDays.ts';
-
-const QUICK_PICKS: { label: string; days: DayOfWeek[] }[] = [
-  { label: 'Every day', days: LOWERCASE_DAYS },
-  { label: 'Weekdays', days: WEEKDAYS },
-  { label: 'Weekend', days: WEEKEND },
-];
+import { SHORT_DAY_NAMES, WEEK_ORDER, describeDays } from './scheduleDays.ts';
 
 type SaveDaysDialogProps = {
   open: boolean;
@@ -18,8 +11,7 @@ type SaveDaysDialogProps = {
   onSave: (days: DayOfWeek[]) => void;
 };
 
-// Asks which days the schedule on screen should be saved to: any mix of days, with shortcuts
-// for the usual groups.
+// Asks which days the schedule on screen should be saved to. Each day is ticked on its own.
 export default function SaveDaysDialog({ open, openDay, onClose, onSave }: SaveDaysDialogProps) {
   const [days, setDays] = useState<DayOfWeek[]>([openDay]);
   // Each time it opens it starts again from the open day
@@ -36,7 +28,7 @@ export default function SaveDaysDialog({ open, openDay, onClose, onSave }: SaveD
       <DialogTitle>Save for which days?</DialogTitle>
       <DialogContent sx={ { display: 'flex', flexDirection: 'column', gap: 2 } }>
         <Box sx={ { display: 'flex', gap: 0.5 } }>
-          { LOWERCASE_DAYS.map(day => (
+          { WEEK_ORDER.map(day => (
             <ToggleButton
               key={ day }
               value={ day }
@@ -47,19 +39,6 @@ export default function SaveDaysDialog({ open, openDay, onClose, onSave }: SaveD
             >
               { SHORT_DAY_NAMES[day] }
             </ToggleButton>
-          )) }
-        </Box>
-        <Box sx={ { display: 'flex', gap: 0.75 } }>
-          { QUICK_PICKS.map(quickPick => (
-            <Button
-              key={ quickPick.label }
-              size="small"
-              variant="outlined"
-              onClick={ () => setDays(quickPick.days) }
-              sx={ { flex: 1, minWidth: 0, px: 0.5, whiteSpace: 'nowrap' } }
-            >
-              { quickPick.label }
-            </Button>
           )) }
         </Box>
         <Typography variant="body2" sx={ { color: 'text.secondary' } }>
