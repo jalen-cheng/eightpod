@@ -361,6 +361,13 @@ echo ""
 
 sh /home/dac/free-sleep/scripts/add_shortcuts.sh
 
+# Give the Pod a name on the home network (http://<hostname>.local:3000), so bookmarks and
+# shortcuts survive a change of address. Skipped if it was switched off with "disable".
+sh /home/dac/free-sleep/scripts/setup_local_name.sh auto || echo "WARNING: could not set up the .local name"
+
+# If Tailscale was set up on the Pod, keep its root-owned script copies in step with this version
+sh /home/dac/free-sleep/scripts/setup_tailscale.sh sync-scripts || echo "WARNING: could not refresh the Tailscale scripts"
+
 # --------------------------------------------------------------------------------
 # Finish
 echo "This is your dac.sock path (if it doesn't end in dac.sock, contact support):"
