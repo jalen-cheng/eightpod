@@ -13,11 +13,11 @@ scripts_path = Path(__file__).resolve().parents[1]
 
 RELAY_MAP = {
     'Regions': {
-        '2': {'RegionCode': 'sfo', 'RegionName': 'San Francisco', 'Nodes': [
+        '2': {'RegionID': 2, 'RegionCode': 'sfo', 'RegionName': 'San Francisco', 'Nodes': [
             {'HostName': 'derp2d.tailscale.com', 'IPv4': '192.73.252.65', 'IPv6': '2607:f740:0:3f::287'},
             {'HostName': 'derp2e.tailscale.com', 'IPv4': '192.73.252.134'},
         ]},
-        '10': {'RegionCode': 'sea', 'RegionName': 'Seattle', 'Nodes': [
+        '10': {'RegionID': 10, 'RegionCode': 'sea', 'RegionName': 'Seattle', 'Nodes': [
             {'HostName': 'derp10b.tailscale.com', 'IPv4': '192.73.240.161'},
             # A relay map must never be able to open the home network or a non-address
             {'HostName': 'private.example', 'IPv4': '10.0.0.5'},
@@ -83,6 +83,8 @@ class TailscaleScriptTests(unittest.TestCase):
         self.assertEqual(self.run_relay_helper('sea').stdout.split(), ['192.73.240.161'])
         self.assertIn('sea\tSeattle', self.run_relay_helper('--list').stdout)
         self.assertNotEqual(self.run_relay_helper('nowhere', check=False).returncode, 0)
+        # The policy entry switches off every region except the chosen one
+        self.assertEqual(json.loads(self.run_relay_helper('--policy', 'sfo').stdout), {'derpMap': {'Regions': {'10': None}}})
 
     def test_block_opens_sign_in_and_relays_only_when_tailscale_is_on_the_pod(self):
         rules = self.run_script('block_internet_access.sh', '--print-rules', ALLOW_TAILSCALE='true').stdout
