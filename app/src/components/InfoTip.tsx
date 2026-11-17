@@ -11,7 +11,12 @@ type InfoTipProps = {
 export default function InfoTip({ text }: InfoTipProps) {
   return (
     <Tooltip title={ text } arrow describeChild enterTouchDelay={ 0 } leaveTouchDelay={ 6_000 }>
-      <IconButton size="small" aria-label="More information" sx={ { p: 0.25, color: 'text.secondary', verticalAlign: 'middle' } }>
+      <IconButton
+        size="small"
+        aria-label="More information"
+        // Small on purpose: it sits inside lines of text and rows of controls
+        sx={ { p: 0.5, minWidth: 0, minHeight: 0, color: 'text.secondary', verticalAlign: 'middle' } }
+      >
         <InfoOutlinedIcon sx={ { fontSize: 16 } }/>
       </IconButton>
     </Tooltip>

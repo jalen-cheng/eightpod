@@ -21,6 +21,8 @@ const TEST_SECONDS = 60;
 // 0 means no warm-up
 const WARM_UP_MINUTES = [0, 15, 30, 45];
 
+const BED_OFF_ON_DISMISS_INFO = 'The bed turns off the moment you dismiss the alarm, instead of 30 minutes after the wake-up time.';
+
 export const PATTERN_NAMES: Record<AlarmSchedule['vibrationPattern'], string> = {
   rise: 'Ramp up',
   double: 'Pulses',
@@ -169,7 +171,7 @@ export default function AlarmOptionsDialog({ open, onClose }: AlarmOptionsDialog
           </OptionRow>
         ) }
 
-        <OptionRow label="Bed off on dismiss" info="The bed turns off the moment you dismiss the alarm, instead of 30 minutes after it.">
+        <OptionRow label="Bed off on dismiss" info={ BED_OFF_ON_DISMISS_INFO }>
           <Switch
             checked={ alarm.turnOffAfterDismiss ?? false }
             onChange={ (event) => updateAlarm({ turnOffAfterDismiss: event.target.checked }) }
