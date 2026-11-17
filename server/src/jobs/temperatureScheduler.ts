@@ -48,6 +48,8 @@ const scheduleAdjustment = (timeZone: TimeZone, side: Side, day: DayOfWeek, time
 
 export const scheduleTemperatures = (settingsData: Settings, side: Side, day: DayOfWeek, dailySchedule: DailySchedule) => {
   if (settingsData[side].awayMode) return;
+  // A night that is switched off does nothing by itself, temperature changes included
+  if (!dailySchedule.power.enabled) return;
   const { timeZone } = settingsData;
   if (timeZone === null) return;
 

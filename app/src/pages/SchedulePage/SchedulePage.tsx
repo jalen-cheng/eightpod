@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Box, Button, Paper, Switch, Typography } from '@mui/material';
+import { Box, Button, IconButton, Paper, Switch, Tooltip, Typography } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { DeepPartial } from 'ts-essentials';
 import moment from 'moment-timezone';
@@ -86,17 +86,24 @@ export default function SchedulePage() {
   return (
     <PageContainer sx={ { width: '100%', mx: 'auto', maxWidth: 800 } }>
       <PageHeader title="Schedules"/>
-      <SideControl linkedHint="Sides linked: saving applies this schedule to both."/>
+      <SideControl/>
       <DayPicker/>
 
       { /* The night being edited, and whether its schedule runs at all */ }
       <Box sx={ { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, width: '100%' } }>
-        <Box sx={ { minWidth: 0 } }>
-          <Typography component="h2" variant="body1" sx={ { fontWeight: 500 } }>{ DAY_NAMES[selectedDay] } night</Typography>
-          <Typography variant="caption" sx={ { color: 'text.secondary' } }>
-            { isScheduleOn ? 'Schedule on' : 'Schedule off for this night' }
-          </Typography>
-        </Box>
+        <Typography component="h2" variant="body1" sx={ { fontWeight: 500, mr: 'auto' } }>{ DAY_NAMES[selectedDay] } night</Typography>
+        { /* Copying is for a saved night, so it waits while there are unsaved changes */ }
+        <Tooltip title="Copy this night to other days" describeChild>
+          <span>
+            <IconButton
+              aria-label="Copy this night to other days"
+              onClick={ () => setIsChoosingDays(true) }
+              disabled={ isUpdating || changesPresent || !isValid() }
+            >
+              <ContentCopyIcon fontSize="small"/>
+            </IconButton>
+          </span>
+        </Tooltip>
         <Switch
           checked={ isScheduleOn }
           onChange={ (event) => updateSelectedSchedule({ power: { enabled: event.target.checked } }) }
@@ -110,20 +117,6 @@ export default function SchedulePage() {
       </ErrorBoundary>
 
       <NightTimeline/>
-
-      { /* With nothing to save, the only thing left to do with this night is copy it elsewhere */ }
-      { !changesPresent && (
-        <Box>
-          <Button
-            size="small"
-            startIcon={ <ContentCopyIcon fontSize="small"/> }
-            onClick={ () => setIsChoosingDays(true) }
-            disabled={ isUpdating || !isValid() }
-          >
-            Copy this night to other days
-          </Button>
-        </Box>
-      ) }
 
       { /* Unsaved changes: a bar that stays in view, so saving never needs a scroll to the bottom.
            Discard sits apart on the left; the two ways to save sit together on the right. */ }

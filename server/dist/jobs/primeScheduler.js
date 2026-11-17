@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="18fb011b-1b78-51cb-b17f-761e787aa7b0")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="a2ded77c-5a38-5694-9576-8e7d9cda4daa")}catch(e){}}();
 import schedule from 'node-schedule';
 import logger from '../logger.js';
 import { updateDeviceStatus } from '../routes/deviceStatus/updateDeviceStatus.js';
@@ -53,19 +53,22 @@ const scheduleCalibrationJob = (onHour, onMinute, timeZone, side) => {
         executeCalibrateSensors(side, moment().subtract(6, 'hours').toISOString(), moment().toISOString());
     });
 };
+const HOURS_PER_DAY = 24;
 export const schedulePrimingRebootAndCalibration = (settingsData) => {
     const { timeZone, primePodDaily } = settingsData;
     if (timeZone === null)
         return;
+    const { time } = primePodDaily;
+    const [onHour, onMinute] = time.split(':').map(Number);
+    // The reboot has its own switch (rebootDaily, checked when it runs), so it is scheduled whether
+    // or not priming is on: an hour before the priming time, wrapping past midnight.
+    scheduleRebootJob((onHour + HOURS_PER_DAY - 1) % HOURS_PER_DAY, onMinute, timeZone);
     if (!primePodDaily.enabled)
         return;
     const dailyRule = new schedule.RecurrenceRule();
-    const { time } = primePodDaily;
-    const [onHour, onMinute] = time.split(':').map(Number);
     dailyRule.hour = onHour;
     dailyRule.minute = onMinute;
     dailyRule.tz = timeZone;
-    scheduleRebootJob(onHour - 1, onMinute, timeZone);
     scheduleCalibrationJob(onHour, 0, timeZone, 'left');
     scheduleCalibrationJob(onHour, 30, timeZone, 'right');
     logger.debug(`Scheduling daily prime job at ${primePodDaily.time}`);
@@ -85,4 +88,4 @@ export const schedulePrimingRebootAndCalibration = (settingsData) => {
     });
 };
 //# sourceMappingURL=primeScheduler.js.map
-//# debugId=18fb011b-1b78-51cb-b17f-761e787aa7b0
+//# debugId=a2ded77c-5a38-5694-9576-8e7d9cda4daa

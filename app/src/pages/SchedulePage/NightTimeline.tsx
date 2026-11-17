@@ -10,6 +10,7 @@ import { DailySchedule, LATE_ALARM_WINDOW_HOURS, MAX_ALARM_SECONDS, Time } from 
 import { useAppStore } from '@state/appStore.tsx';
 import { describeTemperature } from '@lib/temperatureConversions.ts';
 import { useTemperatureFormat } from '@lib/useTemperatureFormat.ts';
+import InfoTip from '@components/InfoTip.tsx';
 import { useScheduleStore } from './scheduleStore.tsx';
 import { TemperatureSelect, TimeField } from './ScheduleFields.tsx';
 import AlarmOptionsDialog, { PATTERN_NAMES } from './AlarmOptionsDialog.tsx';
@@ -28,8 +29,10 @@ const formatClockTime = (time: Time) => moment(time, 'HH:mm').format('h:mm A');
 
 type TimelineRowProps = PropsWithChildren<{
   title: string;
-  // One line, or several shown one under another
-  subtitle?: string | string[];
+  // Kept for what has to be seen at a glance: a short summary, or an error
+  subtitle?: string;
+  // Detail worth having but not worth a permanent line; shown from an "i" beside the title
+  info?: string;
   // The dot's colour; the night's main events get a larger, hollow dot
   color: string;
   isMainEvent?: boolean;
@@ -39,9 +42,8 @@ type TimelineRowProps = PropsWithChildren<{
 
 // One event of the night: a dot on the line, what it is, and its controls underneath.
 // Stacked rather than side by side so the label never has to wrap on a phone.
-const TimelineRow = ({ title, subtitle, color, isMainEvent, headerAction, children }: TimelineRowProps) => {
+const TimelineRow = ({ title, subtitle, info, color, isMainEvent, headerAction, children }: TimelineRowProps) => {
   const dotSize = isMainEvent ? 16 : 10;
-  const subtitleLines = _.castArray(subtitle ?? []);
   return (
     <Box sx={ { position: 'relative', display: 'flex', flexDirection: 'column', gap: 0.75 } }>
       <Box
@@ -53,16 +55,13 @@ const TimelineRow = ({ title, subtitle, color, isMainEvent, headerAction, childr
       <Box sx={ { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, minHeight: 24 } }>
         <Typography variant="body2" sx={ { fontWeight: isMainEvent ? 500 : 400, color: isMainEvent ? 'text.primary' : 'text.secondary' } }>
           { title }
+          { info && <>{ ' ' }<InfoTip text={ info }/></> }
         </Typography>
         { headerAction }
       </Box>
       { /* Under the title line and full width, so a switch beside the title never squeezes the text */ }
-      { subtitleLines.length > 0 && (
-        <Box sx={ { mt: -0.5 } }>
-          { subtitleLines.map(line => (
-            <Typography key={ line } variant="caption" sx={ { color: 'text.secondary', display: 'block' } }>{ line }</Typography>
-          )) }
-        </Box>
+      { subtitle && (
+        <Typography variant="caption" sx={ { color: 'text.secondary', display: 'block', mt: -0.5 } }>{ subtitle }</Typography>
       ) }
       { children && <Box sx={ { display: 'flex', alignItems: 'center', gap: 0.75 } }>{ children }</Box> }
     </Box>
@@ -171,26 +170,30 @@ export default function NightTimeline() {
     );
   };
 
-  // One fact per line: how it vibrates, the warm-up before it, and whether the bed waits for it
+  // At a glance: how it vibrates and for how long, and when the warm-up starts
   const warmUpStart = formatClockTime(addMinutes(alarm.time, -preWarmMinutes));
   const alarmSummary = _.compact([
-    `${PATTERN_NAMES[alarm.vibrationPattern]} for up to ${formatAlarmLength(alarm.duration)}, until dismissed`,
-    preWarmMinutes > 0 && `Bed warms to ${describeTemperature(alarm.alarmTemperature, temperatureFormat)} from ${warmUpStart}`,
-    isAlarmAfterOff && 'Bed stays on until it has gone off',
-  ]);
+    PATTERN_NAMES[alarm.vibrationPattern],
+    formatAlarmLength(alarm.duration),
+    preWarmMinutes > 0 && `warms from ${warmUpStart}`,
+  ]).join(' · ');
 
   const lateAlarmError = `Too long after the bed turns off (over ${LATE_ALARM_WINDOW_HOURS} hours)`;
-  const alarmSubtitle = !alarm.enabled ? 'Off' : isAlarmTimeValid ? alarmSummary : lateAlarmError;
+  // Nothing when the alarm is off: the switch already says so
+  const alarmSubtitle = !alarm.enabled ? undefined : isAlarmTimeValid ? alarmSummary : lateAlarmError;
+  const alarmInfo = !alarm.enabled ? undefined
+    : `Keeps going until dismissed, or for ${formatAlarmLength(alarm.duration)}.`
+      + (preWarmMinutes > 0 ? ` The bed warms to ${describeTemperature(alarm.alarmTemperature, temperatureFormat)} beforehand.` : '')
+      + (isAlarmAfterOff ? ' The bed stays on until it has gone off.' : '');
 
-  const offSubtitle = !isPowerScheduleDurationValid(power.on, power.off)
-    ? 'Must differ from bedtime'
-    : turnsOffWithAlarm ? `Or at ${formatClockTime(power.off)} if it is never dismissed`
-      : isAlarmAfterOff ? 'Stays on until the alarm has gone off' : undefined;
+  const offSubtitle = isPowerScheduleDurationValid(power.on, power.off) ? undefined : 'Must differ from bedtime';
+  const offInfo = turnsOffWithAlarm ? `If the alarm is never dismissed, the bed turns off at ${formatClockTime(power.off)}.`
+    : isAlarmAfterOff ? 'The bed stays on past this time until the alarm has gone off.' : undefined;
 
   return (
     <Paper sx={ { p: { xs: 2, sm: 2.5 }, width: '100%' } }>
       <Box sx={ { borderLeft: '2px solid', borderColor: 'divider', ml: 1, pl: 3, display: 'flex', flexDirection: 'column', gap: 1.5 } }>
-        <TimelineRow title="Bedtime" subtitle="Bed turns on" color={ COOL_COLOR } isMainEvent>
+        <TimelineRow title="Bedtime" color={ COOL_COLOR } isMainEvent>
           <TimeField label="Bedtime" value={ power.on } onChange={ (on) => updateSelectedSchedule({ power: { on } }) } disabled={ disabled }/>
           <TemperatureSelect
             label="Bedtime temperature"
@@ -235,6 +238,7 @@ export default function NightTimeline() {
         <TimelineRow
           title="Alarm"
           subtitle={ alarmSubtitle }
+          info={ alarmInfo }
           color={ WARM_COLOR }
           isMainEvent
           headerAction={
@@ -262,7 +266,7 @@ export default function NightTimeline() {
           ) }
         </TimelineRow>
 
-        <TimelineRow title="Bed turns off" subtitle={ offSubtitle } color="text.disabled">
+        <TimelineRow title="Bed turns off" subtitle={ offSubtitle } info={ offInfo } color="text.disabled">
           { alarm.enabled && (
             <TextField
               select

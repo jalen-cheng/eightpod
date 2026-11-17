@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="bfb2c0cc-4405-5e97-96ab-7533d0f7e2f8")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="761d8c45-e93d-52f0-8c54-73d050fe8383")}catch(e){}}();
 import schedule from 'node-schedule';
 import { getDayIndexForSchedule, logJob } from './utils.js';
 import { updateDeviceStatus } from '../routes/deviceStatus/updateDeviceStatus.js';
@@ -41,6 +41,9 @@ const scheduleAdjustment = (timeZone, side, day, time, temperature, powerOnTime)
 export const scheduleTemperatures = (settingsData, side, day, dailySchedule) => {
     if (settingsData[side].awayMode)
         return;
+    // A night that is switched off does nothing by itself, temperature changes included
+    if (!dailySchedule.power.enabled)
+        return;
     const { timeZone } = settingsData;
     if (timeZone === null)
         return;
@@ -49,4 +52,4 @@ export const scheduleTemperatures = (settingsData, side, day, dailySchedule) => 
     });
 };
 //# sourceMappingURL=temperatureScheduler.js.map
-//# debugId=bfb2c0cc-4405-5e97-96ab-7533d0f7e2f8
+//# debugId=761d8c45-e93d-52f0-8c54-73d050fe8383

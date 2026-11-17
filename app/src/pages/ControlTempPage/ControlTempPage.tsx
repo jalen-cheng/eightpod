@@ -54,7 +54,6 @@ export default function ControlTempPage() {
     <PageContainer sx={ { maxWidth: 600, gap: 2, pt: { xs: 2.5, md: 5 } } }>
       <SideControl
         showTemp
-        linkedHint="Sides linked: temperature and power changes apply to both."
         onLinkSidesChange={ handleLinkSidesChange }
       />
       <Paper

@@ -1,4 +1,4 @@
-import { Box, Tab, Tabs, Typography } from '@mui/material';
+import { Box, Tab, Tabs } from '@mui/material';
 import { useAppStore } from '@state/appStore.tsx';
 import { LOWERCASE_DAYS } from './days.ts';
 import { useScheduleStore } from './scheduleStore.tsx';
@@ -34,11 +34,6 @@ export default function DayPicker() {
           );
         }) }
       </Tabs>
-      { hasEdits && (
-        <Typography variant="caption" sx={ { color: 'text.secondary', display: 'block', mt: 0.5 } }>
-          Save or discard your changes to open another day.
-        </Typography>
-      ) }
     </Box>
   );
 }

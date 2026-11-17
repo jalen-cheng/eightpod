@@ -13,6 +13,9 @@ type AwayModeSwitchProps = {
   updateSettings: (settings: DeepPartial<Settings>) => void;
 }
 
+const AWAY_MODE_INFO = "For when one person is away. This side's schedule and alarm stop, and it follows the other "
+  + "side's temperature. With both sides away, no schedule runs.";
+
 export default function SideSettings({ side, settings, updateSettings }: AwayModeSwitchProps) {
   const { isUpdating } = useAppStore();
   const title = side.charAt(0).toUpperCase() + side.slice(1);
@@ -53,6 +56,7 @@ export default function SideSettings({ side, settings, updateSettings }: AwayMod
       />
       <SettingToggle
         label="Away mode"
+        info={ AWAY_MODE_INFO }
         control={
           <Switch
             disabled={ isUpdating }
