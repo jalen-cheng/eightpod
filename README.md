@@ -24,7 +24,7 @@ Start here:
 | **Temperatures** | Levels spread evenly over 55-110°F, off by up to 5°F | What the firmware aims for at each level, measured on a Pod 5. Range is 50-108°F. |
 | **Display units** | °F or °C | °F, °C, or the -10 to +10 scale of Eight Sleep's app |
 | **Both sides at once** | Each side set separately | A link switch: temperature, power, schedules, buttons and shortcuts apply to both sides |
-| **Schedule page** | Separate sections per setting, one day at a time | One night as a list of events in order. One picker chooses what it covers: every day, weekdays, the weekend, or a single day. |
+| **Schedule page** | Separate sections per setting, one day at a time | One night as a list of events in order, with a tab per day. Save for that day or for any set of days. |
 | **Alarm length** | A set time, 3 minutes at most | Keeps going until dismissed, for 10 to 30 minutes |
 | **Alarm ramp-up** | The firmware's "rise" pattern, which on a Pod 5 is one steady strength | A real ramp: 20, 40, 60, 80% of the chosen strength, then full |
 | **Before the alarm** | Nothing | Optional warm-up to a chosen temperature 15, 30 or 45 minutes before |
@@ -44,7 +44,7 @@ Start here:
 - The dial is blue when cooling and red when warming, and labels its range and step size.
 - The power button waits for the Pod's state instead of acting on a guess.
 - Alarm options has a one-minute test that vibrates the bed as currently set.
-- Schedule changes save with one button that says what it will save ("Save for weekdays, both sides").
+- Saving a schedule says what it will write to ("Save for Tuesday"), or lets you tick the days.
 - The schedule chart's time axis marks the events you set, and its temperature axis is right in °C.
 - Tap and button settings are one short set of choices for both sides, named for the buttons on a Pod 5.
 - `GET /api/deviceStatus/raw` shows the firmware's unparsed status, for seeing what a Pod reports.
