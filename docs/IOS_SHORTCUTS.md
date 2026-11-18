@@ -1,6 +1,6 @@
 # Control your Pod from iPhone with Apple Shortcuts
 
-Free Pod has a local API, so the Shortcuts app can control the bed without opening a browser.
+EightPod has a local API, so the Shortcuts app can control the bed without opening a browser.
 You do not need an Apple developer account. Shortcuts also run from the Home Screen, the Lock
 Screen, Control Center, the Action button, Siri, and Automations (for example "when my Sleep Focus
 turns on").

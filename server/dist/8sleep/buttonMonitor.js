@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="2ebf603a-8982-5525-84e0-8a35a3e91e6e")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="93c5bd40-9178-5d33-bd15-9e1a41d1db36")}catch(e){}}();
 import { spawn } from 'child_process';
 import { createInterface } from 'readline';
 import logger from '../logger.js';
@@ -95,7 +95,7 @@ export class ButtonMonitor {
             // Logged once per run of failures: a server that may not read the journal fails every time
             if (!this.hasWarnedAboutLog) {
                 logger.warn(`Button monitor cannot follow the firmware log (journalctl exited with ${exitCode}). `
-                    + 'The server user needs the systemd-journal group; reinstalling Free Sleep sets it. Retrying quietly...');
+                    + 'The server user needs the systemd-journal group; reinstalling EightPod sets it. Retrying quietly...');
                 this.hasWarnedAboutLog = true;
             }
             setTimeout(() => {
@@ -104,7 +104,7 @@ export class ButtonMonitor {
             }, RESTART_WAIT_MS);
         });
     }
-    // `firmwarePress` names the side as the firmware does; it is turned into Free Sleep's side here
+    // `firmwarePress` names the side as the firmware does; it is turned into EightPod's side here
     addPress(firmwarePress) {
         const press = { ...firmwarePress, side: toFirmwareSide(firmwarePress.side) };
         logger.debug(`Button press: ${press.side} ${press.button} x${press.count}${press.heldMs === undefined ? '' : ` held ${press.heldMs}ms`}`);
@@ -162,4 +162,4 @@ export class ButtonMonitor {
     }
 }
 //# sourceMappingURL=buttonMonitor.js.map
-//# debugId=2ebf603a-8982-5525-84e0-8a35a3e91e6e
+//# debugId=93c5bd40-9178-5d33-bd15-9e1a41d1db36

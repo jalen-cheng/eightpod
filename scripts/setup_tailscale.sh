@@ -1,5 +1,5 @@
 #!/bin/sh
-# Puts Tailscale on the Pod itself, so the Free Sleep page can be reached away from home from
+# Puts Tailscale on the Pod itself, so the EightPod page can be reached away from home from
 # your own devices only, with no other always-on device at home. See docs/REMOTE_ACCESS.md.
 #
 # How it stays locked down:
@@ -109,7 +109,7 @@ download_tailscale() {
 }
 
 # Installs a newer Tailscale when one is out. Called while the internet is open (install.sh runs
-# during a Free Sleep update), so Tailscale is kept current by the same step that updates Free Sleep.
+# during a EightPod update), so Tailscale is kept current by the same step that updates EightPod.
 upgrade_if_newer() {
   installed_version=$("$TAILSCALE_BIN_DIR/tailscale" version | head -n 1)
   latest_version=$(curl -fsSL --max-time 30 "$TAILSCALE_PACKAGES_URL/?mode=json" \
@@ -164,7 +164,7 @@ choose_relay_regions() {
 write_units() {
   cat > "$TAILSCALE_UNIT_DIR/$TAILSCALE_SERVICE_NAME" <<EOF
 [Unit]
-Description=Tailscale for Free Sleep (userspace mode, relays only)
+Description=Tailscale for EightPod (userspace mode, relays only)
 After=network.target free-sleep-firewall.service
 
 [Service]
@@ -179,7 +179,7 @@ EOF
 
   cat > "$TAILSCALE_UNIT_DIR/$TAILSCALE_REFRESH_SERVICE_NAME" <<EOF
 [Unit]
-Description=Refresh the Tailscale relay addresses the Free Sleep internet block allows
+Description=Refresh the Tailscale relay addresses the EightPod internet block allows
 
 [Service]
 Type=oneshot

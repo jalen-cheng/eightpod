@@ -16,7 +16,7 @@ IP6TABLES_RESTORE=$(command -v ip6tables-restore || true)
 echo "Creating systemd service file at $FIREWALL_SERVICE_FILE..."
 cat > "$FIREWALL_SERVICE_FILE" <<EOF
 [Unit]
-Description=Restore Free Sleep WAN block firewall rules
+Description=Restore EightPod WAN block firewall rules
 DefaultDependencies=no
 After=local-fs.target
 Before=network-pre.target

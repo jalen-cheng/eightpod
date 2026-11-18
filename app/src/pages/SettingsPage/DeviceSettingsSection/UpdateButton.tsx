@@ -31,7 +31,7 @@ const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 
 // eslint-disable-next-line react/no-multi-comp
-export default function UpdateFreeSleepButton() {
+export default function UpdateButton() {
   const [open, setOpen] = useState(false);
   const { data: serverInfo } = useServerInfo();
   const [isUpdating, setIsUpdating] = useState(false);
@@ -52,9 +52,9 @@ export default function UpdateFreeSleepButton() {
     while (true) {
       try {
         const deviceStatus = await getDeviceStatus();
-        if (deviceStatus.data.freeSleep.version !== latestVersion) {
+        if (deviceStatus.data.eightPod.version !== latestVersion) {
           setUpdateTitle('Update failed. The previous version was put back; see the update log under Data > Logs.');
-          setUpdateMessage(`Latest version: ${latestVersion} -- Current version: ${deviceStatus.data.freeSleep.version}`);
+          setUpdateMessage(`Latest version: ${latestVersion} -- Current version: ${deviceStatus.data.eightPod.version}`);
         } else {
           setUpdateTitle('Update completed!');
           setUpdateMessage('Refreshing page...');
@@ -98,9 +98,9 @@ export default function UpdateFreeSleepButton() {
             <DialogTitle>{ updateTitle }</DialogTitle>
             :
             isUpdating ?
-              <DialogTitle>Updating Free Pod...</DialogTitle>
+              <DialogTitle>Updating EightPod...</DialogTitle>
               :
-              <DialogTitle>Update Free Pod?</DialogTitle>
+              <DialogTitle>Update EightPod?</DialogTitle>
         }
 
         <DialogContent>

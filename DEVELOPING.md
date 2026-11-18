@@ -1,6 +1,6 @@
-# Developing Free Pod
+# Developing EightPod
 
-This guide covers working on Free Pod: running the app and server, the checks to run, and what a pull request must contain.
+This guide covers working on EightPod: running the app and server, the checks to run, and what a pull request must contain.
 
 ## Layout
 
@@ -24,7 +24,7 @@ cd server && npm ci
 
 ## Running the app
 
-Against a Pod that is running Free Pod:
+Against a Pod that is running EightPod:
 
 ```bash
 cd app && VITE_POD_IP=<pod-ip> npm run dev
@@ -123,9 +123,9 @@ Raise `version` in `server/src/serverInfo.json` when people should update. The a
 
 ## Contributing
 
-Issues and pull requests go to https://github.com/jalen-cheng/free-sleep.
+Issues and pull requests go to https://github.com/jalen-cheng/eightpod.
 
-- Free Pod is tested on one Pod 5. Say in the pull request what you tested on hardware, on which Pod, and what you did not test.
+- EightPod is tested on one Pod 5. Say in the pull request what you tested on hardware, on which Pod, and what you did not test.
 - Keep a pull request to one purpose, and include the rebuilt output.
 - The scripts in `scripts/` run as root on people's beds. Change them when needed, run `scripts/tests`, and say how you tried the change.
 - Code style, from AGENTS.md:
@@ -135,7 +135,7 @@ Issues and pull requests go to https://github.com/jalen-cheng/free-sleep.
 
 ## Demo and screenshots
 
-The demo at [freepod.vercel.app](https://freepod.vercel.app) is the app built with made-up data
+The demo at [eightpod.vercel.app](https://eightpod.vercel.app) is the app built with made-up data
 (`npm run build:demo` in `app/`, settings in `vercel.json`). Deploy it with `npx vercel --prod`
 from the repository root.
 

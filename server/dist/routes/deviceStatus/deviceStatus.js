@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="3c84a971-92ea-5b02-8b5a-7bb448f424ec")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="81eebda0-823c-5694-814f-1257ca820f02")}catch(e){}}();
 import express from 'express';
 import { z } from 'zod';
 import { SideChoiceSchema, resolveSides } from '../sideChoice.js';
@@ -14,7 +14,7 @@ router.get('/deviceStatus', async (req, res) => {
     const resp = await franken.getDeviceStatus();
     res.json(resp);
 });
-// Debugging aid: the firmware's unparsed status text, to see what a Pod reports beyond what Free Sleep reads
+// Debugging aid: the firmware's unparsed status text, to see what a Pod reports beyond what EightPod reads
 router.get('/deviceStatus/raw', async (req, res) => {
     const franken = await connectFranken();
     res.type('text/plain').send(await franken.getRawDeviceStatus());
@@ -75,4 +75,4 @@ router.post('/deviceStatus/dial', async (req, res) => {
 });
 export default router;
 //# sourceMappingURL=deviceStatus.js.map
-//# debugId=3c84a971-92ea-5b02-8b5a-7bb448f424ec
+//# debugId=81eebda0-823c-5694-814f-1257ca820f02

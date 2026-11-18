@@ -31,7 +31,7 @@ address it has. The installer renames a Pod that still has Eight Sleep's name (`
 
 - It uses a responder already on the Pod (in `systemd-resolved`); nothing is installed.
 - **Eight Sleep ships the Pod with this switched off**, to reduce what listens on the network.
-  Free Pod switches it back on for the home network only: the internet block allows the lookups
+  EightPod switches it back on for the home network only: the internet block allows the lookups
   to the local multicast address and nowhere else.
 - To switch it off: `sh /home/dac/free-sleep/scripts/setup_local_name.sh disable`. That choice is
   remembered, so updates leave it off. Running the script with no argument switches it back on.
@@ -66,7 +66,7 @@ you out, unlike a fully manual address. This one has not been tried on the test 
 
 ## 2. Reaching the Pod away from home
 
-Free Pod's page has no login, so it must never be put straight on the open internet. Tailscale
+EightPod's page has no login, so it must never be put straight on the open internet. Tailscale
 makes a private network of your own devices; with it on the Pod and on your phone, the page opens
 from anywhere and nobody else can reach it.
 
@@ -124,7 +124,7 @@ Other commands:
 | `setup_tailscale.sh status` | Shows the connection, the regions and the relay addresses the block allows |
 | `setup_tailscale.sh regions` | Lists every relay region code |
 | `TAILSCALE_RELAY_REGIONS="sfo sea" sh setup_tailscale.sh` | Chooses the regions yourself |
-| `setup_tailscale.sh upgrade` | Downloads the newest Tailscale and restarts it. Updating Free Pod (`fs-update`) does this too, so it is rarely needed |
+| `setup_tailscale.sh upgrade` | Downloads the newest Tailscale and restarts it. Updating EightPod (`fs-update`) does this too, so it is rarely needed |
 | `setup_tailscale.sh remove` | Signs out and removes everything the script added |
 
 ### How it stays locked down
@@ -149,7 +149,7 @@ Other commands:
   so a daily timer on the Pod (`free-sleep-tailscale-relays.timer`) fetches it and rewrites the
   allowed addresses. If a download fails, the last good list stays.
 - **Root-owned copies.** The timer runs copies of the scripts in `/persistent/tailscale/scripts`,
-  because the Free Pod folder can be changed by the unprivileged `dac` user. Updates refresh the copies.
+  because the EightPod folder can be changed by the unprivileged `dac` user. Updates refresh the copies.
 - **Never enable Tailscale Funnel** for the Pod: it would put the page on the public internet.
 - By default every device on your Tailscale account can reach the Pod. To narrow that, limit the
   Pod to ports 3000 and 8822 in the policy file's access rules.

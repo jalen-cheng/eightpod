@@ -177,7 +177,7 @@ export async function loadDeviceStatus(response: string, getGestures: boolean): 
     },
     coverVersion: detectCoverVersion(rawDeviceData.sensorLabel),
     hubVersion: HUB_VERSION,
-    freeSleep: {
+    eightPod: {
       version: serverInfo.version,
       branch: serverInfo.branch,
     },

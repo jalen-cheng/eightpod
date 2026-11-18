@@ -19,7 +19,7 @@ client on a NATS Pod reports a dependency repair instruction.
 
 For installations already failing with `ModuleNotFoundError: No module named 'nats'`,
 this can be repaired over SSH before updating. The exit trap restores the usual
-Free Sleep internet block even if installation fails:
+EightPod internet block even if installation fails:
 
 ```sh
 sudo bash -e -c '

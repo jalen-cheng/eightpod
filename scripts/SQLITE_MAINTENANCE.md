@@ -8,7 +8,7 @@ Create a verified backup, including committed records still in the WAL:
 python3 scripts/sqlite_maintenance.py backup /path/free-sleep.db /path/backup.db
 ```
 
-The previous backup is replaced only after the new backup passes `PRAGMA integrity_check`. A corrupt source leaves the previous backup intact. Maintenance scripts stop both Free Sleep services before using `--checkpoint`, which asks SQLite to flush the source WAL and rejects a busy checkpoint. Journal files must remain available for SQLite recovery; do not delete them to clear a lock.
+The previous backup is replaced only after the new backup passes `PRAGMA integrity_check`. A corrupt source leaves the previous backup intact. Maintenance scripts stop both EightPod services before using `--checkpoint`, which asks SQLite to flush the source WAL and rejects a busy checkpoint. Journal files must remain available for SQLite recovery; do not delete them to clear a lock.
 
 Rebuild a frozen, standalone snapshot of a corrupt database:
 

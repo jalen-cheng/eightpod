@@ -1,4 +1,4 @@
-# Free Pod — your Eight Sleep Pod, on your own network
+# EightPod — your Eight Sleep Pod, on your own network
 
 <p align="center">
   <img src="docs/screenshots/overview.png" width="900" alt="Four phone screens: the temperature dial, a night's schedule, alarm options and in-bed detection">
@@ -6,13 +6,13 @@
 
 <p align="center">
   <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fjalen-cheng%2Ffree-sleep%2Fmain%2Fserver%2Fsrc%2FserverInfo.json&query=%24.version&label=version&style=flat-square" alt="Version"></a>
-  <a href="https://freepod.vercel.app"><img src="https://img.shields.io/badge/demo-live-brightgreen?style=flat-square" alt="Live demo"></a>
+  <a href="https://eightpod.vercel.app"><img src="https://img.shields.io/badge/demo-live-brightgreen?style=flat-square" alt="Live demo"></a>
   <a href="docs/POD_MODELS.md"><img src="https://img.shields.io/badge/tested%20on-Pod%205-blue?style=flat-square" alt="Tested on Pod 5"></a>
-  <a href="https://github.com/jalen-cheng/free-sleep/pulls"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square" alt="Pull requests welcome"></a>
+  <a href="https://github.com/jalen-cheng/eightpod/pulls"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square" alt="Pull requests welcome"></a>
 </p>
 
-Free Pod controls an Eight Sleep Pod from your own network. Each Pod has a small Linux computer
-inside; Free Pod installs a server on it that talks to the Pod's firmware and serves a web app
+EightPod controls an Eight Sleep Pod from your own network. Each Pod has a small Linux computer
+inside; EightPod installs a server on it that talks to the Pod's firmware and serves a web app
 you open on your phone.
 
 It started as a fork of [Free Sleep](https://github.com/throwaway31265/free-sleep) by
@@ -25,7 +25,7 @@ was developed and tested on one Pod 5.
 internet, so nothing is sent to Eight Sleep or anyone else, and the bed keeps working when your
 internet does not.
 
-[Demo](https://freepod.vercel.app) · [Install](INSTALLATION.md) · [Using the app](docs/USING.md) · [How it works](docs/HOW_IT_WORKS.md) · [Shortcuts](docs/IOS_SHORTCUTS.md) · [API](server/API.md) · [Changelog](CHANGELOG.md)
+[Demo](https://eightpod.vercel.app) · [Install](INSTALLATION.md) · [Using the app](docs/USING.md) · [How it works](docs/HOW_IT_WORKS.md) · [Shortcuts](docs/IOS_SHORTCUTS.md) · [API](server/API.md) · [Changelog](CHANGELOG.md)
 
 ## Install
 
@@ -35,7 +35,7 @@ and attaching the adapter to get a root shell; the [install guide](INSTALLATION.
 each Pod. Then, on the Pod:
 
 ```bash
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/jalen-cheng/free-sleep/main/scripts/install.sh)"
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/jalen-cheng/eightpod/main/scripts/install.sh)"
 ```
 
 Already running Free Sleep? Over SSH, lift its internet block, run the same installer, and block
@@ -45,7 +45,7 @@ again. Settings and schedules are kept:
 sh /home/dac/free-sleep/scripts/unblock_internet_access.sh
 ```
 ```bash
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/jalen-cheng/free-sleep/main/scripts/install.sh)"
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/jalen-cheng/eightpod/main/scripts/install.sh)"
 ```
 ```bash
 sh /home/dac/free-sleep/scripts/block_internet_access.sh
@@ -62,7 +62,7 @@ Read [what changes](docs/POD_MODELS.md) first.
 3. In **Schedules**, set when the bed turns on, the temperatures through the night and when you wake.
 4. Block the Pod from the internet (step 16 of the install guide), then close the hub.
 
-No Pod yet? **[freepod.vercel.app](https://freepod.vercel.app)** is the app on made-up data.
+No Pod yet? **[eightpod.vercel.app](https://eightpod.vercel.app)** is the app on made-up data.
 
 ## How it fits together
 
@@ -110,7 +110,7 @@ The full comparison with Free Sleep is in [CHANGELOG.md](CHANGELOG.md#compared-w
 ## Security
 
 - **The app has no login.** Anyone on your home network can open it. Never put it on the open internet; use [Tailscale](docs/REMOTE_ACCESS.md) to reach it from elsewhere.
-- **The internet block** stops the Pod reaching Eight Sleep or anything else, and is restored at every boot. Free Pod has no error-reporting destination built in.
+- **The internet block** stops the Pod reaching Eight Sleep or anything else, and is restored at every boot. EightPod has no error-reporting destination built in.
 - **You need root on the Pod once**, through a serial adapter. It is not supported by Eight Sleep and may affect your warranty. A Pod 3 or 4 can be put back with a firmware reset. **A Pod 5 cannot currently be put back to stock**; see the [FAQ](#faq).
 
 ## Which Pods
@@ -164,7 +164,7 @@ do not improvise. A Pod 3 with an SD card is the riskiest, because the card itse
 <details>
 <summary><b>Will it void my warranty?</b></summary>
 
-It may. Free Pod is not supported by Eight Sleep. Opening the hub is visible to anyone who looks,
+It may. EightPod is not supported by Eight Sleep. Opening the hub is visible to anyone who looks,
 and a Pod 5 cannot currently be put back to stock.
 
 </details>
@@ -208,7 +208,7 @@ away.
 <summary><b>Does sleep tracking work?</b></summary>
 
 Not on a Pod 5: its firmware publishes sensor data where the analysis does not read. On a Pod 3 or
-4 the code is the original's, unchanged and untested here. Help is [wanted](https://github.com/jalen-cheng/free-sleep/issues).
+4 the code is the original's, unchanged and untested here. Help is [wanted](https://github.com/jalen-cheng/eightpod/issues).
 
 </details>
 
@@ -262,7 +262,7 @@ Yes. One command over SSH reinstalls it and keeps your schedules; see
 ## Development
 
 ```bash
-git clone https://github.com/jalen-cheng/free-sleep.git
+git clone https://github.com/jalen-cheng/eightpod.git
 cd free-sleep/app && npm install && VITE_ENV=demo VITE_USE_MSW=true npx vite
 ```
 
@@ -275,16 +275,16 @@ keep the name `free-sleep`, so an existing install updates in place.
 Issues and pull requests are welcome, within a few rules: nothing that sends data off the Pod or
 needs the cloud, one change per pull request, and a test where the code can be tested. The most useful contribution is a report from hardware Free
 Pod has not seen: a Pod 3 or Pod 4, or a newer Pod 5. [CONTRIBUTING.md](CONTRIBUTING.md) says how,
-and issues labelled [needs testing](https://github.com/jalen-cheng/free-sleep/issues?q=is%3Aissue+is%3Aopen+label%3A%22needs+testing%22)
+and issues labelled [needs testing](https://github.com/jalen-cheng/eightpod/issues?q=is%3Aissue+is%3Aopen+label%3A%22needs+testing%22)
 list what is waiting to be checked.
 
 ## Credits
 
-Free Pod exists because of Free Sleep. Its community, support and donations are its author's:
+EightPod exists because of Free Sleep. Its community, support and donations are its author's:
 
 - **[throwaway31265/free-sleep](https://github.com/throwaway31265/free-sleep)**, the original project, with its Discord server linked from its README. To support the original author, use the donation links there.
 - [@bobobo1618](https://github.com/bobobo1618), for the research into how the Pod is controlled through `dac.sock`.
-- The original's error monitoring is sponsored by Sentry. Free Pod does not use it.
+- The original's error monitoring is sponsored by Sentry. EightPod does not use it.
 
 ## License
 
