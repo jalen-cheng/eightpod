@@ -236,9 +236,10 @@ echo "Creating systemd service file at $SERVICE_FILE..."
 
 # Reading the firmware journal is how a Pod 5 reports its button presses. It needs the
 # systemd-journal group; naming a group that does not exist would stop the service from starting,
-# so the line is only written where the group exists.
+# so the line is only written where the group exists. The group file is read directly: the Pod
+# has no getent command, and asking it made every install leave the group out.
 JOURNAL_GROUP_LINE=""
-if getent group systemd-journal > /dev/null 2>&1; then
+if grep -q '^systemd-journal:' /etc/group 2>/dev/null; then
   JOURNAL_GROUP_LINE="SupplementaryGroups=systemd-journal"
 fi
 
