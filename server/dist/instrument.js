@@ -1,14 +1,22 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="d4fdce12-9fc3-53be-8ae5-541aae713a8f")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="377167e8-9eb1-5b37-8587-39b280ff88cf")}catch(e){}}();
 import * as Sentry from '@sentry/node';
 import servicesDB from './db/services.js';
 import serverInfo from './serverInfo.json' with { type: 'json' };
 import logger from './logger.js';
 const inDevMode = process.env.MODE === 'dev' || process.env.ENV === 'local';
+// Where error reports go. This fork ships with none: the original project's address would send
+// reports about this fork's code to people who did not write it. Anyone running their own Sentry
+// project can set SENTRY_DSN in the service's environment.
+const SENTRY_DSN = process.env.SENTRY_DSN;
 export const initSentry = () => {
+    if (!SENTRY_DSN) {
+        logger.debug('Error reporting has no destination (SENTRY_DSN is not set); nothing will be sent');
+        return;
+    }
     logger.debug('Initializing sentry...');
     Sentry.init({
-        dsn: 'https://228d64fe4724349cb4a82b982c7b1133@o4510246020710401.ingest.us.sentry.io/4510252638666752',
+        dsn: SENTRY_DSN,
         // Preserve the restrictive data collection used before Sentry 11.
         dataCollection: {
             userInfo: false,
@@ -41,4 +49,4 @@ if (servicesDB.data.sentryLogging.enabled) {
     initSentry();
 }
 //# sourceMappingURL=instrument.js.map
-//# debugId=d4fdce12-9fc3-53be-8ae5-541aae713a8f
+//# debugId=377167e8-9eb1-5b37-8587-39b280ff88cf

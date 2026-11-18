@@ -303,7 +303,8 @@ it by up to 1,200 for a moment. The Medium margin is 800. Both sides were detect
 minute of lying down. A lighter person, a thick topper or a different Pod may need another
 sensitivity. `GET /api/metrics/presence/sensors` returns the live signal and empty level.
 
-**Not yet tried on the Pod:** either action actually firing.
+**Seen on the Pod:** "Turn on when I get into bed" turned both linked sides on when someone got in. Not yet
+seen: it turning off after they got out, and the long-stay alarm.
 
 ## 8. Daily housekeeping: priming, reboot, calibration
 

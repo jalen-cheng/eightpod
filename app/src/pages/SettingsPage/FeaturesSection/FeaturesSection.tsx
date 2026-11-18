@@ -1,4 +1,5 @@
 import ExtensionOutlinedIcon from '@mui/icons-material/ExtensionOutlined';
+import { SENTRY_DSN } from '../../../sentry.tsx';
 import { Box, CircularProgress, Switch } from '@mui/material';
 import Section from '../Section.tsx';
 import SettingToggle from '../SettingToggle.tsx';
@@ -46,19 +47,22 @@ export default function FeaturesSection() {
             sh /home/dac/free-sleep/scripts/enable_biometrics.sh
           </Box>
         </SettingToggle>
-        <Box sx={ { borderTop: '1px solid', borderColor: 'divider', pt: 2 } }>
-          <SettingToggle
-            control={
-              <Switch
-                disabled={ isUpdating }
-                checked={ services.sentryLogging.enabled }
-                onChange={ (event) => updateServices({ sentryLogging: { enabled: event.target.checked } }) }
-              />
-            }
-            label="Enable Sentry error reporting"
-            info="Sends anonymous error reports to the Free Sleep maintainers. Nothing is sent while the internet block is on."
-          />
-        </Box>
+        { /* Only offered in a build that has somewhere to send reports */ }
+        { SENTRY_DSN && (
+          <Box sx={ { borderTop: '1px solid', borderColor: 'divider', pt: 2 } }>
+            <SettingToggle
+              control={
+                <Switch
+                  disabled={ isUpdating }
+                  checked={ services.sentryLogging.enabled }
+                  onChange={ (event) => updateServices({ sentryLogging: { enabled: event.target.checked } }) }
+                />
+              }
+              label="Enable Sentry error reporting"
+              info="Sends anonymous error reports. Nothing is sent while the internet block is on."
+            />
+          </Box>
+        ) }
       </Box>
     </Section>
   );

@@ -13,8 +13,12 @@ import { DeviceStatus } from '@api/deviceStatusSchema';
 import { USER_ID_KEY, HUB_VERSION_KEY, COVER_VERSION_KEY } from '@state/appStore.tsx';
 
 
+// Where the app's error reports go. This fork is built with none (see server/src/instrument.ts);
+// a build with VITE_SENTRY_DSN set reports to that project.
+export const SENTRY_DSN: string | undefined = import.meta.env.VITE_SENTRY_DSN;
+
 export const initSentry = () => {
-  if (import.meta.env.VITE_ENV === 'prod') {
+  if (import.meta.env.VITE_ENV === 'prod' && SENTRY_DSN) {
     // For some reason, the build assets do not have access to VITE_ENV
     // eslint-disable-next-line no-console
     console.log('Initializing Sentry...');
@@ -31,7 +35,7 @@ export const initSentry = () => {
     };
 
     Sentry.init({
-      dsn: 'https://ddadf73739b2b5dfa084cf8e2734c8a7@o4510246020710401.ingest.us.sentry.io/4510246033817600',
+      dsn: SENTRY_DSN,
       integrations: [
         Sentry.reactRouterV7BrowserTracingIntegration({
           useEffect: React.useEffect,

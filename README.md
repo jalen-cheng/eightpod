@@ -79,11 +79,9 @@ Open pull requests on the original project, each a small fix that stands on its 
   setting the same level. The originals are kept beside them.
 - The installer in [INSTALLATION.md](INSTALLATION.md) installs this fork, and updates come from it.
 - How everything fits together, feature by feature: [docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md).
-- The demo link below shows upstream's app, not this fork's.
+- **Error reporting is off.** This fork has no error-reporting destination built in, so nothing is sent anywhere.
 
 ---
-
-## 👀 [Demo App](https://free-sleep.vercel.app/)
 
 ## 💬 [Discord Server](https://discord.gg/JpArXnBgEj)
 - Support
@@ -105,7 +103,7 @@ Open pull requests on the original project, each a small fix that stands on its 
 Free Sleep is an open-source project that lets you control your Eight Sleep Pod locally — without relying on the cloud or the official app.
 Each Pod actually runs a small Linux computer inside it. Free Sleep installs a lightweight server on that computer, giving you full local control.
 - **Server**: Runs directly on the Pod and talks to its hardware using custom APIs.
-- **App**: A simple, user-friendly web interface for changing temperatures, schedules, alarms, and settings. See [app demo here](https://free-sleep.vercel.app/)
+- **App**: A simple, user-friendly web interface for changing temperatures, schedules, alarms, and settings. Screenshots are below.
 
 ## Compatability
 - Pod 1 - ❌ **NOT COMPATIBLE**
@@ -119,11 +117,11 @@ Each Pod actually runs a small Linux computer inside it. Free Sleep installs a l
 Taken from the test Pod 5 on 17 Nov 2026:
 
 <table><tr>
-<td align="center"><img src="docs/screenshots/temperature.png" width="230" alt="Temperature, with the next alarm"><br>Temperature, with the next alarm</td>
+<td align="center"><img src="docs/screenshots/temperature.png" width="230" alt="Temperature, with the measured bed temperature"><br>Temperature, with the measured bed temperature</td>
 <td align="center"><img src="docs/screenshots/schedule.png" width="230" alt="A night, one tab per day"><br>A night, one tab per day</td>
-<td align="center"><img src="docs/screenshots/schedule_alarm.png" width="230" alt="Bedtime, changes, alarm and off time"><br>Bedtime, changes, alarm and off time</td>
+<td align="center"><img src="docs/screenshots/schedule_alarm.png" width="230" alt="Bed on, temperature changes and wake up"><br>Bed on, temperature changes and wake up</td>
 <td align="center"><img src="docs/screenshots/alarm_options.png" width="230" alt="Alarm options"><br>Alarm options</td>
-<td align="center"><img src="docs/screenshots/settings.png" width="230" alt="Side buttons on a Pod 5"><br>Side buttons on a Pod 5</td>
+<td align="center"><img src="docs/screenshots/settings.png" width="230" alt="In-bed detection and what it sets off"><br>In-bed detection and what it sets off</td>
 </tr></table>
 
 ---

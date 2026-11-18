@@ -7,10 +7,19 @@ import logger from './logger.js';
 
 const inDevMode = process.env.MODE === 'dev' || process.env.ENV === 'local';
 
+// Where error reports go. This fork ships with none: the original project's address would send
+// reports about this fork's code to people who did not write it. Anyone running their own Sentry
+// project can set SENTRY_DSN in the service's environment.
+const SENTRY_DSN = process.env.SENTRY_DSN;
+
 export const initSentry = () => {
+  if (!SENTRY_DSN) {
+    logger.debug('Error reporting has no destination (SENTRY_DSN is not set); nothing will be sent');
+    return;
+  }
   logger.debug('Initializing sentry...');
   Sentry.init({
-    dsn: 'https://228d64fe4724349cb4a82b982c7b1133@o4510246020710401.ingest.us.sentry.io/4510252638666752',
+    dsn: SENTRY_DSN,
     // Preserve the restrictive data collection used before Sentry 11.
     dataCollection: {
       userInfo: false,
