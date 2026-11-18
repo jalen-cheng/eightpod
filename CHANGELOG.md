@@ -1,7 +1,7 @@
 # Changelog
 
 What EightPod changed from [throwaway31265/free-sleep](https://github.com/throwaway31265/free-sleep),
-what was checked on a real Pod, and what was not. EightPod is at version 3.9.2. Everything was
+what was checked on a real Pod, and what was not. EightPod is at version 3.10.0. Everything was
 developed and tested on one Pod 5 between 13 and 18 Nov 2026.
 
 **The API.** Everything the app does goes through a documented local API, and every command the
@@ -38,8 +38,10 @@ Each of these was seen working on the test Pod 5, in its log or by the person on
 ## Not tested
 
 - **Pod 3 and Pod 4.** Nothing has been run on either. See [docs/POD_MODELS.md](docs/POD_MODELS.md).
-- **Autopilot.** Not run through a night. Its heart-rate reading was checked against two minutes of real sensor data;
-  sleep detection, the temperature changes and the learning were checked on made-up nights only, and never with two people in the bed.
+- **Autopilot.** Not run through a night. Sleep detection, naps, the temperature changes, the learning and the fitting to a
+  sleep tracker were checked on made-up nights only, never with two people in the bed, and the Shortcut that sends a tracker's
+  times has not been run on a phone.
+- **The dismissal buzz at its new strength.** At a quarter strength the firmware ran it and it could not be felt.
 - **In-bed detection:** the bed turning off after someone gets out, the long-stay alarm, and its
   state being restored after a restart.
 - **Turning on by hand:** the 3 and 6 hour lengths, and "Ignore the schedule until it turns off".
@@ -242,3 +244,4 @@ acted on it).
 | [#102](https://github.com/jalen-cheng/eightpod/pull/102) | Feature | **Autopilot (Pod 5, experimental, off by default):** reads a heart rate and movement from the cover's piezo sensor, judges asleep and deep sleep, and moves a sleeping side up to 4°F around its set temperature: a fixed night curve, 1°F cooler in deep sleep, your own changes learned per third of the night, and the room's drift. `GET /api/autopilot`; [docs/AUTOPILOT.md](docs/AUTOPILOT.md) (3.9.0). Heart rate checked against a real capture; the rest in tests only |
 | [#103](https://github.com/jalen-cheng/eightpod/pull/103) | Change | **Autopilot no longer tries to detect deep sleep.** The extra degree of cooling now runs from 20 to 90 minutes after falling asleep, where most deep sleep usually falls (3.9.1) |
 | [#104](https://github.com/jalen-cheng/eightpod/pull/104) | Fix | **Side buttons step by levels when the app is set to levels.** '1 level a press' moved 1°F, about a third of a level; a press now moves whole levels. Holding the middle button for 1 second (was 1.5) switches the side (3.9.2) |
+| [#PRNUM](https://github.com/jalen-cheng/eightpod/pull/PRNUM) | Feature, fix | **Autopilot: sleep from stillness, naps, saved nights, and a sleep tracker link.** Sleep is judged from lying still (heart rate is shown only); under 30 minutes out of bed is the same night; a sleep outside the scheduled night is a nap and is left alone; every stay in bed is saved on the Pod; a watch's or band's sleep and wake times can be sent each morning (`POST /api/autopilot/sleepTimes`, steps under Settings > Autopilot > Link) and the bed fits its sleep rules to them. The dismissal buzz is stronger: it could not be felt (3.10.0) |
