@@ -55,66 +55,68 @@ await pause(7000);
 // No scroll bar inside the window
 await run("(() => { const style = appDocument().createElement('style'); style.textContent = 'html{scrollbar-width:none}::-webkit-scrollbar{display:none}'; appDocument().head.append(style); return true })()");
 
+await run("caption('Your Eight Sleep Pod, run from your own network')");
+await pause(400);
 await send('Page.startScreencast', { format: 'jpeg', quality: 92, maxWidth: 1920, maxHeight: 1080, everyNthFrame: 1 });
 isRecording = true;
+await pause(1500);
+
+// Temperature and power, on the one card
+await run("caption('Set the temperature')");
+await run(`zoomTo(${cardWith('Bed temperature')}, 1.22)`);
+await pause(600);
+await run("press(findInApp('button[aria-label=\"Increase temperature\"]'))");
+await pause(160);
+await run("press(findInApp('button[aria-label=\"Increase temperature\"]'))");
+await pause(900);
+await run("caption('One tap for off, one for on')");
+await run("press(findInApp('button[aria-label=\"Turn off\"]'))");
+await pause(1500);
+await run("press(findInApp('p, span', 'Tap to turn on'))");
 await pause(1400);
 
-// Temperature: zoom in on the dial and warm it up
-await run(`zoomTo(${cardWith('Bed temperature')}, 1.5)`);
-await pause(700);
-for (let step = 0; step < 3; step++) {
-  await run("press(findInApp('button[aria-label=\"Increase temperature\"]'))");
-  await pause(260);
-}
-await pause(1300);
-
-// Power: off with the corner button, on again with a press anywhere on the dial
-await run("press(findInApp('button[aria-label=\"Turn off\"]'))");
-await pause(2100);
-await run("press(findInApp('p, span', 'Tap to turn on'))");
-await pause(2000);
-
-// Schedule: one night, then the alarm's options
+// Schedule
 await run('zoomOut()');
-await pause(500);
+await run("caption('A schedule for every night')");
 await run("press(findInApp('a[href=\"/schedules\"]'))");
-await pause(1900);
-await run("scrollAppTo(findInApp('p, span', 'Bed on'), 250)");
-await pause(600);
-await run(`zoomTo(${cardWith('Bed on')}, 1.45)`);
-await pause(1500);
-await run("press(findInApp('button[aria-label=\"Alarm options\"]'))");
 await pause(1300);
-await run("zoomTo(findInApp('.MuiDialog-paper'), 1.45)");
-await pause(900);
-await run("press(findInApp('button', 'Ramp up'))");
-await pause(900);
-await run("press(findInApp('[aria-label=\"Turn the bed off when the alarm is dismissed\"]'))");
-await pause(1000);
-await run("press(findInApp('button', 'Save'))");
-await pause(1500);
-
-// Settings: in-bed detection
-await run('zoomOut()');
+await run("scrollAppTo(findInApp('p, span', 'Bed on'), 250)");
 await pause(500);
+await run(`zoomTo(${cardWith('Bed on')}, 1.2)`);
+await pause(1300);
+
+// Alarm: warm the bed before it goes off
+await run("caption('Wake up warm: the bed heats before the alarm')");
+await run("press(findInApp('button[aria-label=\"Alarm options\"]'))");
+await pause(1000);
+await run("press(findInApp('[aria-label=\"Warm up before the alarm\"]')?.parentElement.querySelector('[role=\"combobox\"]'), 'mousedown')");
+await pause(700);
+await run("press(findInApp('li', '30 min'))");
+await pause(1000);
+await run("press(findInApp('.MuiDialog-paper button', 'Save'))");
+await pause(1200);
+
+// In-bed detection
+await run('zoomOut()');
+await run("caption('It knows when you are in bed (Pod 5)')");
 await run("press(findInApp('a[href=\"/settings\"]'))");
-await pause(1900);
+await pause(1300);
 await run(`scrollAppTo(${HEADINGS}.find(element => element.textContent.trim() === 'In-bed detection'), 150)`);
-await pause(900);
-await run(`zoomTo(${cardWith('In-bed detection')}, 1.4)`);
-await pause(1600);
+await pause(700);
+await run(`zoomTo(${cardWith('In-bed detection')}, 1.2)`);
+await pause(1000);
 // The switch on the same row as a label: the nearest ancestor of the label that holds one
 const switchBeside = label => `(() => { let node = ${HEADINGS}.find(element => element.textContent.trim() === '${label}'); `
   + "while (node && !node.querySelector('input[type=\"checkbox\"]')) node = node.parentElement; "
   + "return node?.querySelector('input[type=\"checkbox\"]'); })()";
 await run(`press(${switchBeside('Alarm after a long time in bed')})`);
-await pause(1700);
+await pause(1300);
 
 // End card
 await run('zoomOut()');
-await pause(900);
+await pause(500);
 await run('showCard()');
-await pause(3000);
+await pause(2400);
 
 isRecording = false;
 await send('Page.stopScreencast');
