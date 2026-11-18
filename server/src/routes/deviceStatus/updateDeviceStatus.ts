@@ -1,3 +1,4 @@
+import { noteManualTemperature } from '../../autopilot/manualChanges.js';
 import _ from 'lodash';
 import { DeepPartial } from 'ts-essentials';
 import cbor from 'cbor';
@@ -102,6 +103,7 @@ const updateSide = async (side: 'left' | 'right', sideStatus: DeepPartial<SideSt
   }
 
   if (targetTemperatureF) {
+    if (isManual) updatedSides.forEach(updatedSide => noteManualTemperature(updatedSide, targetTemperatureF));
     const level = calculateLevelFromF(targetTemperatureF);
     if (updateLeft) await executeFunction('TEMP_LEVEL_LEFT', level);
     if (updateRight) await executeFunction('TEMP_LEVEL_RIGHT', level);

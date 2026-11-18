@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="bdf7accd-dab6-5e50-a577-9a24645b543d")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="1d0f7360-2486-5275-92dc-2a2b3f8f2620")}catch(e){}}();
 import './instrument.js';
 import express from 'express';
 import schedule from 'node-schedule';
@@ -9,6 +9,7 @@ import { connectFranken, disconnectFranken } from './8sleep/frankenServer.js';
 import { FrankenMonitor } from './8sleep/frankenMonitor.js';
 import { ButtonMonitor } from './8sleep/buttonMonitor.js';
 import { BedSensorMonitor } from './8sleep/bedSensorMonitor.js';
+import { AutopilotMonitor } from './autopilot/autopilotMonitor.js';
 import './jobs/jobScheduler.js';
 // Setup code
 import setupMiddleware from './setup/middleware.js';
@@ -28,6 +29,7 @@ let server;
 let frankenMonitor;
 let buttonMonitor;
 let bedSensorMonitor;
+let autopilotMonitor;
 async function disconnectPrisma() {
     try {
         logger.debug('Flushing SQLite');
@@ -77,6 +79,7 @@ async function gracefulShutdown(signal) {
         if (!config.remoteDevMode) {
             frankenMonitor?.stop();
             buttonMonitor?.stop();
+            autopilotMonitor?.stop();
             await bedSensorMonitor?.stop();
             await disconnectFranken();
             logger.debug('Successfully closed Franken components.');
@@ -110,6 +113,8 @@ const initFrankenMonitor = () => {
     // unavailable on Pods that do not report them
     bedSensorMonitor = new BedSensorMonitor();
     bedSensorMonitor.start();
+    autopilotMonitor = new AutopilotMonitor();
+    autopilotMonitor.start();
     logger.info('Frank monitor started!');
 };
 // Main startup function
@@ -166,4 +171,4 @@ startServer().catch((err) => {
     process.exit(1);
 });
 //# sourceMappingURL=server.js.map
-//# debugId=bdf7accd-dab6-5e50-a577-9a24645b543d
+//# debugId=1d0f7360-2486-5275-92dc-2a2b3f8f2620

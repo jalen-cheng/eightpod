@@ -57,6 +57,7 @@ const defaultData: Settings = {
   },
   // The firmware's own length for a side switched on, and the schedule carries on as usual
   manualOn: { hours: 12, overridesSchedule: false },
+  autopilot: { enabled: false },
   // Detection always runs where the sensors exist; both actions are off until switched on
   presence: {
     sensitivity: 'medium',

@@ -1,11 +1,12 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="06b3c546-1950-5ca6-86b4-d42c407fcde2")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="c6daaf59-7716-57d3-a8bf-ea42ceb74d2a")}catch(e){}}();
 import * as Sentry from '@sentry/node';
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import deviceStatus from '../routes/deviceStatus/deviceStatus.js';
 import alarm from '../routes/alarm/alarm.js';
+import autopilot from '../routes/autopilot/autopilot.js';
 import execute from '../routes/execute/execute.js';
 import jobs from '../routes/jobs/jobs.js';
 import settings from '../routes/settings/settings.js';
@@ -23,6 +24,7 @@ const __dirname = path.dirname(__filename);
 export default function (app) {
     logger.debug('Registering routes...');
     app.use('/api/', alarm);
+    app.use('/api/', autopilot);
     app.use('/api/', deviceStatus);
     app.use('/api/', execute);
     app.use('/api/', schedules);
@@ -67,4 +69,4 @@ export default function (app) {
     logger.debug('Registered routes!');
 }
 //# sourceMappingURL=routes.js.map
-//# debugId=06b3c546-1950-5ca6-86b4-d42c407fcde2
+//# debugId=c6daaf59-7716-57d3-a8bf-ea42ceb74d2a

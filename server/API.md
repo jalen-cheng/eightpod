@@ -7,7 +7,7 @@ The server on the Pod serves the web app and a JSON API on port 3000 and also on
 curl http://<pod-ip>:3000/api/deviceStatus
 ```
 
-Contents: [What you can control](#what-you-can-control) · [General](#general) · [Device status](#device-status) · [Dial](#dial) · [Alarms](#alarms) · [Settings](#settings) · [Schedules](#schedules) · [Execute](#execute) · [Jobs](#jobs) · [Services](#services) · [Server status](#server-status) · [Logs](#logs) · [Metrics](#metrics) · [Presence](#presence)
+Contents: [What you can control](#what-you-can-control) · [General](#general) · [Device status](#device-status) · [Dial](#dial) · [Alarms](#alarms) · [Settings](#settings) · [Schedules](#schedules) · [Execute](#execute) · [Jobs](#jobs) · [Services](#services) · [Server status](#server-status) · [Logs](#logs) · [Metrics](#metrics) · [Presence](#presence) · [Autopilot](#autopilot)
 
 ## What you can control
 
@@ -23,6 +23,7 @@ sent. Nothing needs an Eight Sleep account, a subscription or the internet.
 | Read or change the weekly schedule | [Schedules](#schedules) |
 | Read or change settings: time zone, away mode, buttons and taps, in-bed detection, priming, reboot | [Settings](#settings) |
 | Know whether someone is in bed (Pod 5) | [Presence](#presence) |
+| See what the autopilot reads and has done; switch it on with `autopilot.enabled` in Settings (Pod 5) | [Autopilot](#autopilot) |
 | Update EightPod, reboot the Pod, run calibration | [Jobs](#jobs) |
 | Send a firmware command directly | [`POST /api/execute`](#post-apiexecute) |
 | Check health and read logs | [Server status](#server-status), [Logs](#logs) |
@@ -271,6 +272,7 @@ Stored in `settingsDB.json`. The values below are the defaults, except `id` (a r
   },
   "right": { "name": "Right", "awayMode": false, "scheduleOverrides": {}, "taps": {} },
   "manualOn": { "hours": 12, "overridesSchedule": false },
+  "autopilot": { "enabled": false },
   "presence": {
     "sensitivity": "medium",
     "wakeAfterHours": { "enabled": false, "hours": 9 },
@@ -296,6 +298,7 @@ Stored in `settingsDB.json`. The values below are the defaults, except `id` (a r
 | `<side>.taps.doubleTap` / `tripleTap` / `quadTap` | One of two shapes, picked by `type`: `{"type": "temperature", "change": "increment" \| "decrement", "amount": 0-10}` or `{"type": "alarm", "behavior": "snooze" \| "dismiss", "snoozeDuration": 60-600, "inactiveAlarmBehavior": "power" \| "none"}` |
 | `manualOn.hours` | `3`, `6` or `12`: how long a side switched on by hand stays on. |
 | `manualOn.overridesSchedule` | When true, the schedule leaves a side switched on by hand alone until it turns off. Alarms still go off. |
+| `autopilot.enabled` | Lets the bed adjust a sleeping side's temperature (Pod 5, experimental). See [Autopilot](#autopilot). |
 | `presence.sensitivity` | `low`, `medium` or `high` |
 | `presence.wakeAfterHours` | `enabled`, `hours` (integer 1-14): vibrate the alarm after this long in bed in one stay. |
 | `presence.turnOnWhenInBed` | `enabled`, `temperatureF` (50-110), `stayOn` (integer hours 1-12, or `"untilOutOfBed"`) |
@@ -619,3 +622,39 @@ Sets that value for one or both sides. `lastUpdatedAt` is set by the server; a v
 ```
 
 A body with neither `left` nor `right` gets 400 `{"error": "At least one side (left or right) must be specified", "message": "..."}`.
+
+## Autopilot
+
+Pod 5 only, experimental. Switch it on with `POST /api/settings` and `{ "autopilot": { "enabled": true } }`.
+[docs/AUTOPILOT.md](../docs/AUTOPILOT.md) says what it does.
+
+### `GET /api/autopilot`
+
+What the autopilot reads and has done. Sleep is followed whether or not it is switched on; the
+temperature is only changed when it is.
+
+```json
+{
+  "available": true,
+  "enabled": true,
+  "room": { "temperatureF": 68, "humidityPercent": 46 },
+  "left": {
+    "stage": "deep",
+    "heartRate": 54,
+    "minutesAsleep": 96,
+    "offsetF": -3,
+    "lastChange": "1:40 AM: 3°F cooler (time of night, deep sleep)",
+    "learned": { "early": -0.5, "middle": 0, "late": 0 }
+  },
+  "right": { "stage": "out", "learned": { "early": 0, "middle": 0, "late": 0 } }
+}
+```
+
+| Field | Meaning |
+|---|---|
+| `available` | `false` when the piezo sensor has sent nothing in the last 2 minutes (other Pods) |
+| `room` | The air at the cover. Read as hundredths of a degree; not checked against a thermometer |
+| `stage` | `out`, `awake`, `asleep` or `deep` |
+| `heartRate` | Beats a minute over the last 5 minutes; missing when no reading could be trusted |
+| `offsetF` | How far the side is from its set temperature because of the autopilot |
+| `learned` | What your changes have taught it for each third of the night, in °F |

@@ -13,6 +13,7 @@ import FeaturesSection from './FeaturesSection/FeaturesSection.tsx';
 import Section from './Section.tsx';
 import TapGesturesSection from './TapGesturesSection/TapGesturesSection.tsx';
 import PresenceSection from './PresenceSection.tsx';
+import AutopilotSection from './AutopilotSection.tsx';
 import AlarmSection from './AlarmSection.tsx';
 import ApiSection from './ApiSection.tsx';
 import DeviceSettingsSection from './DeviceSettingsSection/DeviceSettingsSection.tsx';
@@ -59,6 +60,9 @@ export default function SettingsPage() {
       </ErrorBoundary>
       <ErrorBoundary componentName="In-bed detection">
         <PresenceSection settings={ settings } updateSettings={ updateSettings }/>
+      </ErrorBoundary>
+      <ErrorBoundary componentName="Autopilot">
+        <AutopilotSection settings={ settings } updateSettings={ updateSettings }/>
       </ErrorBoundary>
       <FeaturesSection/>
       <ErrorBoundary componentName="Device info">
