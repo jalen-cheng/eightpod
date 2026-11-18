@@ -151,9 +151,6 @@ export default function AlarmSection() {
         { hasSaveFailed && (
           <Typography variant="caption" color="error">That was not saved. Check the Pod is reachable and try again.</Typography>
         ) }
-        <Typography variant="caption" sx={ { color: 'text.secondary' } }>
-          For every night and both sides. Each night&apos;s wake time, warm-up and whether it vibrates are set in Schedules.
-        </Typography>
       </Box>
     </Section>
   );

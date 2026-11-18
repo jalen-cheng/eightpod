@@ -145,15 +145,15 @@ When the sides are linked, the buttons on either side control both. The step siz
 
 | Setting | Where | What it does |
 |---|---|---|
-| **Stay on for** | Device settings > Turning on by hand | 3, 6 or 12 hours. Applies when you turn the bed on from the app, a shortcut or the buttons |
-| **Ignore the schedule meanwhile** | Device settings > Turning on by hand | While a side you turned on yourself is on, its schedule is skipped. Alarms still go off |
-| **Away mode** | Device settings > Bed | For when nobody is home. The schedule and alarms stop on both sides until you switch it off |
-| **Flip left and right** | Device settings > Bed | Swaps which physical side the app calls left and right. Each side keeps its schedule and settings |
-| **Light on the hub** | Device settings > Bed | The hub's light, on or off |
+| **When turned on by hand** | Device settings | 3, 6 or 12 hours. Applies when you turn the bed on from the app, a shortcut or the buttons |
+| **Ignore the schedule meanwhile** | Device settings | While a side you turned on yourself is on, its schedule is skipped. Alarms still go off |
+| **Away mode** | Device settings | For when nobody is home. The schedule and alarms stop on both sides until you switch it off |
+| **Flip left and right** | Device settings | Swaps which physical side the app calls left and right. Each side keeps its schedule and settings |
+| **Light on the hub** | Device settings | The hub's light, on or off |
 | **Prime daily** | Priming | Runs the water priming cycle every day at **Prime time**, 2 PM by default. It does not check whether the bed is in use |
 | **Reboot once a day** | Device | Restarts the Pod one hour before the priming time. A vibrating alarm or running warm-up is lost in a reboot, so keep the time in the afternoon |
 | **Status page** | The "Status" link (bottom right on a computer, beside each page's heading on a phone) | Shows Wi-Fi strength, whether EightPod is up to date, and each service. The biometrics and sleep-analysis rows are greyed and marked untested |
-| **API** | Device settings > API | Tap **Show** for the common requests and two examples with your Pod's address filled in. Tap a command to select it |
+| **API** | Device settings | Tap **Show** beside **API requests** for the common requests and two examples with your Pod's address filled in. Tap a command to select it |
 | **In-bed detection** | Its own section, Pod 5 only | Two options, both off by default: **Turn on when I get into bed** and **Alarm after a long time in bed**. Detection was checked with one person on one Pod; the first option has been seen turning the bed on, the rest has not been seen working yet |
 
 ## 11. Updating
