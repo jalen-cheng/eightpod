@@ -146,7 +146,7 @@ morning (`getDayIndexForSchedule` in `server/src/jobs/scheduleTiming.ts`).
 | Power on | Bedtime | Turns the side on at the bedtime temperature | Schedule off, or the side is away |
 | Temperature change | Each change time | Sets the temperature. Does not turn the side on | Schedule off, side away, or a warm-up is running |
 | Warm-up | Alarm time minus the warm-up minutes | Sets the warm-up temperature and holds off scheduled changes until the alarm | Schedule off, alarm off, away, the side is off at that moment, or a one-time alarm stands in for the alarm |
-| Alarm | Alarm time | Starts the vibration (section 5) | Schedule off, alarm off, away, the side is off, or a one-time alarm stands in for it |
+| Alarm | Alarm time | Starts the vibration (section 5) | Schedule off, alarm off, away, the side is off with nobody on it, or a one-time alarm stands in for it |
 | Power off | Off time | Turns the side off, **unless an alarm is still to come** (section 5) | Schedule off, or away |
 
 Jobs are per side. When the sides are linked, the app saves the same night to both sides, so both
@@ -327,7 +327,7 @@ All three are timed from Settings > "Prime daily" (default 14:00, on by default 
 
 | Job | When | Notes |
 |---|---|---|
-| Daily reboot | One hour before the priming time (13:00) | Only if "Reboot once a day" is on. Runs whether or not daily priming is on |
+| Daily reboot | One hour before the priming time (13:00) | Only if "Reboot once a day" is on. Runs whether or not daily priming is on. Skipped for the day when a side is on or an alarm is going off |
 | Priming | The priming time (14:00) | Only if "Prime daily" is on. Runs the water cycle. It does not check whether the bed is in use |
 | Sensor calibration | Left at 14:00, right at 14:30 | Biometrics only; does nothing when biometrics is off |
 
@@ -354,7 +354,8 @@ offers to dismiss it.
   joined by a line whose dots take the colour of each temperature. There is no bed-off row: the
   bed turns off 30 minutes after wake up. This mirrors Eight Sleep's own app, which has a bedtime, temperature phases and
   alarms, and no off time.
-- Editing anything brings up a bar that stays in view: **Discard** and **Save**. Other day tabs
+- Editing anything shows **Discard** and **Save** under the night. A temperature change must
+  come after Bed on and before Wake, or Save stays off. Other day tabs
   and the side picker are locked until you save or discard. The copy button beside the night's
   name copies a saved night to any other days.
 - Saving always writes the whole night shown, to each chosen day, on both sides when linked.
@@ -455,7 +456,7 @@ The cases where one feature changes what another does:
 | Any night | The bed turns off 30 minutes after the wake-up time, with or without a vibrating alarm; "Bed off on dismiss" turns it off sooner |
 | A warm-up is running | Scheduled temperature changes are skipped until the alarm. Changes you make by hand are not |
 | The night's schedule is switched off | Nothing runs that night: no power on or off, no temperature changes, no alarm, no warm-up |
-| The bed is off at the alarm time | A scheduled alarm does not vibrate. A one-time alarm and a test do |
+| The bed is off at the alarm time | A scheduled alarm does not vibrate, unless the bed's sensors say someone is on that side (Pod 5). A one-time alarm and a test always do |
 | Sides are linked and one side dismisses | Both stop |
 | Sides are not linked and one side dismisses | The other side's alarm restarts from the beginning |
 | One side is in away mode | The other side's changes are mirrored to it; its own schedule and alarm do not run |

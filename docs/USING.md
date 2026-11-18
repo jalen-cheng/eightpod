@@ -57,7 +57,7 @@ Each side has one schedule per night of the week. A night is named after the day
 
 **There is no bed-off setting.** The bed turns off 30 minutes after the wake-up time.
 
-The bar appears as soon as you edit anything:
+**Discard** and **Save** appear under the night as soon as you edit anything:
 
 | Button | What it does |
 |---|---|

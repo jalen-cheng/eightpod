@@ -39,6 +39,12 @@ export function findNextScheduledAlarm(sideSchedule: SideSchedule, now: moment.M
   return nextAlarm;
 }
 
+// The schedule day a moment belongs to. A night is filed under the day it starts on, so a
+// morning alarm belongs to the day before: anything before noon counts as the previous day.
+export function findNightDay(at: moment.Moment): DayOfWeek {
+  return at.clone().subtract(12, 'hours').format('dddd').toLowerCase() as DayOfWeek;
+}
+
 // The scheduled alarm a one-off alarm stands in for: the side's next scheduled alarm, when the
 // two are no more than `withinHours` apart. An alarm set for 6:00 replaces the 8:45 of the same
 // morning; an afternoon nap alarm leaves tomorrow morning's alone, and so does one set in the

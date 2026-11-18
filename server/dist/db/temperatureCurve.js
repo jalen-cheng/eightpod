@@ -6,7 +6,7 @@
 // stretches, with levels between the points on the straight line between them. Level -100 alone
 // is different: it drops to 10°C, "as cold as possible", while -99 is still on the first stretch.
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="c67265d3-958d-5af8-ab0f-980d33cf9650")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="332fca84-b318-5dd1-ac8f-b0bc189ed3c8")}catch(e){}}();
 const CURVE_POINTS_C = [
     [-100, 10],
     [-99, 15.12],
@@ -55,11 +55,16 @@ export function stepTemperatureF(temperatureF, deltaF, minTemperatureF, maxTempe
     const currentLevel = temperatureFToLevel(temperatureF);
     if (deltaF === 0 || temperatureFToLevel(steppedF) !== currentLevel)
         return steppedF;
-    const nextLevel = currentLevel + Math.sign(deltaF);
+    // Walk level by level until the whole degree it rounds to is a different level: near the cold
+    // end several levels share one whole degree, so the next level alone can round back here
+    const direction = Math.sign(deltaF);
+    for (let level = currentLevel + direction; level >= MIN_FIRMWARE_LEVEL && level <= MAX_FIRMWARE_LEVEL; level += direction) {
+        const candidateF = clamp(Math.round(levelToTemperatureF(level)));
+        if (temperatureFToLevel(candidateF) !== currentLevel)
+            return candidateF;
+    }
     // Already at the coldest or hottest level
-    if (nextLevel < MIN_FIRMWARE_LEVEL || nextLevel > MAX_FIRMWARE_LEVEL)
-        return steppedF;
-    return clamp(Math.round(levelToTemperatureF(nextLevel)));
+    return steppedF;
 }
 // Before the curve was measured, levels were spread evenly over 55-110°F. Converts a whole °F
 // saved under that assumption to the whole °F that means the same level now, so a saved schedule
@@ -72,4 +77,4 @@ export function convertFromEvenSpreadF(temperatureF) {
     return Math.round(levelToTemperatureF(clampedLevel));
 }
 //# sourceMappingURL=temperatureCurve.js.map
-//# debugId=c67265d3-958d-5af8-ab0f-980d33cf9650
+//# debugId=332fca84-b318-5dd1-ac8f-b0bc189ed3c8

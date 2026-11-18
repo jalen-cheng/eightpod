@@ -10,6 +10,8 @@ import settingsDB from '../db/settings.js';
 import serverStatus from '../serverStatus.js';
 import servicesDB from '../db/services.js';
 import reboot from './reboot.js';
+import { connectFranken } from '../8sleep/frankenServer.js';
+import { alarmSession } from './alarmScheduler.js';
 
 
 const scheduleRebootJob = (onHour: number, onMinute: number, timeZone: TimeZone) => {
@@ -26,6 +28,15 @@ const scheduleRebootJob = (onHour: number, onMinute: number, timeZone: TimeZone)
 
       if (!settingsDB.data.rebootDaily) {
         logger.info('Daily reboot job is disabled, skipping...');
+        return;
+      }
+      // A reboot ends an alarm, a warm-up and a hold by hand, so it is skipped for a day when
+      // the bed is in use: a side is on, or an alarm is going off
+      const deviceStatus = await (await connectFranken()).getDeviceStatus();
+      const isBedInUse = deviceStatus.left.isOn || deviceStatus.right.isOn
+        || alarmSession.isAlarmActive('left') || alarmSession.isAlarmActive('right');
+      if (isBedInUse) {
+        logger.info('Skipping the daily reboot: the bed is in use');
         return;
       }
       logger.info(`Executing scheduled reboot job`);

@@ -28,6 +28,14 @@ export function isTimeDuringNight(time: string, bedtime: string, offTime: string
   return TIME_FORMAT.test(time) && minutesBetween(bedtime, time) <= minutesBetween(bedtime, offTime);
 }
 
+// True when a temperature change comes after the bed-on time and before the wake time. A change
+// at or after the wake time would land on the alarm or after the bed has turned off.
+export function isChangeBeforeWake(time: string, bedtime: string, wakeTime: string): boolean {
+  if (!TIME_FORMAT.test(time)) return false;
+  const offset = minutesBetween(bedtime, time);
+  return offset > 0 && offset < minutesBetween(bedtime, wakeTime);
+}
+
 // A free time for a new temperature change: an hour after the last one if that is still before
 // the wake time, otherwise halfway between the last one and the wake time. Undefined when the
 // night has no room left.

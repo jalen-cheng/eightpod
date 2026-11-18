@@ -11,7 +11,9 @@ import settingsDB from '../db/settings.js';
 import {
   AlarmJob, DailySchedule, DayOfWeek, LATE_ALARM_WINDOW_HOURS, MAX_ALARM_SECONDS, MAX_FIRMWARE_ALARM_SECONDS, Side,
 } from '../db/schedulesSchema.js';
-import { minutesAlarmIsAfterOff } from './scheduleTiming.js';
+import { findNightDay, minutesAlarmIsAfterOff } from './scheduleTiming.js';
+import { isSomeoneInBed } from './inBedCheck.js';
+import { shouldRunJob } from './recentRuns.js';
 import { executeFunction } from '../8sleep/deviceApi.js';
 import { getDayIndexForSchedule, logJob, subtractMinutesFromTime } from './utils.js';
 import { startPreWarm } from './preWarmState.js';
@@ -154,7 +156,8 @@ const runPreWarm = async (side: Side, preWarmMinutes: number, alarmTemperatureF:
 
 // How a one-off alarm vibrates: the settings of the weekly alarm on the day it goes off
 export const getOneOffAlarmSettings = (settingsData: Settings, side: Side, firesAt: moment.Moment) => {
-  const dayKey = firesAt.clone().tz(settingsData.timeZone).format('dddd').toLowerCase() as DayOfWeek;
+  // The settings of the night the alarm ends, not of the calendar day it goes off on
+  const dayKey = findNightDay(firesAt.clone().tz(settingsData.timeZone));
   return schedulesDB.data?.[side]?.[dayKey]?.alarm ?? {
     vibrationIntensity: 100,
     duration: MAX_ALARM_SECONDS,
@@ -242,6 +245,8 @@ export function scheduleAlarmOverride(settingsData: Settings, side: Side) {
 }
 
 
+const REPEATED_HOUR_GUARD_MS = 2 * 60 * 60_000;
+
 export const scheduleAlarm = (settingsData: Settings, side: Side, day: DayOfWeek, dailySchedule: DailySchedule) => {
   if (!dailySchedule.power.enabled) return;
   if (!dailySchedule.alarm.enabled) return;
@@ -261,8 +266,14 @@ export const scheduleAlarm = (settingsData: Settings, side: Side, day: DayOfWeek
 
   logJob('Scheduling alarm job', side, day, dayIndex, time);
 
-  schedule.scheduleJob(`${side}-${day}-${time}-alarm`, alarmRule, async () => {
+  const alarmJobName = `${side}-${day}-${time}-alarm`;
+  schedule.scheduleJob(alarmJobName, alarmRule, async () => {
     try {
+      // The night clocks go back, a time between 1 and 2 AM comes round twice
+      if (!shouldRunJob(alarmJobName, REPEATED_HOUR_GUARD_MS)) {
+        logJob('Skipping alarm job, it already ran within the last two hours', side, day, dayIndex, time);
+        return;
+      }
       logJob('Executing alarm job', side, day, dayIndex, time);
       await settingsDB.read();
 
@@ -281,6 +292,9 @@ export const scheduleAlarm = (settingsData: Settings, side: Side, day: DayOfWeek
         duration: dailySchedule.alarm.duration,
         vibrationPattern: dailySchedule.alarm.vibrationPattern,
         turnOffAfterDismiss: dailySchedule.alarm.turnOffAfterDismiss,
+        // A side that is off is normally left alone. But if its timer ran out early and the
+        // sensors say someone is still in bed, the alarm they set still wakes them.
+        force: isSomeoneInBed(side),
       });
     } catch (error: unknown) {
       serverStatus.status.alarmSchedule.status = 'failed';

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Box, Button, IconButton, Paper, Switch, Tooltip, Typography } from '@mui/material';
+import { Box, Button, IconButton, Switch, Tooltip, Typography } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { DeepPartial } from 'ts-essentials';
 import moment from 'moment-timezone';
@@ -23,8 +23,6 @@ import { buildSidesPayload, getControlledSides } from '@lib/sides.ts';
 
 // The Pod takes a moment to write a schedule before it can be read back
 const SAVE_SETTLE_MS = 1_000;
-// Height of the phone navigation bar, which the save bar has to sit above
-const MOBILE_NAV_HEIGHT_PX = 68;
 
 // A night belongs to the day it starts on, so before noon "tonight's schedule" is yesterday's
 const getAdjustedDayOfWeek = (): DayOfWeek => {
@@ -128,22 +126,12 @@ export default function SchedulePage() {
 
       <NightTimeline/>
 
-      { /* Unsaved changes: a bar that stays in view, so saving never needs a scroll to the bottom.
-           Discard sits apart on the left, Save on the right. Other days are reached by saving,
-           then copying the night with the button beside its name. */ }
+      { /* Unsaved changes: Discard and Save directly under the night they belong to, in the flow
+           of the page. Other days are reached by saving, then copying the night. */ }
       { changesPresent && (
-        <Paper
-          elevation={ 6 }
-          role="region"
-          aria-label="Unsaved changes"
-          sx={ {
-            position: 'sticky', zIndex: 1000,
-            bottom: { xs: `calc(${MOBILE_NAV_HEIGHT_PX}px + env(safe-area-inset-bottom) + 8px)`, md: 16 },
-            display: 'flex', alignItems: 'center', gap: 1, width: '100%', p: 1,
-          } }
-        >
+        <Box role="region" aria-label="Unsaved changes" sx={ { display: 'flex', alignItems: 'center', gap: 1, width: '100%' } }>
+          <Typography variant="body2" sx={ { color: 'text.secondary', mr: 'auto' } }>Unsaved changes</Typography>
           { hasEdits && <Button color="inherit" onClick={ reloadScheduleData } disabled={ isUpdating }>Discard</Button> }
-          <Box sx={ { flex: 1 } }/>
           <Button
             variant="contained"
             onClick={ () => handleSave([selectedDay]) }
@@ -152,7 +140,7 @@ export default function SchedulePage() {
           >
             Save
           </Button>
-        </Paper>
+        </Box>
       ) }
 
       <SaveDaysDialog open={ isChoosingDays } openDay={ selectedDay } onClose={ () => setIsChoosingDays(false) } onSave={ handleSave }/>

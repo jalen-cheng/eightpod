@@ -57,10 +57,15 @@ export function stepTemperatureF(temperatureF: number, deltaF: number, minTemper
   const steppedF = clamp(temperatureF + deltaF);
   const currentLevel = temperatureFToLevel(temperatureF);
   if (deltaF === 0 || temperatureFToLevel(steppedF) !== currentLevel) return steppedF;
-  const nextLevel = currentLevel + Math.sign(deltaF);
+  // Walk level by level until the whole degree it rounds to is a different level: near the cold
+  // end several levels share one whole degree, so the next level alone can round back here
+  const direction = Math.sign(deltaF);
+  for (let level = currentLevel + direction; level >= MIN_FIRMWARE_LEVEL && level <= MAX_FIRMWARE_LEVEL; level += direction) {
+    const candidateF = clamp(Math.round(levelToTemperatureF(level)));
+    if (temperatureFToLevel(candidateF) !== currentLevel) return candidateF;
+  }
   // Already at the coldest or hottest level
-  if (nextLevel < MIN_FIRMWARE_LEVEL || nextLevel > MAX_FIRMWARE_LEVEL) return steppedF;
-  return clamp(Math.round(levelToTemperatureF(nextLevel)));
+  return steppedF;
 }
 
 // Before the curve was measured, levels were spread evenly over 55-110°F. Converts a whole °F

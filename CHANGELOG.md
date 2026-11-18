@@ -1,7 +1,7 @@
 # Changelog
 
 What Free Pod changed from [throwaway31265/free-sleep](https://github.com/throwaway31265/free-sleep),
-what was checked on a real Pod, and what was not. Free Pod is at version 3.4.1. Everything was
+what was checked on a real Pod, and what was not. Free Pod is at version 3.5.0. Everything was
 developed and tested on one Pod 5 between 13 and 17 Nov 2026.
 
 - [Tested on the Pod](#tested-on-the-pod)
@@ -49,8 +49,10 @@ Each of these was seen working on the test Pod 5, in its log or by the person on
 - On a Pod 4, four taps just after an alarm stops can toggle power.
 - In Level, button steps are stored as whole °F, so many presses in a row can drift by a level.
 - Converting saved schedules to the measured curve can move a temperature by up to 2 levels out of 200.
-- Priming and the daily reboot do not check whether the bed is in use.
-- The automated checks on GitHub do not run the tests in `tests/`; they are run by hand.
+- Daily priming does not check whether the bed is in use. (The daily reboot does.)
+- The night clocks go forward, a scheduled time between 2 and 3 AM does not happen that night.
+- `{"shiftMinutes": ...}` moves tonight's alarm even if it was skipped from the app, which turns it back on.
+- Flipping left and right while someone is in bed, or mid-alarm, leaves that state on the old side until it ends.
 - Hardware differences between Pod 3, 4 and 5 are checked in several places instead of one table.
 
 ## Temperature calibration
@@ -214,3 +216,4 @@ acted on it).
 | [#66](https://github.com/jalen-cheng/free-sleep/pull/66) | Design, docs | The schedule's last row is labelled "Wake". The icon is the app's dial. Biometrics rows on the Status page are greyed; the Biometrics switch in Settings works again. The README is reshaped: banner, summary, install, quick start, how it fits together, security, documentation, credits. |
 | [#67](https://github.com/jalen-cheng/free-sleep/pull/67) | Fix, feature, docs | A review pass with fixes. **Alarms:** a shortcut or dial press on a bed that is already on no longer shortens its night; a one-time alarm moved up to 30 minutes later keeps the bed on; a one-time alarm only replaces a scheduled alarm within 6 hours of it; a dismissal between two stretches of an alarm counts; "Bed off on dismiss" ends a hold by hand; a date written with dots is not read as a time. **In-bed detection:** turning on when you get in holds the schedule for the stay, not for the manual length; a "Bed is empty now" button relearns the empty bed. **App:** Prime now no longer locks the app; saving keeps the open day; the side cannot be switched with unsaved edits; a night must be 1 to 23 hours and its changes inside it; Skip applies to both linked sides; filled buttons are grey. **Updates:** however an update ends, the server is started and the internet block is put back; downloads time out; DNS replies over TCP can no longer open a connection. **Docs:** CONTRIBUTING.md, a test-report template, notices where a Pod 3 or 4 differs, and what going back to Eight Sleep involves. |
 | [#76](https://github.com/jalen-cheng/free-sleep/pull/76) | Design | Every tab has the same width and its heading in the same place. The schedule's save bar has one Save button; copying a night to other days is the copy button's job, with a tidier day picker. Sliders are drawn like the dial. |
+| [#77](https://github.com/jalen-cheng/free-sleep/pull/77) | Fix, design, docs | **Schedule page:** Discard and Save sit under the night instead of floating; a temperature change must come before Wake; time fields are wider on a computer and the one-time alarm's is large. **Server:** a one-degree step always changes what the bed is told; a one-time alarm uses the settings of the night it ends; a scheduled alarm still vibrates when its side is off but someone is on it; an alarm cannot fire twice the night clocks go back; the daily reboot is skipped while the bed is in use. **Contributors:** the tests run on every pull request, with a pull-request template and rules for what is and is not accepted. README has an FAQ. |

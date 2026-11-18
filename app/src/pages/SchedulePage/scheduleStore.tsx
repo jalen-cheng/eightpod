@@ -4,7 +4,7 @@ import { DailySchedule, DayOfWeek, Schedules } from '@api/schedulesSchema.ts';
 import { DeepPartial } from 'ts-essentials';
 import { useAppStore } from '@state/appStore.tsx';
 import { LOWERCASE_DAYS } from './days';
-import { isNightLengthValid, isTimeDuringNight } from './scheduleValidation';
+import { isChangeBeforeWake, isNightLengthValid } from './scheduleValidation';
 import { getOtherSide } from '@lib/sides.ts';
 
 type Validations = {
@@ -81,7 +81,7 @@ export const useScheduleStore = create<ScheduleStore>((set, get) => ({
     if (!_.every(validations) || !selectedSchedule) return false;
     const { power, alarm, temperatures } = selectedSchedule;
     return isNightLengthValid(power.on, alarm.time)
-      && Object.keys(temperatures).every(time => isTimeDuringNight(time, power.on, power.off));
+      && Object.keys(temperatures).every(time => isChangeBeforeWake(time, power.on, alarm.time));
   },
 
   hasEdits: false,
