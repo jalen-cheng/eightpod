@@ -51,7 +51,8 @@ internet does not.
 ## Install
 
 You need a Pod 3, 4 or 5, about two hours, and $20 to $70 of parts: a USB serial adapter, plus
-either a tag-connect cable or three soldered wires. The one hands-on step is opening the Pod's hub
+either a tag-connect cable or three soldered wires. Adhesive strips are optional, for sticking the
+hub's rubber feet back on afterwards. The one hands-on step is opening the Pod's hub
 and attaching the adapter to get a root shell; the [install guide](INSTALLATION.md) has photos for
 each Pod. Then, on the Pod:
 
