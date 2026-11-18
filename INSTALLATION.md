@@ -380,13 +380,13 @@ export FREE_SLEEP_REPO=throwaway31265/free-sleep FREE_SLEEP_BRANCH=main
 <img src="docs/screenshots/temperature.png" width="260" alt="The Temperature page">
 
 **Opening it by name.** Where the Pod's system runs `systemd-resolved`, the installer also makes
-the Pod answer by name. A Pod that still has Eight Sleep's name (`eight-pod`) is renamed `bed`, so
-the address is `http://bed.local`. No port is needed; `:3000` keeps working. For another name:
+the Pod answer by name. A Pod that still has Eight Sleep's name (`eight-pod`) is renamed `eightpod`, so
+the address is `http://eightpod.local`. No port is needed; `:3000` keeps working. For another name:
 `sh /home/dac/free-sleep/scripts/setup_local_name.sh name <name>`. The name keeps
 working when the router gives the Pod a new address. Whether a Pod 3 or 4 has `systemd-resolved`
 is not known; if the installer printed `systemd-resolved is not running on this Pod`, use the IP address.
 An iPhone, a Mac and Windows 10 or later look up `.local` names. Android and some Linux computers
-may not: if `http://bed.local` does not load, use `http://<pod-ip>:3000` and reserve that address
+may not: if `http://eightpod.local` does not load, use `http://<pod-ip>:3000` and reserve that address
 in your router ([docs/REMOTE_ACCESS.md](docs/REMOTE_ACCESS.md)).
 To switch the name off: `sh /home/dac/free-sleep/scripts/setup_local_name.sh disable`.
 

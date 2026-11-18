@@ -1,10 +1,10 @@
 #!/bin/sh
 # Gives the Pod a short name and makes it answer to "<name>.local" on the home network (for
-# example http://bed.local), so the app and phone shortcuts keep working when the router hands
+# example http://eightpod.local), so the app and phone shortcuts keep working when the router hands
 # the Pod a different address.
 #
 # The name is the Pod's hostname. A Pod that still has its factory name ("eight-pod") is renamed
-# to "bed"; a name someone chose is left alone. Tailscale, when set up, takes the same name.
+# to "eightpod"; a name someone chose is left alone. Tailscale, when set up, takes the same name.
 #
 # The .local part switches on the mDNS responder in systemd-resolved, which the Pod already runs.
 # Nothing is installed and the Wi-Fi connection is not restarted. The internet block allows the
@@ -16,7 +16,7 @@
 # switches it off and is remembered, so updates leave it off.
 #
 # Usage:
-#   sh setup_local_name.sh              Switch the name on (renaming a factory-named Pod to "bed")
+#   sh setup_local_name.sh              Switch the name on (renaming a factory-named Pod to "eightpod")
 #   sh setup_local_name.sh name <name>  Rename the Pod and switch the name on
 #   sh setup_local_name.sh disable      Switch it off, and keep it off across updates
 #   sh setup_local_name.sh auto         Switch it on unless it was disabled (used by install.sh)
@@ -25,7 +25,7 @@ set -eu
 ACTION="${1:-enable}"
 REQUESTED_NAME="${2:-}"
 # The name a factory-named Pod is given
-DEFAULT_POD_NAME="bed"
+DEFAULT_POD_NAME="eightpod"
 # Overridable so the script can be tested away from a Pod
 RESOLVED_DROP_IN_DIR="${RESOLVED_DROP_IN_DIR:-/etc/systemd/resolved.conf.d}"
 DROP_IN_FILE="$RESOLVED_DROP_IN_DIR/free-sleep-mdns.conf"
@@ -41,7 +41,7 @@ rename_pod() {
   new_name="$1"
   case "$new_name" in
     ''|-*|*-|*[!a-z0-9-]*)
-      echo "A name may only have lowercase letters, digits and dashes, for example: bed" >&2
+      echo "A name may only have lowercase letters, digits and dashes, for example: eightpod" >&2
       exit 1
       ;;
   esac

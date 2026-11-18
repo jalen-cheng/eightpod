@@ -9,14 +9,14 @@ import { buildSidesPayload, getControlledSides } from '@lib/sides.ts';
 export interface AlarmDisabledDialogProps {
   open: boolean;
   setOpen: Dispatch<SetStateAction<boolean>>;
-  scheduledAlarmTimeHhMm: string;
+  scheduledAlarmTime: string;
   alarmDisabled: boolean;
 }
 
 export default function AlarmDisabledDialog({
   open,
   setOpen,
-  scheduledAlarmTimeHhMm,
+  scheduledAlarmTime,
   alarmDisabled,
 }: AlarmDisabledDialogProps) {
   const [isSaving, setIsSaving] = useState(false);
@@ -30,7 +30,7 @@ export default function AlarmDisabledDialog({
     const targetDay = now.isSameOrAfter(noonToday) ? now.clone().add(1, 'day') : now;
 
 
-    const [hour, minute] = scheduledAlarmTimeHhMm.split(':').map(Number);
+    const [hour, minute] = scheduledAlarmTime.split(':').map(Number);
     const expiresAt = moment.tz(
       {
         year: targetDay.year(),

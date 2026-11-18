@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="0a3412e4-031c-5a32-85b9-af26b7d45d93")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="dd5e2869-4bfc-5243-b6d2-8b0ba8be2dd9")}catch(e){}}();
 import express from 'express';
 import { z } from 'zod';
 import moment from 'moment-timezone';
@@ -11,7 +11,7 @@ import logger from '../../logger.js';
 import { applyAutomaticOffTime, isNightLengthValid } from '../../db/automaticOffTime.js';
 import schedulesDB from '../../db/schedules.js';
 import settingsDB from '../../db/settings.js';
-import { executeAlarm, getPendingOneOffAlarm, nextOccurrenceHhMm } from '../../jobs/alarmScheduler.js';
+import { executeAlarm, getPendingOneOffAlarm, nextOccurrenceOfTime } from '../../jobs/alarmScheduler.js';
 const router = express.Router();
 router.post('/alarm', async (req, res) => {
     const body = req.body;
@@ -141,7 +141,7 @@ router.post('/alarm/time', async (req, res) => {
         if (shiftMinutes !== undefined)
             return shiftNextAlarm(alarmSide, shiftMinutes, now);
         // (time is set here: the schema requires it whenever shiftMinutes is missing)
-        const firesAt = nextOccurrenceHhMm(settingsDB.data.timeZone, time);
+        const firesAt = nextOccurrenceOfTime(settingsDB.data.timeZone, time);
         // Without this, a one-off earlier than the scheduled alarm would leave both to go off
         const replacedAlarm = findAlarmReplacedByOneOff(schedulesDB.data[alarmSide], now, firesAt, LATE_ALARM_WINDOW_HOURS);
         // An alarm skipped from the app stays skipped, whatever time the one-off is for
@@ -173,4 +173,4 @@ router.post('/alarm/time/cancel', async (req, res) => {
 });
 export default router;
 //# sourceMappingURL=alarm.js.map
-//# debugId=0a3412e4-031c-5a32-85b9-af26b7d45d93
+//# debugId=dd5e2869-4bfc-5243-b6d2-8b0ba8be2dd9

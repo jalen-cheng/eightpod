@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="3a967f69-50b1-538b-a213-45ce1e95a3e1")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="b8e62b0f-594b-5570-b8d6-a1ef3a6bd3cf")}catch(e){}}();
 import path from 'path';
 import chokidar from 'chokidar';
 import moment from 'moment-timezone';
@@ -68,7 +68,7 @@ async function setupJobs() {
         void setupJobs();
     }
 }
-let RETRY_COUNT = 0;
+let retryCount = 0;
 function waitForValidDateAndSetupJobs() {
     serverStatus.status.systemDate.status = 'started';
     if (isSystemDateValid()) {
@@ -77,11 +77,11 @@ function waitForValidDateAndSetupJobs() {
         logger.info('System date is valid. Setting up jobs...');
         void setupJobs();
     }
-    else if (RETRY_COUNT < 20) {
+    else if (retryCount < 20) {
         serverStatus.status.systemDate.status = 'retrying';
-        const message = `System date is invalid (year 2010). Retrying in 5 seconds... (Attempt #${RETRY_COUNT}})`;
+        const message = `System date is invalid (year 2010). Retrying in 5 seconds... (Attempt #${retryCount}})`;
         serverStatus.status.systemDate.message = message;
-        RETRY_COUNT++;
+        retryCount++;
         logger.debug(message);
         setTimeout(waitForValidDateAndSetupJobs, 5_000);
     }
@@ -111,4 +111,4 @@ chokidar.watch(config.lowDbFolder).on('change', (changedPath) => {
 // Initial job setup
 waitForValidDateAndSetupJobs();
 //# sourceMappingURL=jobScheduler.js.map
-//# debugId=3a967f69-50b1-538b-a213-45ce1e95a3e1
+//# debugId=b8e62b0f-594b-5570-b8d6-a1ef3a6bd3cf

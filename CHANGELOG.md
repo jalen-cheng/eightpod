@@ -1,7 +1,7 @@
 # Changelog
 
 What EightPod changed from [throwaway31265/free-sleep](https://github.com/throwaway31265/free-sleep),
-what was checked on a real Pod, and what was not. EightPod is at version 3.6.1. Everything was
+what was checked on a real Pod, and what was not. EightPod is at version 3.6.2. Everything was
 developed and tested on one Pod 5 between 13 and 17 Nov 2026.
 
 - [Tested on the Pod](#tested-on-the-pod)
@@ -52,7 +52,7 @@ Each of these was seen working on the test Pod 5, in its log or by the person on
 - Daily priming does not check whether the bed is in use. (The daily reboot does.)
 - The night clocks go forward, a scheduled time between 2 and 3 AM does not happen that night.
 - `{"shiftMinutes": ...}` moves tonight's alarm even if it was skipped from the app, which turns it back on.
-- Cancelling a one-time alarm ("Back to schedule") also un-skips a skipped alarm: the two share one slot.
+- Cancelling a one-time alarm (`POST /api/alarm/time/cancel`) also un-skips a skipped alarm: the two share one slot.
 - Flipping left and right while someone is in bed, or mid-alarm, leaves that state on the old side until it ends.
 - Hardware differences between Pod 3, 4 and 5 are checked in several places instead of one table.
 
@@ -221,3 +221,4 @@ acted on it).
 | [#79](https://github.com/jalen-cheng/eightpod/pull/79) | Design, docs | **Temperature page:** a side that is off turns on with a tap anywhere in the dial's section; the power mark at its top right replaces the Turn on / Turn off button. **Schedule page:** a misplaced change says what it collides with ("Must be earlier than the 6:30 AM wake time"). **Docs:** the README's FAQ opens question by question; the install guide covers Linux and Windows computers (not run on either), says how to turn off flow control, makes the SSH key optional, and its way back to Eight Sleep undoes the updater lock-out and no longer names a unit that does not exist. **Server:** a night longer than 12 hours no longer loses the bed before its alarm (the Pod is told to stay on past the off time); a one-time alarm on a night that starts after midnight uses that night's settings; a change saved while the jobs are being rebuilt is no longer dropped. |
 | [#80](https://github.com/jalen-cheng/eightpod/pull/80) | Rename | The project is named **EightPod**: the app, the docs, the repository (`jalen-cheng/eightpod`; the old address redirects) and the demo ([eightpod.vercel.app](https://eightpod.vercel.app)). The version block in the device status is `eightPod` (was `freeSleep`). Folders, services and commands on the Pod keep the name `free-sleep`. |
 | [#81](https://github.com/jalen-cheng/eightpod/pull/81) | Fix, design, docs | **Alarms:** a one-time alarm replaces only the alarm of its own morning and leaves a skipped alarm skipped; the server refuses a wake-up time under 1 hour or over 23 hours after Bed on, as the app does. **Dialogs:** centred over the page on a computer, not the whole window; the alarm dialog has Discard and Save, with the test beside the strength; "Change the next alarm" says it is for one time only. **Data:** Sleep is shown as off while biometrics is off, and the demo has no sleep data, like a Pod. **Docs:** install steps for a Pod already running Free Sleep; Windows marked as not tested. |
+| [#82](https://github.com/jalen-cheng/eightpod/pull/82) | Design, docs | A new Pod is named `eightpod`, so the app is at `http://eightpod.local` (a Pod already named is left alone). The one-time alarm dialog is titled "Change next alarm only (overrides schedule)" and no longer has Back to schedule. Shortcut and API docs say what a refused request returns. README: evenly spaced links, new screenshots. Clearer names in the code for times and counters. |

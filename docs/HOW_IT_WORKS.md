@@ -194,7 +194,7 @@ leaves the bed on until the off time.
 
 ### One-time alarms
 
-Set from the Temperature page ("Change the next alarm"), or by a shortcut
+Set from the Temperature page ("Change next alarm only"), or by a shortcut
 (`POST /api/alarm/time {"time": "7:15 AM"}`). It is stored in the settings file as a time plus an
 expiry, and the weekly schedule is not touched.
 
@@ -209,7 +209,7 @@ expiry, and the weekly schedule is not touched.
   same warm-up (that weekday's minutes and temperature) before its own time, if the bed is on then.
 - **It moves the off time.** A side that is on turns off 30 minutes after the one-time alarm goes off.
 - `{"shiftMinutes": 30}` moves the next alarm later (or earlier with a negative number) the same way.
-- "Back to schedule" in the app, or `POST /api/alarm/time/cancel`, removes it.
+- `POST /api/alarm/time/cancel` removes it. In the app, set the time back to the schedule's own.
 
 ### A one-time alarm later than the off time
 
@@ -341,7 +341,7 @@ The app refreshes the bed's state every 5 seconds.
 **Temperature.** Side picker and link button; the dial with the target, the current reading and
 "Turns off at"; + and -; the power mark at the top right, which turns the side off (a side that is
 off turns on with a tap anywhere in the section); and a row for the next alarm. On that row the time
-opens "Change the next alarm" (a one-time alarm), and **Skip** turns off tonight's alarm (the button
+opens "Change next alarm only" (a one-time alarm), and **Skip** turns off tonight's alarm (the button
 then reads **Turn on**). While an alarm vibrates, a dialog
 offers to dismiss it.
 
@@ -391,8 +391,8 @@ in [server/API.md](../server/API.md). The ones made for shortcuts:
 Step-by-step shortcut recipes are in [IOS_SHORTCUTS.md](IOS_SHORTCUTS.md).
 
 **Which pages may call the API.** A browser tells the server which page a request came from. The
-server accepts the Pod's own addresses and names (home network addresses, `bed`,
-`bed.local`, its Tailscale address and name) and refuses any other website, so a page on the
+server accepts the Pod's own addresses and names (home network addresses, `eightpod`,
+`eightpod.local`, its Tailscale address and name) and refuses any other website, so a page on the
 internet cannot drive the bed through your browser. Requests with no page behind them, such as
 shortcuts, are accepted.
 
@@ -404,8 +404,8 @@ name lookups on the home network. It is restored at every boot before the networ
 on, the Pod cannot reach Eight Sleep or anything else. `scripts/updater_lockout.sh` separately
 switches off Eight Sleep's updater so it cannot replace the firmware.
 
-**The name.** The installer renames a Pod that still has its factory name to `bed` and switches
-on a responder, so the Pod answers at `http://bed.local` at home, whatever address the router
+**The name.** The installer renames a Pod that still has its factory name to `eightpod` and switches
+on a responder, so the Pod answers at `http://eightpod.local` at home, whatever address the router
 gives it. The server listens on port 80 as well as 3000, so the port can be left out.
 `setup_local_name.sh disable` turns it off for good.
 
@@ -417,7 +417,7 @@ anywhere:
 - A daily timer re-reads Tailscale's relay list and updates the allowed addresses.
 - Updating EightPod also installs a newer Tailscale when one is out.
 - **Home access never depends on it.** If Tailscale is down, `http://<pod-ip>:3000` and
-  `bed.local` work as before on your home network.
+  `eightpod.local` work as before on your home network.
 
 Details, limits and alternatives: [REMOTE_ACCESS.md](REMOTE_ACCESS.md).
 
