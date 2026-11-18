@@ -1,11 +1,12 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="a4423c2a-5600-51cf-be1e-29820eb75a02")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="9a00e264-05bf-589d-86a6-f05a6d905a12")}catch(e){}}();
 import express from 'express';
 import cors from 'cors';
 import logger from '../logger.js';
 import os from 'os';
 import { isAllowedOrigin } from './allowedOrigin.js';
-const originRules = { podHostname: os.hostname(), extraAllowedOrigin: process.env.ALLOWED_ORIGIN };
+// Read on every request: the Pod can be renamed while the server runs (setup_local_name.sh)
+const getOriginRules = () => ({ podHostname: os.hostname(), extraAllowedOrigin: process.env.ALLOWED_ORIGIN });
 export default function (app) {
     app.use((req, res, next) => {
         const startTime = Date.now();
@@ -20,7 +21,7 @@ export default function (app) {
     // Allow local development
     app.use(cors({
         origin: (origin, callback) => {
-            if (isAllowedOrigin(origin, originRules)) {
+            if (isAllowedOrigin(origin, getOriginRules())) {
                 return callback(null, true);
             }
             return callback(new Error('Not allowed by CORS'));
@@ -36,4 +37,4 @@ export default function (app) {
     });
 }
 //# sourceMappingURL=middleware.js.map
-//# debugId=a4423c2a-5600-51cf-be1e-29820eb75a02
+//# debugId=9a00e264-05bf-589d-86a6-f05a6d905a12

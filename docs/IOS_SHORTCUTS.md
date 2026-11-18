@@ -1,6 +1,6 @@
 # Control your Pod from iPhone with Apple Shortcuts
 
-Free Sleep has a local API, so the Shortcuts app can control the bed without opening a browser.
+Free Pod has a local API, so the Shortcuts app can control the bed without opening a browser.
 You do not need an Apple developer account. Shortcuts also run from the Home Screen, the Lock
 Screen, Control Center, the Action button, Siri, and Automations (for example "when my Sleep Focus
 turns on").
@@ -11,11 +11,11 @@ Every shortcut below uses `<pod>`. Replace it with one of these, most stable fir
 
 | Use | Works | Keeps working when |
 |---|---|---|
-| `eight-pod` | Anywhere, while Tailscale is connected on the phone | The Pod's address, your router or your network changes |
-| `eight-pod.local` | At home | The Pod's address or your router changes. Shortcuts run by a Home automation have been reported to fail on `.local` names; if yours does, use one of the others |
+| `bed` | Anywhere, while Tailscale is connected on the phone | The Pod's address, your router or your network changes |
+| `bed.local` | At home | The Pod's address or your router changes. Shortcuts run by a Home automation have been reported to fail on `.local` names; if yours does, use one of the others |
 | The Pod's home address, for example `192.168.1.50` | At home; anywhere with Tailscale if you set up the one-link route | Only while that address stays the same, so reserve it in the router |
 
-`eight-pod` is a Pod 5's name; run `hostname` on the Pod to check yours. Setting up Tailscale, the
+`bed` is the name the installer gives the Pod; run `hostname` on the Pod to check yours. Setting up Tailscale, the
 one-link route and a reserved address is in [REMOTE_ACCESS.md](REMOTE_ACCESS.md).
 
 The first run of a shortcut asks for permission to connect to devices on your local network; allow it.
@@ -27,7 +27,7 @@ Asks for a number on the same scale as Eight Sleep's own app, turns the bed on, 
 1. Open **Shortcuts** and tap **+**.
 2. Add **Ask for Input**. Set the type to **Number**, the prompt to "Bed temperature, -10 to 10", and
    switch on **Allow Negative Numbers**.
-3. Add **Get Contents of URL** and set the URL to `http://<pod>:3000/api/deviceStatus/dial`.
+3. Add **Get Contents of URL** and set the URL to `http://<pod>/api/deviceStatus/dial`.
 4. Expand it and set **Method** to `POST` and **Request Body** to `JSON`.
 5. Add a **Number** field `dial` and pick **Provided Input** (the answer from step 2) as its value.
 6. Name it "Bed temperature".
@@ -42,7 +42,7 @@ Asks for a time and sets a one-time alarm. Your weekly schedule is not changed.
 
 1. Open **Shortcuts** and tap **+**.
 2. Add **Ask for Input**. Set the type to **Time** and the prompt to "Alarm time".
-3. Add **Get Contents of URL** and set the URL to `http://<pod>:3000/api/alarm/time`.
+3. Add **Get Contents of URL** and set the URL to `http://<pod>/api/alarm/time`.
 4. Expand it and set **Method** to `POST` and **Request Body** to `JSON`.
 5. Add a **Text** field `time` and pick **Provided Input** (the answer from step 2) as its value.
 6. Name it "Bed alarm".
@@ -66,7 +66,7 @@ How the time is understood:
 Says what the bed is set to and what it has reached, on the -10 to +10 scale.
 
 1. Open **Shortcuts** and tap **+**.
-2. Add **Get Contents of URL** and set the URL to `http://<pod>:3000/api/deviceStatus/dial`.
+2. Add **Get Contents of URL** and set the URL to `http://<pod>/api/deviceStatus/dial`.
    Leave the method as `GET`.
 3. Add **Get Dictionary Value** and set it to get the value for `summary`.
 4. Add **Show Result** (or **Speak Text** for Siri).
@@ -81,11 +81,11 @@ built the same way as shortcut 1 but with fixed values instead of a question.
 
 | Shortcut | URL | JSON fields |
 |---|---|---|
-| Turn the bed off | `http://<pod>:3000/api/deviceStatus` | Dictionary `left` with Boolean `isOn` = false, and the same for `right` |
-| Stop a vibrating alarm | `http://<pod>:3000/api/deviceStatus` | Dictionary `left` with Boolean `isAlarmVibrating` = false |
-| Next alarm 30 minutes later | `http://<pod>:3000/api/alarm/time` | Number `shiftMinutes` = 30 (negative for earlier) |
-| Cancel the one-time alarm | `http://<pod>:3000/api/alarm/time/cancel` | None |
-| Change the weekly wake-up time | `http://<pod>:3000/api/alarm/time` | Text `time`, and Array `days` of Text such as `monday`. The bed's off time moves with it |
+| Turn the bed off | `http://<pod>/api/deviceStatus` | Dictionary `left` with Boolean `isOn` = false, and the same for `right` |
+| Stop a vibrating alarm | `http://<pod>/api/deviceStatus` | Dictionary `left` with Boolean `isAlarmVibrating` = false |
+| Next alarm 30 minutes later | `http://<pod>/api/alarm/time` | Number `shiftMinutes` = 30 (negative for earlier) |
+| Cancel the one-time alarm | `http://<pod>/api/alarm/time/cancel` | None |
+| Change the weekly wake-up time | `http://<pod>/api/alarm/time` | Text `time`, and Array `days` of Text such as `monday`. The bed's off time moves with it |
 
 Stopping an alarm on one side stops both when the sides are linked. Everything the app can do is
 in [server/API.md](../server/API.md), including whether someone is in bed
@@ -98,8 +98,8 @@ linked in the app, both sides change anyway.
 
 ## Troubleshooting
 
-- **The shortcut times out**: check that `http://<pod>:3000` opens in Safari on the same phone. If
-  you used `eight-pod`, check Tailscale is connected.
+- **The shortcut times out**: check that `http://<pod>` opens in Safari on the same phone. A Pod installed before version 3.2.0 needs `:3000` after the name until it is updated. If
+  you used `bed`, check Tailscale is connected.
 - **"Invalid request data" (HTTP 400)**: a field has the wrong type or value. `dial` must be a Number
   field from -10 to 10; `side` and `time` must be Text fields, and `time` must contain a time of day.
 - **It stopped working after a while**: if the shortcut uses a number, the Pod's address changed.

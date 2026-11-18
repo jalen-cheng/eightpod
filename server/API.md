@@ -255,7 +255,7 @@ Stored in `settingsDB.json`. The values below are the defaults, except `id` (a r
 | `temperatureFormat` | `fahrenheit`, `celsius` or `level` (the -10 to +10 scale). Display only. |
 | `rebootDaily` | boolean |
 | `linkSides` | When true, a temperature or power change made for one side applies to both. |
-| `swapSides` | When true, Free Sleep's left is the firmware's right and the other way round. |
+| `swapSides` | When true, Free Pod's left is the firmware's right and the other way round. |
 | `<side>.name` | 1-20 characters |
 | `<side>.awayMode` | boolean |
 | `<side>.scheduleOverrides.temperatureSchedules` | `disabled`, `expiresAt` (string) |
@@ -378,7 +378,7 @@ Starts jobs now. The body is a JSON array of job names. Returns **204** without 
 | `analyzeSleepLeft`, `analyzeSleepRight` | Sleep analysis over the last 12 hours for that side. |
 | `biometricsCalibrationLeft`, `biometricsCalibrationRight` | Sensor calibration over the last 2 hours for that side. |
 | `reboot` | Reboots the Pod. |
-| `update` | Starts `free-sleep-update.service`, which updates Free Sleep. |
+| `update` | Starts `free-sleep-update.service`, which updates Free Pod. |
 
 ```json
 ["analyzeSleepLeft"]

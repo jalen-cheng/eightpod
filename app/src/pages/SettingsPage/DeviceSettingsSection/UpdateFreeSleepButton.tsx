@@ -98,9 +98,9 @@ export default function UpdateFreeSleepButton() {
             <DialogTitle>{ updateTitle }</DialogTitle>
             :
             isUpdating ?
-              <DialogTitle>Updating Free Sleep...</DialogTitle>
+              <DialogTitle>Updating Free Pod...</DialogTitle>
               :
-              <DialogTitle>Update Free Sleep?</DialogTitle>
+              <DialogTitle>Update Free Pod?</DialogTitle>
         }
 
         <DialogContent>

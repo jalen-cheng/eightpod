@@ -1,11 +1,11 @@
 {
-  "name": "Free Sleep",
-  "short_name": "Free Sleep",
+  "name": "Free Pod",
+  "short_name": "Free Pod",
   "start_url": "/temperature",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#000000",
-  "description": "Free Sleep",
+  "description": "Free Pod",
   "icons": [
     {
       "src": "/free-sleep-icon_96.png",

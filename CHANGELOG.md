@@ -1,7 +1,7 @@
 # Changelog
 
 What this fork changed from [throwaway31265/free-sleep](https://github.com/throwaway31265/free-sleep),
-what was checked on a real Pod, and what was not. The fork is at version 3.1.0. Everything was
+what was checked on a real Pod, and what was not. The fork is called Free Pod and is at version 3.2.0. Everything was
 developed and tested on one Pod 5 between 13 and 17 Nov 2026.
 
 - [Tested on the Pod](#tested-on-the-pod)
@@ -177,3 +177,4 @@ minutes; whether it gets to 50°F with more time is not known from this run.
 | [#59](https://github.com/jalen-cheng/free-sleep/pull/59) | Tests | A test used the test Pod's own Tailscale address; replaced with a generic one. |
 | [#61](https://github.com/jalen-cheng/free-sleep/pull/61) | Fix | In-bed state survives a restart of the server. A side picking up the person on the other side no longer reads as a second person. |
 | [#62](https://github.com/jalen-cheng/free-sleep/pull/62) | Docs, fix | One install guide, a first-use guide, a complete API reference and a developer guide; the README is the fork's own and this changelog replaces the status document. A wake-up time set while the alarm is off is kept. In-bed margins raised so a laptop left on the bed is not a person. Links in the app point at this fork. |
+| [#63](https://github.com/jalen-cheng/free-sleep/pull/63) | Feature, docs | The fork is named Free Pod. The installer renames a factory-named Pod to `bed` and the server also listens on port 80, so the app opens at `http://bed.local` (or `http://bed` with Tailscale). Screenshots are one size in phone frames. The README opens with why the fork exists and says biometrics are untested. A demo is at freepod.vercel.app. |

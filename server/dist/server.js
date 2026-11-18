@@ -1,8 +1,9 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="fb5728b0-45c4-5a54-a790-7431fd893a05")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="bdf7accd-dab6-5e50-a577-9a24645b543d")}catch(e){}}();
 import './instrument.js';
 import express from 'express';
 import schedule from 'node-schedule';
+import { createServer } from 'http';
 import logger from './logger.js';
 import { connectFranken, disconnectFranken } from './8sleep/frankenServer.js';
 import { FrankenMonitor } from './8sleep/frankenMonitor.js';
@@ -18,6 +19,10 @@ import { prisma } from './db/prisma.js';
 import { setupSentryTags } from './setupSentryTags.js';
 import { loadWifiSignalStrength } from './8sleep/wifiSignalStrength.js';
 const port = 3000;
+// The standard web port, so the app also opens without ":3000". Binding it needs the capability
+// the installer gives the service; without it the app stays on port 3000 only.
+const WEB_PORT = 80;
+let webPortServer;
 const app = express();
 let server;
 let frankenMonitor;
@@ -68,6 +73,7 @@ async function gracefulShutdown(signal) {
                 logger.debug('Closed out remaining HTTP connections.');
             });
         }
+        webPortServer?.close();
         if (!config.remoteDevMode) {
             frankenMonitor?.stop();
             buttonMonitor?.stop();
@@ -114,6 +120,14 @@ async function startServer() {
     server = app.listen(port, () => {
         logger.debug(`Server running on http://localhost:${port}`);
     });
+    if (!config.remoteDevMode) {
+        webPortServer = createServer(app);
+        webPortServer.on('error', (error) => {
+            logger.info(`Port ${WEB_PORT} is not available (${error.message}); the app is on port ${port} only.`);
+            webPortServer = undefined;
+        });
+        webPortServer.listen(WEB_PORT, () => logger.debug(`Also serving on port ${WEB_PORT}`));
+    }
     serverStatus.status.express.status = 'healthy';
     serverStatus.status.logger.status = 'healthy';
     // Initialize Franken once before listening
@@ -152,4 +166,4 @@ startServer().catch((err) => {
     process.exit(1);
 });
 //# sourceMappingURL=server.js.map
-//# debugId=fb5728b0-45c4-5a54-a790-7431fd893a05
+//# debugId=bdf7accd-dab6-5e50-a577-9a24645b543d

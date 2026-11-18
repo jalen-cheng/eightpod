@@ -1,6 +1,6 @@
-# Installing Free Sleep
+# Installing Free Pod
 
-This guide takes a Pod from sealed to a working Free Sleep install with the internet blocked.
+This guide takes a Pod from sealed to a working Free Pod install with the internet blocked.
 It covers the Pod 3, Pod 4 and Pod 5.
 
 **Only a Pod 5 was tested.** This fork was installed and run on one Pod 5. The Pod 3 and Pod 4
@@ -306,7 +306,7 @@ is wrong.
    systemctl restart systemd-timesyncd
    ```
 
-## 12. Install Free Sleep
+## 12. Install Free Pod
 
 ```
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/jalen-cheng/free-sleep/main/scripts/install.sh)"
@@ -340,13 +340,9 @@ export FREE_SLEEP_REPO=throwaway31265/free-sleep FREE_SLEEP_BRANCH=main
 <img src="docs/screenshots/temperature.png" width="260" alt="The Temperature page">
 
 **Opening it by name.** Where the Pod's system runs `systemd-resolved`, the installer also makes
-the Pod answer at `http://<hostname>.local:3000`. Print the hostname with:
-
-```
-hostname
-```
-
-On a Pod 5 it is `eight-pod`, so the address is `http://eight-pod.local:3000`. The name keeps
+the Pod answer by name. A Pod that still has Eight Sleep's name (`eight-pod`) is renamed `bed`, so
+the address is `http://bed.local`. No port is needed; `:3000` keeps working. For another name:
+`sh /home/dac/free-sleep/scripts/setup_local_name.sh name <name>`. The name keeps
 working when the router gives the Pod a new address. Whether a Pod 3 or 4 has `systemd-resolved`
 is not known; if the installer printed `systemd-resolved is not running on this Pod`, use the IP address.
 To switch the name off: `sh /home/dac/free-sleep/scripts/setup_local_name.sh disable`.
@@ -394,7 +390,7 @@ outside your home network.
 3. Optional: add the updater lock-out. Step 9 already disabled Eight Sleep's updater. This masks
    the updater services again and points Eight Sleep's cloud hosts (`raw-api-upload.8slp.net`,
    `update-api.8slp.net`, `device-api.8slp.net`) nowhere in `/etc/hosts`, so they stay unreachable
-   even while the block is briefly lifted for a Free Sleep update. Warnings that a unit was "not
+   even while the block is briefly lifted for a Free Pod update. Warnings that a unit was "not
    found" are harmless; the unit names were only confirmed on a Pod 3.
    ```
    sh /home/dac/free-sleep/scripts/updater_lockout.sh enable
@@ -515,11 +511,11 @@ SSH session (`ssh root@<pod-ip> -p 8822`):
 
 | Command | What it does |
 |---|---|
-| `fs-update` | Updates Free Sleep from the saved source, keeping settings and schedules. Takes about four minutes and ends with the internet block on |
-| `fs-debug` | Prints a debug report for the Pod and Free Sleep. Include it in issues |
-| `fs-restart` | Restarts the Free Sleep services |
+| `fs-update` | Updates Free Pod from the saved source, keeping settings and schedules. Takes about four minutes and ends with the internet block on |
+| `fs-debug` | Prints a debug report for the Pod and Free Pod. Include it in issues |
+| `fs-restart` | Restarts the Free Pod services |
 | `fs-reset-db` | Deletes the sleep-data database and recreates it. Asks for confirmation |
-| `fs-reset` | Deletes all Free Sleep data (settings, schedules, sleep data) and reinstalls. Asks for confirmation |
+| `fs-reset` | Deletes all Free Pod data (settings, schedules, sleep data) and reinstalls. Asks for confirmation |
 | `fs-dev-server` | For developers: stops the service and runs the server with hot reload |
 
 **Going back to the original project.** This switches the saved source, so later updates come
