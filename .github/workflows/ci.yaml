@@ -6,7 +6,8 @@ on:
 jobs:
   biometrics:
     name: Biometrics (Python ${{ matrix.python-version }}, cbor2 ${{ matrix.cbor-version }})
-    runs-on: ubuntu-latest
+    # Pinned: Python 3.9, which older Pods run, is not offered on the newest runner image
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         include:
@@ -67,8 +68,9 @@ jobs:
 
       - name: Require clean working directory
         run: |
-          if ! git diff --exit-code; then
-            echo "Working tree dirty at end of job."
+          # Source maps are left out: they differ between machines while the code they map is identical
+          if ! git diff --exit-code --stat -- . ':(exclude)server/public/*.map' ':(exclude)server/dist/**/*.map'; then
+            echo "The committed build output is out of date. Run 'npm run build:pr' in server/ and app/ and commit the result."
             exit 1
           fi
 
