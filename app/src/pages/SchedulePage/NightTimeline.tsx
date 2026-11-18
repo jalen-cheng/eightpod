@@ -82,7 +82,12 @@ const NightRow = ({ label, info, error, dotColor, isMainEvent, children }: Night
 // There is no off time to choose: the bed turns off OFF_AFTER_ALARM_MINUTES after wake-up. The
 // wake-up time is the alarm's time; the button beside it says whether the
 // alarm vibrates and opens everything else about it.
-export default function NightTimeline() {
+type NightTimelineProps = {
+  // Saves the night being edited
+  onSave: () => Promise<void>;
+};
+
+export default function NightTimeline({ onSave }: NightTimelineProps) {
   const { isUpdating } = useAppStore();
   const { selectedSchedule, updateSelectedSchedule, updateSelectedTemperatures } = useScheduleStore();
   const [areAlarmOptionsOpen, setAreAlarmOptionsOpen] = useState(false);
@@ -227,7 +232,7 @@ export default function NightTimeline() {
           <InfoTip text={ `The bed turns off at ${formatClockTime(power.off)}, ${OFF_AFTER_ALARM_MINUTES} minutes after this.` }/>
         </NightRow>
       </Box>
-      <AlarmOptionsDialog open={ areAlarmOptionsOpen } onClose={ () => setAreAlarmOptionsOpen(false) }/>
+      <AlarmOptionsDialog open={ areAlarmOptionsOpen } onClose={ () => setAreAlarmOptionsOpen(false) } onSave={ onSave }/>
     </Paper>
   );
 }

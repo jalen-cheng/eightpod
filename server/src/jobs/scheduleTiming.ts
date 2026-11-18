@@ -79,6 +79,19 @@ export function findAlarmReplacedByOneOff(
   return hoursApart <= withinHours ? nextScheduled : undefined;
 }
 
+// Until when scheduled alarms stay quiet once a one-off alarm is set: until the one-off itself,
+// or the scheduled alarm it replaces, or the end of a skip that is still running, whichever is last.
+export function findHoldBackUntil(
+  oneOffFiresAt: moment.Moment,
+  replacedAlarm: moment.Moment | undefined,
+  skipEndsAt: moment.Moment | undefined,
+  now: moment.Moment,
+): moment.Moment {
+  const candidates = [oneOffFiresAt, ...(replacedAlarm ? [replacedAlarm] : [])];
+  if (skipEndsAt?.isAfter(now)) candidates.push(skipEndsAt);
+  return moment.max(candidates);
+}
+
 // "9:05", "09:05:00", or either inside a longer text such as a full date
 const CLOCK_WITH_COLON = /(\d{1,2}):(\d{2})(?::\d{2})?\s*(a\.?m|p\.?m)?/i;
 // "9.05 pm". A dot only counts with AM or PM after it, so a date such as 16.11.2026 is not a time

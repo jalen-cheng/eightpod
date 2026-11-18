@@ -120,54 +120,54 @@ const createVitalsRecords = (): VitalsRecord[] => {
 const createSchedules = (): Schedules => ({
   left: {
     sunday: {
-      temperatures: { '06:00': 82, '07:00': 100 },
+      temperatures: { '01:00': 66, '06:00': 82 },
       power: { on: '21:30', off: '08:00', enabled: true, onTemperature: 60 },
       alarm: { time: '07:30', vibrationIntensity: 60, vibrationPattern: 'rise', duration: 600, enabled: true, alarmTemperature: 82 },
     },
     monday: {
-      temperatures: { '06:00': 82, '07:00': 100 },
+      temperatures: { '01:00': 66, '06:00': 82 },
       power: { on: '21:30', off: '07:30', enabled: true, onTemperature: 60 },
       alarm: { time: '07:00', vibrationIntensity: 80, vibrationPattern: 'double', duration: 600, enabled: true, alarmTemperature: 83 },
     },
     tuesday: {
-      temperatures: { '06:00': 82, '07:00': 100 },
+      temperatures: { '01:00': 66, '06:00': 82 },
       power: { on: '21:30', off: '07:30', enabled: true, onTemperature: 60 },
       alarm: { time: '07:00', vibrationIntensity: 60, vibrationPattern: 'rise', duration: 600, enabled: true, alarmTemperature: 82 },
     },
     wednesday: {
-      temperatures: { '06:00': 82, '07:00': 100 },
+      temperatures: { '01:00': 66, '06:00': 82 },
       power: { on: '21:30', off: '07:30', enabled: true, onTemperature: 60 },
       alarm: { time: '07:00', vibrationIntensity: 40, vibrationPattern: 'rise', duration: 600, enabled: true, alarmTemperature: 82 },
     },
     thursday: {
-      temperatures: { '06:00': 82, '07:00': 100 },
+      temperatures: { '01:00': 66, '06:00': 82 },
       power: { on: '21:30', off: '07:30', enabled: true, onTemperature: 60 },
       alarm: { time: '07:00', vibrationIntensity: 60, vibrationPattern: 'rise', duration: 600, enabled: true, alarmTemperature: 81 },
     },
     friday: {
-      temperatures: { '06:00': 82, '07:00': 100 },
+      temperatures: { '01:00': 66, '06:00': 82 },
       power: { on: '22:00', off: '08:30', enabled: true, onTemperature: 60 },
       alarm: { time: '08:00', vibrationIntensity: 80, vibrationPattern: 'rise', duration: 900, enabled: true, alarmTemperature: 84 },
     },
     saturday: {
-      temperatures: { '06:00': 82, '07:00': 100 },
+      temperatures: { '01:00': 66, '06:00': 82 },
       power: { on: '22:30', off: '09:30', enabled: true, onTemperature: 60 },
       alarm: { time: '09:00', vibrationIntensity: 40, vibrationPattern: 'rise', duration: 900, enabled: true, alarmTemperature: 85 },
     },
   },
   right: {
     sunday: {
-      temperatures: { '06:00': 82, '07:00': 100 },
+      temperatures: { '01:00': 66, '06:00': 82 },
       power: { on: '21:00', off: '07:30', enabled: true, onTemperature: 60 },
       alarm: { time: '07:00', vibrationIntensity: 60, vibrationPattern: 'rise', duration: 600, enabled: true, alarmTemperature: 84 },
     },
     monday: {
-      temperatures: { '06:00': 82, '07:00': 100 },
+      temperatures: { '01:00': 66, '06:00': 82 },
       power: { on: '21:00', off: '07:00', enabled: true, onTemperature: 60 },
       alarm: { time: '06:30', vibrationIntensity: 80, vibrationPattern: 'double', duration: 600, enabled: true, alarmTemperature: 84 },
     },
     tuesday: {
-      temperatures: { '06:00': 82, '07:00': 100 },
+      temperatures: { '01:00': 66, '06:00': 82 },
       power: { on: '21:15', off: '07:00', enabled: true, onTemperature: 60 },
       alarm: { time: '06:30', vibrationIntensity: 80, vibrationPattern: 'double', duration: 600, enabled: true, alarmTemperature: 83 },
     },

@@ -1,4 +1,5 @@
 import { Badge, Box, BottomNavigation, BottomNavigationAction, Button, LinearProgress, Typography } from '@mui/material';
+import { SIDEBAR_WIDTH_PX } from './pageFrame.ts';
 import { ReactElement } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAppStore } from '@state/appStore.tsx';
@@ -32,7 +33,7 @@ export default function Navbar() {
       <Box
         component="aside"
         sx={ {
-          display: { xs: 'none', md: 'flex' }, position: 'fixed', inset: '0 auto 0 0', width: 224, p: 2,
+          display: { xs: 'none', md: 'flex' }, position: 'fixed', inset: '0 auto 0 0', width: SIDEBAR_WIDTH_PX, p: 2,
           flexDirection: 'column', borderRight: '1px solid', borderColor: 'divider', bgcolor: 'background.default', zIndex: 1100,
         } }
       >

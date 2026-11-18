@@ -6,9 +6,11 @@ import {
 } from '../../db/schedulesSchema.js';
 import { DAYS_OF_WEEK } from '../../jobs/utils.js';
 import { SideChoiceSchema, resolveSides } from '../sideChoice.js';
-import { findAlarmReplacedByOneOff, findNextScheduledAlarm, parseClockTime } from '../../jobs/scheduleTiming.js';
+import {
+  findAlarmReplacedByOneOff, findHoldBackUntil, findNextScheduledAlarm, parseClockTime,
+} from '../../jobs/scheduleTiming.js';
 import logger from '../../logger.js';
-import { applyAutomaticOffTime } from '../../db/automaticOffTime.js';
+import { applyAutomaticOffTime, isNightLengthValid } from '../../db/automaticOffTime.js';
 import schedulesDB from '../../db/schedules.js';
 import settingsDB from '../../db/settings.js';
 import { executeAlarm, getPendingOneOffAlarm, nextOccurrenceHhMm } from '../../jobs/alarmScheduler.js';
@@ -97,7 +99,8 @@ const shiftNextAlarm = (side: Side, shiftMinutes: number, now: moment.Moment) =>
 // where sending a whole schedule is impractical.
 // - `time`, no `days`: a one-off alarm at the next occurrence of the time (tonight or tomorrow,
 //   whichever comes first). The weekly schedule is untouched; the scheduled alarm of that same
-//   morning is skipped, whether it is earlier or up to LATE_ALARM_WINDOW_HOURS later.
+//   morning is skipped, whether it is earlier or up to LATE_ALARM_WINDOW_HOURS later. Every other
+//   scheduled alarm goes off as usual, and one that was skipped stays skipped.
 // - `time` with `days`: sets the weekly alarm time on those days, leaving the rest of each alarm alone.
 // - `shiftMinutes`: moves the next alarm later or earlier, as a one-off.
 router.post('/alarm/time', async (req: Request, res: Response) => {
@@ -116,6 +119,17 @@ router.post('/alarm/time', async (req: Request, res: Response) => {
   }
   if (days && time) {
     await schedulesDB.read();
+    // Refused as the app refuses it: a wake-up time under 1 hour or over 23 hours after bed-on
+    const badNights = alarmSides.flatMap(alarmSide => days
+      .filter(day => schedulesDB.data[alarmSide][day].power.enabled && !isNightLengthValid(schedulesDB.data[alarmSide][day].power.on, time))
+      .map(day => `${alarmSide} ${day}`));
+    if (badNights.length > 0) {
+      res.status(400).json({
+        error: 'Invalid request data',
+        details: `The wake-up time must be 1 to 23 hours after the bed-on time (${badNights.join(', ')})`,
+      });
+      return;
+    }
     for (const alarmSide of alarmSides) {
       for (const day of days) {
         schedulesDB.data[alarmSide][day].alarm.time = time;
@@ -139,7 +153,10 @@ router.post('/alarm/time', async (req: Request, res: Response) => {
       const firesAt = nextOccurrenceHhMm(settingsDB.data.timeZone, time as string);
       // Without this, a one-off earlier than the scheduled alarm would leave both to go off
       const replacedAlarm = findAlarmReplacedByOneOff(schedulesDB.data[alarmSide], now, firesAt, LATE_ALARM_WINDOW_HOURS);
-      return setOneOff(alarmSide, firesAt, replacedAlarm ?? firesAt);
+      // An alarm skipped from the app stays skipped, whatever time the one-off is for
+      const { disabled, expiresAt } = settingsDB.data[alarmSide].scheduleOverrides.alarm;
+      const skipEndsAt = disabled && expiresAt ? moment.tz(expiresAt, settingsDB.data.timeZone) : undefined;
+      return setOneOff(alarmSide, firesAt, findHoldBackUntil(firesAt, replacedAlarm, skipEndsAt, now));
     })
     .filter(alarm => alarm !== undefined);
   if (alarms.length === 0) {

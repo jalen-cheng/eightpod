@@ -60,15 +60,22 @@ const OptionRow = ({ label, info, isStacked, children }: OptionRowProps) => (
 type AlarmOptionsDialogProps = {
   open: boolean;
   onClose: () => void;
+  // Saves the night being edited, as the page's own Save does
+  onSave: () => Promise<void>;
 };
 
 // Everything about the alarm except its time: whether it vibrates at all, how, how long for, and
-// the warm-up before it. Changes go into the schedule being edited and are saved with it. The test runs the
-// vibration as set on screen, saved or not.
+// the warm-up before it. Save writes the night as the page's Save does; Discard puts the alarm
+// back as it was when the dialog opened. The test runs the vibration as set on screen, saved or not.
 // eslint-disable-next-line react/no-multi-comp
-export default function AlarmOptionsDialog({ open, onClose }: AlarmOptionsDialogProps) {
-  const { selectedSchedule, updateSelectedSchedule } = useScheduleStore();
-  const { side, linkSides } = useAppStore();
+export default function AlarmOptionsDialog({ open, onClose, onSave }: AlarmOptionsDialogProps) {
+  const { selectedSchedule, updateSelectedSchedule, replaceSelectedAlarm, changesPresent, isValid } = useScheduleStore();
+  const { side, linkSides, isUpdating } = useAppStore();
+  // The alarm as it was when the dialog opened, for Discard
+  const [alarmAtOpen, setAlarmAtOpen] = useState<AlarmSchedule | undefined>(undefined);
+  useEffect(() => {
+    if (open) setAlarmAtOpen(useScheduleStore.getState().selectedSchedule?.alarm);
+  }, [open]);
   const [isTesting, setIsTesting] = useState(false);
   // The test ends by itself; the button goes back to "Test" when it has
   useEffect(() => {
@@ -109,6 +116,16 @@ export default function AlarmOptionsDialog({ open, onClose }: AlarmOptionsDialog
     postDeviceStatus(buildSidesPayload(testSides, { isAlarmVibrating: false })).catch(error => console.error(error));
   };
 
+  const hasAlarmChanged = !_.isEqual(alarm, alarmAtOpen);
+  const discard = () => {
+    if (alarmAtOpen) replaceSelectedAlarm(alarmAtOpen);
+    onClose();
+  };
+  const save = () => {
+    onClose();
+    if (changesPresent) void onSave();
+  };
+
   return (
     <Dialog open={ open } onClose={ onClose } fullWidth maxWidth="xs">
       <DialogTitle sx={ { display: 'flex', alignItems: 'center', justifyContent: 'space-between' } }>
@@ -144,7 +161,13 @@ export default function AlarmOptionsDialog({ open, onClose }: AlarmOptionsDialog
         </OptionRow>
 
         <Box>
-          <Typography variant="body2" sx={ { fontWeight: 500 } }>Strength { alarm.vibrationIntensity }%</Typography>
+          <Box sx={ { display: 'flex', alignItems: 'center', justifyContent: 'space-between', minHeight: 36 } }>
+            <Typography variant="body2" sx={ { fontWeight: 500 } }>Strength { alarm.vibrationIntensity }%</Typography>
+            { /* Beside the strength it lets you feel. It vibrates the bed for a minute, saved or not. */ }
+            <Button size="small" onClick={ isTesting ? stopTest : startTest }>
+              { isTesting ? 'Stop test' : 'Test for a minute' }
+            </Button>
+          </Box>
           <Slider
             value={ alarm.vibrationIntensity }
             min={ 1 }
@@ -204,10 +227,8 @@ export default function AlarmOptionsDialog({ open, onClose }: AlarmOptionsDialog
         </OptionRow>
       </DialogContent>
       <DialogActions sx={ { px: 3, pb: 2 } }>
-        <Button onClick={ isTesting ? stopTest : startTest } disabled={ !alarm.enabled && !isTesting } sx={ { mr: 'auto' } }>
-          { isTesting ? 'Stop test' : 'Test for a minute' }
-        </Button>
-        <Button variant="contained" onClick={ onClose }>Done</Button>
+        <Button color="inherit" onClick={ discard } disabled={ isUpdating }>{ hasAlarmChanged ? 'Discard' : 'Close' }</Button>
+        <Button variant="contained" onClick={ save } disabled={ isUpdating || !isValid() } sx={ { minWidth: 96 } }>Save</Button>
       </DialogActions>
     </Dialog>
   );

@@ -1,5 +1,6 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="e74b5250-603b-573d-9c36-2e674fd5ee2e")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="e7af2a75-1017-556c-adc0-262ba7713369")}catch(e){}}();
+import moment from 'moment-timezone';
 export const DAYS_OF_WEEK = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 const MINUTES_PER_DAY = 24 * 60;
 // Returns the HH:mm that is `minutes` before `time`, wrapping past midnight ("00:10" - 30 -> "23:40")
@@ -68,6 +69,14 @@ export function findAlarmReplacedByOneOff(sideSchedule, now, oneOffFiresAt, with
     const hoursApart = Math.abs(nextScheduled.diff(oneOffFiresAt, 'minutes')) / 60;
     return hoursApart <= withinHours ? nextScheduled : undefined;
 }
+// Until when scheduled alarms stay quiet once a one-off alarm is set: until the one-off itself,
+// or the scheduled alarm it replaces, or the end of a skip that is still running, whichever is last.
+export function findHoldBackUntil(oneOffFiresAt, replacedAlarm, skipEndsAt, now) {
+    const candidates = [oneOffFiresAt, ...(replacedAlarm ? [replacedAlarm] : [])];
+    if (skipEndsAt?.isAfter(now))
+        candidates.push(skipEndsAt);
+    return moment.max(candidates);
+}
 // "9:05", "09:05:00", or either inside a longer text such as a full date
 const CLOCK_WITH_COLON = /(\d{1,2}):(\d{2})(?::\d{2})?\s*(a\.?m|p\.?m)?/i;
 // "9.05 pm". A dot only counts with AM or PM after it, so a date such as 16.11.2026 is not a time
@@ -109,4 +118,4 @@ export function minutesAlarmIsAfterOff(alarmTime, power) {
     return minutesAfterBedtime(alarmTime, power.on) - minutesAfterBedtime(power.off, power.on);
 }
 //# sourceMappingURL=scheduleTiming.js.map
-//# debugId=e74b5250-603b-573d-9c36-2e674fd5ee2e
+//# debugId=e7af2a75-1017-556c-adc0-262ba7713369

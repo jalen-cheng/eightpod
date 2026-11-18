@@ -1,5 +1,5 @@
 import _ from 'lodash';
-import { applyAutomaticOffTime } from '../../db/automaticOffTime.js';
+import { applyAutomaticOffTime, isNightLengthValid } from '../../db/automaticOffTime.js';
 import express, { Request, Response } from 'express';
 import type { DeepPartial } from 'ts-essentials';
 import { Schedules } from '../../db/schedulesSchema.js';
@@ -36,6 +36,26 @@ router.post('/schedules', async (req: Request, res: Response) => {
   }
   const schedules: DeepPartial<Schedules> = validationResult.data;
   await schedulesDB.read();
+
+  // A night that is on must have its wake-up time 1 to 23 hours after its bed-on time, as the
+  // app requires. Checked for every night in the request before anything is changed.
+  const badNights: string[] = [];
+  (Object.entries(schedules) as [Side, Partial<SideSchedule>][]).forEach(([side, sideSchedule]) => {
+    (Object.entries(sideSchedule) as [DayOfWeek, Partial<DailySchedule>][]).forEach(([day, schedule]) => {
+      const saved = schedulesDB.data[side][day];
+      const isOn = schedule.power?.enabled ?? saved.power.enabled;
+      const bedtime = schedule.power?.on ?? saved.power.on;
+      const wakeTime = schedule.alarm?.time ?? saved.alarm.time;
+      if (isOn && !isNightLengthValid(bedtime, wakeTime)) badNights.push(`${side} ${day}`);
+    });
+  });
+  if (badNights.length > 0) {
+    res.status(400).json({
+      error: 'Invalid request data',
+      details: `The wake-up time must be 1 to 23 hours after the bed-on time (${badNights.join(', ')})`,
+    });
+    return;
+  }
 
   (
     Object.entries(schedules) as [Side, Partial<SideSchedule>][]).forEach(([side, sideSchedule]) => {

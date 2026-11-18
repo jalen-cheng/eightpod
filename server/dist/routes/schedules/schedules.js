@@ -1,7 +1,7 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="88bd0a44-a3ea-5f9f-be77-13e2ba631513")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="c21c019e-5d4e-521c-b8cc-346c77fa0daf")}catch(e){}}();
 import _ from 'lodash';
-import { applyAutomaticOffTime } from '../../db/automaticOffTime.js';
+import { applyAutomaticOffTime, isNightLengthValid } from '../../db/automaticOffTime.js';
 import express from 'express';
 import logger from '../../logger.js';
 import schedulesDB from '../../db/schedules.js';
@@ -24,6 +24,26 @@ router.post('/schedules', async (req, res) => {
     }
     const schedules = validationResult.data;
     await schedulesDB.read();
+    // A night that is on must have its wake-up time 1 to 23 hours after its bed-on time, as the
+    // app requires. Checked for every night in the request before anything is changed.
+    const badNights = [];
+    Object.entries(schedules).forEach(([side, sideSchedule]) => {
+        Object.entries(sideSchedule).forEach(([day, schedule]) => {
+            const saved = schedulesDB.data[side][day];
+            const isOn = schedule.power?.enabled ?? saved.power.enabled;
+            const bedtime = schedule.power?.on ?? saved.power.on;
+            const wakeTime = schedule.alarm?.time ?? saved.alarm.time;
+            if (isOn && !isNightLengthValid(bedtime, wakeTime))
+                badNights.push(`${side} ${day}`);
+        });
+    });
+    if (badNights.length > 0) {
+        res.status(400).json({
+            error: 'Invalid request data',
+            details: `The wake-up time must be 1 to 23 hours after the bed-on time (${badNights.join(', ')})`,
+        });
+        return;
+    }
     Object.entries(schedules).forEach(([side, sideSchedule]) => {
         Object.entries(sideSchedule).forEach(([day, schedule]) => {
             if (schedule.power) {
@@ -43,4 +63,4 @@ router.post('/schedules', async (req, res) => {
 });
 export default router;
 //# sourceMappingURL=schedules.js.map
-//# debugId=88bd0a44-a3ea-5f9f-be77-13e2ba631513
+//# debugId=c21c019e-5d4e-521c-b8cc-346c77fa0daf

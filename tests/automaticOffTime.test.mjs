@@ -1,7 +1,7 @@
 // Run with Node 24: node --test tests/automaticOffTime.test.mjs
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { addMinutesToTime, adoptSavedOffTime, applyAutomaticOffTime, offTimeAfterAlarm } from '../server/src/db/automaticOffTime.ts';
+import { addMinutesToTime, adoptSavedOffTime, applyAutomaticOffTime, isNightLengthValid, offTimeAfterAlarm } from '../server/src/db/automaticOffTime.ts';
 
 test('minutes are added to a time of day, wrapping past midnight', () => {
   assert.equal(addMinutesToTime('08:45', 30), '09:15');
@@ -24,4 +24,14 @@ test('a night saved without an alarm keeps its off time when first loaded, once'
   assert.deepEqual(adoptSavedOffTime(saved), { alarm: { enabled: false, time: '09:30' }, power: { off: '10:00' } });
   const withAlarm = { alarm: { enabled: true, time: '08:45' }, power: { off: '10:00' } };
   assert.equal(adoptSavedOffTime(withAlarm).power.off, '09:15');
+});
+
+test('the server and the app refuse the same nights', () => {
+  assert.equal(isNightLengthValid('22:00', '07:00'), true);
+  assert.equal(isNightLengthValid('22:00', '23:00'), true);
+  assert.equal(isNightLengthValid('22:00', '21:00'), true);
+  // Under an hour, and over 23 hours: the off time would land before the next bed-on time
+  assert.equal(isNightLengthValid('22:00', '22:30'), false);
+  assert.equal(isNightLengthValid('22:00', '21:50'), false);
+  assert.equal(isNightLengthValid('22:00', '7am'), false);
 });

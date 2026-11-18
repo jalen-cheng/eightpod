@@ -47,6 +47,9 @@ const alarmSides = (side: Side | 'both' | undefined): Side[] => (side === 'left'
 
 const notFound = (message: string) => HttpResponse.json({ message }, { status: 404 });
 
+// As on a Pod, there is no sleep data unless biometrics is switched on in Settings
+const isBiometricsOn = () => getServices().biometrics.enabled;
+
 export const handlers = [
   http.post('/api/metrics/presence/sensors/empty', async () => {
     await delay(120);
@@ -130,7 +133,7 @@ export const handlers = [
   }),
   http.get('/api/metrics/sleep', async ({ request }) => {
     const filters = toFilters(request);
-    const records = listSleepRecords();
+    const records = isBiometricsOn() ? listSleepRecords() : [];
     // @ts-expect-error
     const filtered = filterByQuery(records, filters, (record: SleepRecord) => Date.parse(record.entered_bed_at));
     await delay(150);
@@ -163,14 +166,14 @@ export const handlers = [
   }),
   http.get('/api/metrics/movement', async () => {
     // const filters = toFilters(request);
-    const records = listMovementRecords();
+    const records = isBiometricsOn() ? listMovementRecords() : [];
     // const filtered = filterByQuery(records, filters, (record: MovementRecord) => record.timestamp * 1000);
     await delay(120);
     return HttpResponse.json(records);
   }),
   http.get('/api/metrics/vitals', async () => {
     // const filters = toFilters(request);
-    const records = listVitalsRecords();
+    const records = isBiometricsOn() ? listVitalsRecords() : [];
     // const filtered = filterByQuery(records, filters, (record: VitalsRecord) => record.timestamp * 1000);
     await delay(120);
     return HttpResponse.json(records);

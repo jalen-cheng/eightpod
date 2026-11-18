@@ -85,8 +85,9 @@ its on/off switch at the top. The dialog is titled "Alarm":
 | **Warm-up** | Off, or 15, 30 or 45 minutes before the alarm, with a **Warm up to** temperature |
 | **Bed off on dismiss** | The bed turns off the moment you dismiss the alarm, not 30 minutes after the wake-up time |
 
-**Test for a minute** vibrates the bed now with the settings on screen, saved or not, even if the
-bed is off. **Stop test** ends it. Tap **Done**, then save the night; options are saved with it.
+**Test for a minute**, beside the strength, vibrates the bed now with the settings on screen, saved
+or not, even if the bed is off. **Stop test** ends it. **Save** saves the night with these
+options; **Discard** puts the alarm back as it was when you opened the dialog.
 
 A scheduled alarm only vibrates if that side is on at the alarm time.
 

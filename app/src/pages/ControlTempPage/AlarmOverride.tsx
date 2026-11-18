@@ -1,5 +1,5 @@
 import { Dispatch, SetStateAction, useState } from 'react';
-import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle } from '@mui/material';
+import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Typography } from '@mui/material';
 import InfoTip from '@components/InfoTip.tsx';
 import { cancelOneTimeAlarm, postOneTimeAlarm } from '@api/alarm.ts';
 import { useSettings } from '@api/settings.ts';
@@ -53,9 +53,14 @@ export default function AlarmOverride({
     <Dialog open={ open } onClose={ close } fullWidth maxWidth="xs">
       <DialogTitle sx={ { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 } }>
         Change the next alarm
-        <InfoTip text="Just this once. It goes off the next time the clock shows this time, and your weekly schedule stays as it is."/>
+        <InfoTip
+          text="It goes off the next time the clock shows this time, in place of that morning's alarm. For every week, use Schedules."
+        />
       </DialogTitle>
       <DialogContent>
+        <Typography variant="body2" sx={ { color: 'text.secondary' } }>
+          This one time only. Your schedule stays as it is.
+        </Typography>
         <Box sx={ { display: 'flex', justifyContent: 'center', py: 1 } }>
           <TimeField
             label="Alarm time"

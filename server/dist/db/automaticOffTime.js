@@ -6,7 +6,7 @@
 // The bed turns off this long after the wake-up time. A one-off alarm moves it: this long after
 // that alarm goes off (see scheduleAlarmOverride in jobs/alarmScheduler.ts).
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="cb00f40c-85ac-5281-a392-97725278fcda")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="87b59ca0-b28c-57b1-8b1d-164ebd9d71df")}catch(e){}}();
 export const OFF_AFTER_ALARM_MINUTES = 30;
 const MINUTES_PER_HOUR = 60;
 const MINUTES_PER_DAY = 24 * MINUTES_PER_HOUR;
@@ -18,6 +18,19 @@ export function addMinutesToTime(time, minutes) {
     return `${padded(Math.floor(total / MINUTES_PER_HOUR))}:${padded(total % MINUTES_PER_HOUR)}`;
 }
 export const offTimeAfterAlarm = (alarmTime) => addMinutesToTime(alarmTime, OFF_AFTER_ALARM_MINUTES);
+const CLOCK_TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
+// A night shorter than this is a mistake, and one longer leaves no gap before the next
+const MIN_NIGHT_MINUTES = 60;
+const MAX_NIGHT_MINUTES = 23 * MINUTES_PER_HOUR;
+// True when the wake-up time is a sensible distance after the bed-on time: 1 to 23 hours.
+// Outside that, the off time (30 minutes after waking) lands on the wrong side of the bed-on time.
+export function isNightLengthValid(bedtime, wakeTime) {
+    if (!CLOCK_TIME.test(bedtime) || !CLOCK_TIME.test(wakeTime))
+        return false;
+    const toMinutes = (time) => Number(time.slice(0, 2)) * MINUTES_PER_HOUR + Number(time.slice(3, 5));
+    const nightMinutes = (toMinutes(wakeTime) - toMinutes(bedtime) + MINUTES_PER_DAY) % MINUTES_PER_DAY;
+    return nightMinutes >= MIN_NIGHT_MINUTES && nightMinutes <= MAX_NIGHT_MINUTES;
+}
 // Sets a night's off time from its wake-up time. Used on every write: whatever off time was
 // sent, the wake-up time (the alarm's time, alarm on or off) decides it. Changes the night in
 // place and returns it.
@@ -36,4 +49,4 @@ export function adoptSavedOffTime(night) {
     return applyAutomaticOffTime(night);
 }
 //# sourceMappingURL=automaticOffTime.js.map
-//# debugId=cb00f40c-85ac-5281-a392-97725278fcda
+//# debugId=87b59ca0-b28c-57b1-8b1d-164ebd9d71df
