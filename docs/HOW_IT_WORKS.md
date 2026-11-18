@@ -285,6 +285,18 @@ publishes their readings twice a second on its local message bus. Free Sleep lis
   30 seconds, and **out** when it has dropped for a minute. Sensitivity (Low, Medium, High) is in
   Settings > In-bed detection, which also shows what each side reads right now.
 - A **stay** bridges gaps of up to 15 minutes, so getting up briefly does not end it.
+- **One person, two sides.** Someone lying towards the middle raises the other side's sensors
+  too (by up to 1,300 against 3,000 or more on their own side). A side whose rise is under half
+  the other side's is treated as that spill-over, not as a second person.
+
+**For maintainers: restarts.** Everything above is learned while running, so a restart of the
+server (every update, the daily reboot) used to lose it: a detector that starts with someone in
+bed takes their weight as the empty level, and a stay that turned the bed on "until I get out of
+bed" was forgotten, so the bed stayed on. The monitor now writes what it has learned to
+`/persistent/free-sleep-data/presence_state.json` every minute and on shutdown, and reads it back
+on start if it is under 30 minutes old. The file sits outside the `lowdb` folder on purpose:
+anything written there rebuilds every scheduled job. If detection ever looks stuck, delete that
+file and restart Free Sleep with the bed empty.
 
 Two optional actions, both off by default, each run once per stay:
 
