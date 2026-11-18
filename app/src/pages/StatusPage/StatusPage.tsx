@@ -23,7 +23,7 @@ export default function StatusPage() {
         <PageHeader title="Status">
           <Box sx={ { display: 'flex', flexWrap: 'wrap', gap: 0.75 } }>
             <WifiStrength/>
-            <VersionStatus variant="chip"/>
+            <VersionStatus/>
           </Box>
         </PageHeader>
         <Typography

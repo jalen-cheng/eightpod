@@ -13,11 +13,6 @@ import { postJobs } from '@api/jobs.ts';
 import { getLatestVersion, useServerInfo } from '@api/serverInfo.ts';
 import { getDeviceStatus } from '@api/deviceStatus.ts';
 
-// Hack for demo app
-if (import.meta.env.VITE_ENV === 'demo') {
-  currentServerInfo.version = '1.0.0';
-}
-
 const Transition = forwardRef(function Transition(
   props: TransitionProps & {
     children: ReactElement<any, any>;
@@ -82,9 +77,7 @@ export default function UpdateButton() {
 
   return (
     <>
-      <Button variant="outlined" onClick={ handleClickOpen } size="small" sx={ { width: '100%' } }>
-        Update free sleep
-      </Button>
+      <Button variant="contained" onClick={ handleClickOpen } size="small">Update</Button>
       <Dialog
         open={ open }
         slots={ {

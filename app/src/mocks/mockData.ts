@@ -1,4 +1,5 @@
 import moment from 'moment-timezone';
+import currentServerInfo from '../../../server/src/serverInfo.json';
 import type { Services } from '@api/services.ts';
 import type { Schedules } from '@api/schedulesSchema.ts';
 import type { Settings } from '@api/settingsSchema.ts';
@@ -344,7 +345,7 @@ const createDeviceStatus = (): DeviceStatus => ({
   coverVersion: 'Pod 5',
   hubVersion: 'Pod 5',
   eightPod: {
-    version: '1.2.0',
+    version: currentServerInfo.version,
     branch: 'main',
   },
   wifiStrength: 82,

@@ -37,9 +37,9 @@ const readStayOn = (value: unknown): Settings['presence']['turnOnWhenInBed']['st
   value === UNTIL_OUT_OF_BED ? UNTIL_OUT_OF_BED : Number(value)
 );
 
-// A setting's own controls, shown under its switch while it is on
+// A setting's own controls, in a line under its label while it is on
 const SettingDetail = ({ children }: PropsWithChildren) => (
-  <Box sx={ { display: 'flex', alignItems: 'center', justifyContent: 'flex-end', flexWrap: 'wrap', gap: 1, mt: 1 } }>{ children }</Box>
+  <Box sx={ { display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 1, mt: 0.75 } }>{ children }</Box>
 );
 
 type HoursSelectProps = {
@@ -133,7 +133,7 @@ export default function PresenceSection({ settings, updateSettings }: PresenceSe
         >
           { turnOnWhenInBed.enabled && (
             <SettingDetail>
-              <Typography variant="body2" sx={ { color: 'text.secondary' } }>at</Typography>
+              <Typography variant="body2" sx={ { color: 'text.secondary' } }>To</Typography>
               <TemperatureSelect
                 label="Temperature the bed turns on at"
                 value={ turnOnWhenInBed.temperatureF }
@@ -170,7 +170,7 @@ export default function PresenceSection({ settings, updateSettings }: PresenceSe
         >
           { wakeAfterHours.enabled && (
             <SettingDetail>
-              <Typography variant="body2" sx={ { color: 'text.secondary' } }>after</Typography>
+              <Typography variant="body2" sx={ { color: 'text.secondary' } }>After</Typography>
               <HoursSelect
                 label="Hours in bed before the alarm"
                 value={ wakeAfterHours.hours }
@@ -178,6 +178,7 @@ export default function PresenceSection({ settings, updateSettings }: PresenceSe
                 onChange={ (hours) => updatePresence({ wakeAfterHours: { hours } }) }
                 disabled={ isUpdating }
               />
+              <Typography variant="body2" sx={ { color: 'text.secondary' } }>in one stay</Typography>
             </SettingDetail>
           ) }
         </SettingToggle>

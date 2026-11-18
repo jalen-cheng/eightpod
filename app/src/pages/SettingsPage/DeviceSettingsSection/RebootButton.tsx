@@ -39,9 +39,7 @@ export default function RebootButton() {
 
   return (
     <>
-      <Button variant="outlined" onClick={ handleClickOpen } size='small' sx={ { width: '100%' } }>
-        Reboot pod now
-      </Button>
+      <Button variant="outlined" onClick={ handleClickOpen } size="small">Reboot</Button>
       <Dialog
         open={ open }
         slots={ {
