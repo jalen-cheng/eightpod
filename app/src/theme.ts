@@ -86,7 +86,15 @@ const buildComponents = (colors: typeof DARK_COLORS): ThemeOptions['components']
   },
   MuiDialog: {
     styleOverrides: {
-      paper: { borderRadius: 20 },
+      // A dialog lifts off the page: the page behind is dimmed and blurred, and the dialog has
+      // an edge and a soft shadow of its own
+      root: { '& .MuiBackdrop-root': { backgroundColor: 'rgba(0, 0, 0, 0.6)', backdropFilter: 'blur(8px)' } },
+      paper: ({ theme }) => ({
+        borderRadius: 20,
+        backgroundColor: colors.surface,
+        border: `1px solid ${theme.palette.divider}`,
+        boxShadow: '0 24px 64px rgba(0, 0, 0, 0.55), 0 2px 8px rgba(0, 0, 0, 0.4)',
+      }),
       // On a computer the navigation column takes the left of the window, so a dialog is
       // centred over the page beside it, where the thing that opened it is
       container: ({ theme }) => ({ [theme.breakpoints.up('md')]: { paddingLeft: SIDEBAR_WIDTH_PX } }),
@@ -165,6 +173,8 @@ const buildComponents = (colors: typeof DARK_COLORS): ThemeOptions['components']
   },
   MuiSelect: { styleOverrides: { icon: ({ theme }) => ({ color: theme.palette.text.secondary, fontSize: 20 }) } },
   MuiMenuItem: { styleOverrides: { root: { fontSize: CONTROL_FONT_SIZE, minHeight: 40 } } },
+  // A long list of choices (every degree, for one) scrolls inside a short menu
+  MuiMenu: { styleOverrides: { paper: { maxHeight: 280 } } },
   MuiInput: {
     styleOverrides: {
       root: { fontSize: CONTROL_FONT_SIZE },

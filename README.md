@@ -32,7 +32,7 @@ internet does not.
   <tr>
     <td align="center" width="130"><a href="https://eightpod.vercel.app">Demo</a></td>
     <td align="center" width="130"><a href="INSTALLATION.md">Install</a></td>
-    <td align="center" width="130"><a href="docs/USING.md">App guide</a></td>
+    <td align="center" width="130"><a href="docs/USING.md">Usage</a></td>
     <td align="center" width="130"><a href="docs/HOW_IT_WORKS.md">Implementation</a></td>
     <td align="center" width="130"><a href="docs/IOS_SHORTCUTS.md">Shortcuts</a></td>
     <td align="center" width="130"><a href="server/API.md">API</a></td>
@@ -98,21 +98,20 @@ No Pod yet? **[eightpod.vercel.app](https://eightpod.vercel.app)** is the app on
 
 **The big ones**
 
-- **Networking.** The app opens at `http://eightpod.local`, with no IP address or port to remember. Optional Tailscale on the Pod reaches it from anywhere: on cellular, at work or on hotel Wi-Fi your phone opens the same app, over an encrypted link only your own devices can use, with nothing opened on your router. The internet block stays on throughout, keeps the clock and name lookups working, and is restored at every boot.
-- **Pod 5 side buttons work.** + and - change the temperature, holding the middle button switches the side on or off, and any button stops an alarm.
-- **In-bed detection (Pod 5).** The bed knows when someone is in it, and can turn on when you get in, off after you get out, or vibrate after a long stay.
-- **Wake-up heat.** The bed warms to a temperature you choose 15 to 45 minutes before the alarm, so you wake warm instead of being shaken out of a cold bed.
-- **Alarms that keep going.** They vibrate until you dismiss them, with a real ramp-up on a Pod 5, and go off even if the bed is off.
-- **Temperatures are calibrated.** The number shown is what the firmware aims for at each level, measured on a Pod 5, beside the temperature the bed measures. Units are °F, °C, or Eight Sleep's -10 to +10.
-- **An API for everything.** Every control the firmware offers is a documented local request: temperature, power, alarms, priming, schedules, settings and who is in bed. Anything that can send a web request can drive the bed: iPhone Shortcuts, Home Assistant, a script, or an AI assistant. See [server/API.md](server/API.md).
+- **Networking:** the app opens at `http://eightpod.local`, with no IP address or port to remember. Optional Tailscale on the Pod reaches it from anywhere, with the internet block still on and nothing opened on your router.
+- **Pod 5 side buttons enabled:** + and - change the temperature, holding the middle button switches the side on or off, and any button stops an alarm.
+- **In-bed detection (Pod 5):** the bed knows when someone is in it, and can turn on when you get in, off after you get out, or vibrate after a long stay.
+- **Wake-up heat:** the bed warms to a temperature you choose 15 to 45 minutes before the alarm, so you wake warm instead of being shaken out of a cold bed.
+- **Temperatures are calibrated:** the number shown is what the firmware aims for at each level, measured on a Pod 5, beside the temperature the bed measures. Units are °F, °C, or Eight Sleep's -10 to +10.
+- **An API for everything:** every control the firmware offers is a documented local request: temperature, power, alarms, priming, schedules, settings and who is in bed. Anything that can send a web request can drive the bed: iPhone Shortcuts, Home Assistant, a script, or an AI assistant. See [server/API.md](server/API.md).
 
 **Quality of life**
 
-- **A redesigned app.** Dark, phone-first and quiet: one screen per night with a chart, explanations behind an "i", and controls that respond at once.
-- **No off time to manage.** The bed turns off 30 minutes after the wake time, or the moment you dismiss the alarm.
-- **Change one morning's alarm** without touching the schedule.
-- **Linked sides.** Control the whole bed as one: temperature, power, schedules, buttons and shortcuts.
-- **Updates from the app.** It shows when a newer version exists and updates in about four minutes, putting the old version back if anything fails.
+- **A redesigned app:** dark, phone-first and quiet, with one screen per night, explanations behind an "i", and controls that respond at once.
+- **Alarms that keep going:** they vibrate until you dismiss them, with a real ramp-up on a Pod 5, and go off even if the bed is off.
+- **One-time alarms:** change one morning's alarm without touching the schedule.
+- **Linked sides:** control the whole bed as one, across temperature, power, schedules, buttons and shortcuts.
+- **Updates from the app:** it shows when a newer version exists and updates in about four minutes, putting the old version back if anything fails.
 
 The rest, and the full comparison with Free Sleep, is in [CHANGELOG.md](CHANGELOG.md#compared-with-free-sleep).
 
@@ -120,7 +119,7 @@ The rest, and the full comparison with Free Sleep, is in [CHANGELOG.md](CHANGELO
 
 - **The app has no login.** Anyone on your home network can open it. Never put it on the open internet; use [Tailscale](docs/REMOTE_ACCESS.md) to reach it from elsewhere.
 - **The internet block** stops the Pod reaching Eight Sleep or anything else, and is restored at every boot. EightPod has no error-reporting destination built in.
-- **You need root on the Pod once**, through a serial adapter. It is not supported by Eight Sleep and may affect your warranty. A Pod 3 or 4 can be put back with a firmware reset. **A Pod 5 cannot currently be put back to stock**; see the [FAQ](#faq).
+- **You need root on the Pod once**, through a serial adapter. It is not supported by Eight Sleep. The install can be undone; see the [FAQ](#faq).
 
 ## Compatibility
 
@@ -154,10 +153,14 @@ Select a question to open its answer.
 <summary><b>Is it reversible?</b></summary>
 <br>
 
-On a Pod 3 or Pod 4, yes: a firmware reset puts the Pod back as it left the factory, and it works
-with Eight Sleep's app again. On a Pod 5, treat it as not reversible for now. Nobody has
-established how to reset one, and the software-only way back in the
-[install guide](INSTALLATION.md#going-back-to-eight-sleep) has not been tried.
+Yes. The install leaves Eight Sleep's firmware in place and only switches its cloud services
+off, so going back means switching them on again.
+
+- **Pod 3 and Pod 4:** a firmware reset puts the Pod back as it left the factory.
+- **Pod 5:** [six commands over SSH](INSTALLATION.md#going-back-to-eight-sleep) switch Eight
+  Sleep's services back on and remove the internet block. They are the install steps in reverse.
+  The one test Pod is still in use, so they have not been run yet; if you try them, please say how
+  it went.
 
 </details>
 
@@ -176,8 +179,9 @@ do not improvise. A Pod 3 with an SD card is the riskiest, because the card itse
 <summary><b>Will it void my warranty?</b></summary>
 <br>
 
-It may. EightPod is not supported by Eight Sleep. Opening the hub is visible to anyone who looks,
-and a Pod 5 cannot currently be put back to stock.
+EightPod is not supported by Eight Sleep, and their warranty terms are theirs to apply. Nothing
+is soldered or cut: the hub is opened with a screwdriver and closed again, and the software
+change can be undone (see "Is it reversible?").
 
 </details>
 
@@ -271,7 +275,7 @@ Yes. One command over SSH reinstalls it and keeps your schedules; see
 | Goal | Start here |
 |---|---|
 | Install it on a Pod | [INSTALLATION.md](INSTALLATION.md) |
-| App guide: a night, alarms, settings | [docs/USING.md](docs/USING.md) |
+| Usage: a night, alarms, settings | [docs/USING.md](docs/USING.md) |
 | Know what works on a Pod 3 or Pod 4 | [docs/POD_MODELS.md](docs/POD_MODELS.md) |
 | Keep the address stable, or reach the Pod away from home | [docs/REMOTE_ACCESS.md](docs/REMOTE_ACCESS.md) |
 | Control the bed from iPhone Shortcuts | [docs/IOS_SHORTCUTS.md](docs/IOS_SHORTCUTS.md) |
@@ -293,8 +297,9 @@ keep the name `free-sleep`, so an existing install updates in place.
 
 ## Contributing
 
-Issues and pull requests are welcome, within a few rules: nothing that sends data off the Pod or
-needs the cloud, one change per pull request, and a test where the code can be tested. The most useful contribution is a report from hardware Free
+Issues and pull requests are welcome, including new features, a different direction for the
+product and UI rewrites. The only fixed rules are that it stays local and leaves Eight Sleep's
+firmware alone. The most useful contribution is a report from hardware Free
 Pod has not seen: a Pod 3 or Pod 4, or a newer Pod 5. [CONTRIBUTING.md](CONTRIBUTING.md) says how,
 and issues labelled [needs testing](https://github.com/jalen-cheng/eightpod/issues?q=is%3Aissue+is%3Aopen+label%3A%22needs+testing%22)
 list what is waiting to be checked.

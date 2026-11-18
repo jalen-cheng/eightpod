@@ -146,7 +146,7 @@ export default function PresenceSection({ settings, updateSettings }: PresenceSe
                 value={ turnOnWhenInBed.stayOn }
                 onChange={ (event) => updatePresence({ turnOnWhenInBed: { stayOn: readStayOn(event.target.value) } }) }
                 disabled={ isUpdating }
-                sx={ { minWidth: 96, flex: 1, maxWidth: 220 } }
+                sx={ { flex: '0 1 auto', minWidth: 96 } }
                 slotProps={ { htmlInput: { 'aria-label': 'How long the bed stays on' } } }
               >
                 <MenuItem value={ UNTIL_OUT_OF_BED }>until I get out of bed</MenuItem>

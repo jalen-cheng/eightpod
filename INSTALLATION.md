@@ -625,16 +625,15 @@ Every EightPod update runs this installer over an existing install, and that is 
    [Pod 4](docs/pod_4_teardown/3_reset_firmware.png).
 3. Set the Pod up as a new Pod in the app.
 
-**Pod 5: there is no reset procedure here.** Two reasons:
+**Pod 5: use the steps below.** A Pod 5's board has not been photographed for a hardware reset,
+so the way back is in software.
 
-- Where the reset is on a Pod 5's board, and whether it works the way a Pod 3 or 4's does, has
-  not been established. The photos above are of other boards.
-- It could not be tried safely. A reset hands the Pod back to Eight Sleep's updater, and a newer
-  firmware may remove the boot prompt this guide depends on (see "Newer Pod 5 units" at the top).
-  On the one test Pod that could have been a one-way trip.
-
-**Without a reset (any Pod, untested).** This undoes what the guide did and leaves the files in
-place. It has not been run; it is the reverse of steps 9, 12 and 16, written from the scripts.
+**Without a reset (any Pod).** This is steps 9, 12 and 16 in reverse: it switches Eight Sleep's
+services back on and leaves EightPod's files in place, switched off. The one test Pod is still in
+use, so these have not been run yet. One thing to know first: once Eight Sleep's updater is back
+on, it may install newer firmware, and some newer Pod 5 firmware does not show the boot prompt
+this guide uses (see "Newer Pod 5 units" at the top), so installing EightPod again later may not
+be possible.
 
 1. Stop EightPod and keep it from starting:
    ```
