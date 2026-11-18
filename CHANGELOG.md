@@ -1,7 +1,7 @@
 # Changelog
 
 What EightPod changed from [throwaway31265/free-sleep](https://github.com/throwaway31265/free-sleep),
-what was checked on a real Pod, and what was not. EightPod is at version 3.6.3. Everything was
+what was checked on a real Pod, and what was not. EightPod is at version 3.6.4. Everything was
 developed and tested on one Pod 5 between 13 and 17 Nov 2026.
 
 **The API.** Everything the app does goes through a documented local API, and every command the
@@ -229,3 +229,4 @@ acted on it).
 | [#81](https://github.com/jalen-cheng/eightpod/pull/81) | Fix, design, docs | **Alarms:** a one-time alarm replaces only the alarm of its own morning and leaves a skipped alarm skipped; the server refuses a wake-up time under 1 hour or over 23 hours after Bed on, as the app does. **Dialogs:** centred over the page on a computer, not the whole window; the alarm dialog has Discard and Save, with the test beside the strength; "Change the next alarm" says it is for one time only. **Data:** Sleep is shown as off while biometrics is off, and the demo has no sleep data, like a Pod. **Docs:** install steps for a Pod already running Free Sleep; Windows marked as not tested. |
 | [#82](https://github.com/jalen-cheng/eightpod/pull/82) | Design, docs | A new Pod is named `eightpod`, so the app is at `http://eightpod.local` (a Pod already named is left alone). The one-time alarm dialog is titled "Change next alarm only (overrides schedule)" and no longer has Back to schedule. Shortcut and API docs say what a refused request returns. README: evenly spaced links, new screenshots. Clearer names in the code for times and counters. |
 | [#85](https://github.com/jalen-cheng/eightpod/pull/85) | Design, docs | Dialogs stand off the page: the page behind is dimmed and blurred, and the dialog has an edge and a shadow. Close sits on the left of the alarm dialog. Long menus scroll inside a short list, and the in-bed "stay on" choice is only as wide as its text. A shorter, more open contributing guide; README wording on reversibility and warranty. |
+| [#89](https://github.com/jalen-cheng/eightpod/pull/89) | Feature, docs | Settings has an **API** section: what the API is for, two requests to copy with the Pod's own address filled in, and a link to the reference. The demo video gains an API scene and is recorded at 60 frames a second. |

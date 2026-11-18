@@ -30,6 +30,19 @@
   #ripple { position: absolute; left: -17px; top: -17px; width: 36px; height: 36px; border-radius: 50%; border: 2px solid rgba(255, 255, 255, 0.85); opacity: 0; }
   #ripple.go { animation: ripple 420ms ease-out; }
   @keyframes ripple { from { opacity: 0.9; transform: scale(0.3); } to { opacity: 0; transform: scale(1.5); } }
+  /* A terminal that slides over the window for the API scene */
+  #terminal { position: absolute; left: 330px; top: 400px; width: 760px; border-radius: 12px; overflow: hidden; z-index: 4;
+    background: #0d0f12; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.14), 0 30px 80px rgba(0, 0, 0, 0.7);
+    opacity: 0; transform: translateY(26px); transition: opacity 320ms ease, transform 320ms ease; }
+  #terminal.show { opacity: 1; transform: translateY(0); }
+  #terminal header { height: 30px; display: flex; align-items: center; gap: 7px; padding: 0 12px; background: #16191e; color: #7d8590; font-size: 12px; }
+  #terminal header i { width: 10px; height: 10px; border-radius: 50%; background: #333a44; }
+  #terminal header span { margin: 0 auto; transform: translateX(-24px); }
+  #terminal pre { margin: 0; padding: 16px 18px 18px; min-height: 96px; color: #e6edf3; white-space: pre-wrap;
+    font: 16px/1.55 'SF Mono', ui-monospace, Menlo, monospace; }
+  #terminal .prompt { color: #3fb950; }
+  #terminal .reply { color: #7d8590; }
+  #terminal .caret { display: inline-block; width: 9px; height: 19px; margin-left: 1px; vertical-align: -3px; background: #e6edf3; }
   /* A line of words under the window saying what is being shown */
   #caption { position: fixed; left: 50%; bottom: 26px; transform: translate(-50%, 12px); padding: 11px 24px; border-radius: 999px;
     background: rgba(12, 13, 16, 0.78); backdrop-filter: blur(14px); border: 1px solid rgba(255, 255, 255, 0.12);
@@ -51,6 +64,10 @@
       <div id="bar"><i></i><i></i><i></i><span>eightpod.local</span></div>
       <iframe id="app" src="/"></iframe>
     </div>
+    <div id="terminal">
+      <header><i></i><i></i><i></i><span>zsh</span></header>
+      <pre><span class="prompt">$ </span><span id="typed"></span><span class="caret"></span><span class="reply" id="reply"></span></pre>
+    </div>
     <div id="cursor">
       <div id="ripple"></div>
       <svg viewBox="0 0 22 22" width="22" height="22"><path d="M3 2l6.2 16.2 2.3-6.7 6.7-2.3z" fill="#fff" stroke="#111" stroke-width="1.4" stroke-linejoin="round"/></svg>
@@ -68,7 +85,10 @@
   const camera = document.getElementById('camera');
   const cursor = document.getElementById('cursor');
   const ripple = document.getElementById('ripple');
-  const wait = (milliseconds) => new Promise(resolve => setTimeout(resolve, milliseconds));
+  // The recorder can run the stage in slow motion and speed the film back up, which gives it
+  // more frames per second of finished video. SLOW is how many times slower everything runs.
+  window.SLOW = 1;
+  const wait = (milliseconds) => new Promise(resolve => setTimeout(resolve, milliseconds * window.SLOW));
   window.appDocument = () => appFrame.contentDocument;
 
   // The first element in the app matching the selector, optionally with this exact text
@@ -114,7 +134,7 @@
     ripple.classList.add('go');
     cursor.classList.add('down');
     await wait(110);
-    setTimeout(() => cursor.classList.remove('down'), 130);
+    setTimeout(() => cursor.classList.remove('down'), 130 * window.SLOW);
     if (pressWith === 'mousedown') element.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0 }));
     else element.click();
     return true;
@@ -136,6 +156,26 @@
     await wait(200);
     line.textContent = text;
     line.classList.add('show');
+    return true;
+  };
+
+  // The API scene: a terminal appears, a command is typed, and it is really sent to the app's
+  // (made-up) Pod, so the page behind changes because of it
+  window.showTerminal = async () => { document.getElementById('terminal').classList.add('show'); await wait(350); return true; };
+  window.hideTerminal = () => { document.getElementById('terminal').classList.remove('show'); return true; };
+  window.typeCommand = async (command) => {
+    const typed = document.getElementById('typed');
+    for (const character of command) {
+      typed.textContent += character;
+      await wait(character === ' ' ? 34 : 20);
+    }
+    return true;
+  };
+  window.sendRequest = async (path, body) => {
+    const response = await appFrame.contentWindow.fetch(path, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+    });
+    document.getElementById('reply').textContent = `\nHTTP ${response.status}`;
     return true;
   };
 

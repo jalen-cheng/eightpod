@@ -18,6 +18,7 @@ import FeaturesSection from './FeaturesSection/FeaturesSection.tsx';
 import Section from './Section.tsx';
 import TapGesturesSection from './TapGesturesSection/TapGesturesSection.tsx';
 import PresenceSection from './PresenceSection.tsx';
+import ApiSection from './ApiSection.tsx';
 import DeviceSettingsSection from './DeviceSettingsSection/DeviceSettingsSection.tsx';
 import DeviceInfo from './DeviceSettingsSection/DeviceInfo.tsx';
 import DailyReboot from './DeviceSettingsSection/DailyReboot.tsx';
@@ -87,6 +88,7 @@ export default function SettingsPage() {
       <ErrorBoundary componentName="In-bed detection">
         <PresenceSection settings={ settings } updateSettings={ updateSettings }/>
       </ErrorBoundary>
+      <ApiSection/>
       <FeaturesSection/>
       <ErrorBoundary componentName="Device info">
         <Section title="Device" icon={ <MemoryOutlinedIcon/> }>

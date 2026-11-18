@@ -145,6 +145,7 @@ When the sides are linked, the buttons on either side control both. The step siz
 | **Prime daily** | Priming | Runs the water priming cycle every day at **Prime time**, 2 PM by default. It does not check whether the bed is in use |
 | **Reboot once a day** | Device | Restarts the Pod one hour before the priming time. A vibrating alarm or running warm-up is lost in a reboot, so keep the time in the afternoon |
 | **Status page** | Its own page | Shows Wi-Fi strength, whether EightPod is up to date, and each service. The biometrics and sleep-analysis rows are greyed and marked untested |
+| **API** | Its own section | Two example requests with your Pod's address filled in, and a link to every request. Tap a command to select it |
 | **In-bed detection** | Its own section, Pod 5 only | Two options, both off by default: **Turn on when I get into bed** and **Alarm after a long time in bed**. Detection was checked with one person on one Pod; the first option has been seen turning the bed on, the rest has not been seen working yet |
 
 ## 11. Updating
