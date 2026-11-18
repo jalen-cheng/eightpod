@@ -6,9 +6,8 @@ While someone is asleep, it moves their side a few degrees around the temperatur
 10 minutes, and does nothing while the sleeper is awake, the side is off, away mode is on, the
 wake-up heat is running, or a temperature set by hand is holding the schedule back.
 
-**Not yet run through a night.** The heart-rate reading was checked against two minutes of real
-sensor data from one person on one Pod 5. Sleep detection, the temperature changes and the
-learning are covered by tests on made-up nights only.
+**Not yet run through a night.** Sleep detection, naps, the temperature changes, the learning
+and the fitting to a sleep tracker are covered by tests on made-up nights only.
 
 ## What it does
 
@@ -25,26 +24,67 @@ change as it comes up. A scheduled change is applied straight away, with the off
 
 ## How it tells you are asleep
 
-The cover's piezo sensor (500 readings a second per side, on the firmware's sensor bus) feels
-heartbeats and movement. Every 5 seconds the last 15 seconds are cleaned the way the biometrics
-code in this repo does it (outliers clipped, a 4 to 11 Hz band kept) and the beat spacing is
-read from how the signal repeats. Windows with movement in them, and weak readings, are dropped.
-Each minute is then summed up as a heart rate and a count of seconds with movement, and plain
-rules decide the state (`server/src/autopilot/sleepTracker.ts`):
+By stillness alone, the way a wrist tracker's movement sensor does. The cover's piezo sensor
+(500 readings a second per side, on the firmware's sensor bus) feels movement; each minute is
+summed up as a count of seconds with movement, and two rules decide the state
+(`server/src/autopilot/sleepTracker.ts`):
 
-- **Asleep:** in bed more than 10 minutes, still for 10, and the heart at least 3 beats a minute
-  slower than while settling. With no heart rate, still for 20 minutes.
-- **Awake again:** 3 restless minutes in 5.
+- **Asleep:** in bed and still for 15 minutes in a row. Sleep is counted from when the
+  stillness began, not from when it was believed.
+- **Awake again:** 3 minutes out of 5 with 12 or more moving seconds each. A turn in bed, or
+  two, is not waking.
 
-These are cues, not a sleep lab. Deep sleep is not detected at all: heart-rate-only staging
-agrees only moderately with lab scoring even with a trained model (Radha et al. 2019, Sci Rep
-9:14149, kappa 0.61), and deep sleep is the hardest stage to tell. The extra degree of cooling
-goes by the clock instead, over the first sleep cycle.
+A heart rate is still read from the same sensor and shown, but decides nothing: its error of a
+few beats a minute is as large as the drop that falling asleep causes. Deep sleep is not
+detected either; the extra degree of cooling goes by the clock, over the first sleep cycle.
+Lying awake and still reads as asleep, which is the known weak point of judging by movement.
 
-**Two people in the bed.** An empty side picks up the other person's pulse faintly. A side is
-only followed while its in-bed sensor says someone is there, and weak readings are dropped, but
-with two sleepers each side's heart rate can be pulled toward the other's. Treat it as working
-for one person in the bed until it has been checked with two.
+**Getting up in the night.** Less than 30 minutes out of bed is the same night: the curve
+carries on from where it was when you return and are asleep again.
+
+**Naps.** A sleep that begins outside the scheduled night (more than 3 hours before bedtime, or
+after the wake-up time; between 9:00 and 19:00 when that day has no schedule) is a nap. It is
+followed and saved, and the autopilot leaves the temperature alone for it.
+
+**Two people in the bed.** A side is only followed while its in-bed sensor says someone is
+there. Whether one sleeper's turning reads as movement on the other side has not been checked.
+
+## Linking a sleep tracker
+
+The bed's two numbers (15 still minutes, 12 moving seconds) are guesses. A watch or band knows
+better when you slept, so you can send its times each morning and the bed fits its numbers to
+them. **Settings > Autopilot > Sleep tracker > Link** has the steps for an iPhone Shortcut that
+reads last night's sleep from Apple Health and posts it; Apple Watch and Whoop write their sleep
+there, and Fitbit does through a sync app. Anything else can post the same request:
+
+```bash
+curl -X POST http://eightpod.local/api/autopilot/sleepTimes -H 'Content-Type: application/json' \
+  -d '{"side":"left","source":"Whoop","asleepAt":"2026-11-18T23:12:00-08:00","awakeAt":"2026-11-19T06:48:00-08:00"}'
+```
+
+Each sleep sent is filed with the saved stay in bed it overlaps. Once 3 nights have tracker
+times, the bed replays its saved minutes for the newest 14 such nights under each candidate pair
+of numbers and keeps the pair whose sleep and wake times land closest. It does this again every
+time new times arrive. Settings shows how far off the bed is, in minutes. Naps are filed but not
+used for fitting. Only sleep and wake times are used, not sleep stages.
+
+There is no direct Whoop or Fitbit link. Their data is only on their servers, so the Pod would
+need a developer app registered with each company, a sign-in, and a hole in its internet block.
+The phone already has the data, so the phone sends it.
+
+Not yet run with a real tracker: the Shortcut steps and the fitting were checked only by tests
+on made-up nights.
+
+## Where nights are kept
+
+Every stay in bed of 20 minutes or more is saved on the Pod, whether or not the autopilot is
+switched on, as one file in `/persistent/free-sleep-data/autopilot_nights/`: a row per minute
+(moving seconds, heart rate, state, the autopilot's offset, room temperature), the bed's sleep
+and wake times, and the tracker's if any were sent. A night is about 30 KB. The newest 160 files
+are kept (about two months for two sleepers), under 5 MB of the Pod's 14 GB free. An open stay
+is written every 10 minutes, so a restart loses at most that, and starts a new file.
+`GET /api/autopilot/nights` lists them. The biometrics service keeps its own sleep records in
+its database; these files are separate and do not need it.
 
 ## Why the curve has this shape
 
@@ -65,14 +105,15 @@ purpose, and your own changes reshape them.
 ## Seeing what it does
 
 Settings > Autopilot shows each side's state beside the heading and, while someone is in bed,
-their heart rate and the last change with its reasons. `GET /api/autopilot` returns the same
+their heart rate and the last change with its reasons, and which sleep tracker is linked. `GET /api/autopilot` returns the same
 (see [server/API.md](../server/API.md#autopilot)), and the server log has a line for every
 change. What it has learned is kept in `/persistent/free-sleep-data/autopilot_state.json`;
 delete the file and restart EightPod to forget it.
 
 ## Code
 
-`server/src/autopilot/`: `heartRate.ts` (the estimate), `sleepTracker.ts` (the rules),
-`nightPlan.ts` (curve, learning, room, limits), `scheduledBase.ts` (the schedule's temperature
-at a time), `autopilotMonitor.ts` (state, and the only file that touches the Pod). All but the
-last are pure and tested in `tests/autopilot.test.mjs`.
+`server/src/autopilot/`: `heartRate.ts` (the estimate), `sleepTracker.ts` (the rules, and
+fitting them to a tracker), `nightPlan.ts` (curve, learning, room, limits), `scheduledBase.ts`
+(the schedule's temperature at a time; night or nap), `nightLog.ts` (the saved nights),
+`autopilotMonitor.ts` (state, and the only file that touches the Pod). The first four are pure
+and tested in `tests/autopilot.test.mjs`.

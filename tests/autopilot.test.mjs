@@ -4,11 +4,13 @@ import { test } from 'node:test';
 import {
   HEART_RATE_WINDOW_SECONDS, PIEZO_SAMPLES_PER_SECOND, countMovementSeconds, estimateHeartRate, measureSwing,
 } from '../server/src/autopilot/heartRate.ts';
-import { createSleepTracker } from '../server/src/autopilot/sleepTracker.ts';
 import {
   MAX_OFFSET_F, NO_LEARNED_OFFSETS, curveOffsetF, learnFromCorrection, nightPartAt, planTemperature, surroundingsOffsetF,
 } from '../server/src/autopilot/nightPlan.ts';
-import { findScheduledTemperatureF } from '../server/src/autopilot/scheduledBase.ts';
+import { classifySleep, findScheduledTemperatureF } from '../server/src/autopilot/scheduledBase.ts';
+import {
+  DEFAULT_SLEEP_RULES, calibrateSleepRules, createSleepTracker, detectSleepTimes, findSleepPeriods, measureRules,
+} from '../server/src/autopilot/sleepTracker.ts';
 
 // A made-up piezo signal: a short 7 Hz knock at every heartbeat, over slow breathing and noise
 const makeHeartbeatSignal = (beatsPerMinute, seconds = HEART_RATE_WINDOW_SECONDS) => {
@@ -57,30 +59,115 @@ const addMinutes = (tracker, count, minute) => {
   return state;
 };
 
-test('a sleeper goes from awake to asleep, and back to awake when restless', () => {
+test('a sleeper is asleep after lying still, whatever the heart does, and awake again when restless', () => {
   const tracker = createSleepTracker();
-  // Settling: a normal heart rate and some movement
+  // Settling: some movement every minute
   assert.equal(addMinutes(tracker, 12, { isInBed: true, heartRate: 66, movementSeconds: 6 }).stage, 'awake');
-  // Still, and the heart a little slower: asleep after ten such minutes
-  assert.equal(addMinutes(tracker, 9, { isInBed: true, heartRate: 62, movementSeconds: 1 }).stage, 'awake');
-  assert.equal(addMinutes(tracker, 1, { isInBed: true, heartRate: 62, movementSeconds: 1 }).stage, 'asleep');
-  // However slow and steady the heart, the stage stays "asleep": deep sleep is not detected
-  const later = addMinutes(tracker, 30, { isInBed: true, heartRate: 56, movementSeconds: 0 });
-  assert.equal(later.stage, 'asleep');
-  assert.equal(later.settlingHeartRate, 66);
-  assert.equal(later.minutesAsleep, 30);
-  // One turn in bed does not end sleep; three restless minutes do
-  assert.equal(addMinutes(tracker, 1, { isInBed: true, heartRate: 60, movementSeconds: 8 }).stage, 'asleep');
-  assert.equal(addMinutes(tracker, 3, { isInBed: true, heartRate: 70, movementSeconds: 20 }).stage, 'awake');
+  // Fifteen still minutes: asleep, counted from when the stillness began. The heart rate has
+  // not dropped at all and it makes no difference.
+  assert.equal(addMinutes(tracker, 14, { isInBed: true, heartRate: 66, movementSeconds: 1 }).stage, 'awake');
+  const asleep = addMinutes(tracker, 1, { isInBed: true, heartRate: 66, movementSeconds: 1 });
+  assert.equal(asleep.stage, 'asleep');
+  assert.equal(asleep.minutesAsleep, 15);
+  assert.equal(asleep.heartRate, 66);
+  // A turn in bed, even two in a row, does not end sleep; three restless minutes in five do
+  assert.equal(addMinutes(tracker, 2, { isInBed: true, movementSeconds: 20 }).stage, 'asleep');
+  assert.equal(addMinutes(tracker, 10, { isInBed: true, movementSeconds: 0 }).stage, 'asleep');
+  assert.equal(addMinutes(tracker, 3, { isInBed: true, movementSeconds: 20 }).stage, 'awake');
   // Getting out starts over
   assert.deepEqual(tracker.addMinute({ isInBed: false, movementSeconds: 0 }), { stage: 'out', minutesInBed: 0 });
 });
 
-test('with no heart rate, long stillness alone counts as asleep', () => {
-  const tracker = createSleepTracker();
-  assert.equal(addMinutes(tracker, 19, { isInBed: true, movementSeconds: 0 }).stage, 'awake');
-  assert.equal(addMinutes(tracker, 1, { isInBed: true, movementSeconds: 0 }).stage, 'asleep');
-  assert.equal(addMinutes(tracker, 60, { isInBed: true, movementSeconds: 0 }).stage, 'asleep');
+test('the rules a tracker is given decide how long stillness has to last', () => {
+  const quick = createSleepTracker(() => ({ stillMinutesToSleep: 5, restlessSecondsToWake: 30 }));
+  assert.equal(addMinutes(quick, 4, { isInBed: true, movementSeconds: 0 }).stage, 'awake');
+  assert.equal(addMinutes(quick, 1, { isInBed: true, movementSeconds: 0 }).stage, 'asleep');
+  // Twenty moving seconds is under this tracker's bar for a restless minute
+  assert.equal(addMinutes(quick, 5, { isInBed: true, movementSeconds: 20 }).stage, 'asleep');
+});
+
+// A made-up stay in bed: restless, then asleep, then up. One row a minute.
+const makeStay = ({ restlessMinutes, asleepMinutes, awakeMinutes = 10 }) => [
+  ...new Array(restlessMinutes).fill({ isInBed: true, movementSeconds: 8 }),
+  ...new Array(asleepMinutes).fill({ isInBed: true, movementSeconds: 0 }),
+  ...new Array(awakeMinutes).fill({ isInBed: true, movementSeconds: 40 }),
+];
+
+test('a saved stay replays to the minute sleep began and ended', () => {
+  const stay = makeStay({ restlessMinutes: 25, asleepMinutes: 400 });
+  const detected = detectSleepTimes(stay, DEFAULT_SLEEP_RULES);
+  assert.equal(detected.asleepAtMinute, 25);
+  // Waking is seen once three restless minutes have passed
+  assert.ok(Math.abs(detected.awakeAtMinute - 425) <= 3, `woke at ${detected.awakeAtMinute}`);
+  // A stay with no long stillness has no sleep in it
+  assert.deepEqual(detectSleepTimes(makeStay({ restlessMinutes: 60, asleepMinutes: 5 }), DEFAULT_SLEEP_RULES), {});
+});
+
+test('the longest sleep of a stay is the one reported', () => {
+  const stay = [
+    ...makeStay({ restlessMinutes: 5, asleepMinutes: 20, awakeMinutes: 15 }),
+    ...makeStay({ restlessMinutes: 0, asleepMinutes: 300 }),
+  ];
+  assert.equal(detectSleepTimes(stay, DEFAULT_SLEEP_RULES).asleepAtMinute, 40);
+});
+
+test('calibration picks the rules that land nearest a worn tracker, given enough nights', () => {
+  // This sleeper rolls over for a minute every half hour, 15 moving seconds each time, and the
+  // worn tracker says they slept through it. They also lie still for 9 minutes before sleep.
+  const makeNight = () => {
+    const minutes = [...new Array(20).fill({ isInBed: true, movementSeconds: 8 })];
+    for (let minute = 0; minute < 420; minute++) {
+      const isRolling = minute % 30 >= 27;
+      minutes.push({ isInBed: true, movementSeconds: isRolling ? 15 : 0 });
+    }
+    minutes.push(...new Array(10).fill({ isInBed: true, movementSeconds: 45 }));
+    return { minutes, trackerAsleepAtMinute: 20, trackerAwakeAtMinute: 440 };
+  };
+  // The default rules take three such minutes in a row for waking, and split the night
+  const withDefault = measureRules([makeNight()], DEFAULT_SLEEP_RULES);
+  assert.ok(withDefault.wakeErrorMinutes > 60, `default rules were off by ${withDefault.wakeErrorMinutes}`);
+  // Two nights are too few to change anything
+  assert.deepEqual(calibrateSleepRules([makeNight(), makeNight()]).rules, DEFAULT_SLEEP_RULES);
+  const calibrated = calibrateSleepRules([makeNight(), makeNight(), makeNight()]);
+  assert.equal(calibrated.nights, 3);
+  assert.ok(calibrated.rules.restlessSecondsToWake > 15, `restless bar ${calibrated.rules.restlessSecondsToWake}`);
+  assert.ok(calibrated.onsetErrorMinutes <= 2 && calibrated.wakeErrorMinutes <= 5, JSON.stringify(calibrated));
+});
+
+test('when the default rules already fit, calibration leaves them alone', () => {
+  const night = { minutes: makeStay({ restlessMinutes: 25, asleepMinutes: 400 }), trackerAsleepAtMinute: 25, trackerAwakeAtMinute: 425 };
+  assert.deepEqual(calibrateSleepRules([night, night, night]).rules, DEFAULT_SLEEP_RULES);
+});
+
+test('a health app\'s samples are joined into sleeps, leaving out awake and in-bed ones', () => {
+  const at = (hour, minute = 0) => Date.UTC(2026, 10, 18, hour, minute);
+  const periods = findSleepPeriods([
+    { startMs: at(6), endMs: at(14), value: 'In Bed' },
+    { startMs: at(6, 20), endMs: at(8), value: 'Core' },
+    { startMs: at(8), endMs: at(8, 10), value: 'Awake' },
+    { startMs: at(8, 10), endMs: at(13, 40), value: 'REM' },
+    // A nap that afternoon, and a blip too short to count
+    { startMs: at(21), endMs: at(21, 40), value: 'Asleep' },
+    { startMs: at(23, 30), endMs: at(23, 35) },
+  ]);
+  assert.deepEqual(periods, [
+    { asleepAtMs: at(6, 20), awakeAtMs: at(13, 40) },
+    { asleepAtMs: at(21), awakeAtMs: at(21, 40) },
+  ]);
+});
+
+test('sleep that begins in or just before the scheduled night is the night; otherwise a nap', () => {
+  const night = { power: { on: '22:00', off: '07:30', enabled: true, onTemperature: 82 }, alarm: { time: '07:00' } };
+  assert.equal(classifySleep('22:40', night), 'night');
+  assert.equal(classifySleep('03:10', night), 'night');
+  assert.equal(classifySleep('20:15', night), 'night');
+  assert.equal(classifySleep('14:00', night), 'nap');
+  assert.equal(classifySleep('07:30', night), 'nap');
+  // With no schedule, the hour decides
+  const off = { ...night, power: { ...night.power, enabled: false } };
+  assert.equal(classifySleep('14:00', off), 'nap');
+  assert.equal(classifySleep('23:00', off), 'night');
+  assert.equal(classifySleep('23:00', undefined), 'night');
 });
 
 test('the night curve cools early, returns by late night and ends a degree warm', () => {

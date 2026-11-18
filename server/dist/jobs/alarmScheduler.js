@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="ac4c4115-3c64-58fc-8563-af9b42181f5b")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="442dda12-1907-5473-9bb1-3275a717f25f")}catch(e){}}();
 import schedule from 'node-schedule';
 import { markOneOffAlarmFired } from './oneOffAlarmState.js';
 import cbor from 'cbor';
@@ -76,10 +76,11 @@ export const executeAlarm = async (alarmJob, { isContinuation } = { isContinuati
         logger.error(error);
     }
 };
-// A short, gentle double buzz on one side, to say "your press was taken" after a dismissal from
-// the bed. A Pod 5's firmware runs a 2-second request as given (anything shorter it drops). It
-// is not an alarm: nothing tracks it and nothing follows it.
-const CONFIRM_BUZZ = { strength: 25, seconds: 2, pattern: 'double' };
+// A short double buzz on one side, to say "your press was taken" after a dismissal from the
+// bed. A Pod 5's firmware drops a request shorter than 2 seconds. At a quarter strength the
+// firmware ran it but it could not be felt, so it is sent strong. It is not an alarm: nothing
+// tracks it and nothing follows it.
+const CONFIRM_BUZZ = { strength: 80, seconds: 3, pattern: 'double' };
 // The firmware drops a request that arrives with the stop command, or that carries the same
 // second as the alarm it just stopped (seen on a Pod 5). Waiting gets past both.
 const CONFIRM_BUZZ_WAIT_MS = 1_200;
@@ -331,4 +332,4 @@ export const scheduleAlarmPreWarm = (settingsData, side, day, dailySchedule) => 
     });
 };
 //# sourceMappingURL=alarmScheduler.js.map
-//# debugId=ac4c4115-3c64-58fc-8563-af9b42181f5b
+//# debugId=442dda12-1907-5473-9bb1-3275a717f25f

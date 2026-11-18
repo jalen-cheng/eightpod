@@ -644,9 +644,12 @@ temperature is only changed when it is.
     "minutesAsleep": 62,
     "offsetF": -3,
     "lastChange": "12:40 AM: 3°F cooler (time of night, first sleep cycle)",
-    "learned": { "early": -0.5, "middle": 0, "late": 0 }
+    "sleepKind": "night",
+    "learned": { "early": -0.5, "middle": 0, "late": 0 },
+    "rules": { "stillMinutesToSleep": 10, "restlessSecondsToWake": 20 },
+    "tracker": { "source": "Apple Health", "syncedAt": "2026-11-18T15:02:11.000Z", "nights": 6, "onsetErrorMinutes": 7, "wakeErrorMinutes": 4 }
   },
-  "right": { "stage": "out", "learned": { "early": 0, "middle": 0, "late": 0 } }
+  "right": { "stage": "out", "learned": { "early": 0, "middle": 0, "late": 0 }, "rules": { "stillMinutesToSleep": 15, "restlessSecondsToWake": 12 } }
 }
 ```
 
@@ -655,6 +658,36 @@ temperature is only changed when it is.
 | `available` | `false` when the piezo sensor has sent nothing in the last 2 minutes (other Pods) |
 | `room` | The air at the cover. Read as hundredths of a degree; not checked against a thermometer |
 | `stage` | `out`, `awake` or `asleep` |
-| `heartRate` | Beats a minute over the last 5 minutes; missing when no reading could be trusted |
+| `sleepKind` | While asleep: `night`, or `nap` (followed and saved, not adjusted) |
+| `heartRate` | Beats a minute over the last 5 minutes; missing when no reading could be trusted. Shown only: sleep is judged from stillness |
+| `rules` | The stillness rules in use: still minutes before "asleep", and moving seconds that make a minute restless |
+| `tracker` | The last sleep tracker to report on this side, and how far the bed's sleep and wake times are from its, in minutes |
 | `offsetF` | How far the side is from its set temperature because of the autopilot |
 | `learned` | What your changes have taught it for each third of the night, in °F |
+
+### `POST /api/autopilot/sleepTimes`
+
+Sleep and wake times from a watch or band, sent by a phone shortcut or a script. Each sleep is
+filed with the saved stay in bed it overlaps, and the side's `rules` are fitted again (once 3
+nights have tracker times). Send the two times, or a health app's raw samples:
+
+| Field | Type |
+| --- | --- |
+| `side` | `left` or `right` (required) |
+| `source` | optional name, up to 40 characters: `"Apple Health"`, `"Whoop"` |
+| `asleepAt`, `awakeAt` | date and time with an offset, such as `2026-11-18T23:12:00-08:00` |
+| `samples` | in place of the two times: up to 2000 of `{ "start", "end", "value" }`. Samples whose value says awake or in bed are left out, and the rest are joined into sleeps (a gap over an hour starts a new one) |
+
+```json
+{ "side": "left", "source": "Whoop", "asleepAt": "2026-11-18T23:12:00-08:00", "awakeAt": "2026-11-19T06:48:00-08:00" }
+```
+
+The response says how many sleeps were read, how many matched a saved stay, and the rules now in
+use. 400 when the body is not valid or holds no sleep.
+
+### `GET /api/autopilot/nights`
+
+The saved stays in bed, newest first, without their minute rows: `side`, `startedAtMs`,
+`minutesLogged`, `kind` (`night` or `nap`), the bed's `asleepAtMs` and `awakeAtMs`, and
+`tracker` when times were sent. `?limit=` takes 1 to 60 (default 14). The full files are on the
+Pod in `/persistent/free-sleep-data/autopilot_nights/`.

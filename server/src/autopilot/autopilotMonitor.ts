@@ -1,7 +1,8 @@
 // The autopilot's running half: takes the bed's sensor readings in, follows each sleeper minute
-// by minute, and (when switched on in Settings) moves a side's temperature by a few degrees
-// around what the schedule set. The decisions are made by the pure modules beside this file;
-// this one holds the state and talks to the Pod. Pod 5 only: it needs the sensor bus.
+// by minute, saves each stay in bed, and (when switched on in Settings) moves a side's
+// temperature by a few degrees around what the schedule set. The decisions are made by the pure
+// modules beside this file; this one holds the state and talks to the Pod. Pod 5 only: it needs
+// the sensor bus.
 import { readFileSync, writeFileSync } from 'fs';
 import moment from 'moment-timezone';
 import config from '../config.js';
@@ -15,16 +16,20 @@ import { isManualHoldActive } from '../jobs/manualHold.js';
 import { isPreWarmActive } from '../jobs/preWarmState.js';
 import { findNightDay } from '../jobs/scheduleTiming.js';
 import { updateDeviceStatus } from '../routes/deviceStatus/updateDeviceStatus.js';
+import type { AutopilotSideSnapshot, AutopilotSnapshot, TrackerLink } from './autopilotSnapshot.js';
 import {
   HEART_RATE_WINDOW_SECONDS, countMovementSeconds, estimateHeartRate, measureSwing,
 } from './heartRate.js';
-import type { AutopilotSideSnapshot, AutopilotSnapshot } from './autopilotSnapshot.js';
 import { registerManualChangeListener } from './manualChanges.js';
+import { deleteNight, listNights, pruneNights, saveNight } from './nightLog.js';
 import {
   LearnedOffsets, NO_LEARNED_OFFSETS, NightPart, Plan, Surroundings, learnFromCorrection, nightPartAt, planTemperature,
 } from './nightPlan.js';
-import { findScheduledTemperatureF } from './scheduledBase.js';
-import { SleepState, createSleepTracker } from './sleepTracker.js';
+import type { NightRecord, NightSummary, SleepKind } from './nightRecord.js';
+import { classifySleep, findScheduledTemperatureF } from './scheduledBase.js';
+import {
+  CalibrationNight, DEFAULT_SLEEP_RULES, MinuteSummary, SleepPeriod, SleepRules, SleepState, calibrateSleepRules, createSleepTracker,
+} from './sleepTracker.js';
 
 const SIDES: Side[] = ['left', 'right'];
 const MINUTE_MS = 60_000;
@@ -39,12 +44,24 @@ const MIN_MINUTES_BETWEEN_CHANGES = 10;
 const DEFAULT_NIGHT_HOURS = 8;
 // Sensor readings older than this are not used
 const SURROUNDINGS_STALE_MS = 2 * MINUTE_MS;
-// What was learned from the sleeper's corrections. Kept beside the settings folder, not in it,
-// so writing it does not make the job scheduler rebuild every job.
+// Out of bed for less than this is the same stay and the same night: a trip to the bathroom
+// does not start the night over
+const OUT_GRACE_MINUTES = 30;
+// A stay shorter than this is not saved: sitting on the bed, making it
+const MIN_STAY_MINUTES = 20;
+// A stay is cut off at this length, so a sensor stuck on "in bed" cannot grow one file for days
+const MAX_STAY_MINUTES = 16 * 60;
+// An open stay is written out this often, so a restart loses little
+const SAVE_EVERY_MINUTES = 10;
+// Calibration looks at this many of the newest nights that a sleep tracker reported on
+const CALIBRATION_NIGHTS = 14;
+// What was learned from the sleeper's corrections and from a linked sleep tracker. Kept beside
+// the settings folder, not in it, so writing it does not make the job scheduler rebuild every job.
 const STATE_FILE = `${config.dbFolder}autopilot_state.json`;
 
-// Tonight's sleep on one side, from falling asleep until getting up
+// The sleep the autopilot is steering on one side, from falling asleep until getting up
 type Night = {
+  kind: SleepKind;
   asleepSinceMs: number;
   wakeAtMs: number;
   // The temperature the side was set to when sleep began, used when no schedule covers the night
@@ -63,6 +80,9 @@ type SideState = {
   minuteHeartRates: number[];
   secondsSinceEstimate: number;
   sleep: SleepState;
+  // The stay in bed being saved, and how many minutes in a row the side has been empty during it
+  stay?: NightRecord;
+  minutesOut: number;
   night?: Night;
   lastPlan?: Plan;
   lastBaseF?: number;
@@ -70,17 +90,27 @@ type SideState = {
   lastChangeReason?: string;
 };
 
-const newSideState = (): SideState => ({
-  tracker: createSleepTracker(),
+type SavedState = {
+  learned?: Record<Side, LearnedOffsets>;
+  rules?: Record<Side, SleepRules>;
+  trackerLinks?: Partial<Record<Side, TrackerLink>>;
+};
+
+let learned: Record<Side, LearnedOffsets> = { left: { ...NO_LEARNED_OFFSETS }, right: { ...NO_LEARNED_OFFSETS } };
+let rules: Record<Side, SleepRules> = { left: DEFAULT_SLEEP_RULES, right: DEFAULT_SLEEP_RULES };
+let trackerLinks: Partial<Record<Side, TrackerLink>> = {};
+
+const newSideState = (side: Side): SideState => ({
+  tracker: createSleepTracker(() => rules[side]),
   recentSeconds: [],
   minuteSwings: [],
   minuteHeartRates: [],
   secondsSinceEstimate: 0,
   sleep: { stage: 'out', minutesInBed: 0 },
+  minutesOut: 0,
 });
 
-const sides: Record<Side, SideState> = { left: newSideState(), right: newSideState() };
-let learned: Record<Side, LearnedOffsets> = { left: { ...NO_LEARNED_OFFSETS }, right: { ...NO_LEARNED_OFFSETS } };
+const sides: Record<Side, SideState> = { left: newSideState('left'), right: newSideState('right') };
 let room: { temperatureF: number; humidityPercent?: number; atMs: number } | undefined;
 const surfaces: Partial<Record<Side, { temperatureF: number; atMs: number }>> = {};
 let lastPiezoAtMs = 0;
@@ -89,6 +119,15 @@ const median = (values: number[]): number | undefined => {
   if (values.length === 0) return undefined;
   const sorted = [...values].sort((first, second) => first - second);
   return sorted[Math.floor(sorted.length / 2)];
+};
+
+const saveState = () => {
+  try {
+    const state: SavedState = { learned, rules, trackerLinks };
+    writeFileSync(STATE_FILE, JSON.stringify(state));
+  } catch (error: unknown) {
+    logger.debug(`Autopilot could not save its state: ${String(error)}`);
+  }
 };
 
 // One second of a side's piezo signal, as the sensor bus delivers it
@@ -125,11 +164,14 @@ const readSurroundings = (side: Side, nowMs: number): Surroundings => ({
 export function getAutopilotSnapshot(nowMs: number = Date.now()): AutopilotSnapshot {
   const describe = (side: Side): AutopilotSideSnapshot => ({
     stage: sides[side].sleep.stage,
+    sleepKind: sides[side].sleep.stage === 'asleep' ? sides[side].stay?.kind : undefined,
     heartRate: sides[side].sleep.heartRate === undefined ? undefined : Math.round(sides[side].sleep.heartRate),
     minutesAsleep: sides[side].sleep.minutesAsleep,
     offsetF: sides[side].night ? sides[side].lastPlan?.offsetF : undefined,
     lastChange: sides[side].lastChangeReason,
     learned: learned[side],
+    rules: rules[side],
+    tracker: trackerLinks[side],
   });
   return {
     available: nowMs - lastPiezoAtMs < SURROUNDINGS_STALE_MS,
@@ -140,6 +182,62 @@ export function getAutopilotSnapshot(nowMs: number = Date.now()): AutopilotSnaps
     left: describe('left'),
     right: describe('right'),
   };
+}
+
+const summarise = ({ minutes, ...rest }: NightRecord): NightSummary => ({ ...rest, minutesLogged: minutes.length });
+
+// Saved stays in bed without their minute rows, newest first, with any stay still under way
+export function getNightSummaries(limit: number): NightSummary[] {
+  const open = SIDES.flatMap(side => (sides[side].stay ? [sides[side].stay] : []));
+  const isOpen = (night: NightRecord) => open.some(stay => stay.side === night.side && stay.startedAtMs === night.startedAtMs);
+  const saved = listNights(undefined, limit).filter(night => !isOpen(night));
+  return [...open, ...saved].sort((first, second) => second.startedAtMs - first.startedAtMs).slice(0, limit).map(summarise);
+}
+
+const overlapMs = (night: NightRecord, period: SleepPeriod) => (
+  Math.min(night.startedAtMs + night.minutes.length * MINUTE_MS, period.awakeAtMs) - Math.max(night.startedAtMs, period.asleepAtMs)
+);
+
+// Sets a side's sleep rules to whatever fits its newest tracker-reported nights best
+const recalibrate = (side: Side, source: string, nowMs: number) => {
+  const nights: CalibrationNight[] = listNights(side)
+    .filter(night => night.tracker && night.kind !== 'nap')
+    .slice(0, CALIBRATION_NIGHTS)
+    .flatMap(night => (night.tracker ? [{
+      minutes: night.minutes.map(minute => ({ isInBed: minute.stage !== 'out', movementSeconds: minute.movementSeconds })),
+      trackerAsleepAtMinute: (night.tracker.asleepAtMs - night.startedAtMs) / MINUTE_MS,
+      trackerAwakeAtMinute: (night.tracker.awakeAtMs - night.startedAtMs) / MINUTE_MS,
+    }] : []));
+  const calibration = calibrateSleepRules(nights);
+  rules[side] = calibration.rules;
+  trackerLinks[side] = {
+    source,
+    syncedAt: new Date(nowMs).toISOString(),
+    nights: calibration.nights,
+    onsetErrorMinutes: calibration.onsetErrorMinutes,
+    wakeErrorMinutes: calibration.wakeErrorMinutes,
+  };
+  saveState();
+  logger.debug(`Autopilot: ${side} side's sleep rules after ${calibration.nights} tracker nights: ${JSON.stringify(calibration)}`);
+};
+
+// A worn sleep tracker's account of when someone on this side slept. Each sleep is filed with
+// the saved stay in bed it overlaps, and the side's sleep rules are then fitted again. Returns
+// how many of the sleeps matched a stay.
+export function applyTrackerSleep(side: Side, source: string, periods: SleepPeriod[], nowMs: number = Date.now()): number {
+  const openStay = sides[side].stay;
+  const nights = [...(openStay ? [openStay] : []), ...listNights(side).filter(night => night.startedAtMs !== openStay?.startedAtMs)];
+  let matched = 0;
+  for (const period of periods) {
+    const night = nights.filter(candidate => overlapMs(candidate, period) > 0)
+      .sort((first, second) => overlapMs(second, period) - overlapMs(first, period))[0];
+    if (!night) continue;
+    night.tracker = { source, asleepAtMs: period.asleepAtMs, awakeAtMs: period.awakeAtMs, receivedAtMs: nowMs };
+    saveNight(night);
+    matched++;
+  }
+  recalibrate(side, source, nowMs);
+  return matched;
 }
 
 const describePlan = (plan: Plan, stage: SleepState['stage']): string => {
@@ -159,12 +257,16 @@ export class AutopilotMonitor {
 
   start() {
     try {
-      const saved = JSON.parse(readFileSync(STATE_FILE, 'utf8')) as { learned?: Record<Side, LearnedOffsets> };
+      const saved = JSON.parse(readFileSync(STATE_FILE, 'utf8')) as SavedState;
       if (saved.learned) {
         learned = { left: { ...NO_LEARNED_OFFSETS, ...saved.learned.left }, right: { ...NO_LEARNED_OFFSETS, ...saved.learned.right } };
       }
+      if (saved.rules) {
+        rules = { left: { ...DEFAULT_SLEEP_RULES, ...saved.rules.left }, right: { ...DEFAULT_SLEEP_RULES, ...saved.rules.right } };
+      }
+      trackerLinks = saved.trackerLinks ?? {};
     } catch {
-      // Nothing learned yet
+      // Nothing saved yet
     }
     registerManualChangeListener((side, temperatureF) => this.noteManualChange(side, temperatureF));
     this.minuteTimer = setInterval(() => void this.runMinute(), MINUTE_MS);
@@ -173,15 +275,18 @@ export class AutopilotMonitor {
   stop() {
     clearInterval(this.minuteTimer);
     registerManualChangeListener(undefined);
+    for (const side of SIDES) {
+      if (sides[side].stay) saveNight(sides[side].stay);
+    }
   }
 
   // A person set this side's temperature. While the autopilot has a night under way, that is a
   // correction: kept in full for the rest of this part of the night, and half-remembered for
-  // later nights.
+  // later nights. During a nap the autopilot is not steering, so there is nothing to correct.
   private noteManualChange(side: Side, temperatureF: number) {
     const state = sides[side];
     const { night, lastPlan } = state;
-    if (!settingsDB.data.autopilot.enabled || !night || !lastPlan) return;
+    if (!settingsDB.data.autopilot.enabled || !night || night.kind === 'nap' || !lastPlan) return;
     const correctionF = temperatureF - lastPlan.targetTemperatureF;
     if (correctionF === 0) return;
     const part = nightPartAt((Date.now() - night.asleepSinceMs) / (night.wakeAtMs - night.asleepSinceMs));
@@ -191,14 +296,10 @@ export class AutopilotMonitor {
     state.lastPlan = { ...lastPlan, targetTemperatureF: temperatureF };
     learned[side] = learnFromCorrection(learned[side], part, correctionF);
     logger.debug(`Autopilot: ${side} side was changed by hand by ${correctionF}°F in the ${part} part of the night`);
-    try {
-      writeFileSync(STATE_FILE, JSON.stringify({ learned }));
-    } catch (error: unknown) {
-      logger.debug(`Autopilot could not save what it learned: ${String(error)}`);
-    }
+    saveState();
   }
 
-  // Once a minute: sum up the minute for each side, update its sleep state, and act on it
+  // Once a minute: sum up the minute for each side, update its sleep state, save it, act on it
   private async runMinute() {
     try {
       const nowMs = Date.now();
@@ -206,22 +307,18 @@ export class AutopilotMonitor {
       await settingsDB.read();
       for (const side of SIDES) {
         const state = sides[side];
-        const wasAsleep = state.sleep.stage === 'asleep';
-        state.sleep = state.tracker.addMinute({
+        const minute: MinuteSummary = {
           isInBed: isSomeoneInBed(side),
           heartRate: median(state.minuteHeartRates),
           movementSeconds: countMovementSeconds(state.minuteSwings),
-        });
+        };
+        state.sleep = state.tracker.addMinute(minute);
         state.minuteHeartRates = [];
         state.minuteSwings = [];
-        if (state.sleep.stage === 'out') {
-          state.night = undefined;
-          state.lastPlan = undefined;
-          continue;
-        }
-        if (!settingsDB.data.autopilot.enabled) continue;
-        const isAsleep = state.sleep.stage === 'asleep';
-        if (isAsleep && !wasAsleep && !state.night) await this.beginNight(side, nowMs);
+        if (state.sleep.stage === 'asleep') await this.noteAsleep(side, nowMs);
+        this.logMinute(side, minute, nowMs);
+        if (state.sleep.stage === 'out' || !settingsDB.data.autopilot.enabled) continue;
+        if (state.sleep.stage === 'asleep' && !state.night) await this.beginNight(side, nowMs);
         if (state.night) await this.steer(side, nowMs);
       }
     } catch (error: unknown) {
@@ -229,8 +326,67 @@ export class AutopilotMonitor {
     }
   }
 
-  // Sleep has begun: note when it should end and what the surroundings are now
+  // Marks the stay with when sleep began, what kind it is, and how late it has lasted so far
+  private async noteAsleep(side: Side, nowMs: number) {
+    const state = sides[side];
+    state.stay ??= { side, startedAtMs: nowMs - state.sleep.minutesInBed * MINUTE_MS, minutes: [] };
+    if (state.stay.asleepAtMs === undefined) {
+      const asleepAtMs = nowMs - (state.sleep.minutesAsleep ?? 0) * MINUTE_MS;
+      await schedulesDB.read();
+      const asleepAt = moment.tz(asleepAtMs, settingsDB.data.timeZone);
+      const scheduledNight = schedulesDB.data[side][findNightDay(asleepAt, schedulesDB.data[side])];
+      state.stay.asleepAtMs = asleepAtMs;
+      state.stay.kind = classifySleep(asleepAt.format('HH:mm'), scheduledNight);
+      logger.debug(`Autopilot: ${side} side fell asleep at ${asleepAt.format()} (${state.stay.kind})`);
+    }
+    state.stay.awakeAtMs = nowMs;
+  }
+
+  // Adds the minute to the stay being saved. The stay ends, and the night with it, once the
+  // side has been empty for longer than a trip out of bed takes.
+  private logMinute(side: Side, minute: MinuteSummary, nowMs: number) {
+    const state = sides[side];
+    if (minute.isInBed) {
+      state.stay ??= { side, startedAtMs: nowMs - MINUTE_MS, minutes: [] };
+      state.minutesOut = 0;
+    } else if (state.stay) {
+      state.minutesOut++;
+    }
+    const stay = state.stay;
+    if (!stay) return;
+    stay.minutes.push({
+      movementSeconds: minute.movementSeconds,
+      heartRate: minute.heartRate === undefined ? undefined : Math.round(minute.heartRate),
+      stage: state.sleep.stage,
+      offsetF: state.night ? state.lastPlan?.offsetF : undefined,
+      roomF: room && nowMs - room.atMs < SURROUNDINGS_STALE_MS ? Math.round(room.temperatureF * 10) / 10 : undefined,
+    });
+    if (state.minutesOut >= OUT_GRACE_MINUTES || stay.minutes.length >= MAX_STAY_MINUTES) {
+      this.endStay(side);
+    } else if (stay.minutes.length % SAVE_EVERY_MINUTES === 0) {
+      saveNight(stay);
+    }
+  }
+
+  private endStay(side: Side) {
+    const state = sides[side];
+    const stay = state.stay;
+    if (!stay) return;
+    // The empty minutes at the end were the wait to see whether they would come back
+    stay.minutes = stay.minutes.slice(0, stay.minutes.length - state.minutesOut);
+    if (stay.minutes.length >= MIN_STAY_MINUTES) saveNight(stay);
+    else deleteNight(stay);
+    pruneNights();
+    state.stay = undefined;
+    state.minutesOut = 0;
+    state.night = undefined;
+    state.lastPlan = undefined;
+    state.lastBaseF = undefined;
+  }
+
+  // Sleep has begun on a side that is on: note when it should end and what the surroundings are
   private async beginNight(side: Side, nowMs: number) {
+    const state = sides[side];
     const deviceStatus = await (await connectFranken()).getDeviceStatus();
     if (!deviceStatus[side].isOn) return;
     await schedulesDB.read();
@@ -244,22 +400,24 @@ export class AutopilotMonitor {
       // A wake time most of a day away is not this night's
       if (wakeAt.diff(now, 'hours') <= 14) wakeAtMs = wakeAt.valueOf();
     }
-    sides[side].night = {
-      asleepSinceMs: nowMs,
+    state.night = {
+      kind: state.stay?.kind ?? 'night',
+      asleepSinceMs: state.stay?.asleepAtMs ?? nowMs,
       wakeAtMs,
       temperatureAtOnsetF: deviceStatus[side].targetTemperatureF,
       surroundingsAtOnset: readSurroundings(side, nowMs),
       correctionF: 0,
     };
-    logger.debug(`Autopilot: ${side} side fell asleep; the night runs until ${moment(wakeAtMs).format()}`);
+    logger.debug(`Autopilot: steering the ${side} side's ${state.night.kind} until ${moment(wakeAtMs).format()}`);
   }
 
   // Sets the side to what the plan wants, if that differs from what it is set to and the bed
-  // has not just been moved
+  // has not just been moved. A nap is followed and saved but not steered: the night's curve is
+  // made for a night.
   private async steer(side: Side, nowMs: number) {
     const state = sides[side];
     const night = state.night;
-    if (!night) return;
+    if (!night || night.kind === 'nap') return;
     if (settingsDB.data[side].awayMode || isManualHoldActive(side) || isPreWarmActive(side)) return;
     const deviceStatus = await (await connectFranken()).getDeviceStatus();
     if (!deviceStatus[side].isOn) return;
