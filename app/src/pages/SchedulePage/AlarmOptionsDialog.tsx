@@ -227,7 +227,9 @@ export default function AlarmOptionsDialog({ open, onClose, onSave }: AlarmOptio
         </OptionRow>
       </DialogContent>
       <DialogActions sx={ { px: 3, pb: 2 } }>
-        <Button color="inherit" onClick={ discard } disabled={ isUpdating }>{ hasAlarmChanged ? 'Discard' : 'Close' }</Button>
+        <Button color="inherit" onClick={ discard } disabled={ isUpdating } sx={ { mr: 'auto' } }>
+          { hasAlarmChanged ? 'Discard' : 'Close' }
+        </Button>
         <Button variant="contained" onClick={ save } disabled={ isUpdating || !isValid() } sx={ { minWidth: 96 } }>Save</Button>
       </DialogActions>
     </Dialog>
