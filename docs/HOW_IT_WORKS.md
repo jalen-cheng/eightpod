@@ -356,7 +356,7 @@ offers to dismiss it.
   bed turns off 30 minutes after wake up. This mirrors Eight Sleep's own app, which has a bedtime, temperature phases and
   alarms, and no off time.
 - Editing anything shows **Discard** and **Save** under the night. A temperature change must
-  come after Bed on and before Wake (the row names the alarm it runs into), or Save stays off. Other day tabs
+  come after Bed on and before Wake (the row says it must be earlier than the wake time), or Save stays off. Other day tabs
   and the side picker are locked until you save or discard. The copy button beside the night's
   name copies a saved night to any other days.
 - Saving always writes the whole night shown, to each chosen day, on both sides when linked.

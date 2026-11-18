@@ -124,16 +124,15 @@ export default function NightTimeline() {
   const isNightValid = isNightLengthValid(power.on, alarm.time);
 
   // What to tell the user about a change whose time cannot be saved. The usual cause is the
-  // wake time: the alarm goes off there and the bed turns off soon after.
+  // wake time: the bed turns off soon after it, so a later change would never run.
   const describeChangeProblem = (time: Time) => {
     const problem = findChangeProblem(time, power.on, alarm.time);
     if (problem === undefined) return undefined;
     if (problem === 'notAfterBedOn') return 'Must be after Bed on';
     const wakeMoment = moment(alarm.time, 'HH:mm', true);
     // While the wake time is being typed, its own row carries the error
-    if (!wakeMoment.isValid()) return 'Must be before Wake';
-    const wakeLabel = wakeMoment.format('h:mm A');
-    return alarm.enabled ? `Must be before the ${wakeLabel} alarm` : `Must be before Wake at ${wakeLabel}`;
+    if (!wakeMoment.isValid()) return 'Must be earlier than the wake time';
+    return `Must be earlier than the ${wakeMoment.format('h:mm A')} wake time`;
   };
 
   return (
