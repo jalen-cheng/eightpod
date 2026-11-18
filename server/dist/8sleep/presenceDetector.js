@@ -9,7 +9,7 @@
 // moved by up to 140 as the water went from coldest to hottest; lying on a side raised it by
 // 1,800 to 3,000, and lying on the other side raised it by up to 1,200 for a moment.
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="16c38746-4af1-54b6-917a-4e37c908d844")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="0689a7db-11cc-5899-a016-2ebd3ceec1c3")}catch(e){}}();
 export const PRESENCE_DELTAS = { low: 1400, medium: 800, high: 400 };
 // Readings are noisy one by one, so the middle of the last few is used (5 seconds' worth)
 const SMOOTHING_SAMPLES = 10;
@@ -24,16 +24,28 @@ const LEAVE_FRACTION = 0.6;
 const EMPTY_FRACTION = 0.5;
 // How much of the gap the baseline closes per reading while empty (a few minutes to catch up)
 const BASELINE_DRIFT_RATE = 0.002;
+// Someone lying towards the middle raises the other side's sensors too: on the test Pod, by up
+// to 1,300 against 3,000 or more on their own side. A side whose rise is less than this fraction
+// of the other side's is taken as that spill-over, not as a second person.
+const NEIGHBOUR_FRACTION = 0.5;
+// True when a side that reads "in bed" is only picking up the person on the other side
+export function isNeighbourSpillOver(side, otherSide) {
+    if (!side.present || !otherSide?.present)
+        return false;
+    return side.signal - side.baseline < (otherSide.signal - otherSide.baseline) * NEIGHBOUR_FRACTION;
+}
 const median = (values) => {
     const sorted = [...values].sort((first, second) => first - second);
     const middle = Math.floor(sorted.length / 2);
     return sorted.length % 2 === 0 ? (sorted[middle - 1] + sorted[middle]) / 2 : sorted[middle];
 };
 // Creates the detector for one side. Feed it every reading with the time it arrived.
-export function createPresenceDetector() {
+// `remembered` is what a detector knew before a restart. Without it a detector starts by taking
+// the first reading as "empty", which is wrong if someone is in bed at that moment.
+export function createPresenceDetector(remembered) {
     const recentSignals = [];
-    let baseline;
-    let present = false;
+    let baseline = remembered?.baseline;
+    let present = remembered?.present ?? false;
     // When the signal first disagreed with `present`; cleared when it agrees again
     let disagreeingSinceMs;
     const update = (reading, nowMs, presenceDelta) => {
@@ -65,4 +77,4 @@ export function createPresenceDetector() {
     return { update };
 }
 //# sourceMappingURL=presenceDetector.js.map
-//# debugId=16c38746-4af1-54b6-917a-4e37c908d844
+//# debugId=0689a7db-11cc-5899-a016-2ebd3ceec1c3

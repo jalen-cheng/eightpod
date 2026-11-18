@@ -50,17 +50,33 @@ export type PresenceSnapshot = {
   right?: SidePresence;
 };
 
+// Someone lying towards the middle raises the other side's sensors too: on the test Pod, by up
+// to 1,300 against 3,000 or more on their own side. A side whose rise is less than this fraction
+// of the other side's is taken as that spill-over, not as a second person.
+const NEIGHBOUR_FRACTION = 0.5;
+
+// True when a side that reads "in bed" is only picking up the person on the other side
+export function isNeighbourSpillOver(side: PresenceEstimate, otherSide: PresenceEstimate | undefined): boolean {
+  if (!side.present || !otherSide?.present) return false;
+  return side.signal - side.baseline < (otherSide.signal - otherSide.baseline) * NEIGHBOUR_FRACTION;
+}
+
 const median = (values: number[]) => {
   const sorted = [...values].sort((first, second) => first - second);
   const middle = Math.floor(sorted.length / 2);
   return sorted.length % 2 === 0 ? (sorted[middle - 1] + sorted[middle]) / 2 : sorted[middle];
 };
 
+// What a detector has learned, enough to carry on after a restart
+export type DetectorMemory = { baseline: number; present: boolean };
+
 // Creates the detector for one side. Feed it every reading with the time it arrived.
-export function createPresenceDetector() {
+// `remembered` is what a detector knew before a restart. Without it a detector starts by taking
+// the first reading as "empty", which is wrong if someone is in bed at that moment.
+export function createPresenceDetector(remembered?: DetectorMemory) {
   const recentSignals: number[] = [];
-  let baseline: number | undefined;
-  let present = false;
+  let baseline: number | undefined = remembered?.baseline;
+  let present = remembered?.present ?? false;
   // When the signal first disagreed with `present`; cleared when it agrees again
   let disagreeingSinceMs: number | undefined;
 

@@ -1,7 +1,7 @@
 // Run with Node 24: node --test tests/presence.test.mjs
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { createPresenceDetector } from '../server/src/8sleep/presenceDetector.ts';
+import { createPresenceDetector, isNeighbourSpillOver } from '../server/src/8sleep/presenceDetector.ts';
 import { SESSION_GAP_MS, createBedSession, takeDueActions, trackBedSession } from '../server/src/jobs/presenceActions.ts';
 
 // As measured on a Pod 5: an empty side near 3,900 in total, a person adding 1,800 or more
@@ -53,11 +53,37 @@ test('someone on the other side does not count as someone on this side', () => {
   assert.equal(feed(detector, neighbour, 60_000, 600).present, false);
 });
 
+test('a much smaller rise beside a large one is spill-over from the other side, not a second person', () => {
+  // Measured with one person lying left of centre
+  const left = { present: true, signal: 6650, baseline: 3570 };
+  const right = { present: true, signal: 4940, baseline: 3850 };
+  assert.equal(isNeighbourSpillOver(right, left), true);
+  assert.equal(isNeighbourSpillOver(left, right), false);
+  // Two people: both rises are large
+  const partner = { present: true, signal: 5900, baseline: 3850 };
+  assert.equal(isNeighbourSpillOver(partner, left), false);
+  // Nobody on the other side: nothing to spill over from
+  assert.equal(isNeighbourSpillOver(right, { ...left, present: false }), false);
+});
+
 test('a detector started with someone in bed corrects itself when they get out', () => {
   const detector = createPresenceDetector();
   assert.equal(feed(detector, OCCUPIED, 0, 60).present, false);
   feed(detector, EMPTY, 60_000, 30);
   assert.equal(feed(detector, OCCUPIED, 90_000, 60).present, true);
+});
+
+test('a detector that remembers what it knew carries on correctly after a restart with someone in bed', () => {
+  const beforeRestart = createPresenceDetector();
+  feed(beforeRestart, EMPTY, 0, 60);
+  const inBed = feed(beforeRestart, OCCUPIED, 60_000, 60);
+  assert.equal(inBed.present, true);
+
+  const afterRestart = createPresenceDetector({ baseline: inBed.baseline, present: inBed.present });
+  const stillInBed = feed(afterRestart, OCCUPIED, 400_000, 30);
+  assert.equal(stillInBed.present, true);
+  assert.ok(Math.abs(stillInBed.baseline - inBed.baseline) < 1, 'the sleeper was learned as the empty level');
+  assert.equal(feed(afterRestart, EMPTY, 430_000, 90).present, false);
 });
 
 test('a stay in bed bridges short gaps and ends after a long one', () => {
