@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="aa761f25-b037-597f-8b05-220db8ee12c6")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="8703a279-b4cc-5157-bec4-82737b534596")}catch(e){}}();
 import logger from '../logger.js';
 import settingsDB from '../db/settings.js';
 import { MAX_TARGET_TEMPERATURE_F, MIN_TARGET_TEMPERATURE_F, } from '../routes/deviceStatus/deviceStatusSchema.js';
@@ -8,7 +8,7 @@ import { handleAlarmGesture } from '../jobs/alarmSession.js';
 import { Version } from '../routes/deviceStatus/deviceStatusSchema.js';
 import { buzzDismissalConfirmation } from '../jobs/alarmScheduler.js';
 import { processSideGestures } from './gestures.js';
-import { stepTemperatureF } from '../db/temperatureCurve.js';
+import { stepDialLevels, stepFToDialLevels, stepTemperatureF } from '../db/temperatureCurve.js';
 // One press can reach us twice: through the tap counters and through the Pod 5 button log, or as
 // a long hold that the firmware follows with a second, shorter event. Running an alarm or power
 // gesture twice would undo it (a power toggle flips back), so a second one for the same side
@@ -29,6 +29,11 @@ const updateControlledSides = (side, sideStatus) => {
     getControlledSides(side).forEach((controlledSide) => { update[controlledSide] = sideStatus; });
     return updateDeviceStatus(update, { isManual: true });
 };
+// One press of a temperature button or tap. The step is saved in °F; with the app set to
+// levels it is taken as whole levels instead, so "1 level a press" moves one level.
+const stepForChosenUnit = (temperatureF, deltaF, minTemperatureF, maxTemperatureF) => (settingsDB.data.temperatureFormat === 'level'
+    ? stepDialLevels(temperatureF, Math.sign(deltaF) * stepFToDialLevels(deltaF), minTemperatureF, maxTemperatureF)
+    : stepTemperatureF(temperatureF, deltaF, minTemperatureF, maxTemperatureF));
 export const setSidePower = (side, isOn) => updateControlledSides(side, { isOn });
 // Runs a side's configured actions for the gestures made between two sets of counts.
 // Shared by the tap counter monitor and the Pod 5 button monitor, so both behave the same.
@@ -42,7 +47,7 @@ export async function runSideGestures(side, deviceStatus, previousTaps, nextTaps
             tapSettings: settingsDB.data[side].taps,
             targetTemperatureF: deviceStatus[side].targetTemperatureF,
             temperatureLimits: {
-                minTemperatureF: MIN_TARGET_TEMPERATURE_F, maxTemperatureF: MAX_TARGET_TEMPERATURE_F, stepTemperature: stepTemperatureF,
+                minTemperatureF: MIN_TARGET_TEMPERATURE_F, maxTemperatureF: MAX_TARGET_TEMPERATURE_F, stepTemperature: stepForChosenUnit,
             },
             actions: {
                 setTargetTemperature: async (temperatureF) => {
@@ -76,4 +81,4 @@ export async function runSideGestures(side, deviceStatus, previousTaps, nextTaps
     }
 }
 //# sourceMappingURL=gestureActions.js.map
-//# debugId=aa761f25-b037-597f-8b05-220db8ee12c6
+//# debugId=8703a279-b4cc-5157-bec4-82737b534596
