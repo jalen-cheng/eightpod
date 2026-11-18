@@ -2,7 +2,7 @@
 // a new alarm while one is vibrating. So a ramp-up is made here: short stretches one after
 // another, each stronger than the last, then full strength.
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="cec66a41-818a-5a55-ad02-7ed60c176d42")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="ebe68bbd-8764-51bf-8e58-79b78d0b5e85")}catch(e){}}();
 const RAMP_STEP_SECONDS = 10;
 const RAMP_STRENGTH_FRACTIONS = [0.2, 0.4, 0.6, 0.8];
 // The firmware does not run an alarm shorter than this
@@ -49,14 +49,18 @@ export function createAlarmSession({ startAlarm, setAlarmVibrating, logDebug }) 
             return;
         cancelVibrationEndTimer(side);
         // A restart re-runs the whole alarm, so later stretches must not replace it
-        if (!isContinuation)
+        if (!isContinuation) {
             sideStates[side].lastAlarm = alarmJob;
+            // A restart after the other side's dismissal keeps the time the alarm first began
+            sideStates[side].startedAtMs ??= Date.now();
+        }
         sideStates[side].isActive = true;
         await setAlarmVibrating(side, true);
         const stretchTimer = setTimeout(() => {
             sideStates[side].vibrationEndTimer = undefined;
             if (!continuation) {
                 sideStates[side].isActive = false;
+                sideStates[side].startedAtMs = undefined;
                 void setAlarmVibrating(side, false);
                 return;
             }
@@ -80,6 +84,7 @@ export function createAlarmSession({ startAlarm, setAlarmVibrating, logDebug }) 
     const alarmCleared = async (side) => {
         const wasVibrating = Boolean(sideStates[side].isActive);
         sideStates[side].isActive = false;
+        sideStates[side].startedAtMs = undefined;
         cancelVibrationEndTimer(side);
         await setAlarmVibrating(side, false);
         return wasVibrating ? sideStates[side].lastAlarm : undefined;
@@ -100,7 +105,15 @@ export function createAlarmSession({ startAlarm, setAlarmVibrating, logDebug }) 
             await setAlarmVibrating(side, false);
         return true;
     };
-    return { alarmStarted, alarmCleared, restartIfVibrating, isAlarmActive };
+    // True when both sides are going off and began within `withinMs` of each other: one alarm for
+    // the whole bed (linked sides, or two schedules with the same wake time), which one press stops.
+    const didAlarmsStartTogether = (withinMs) => {
+        const { left, right } = sideStates;
+        if (!left.isActive || !right.isActive || left.startedAtMs === undefined || right.startedAtMs === undefined)
+            return false;
+        return Math.abs(left.startedAtMs - right.startedAtMs) <= withinMs;
+    };
+    return { alarmStarted, alarmCleared, restartIfVibrating, isAlarmActive, didAlarmsStartTogether };
 }
 // Decides what an alarm tap does. While an alarm vibrates it dismisses it; otherwise it toggles
 // the side's power if configured to. (The saved config still carries a snooze choice, which
@@ -117,4 +130,4 @@ export async function handleAlarmGesture(tapConfig, deps) {
     return 'none';
 }
 //# sourceMappingURL=alarmSession.js.map
-//# debugId=cec66a41-818a-5a55-ad02-7ed60c176d42
+//# debugId=ebe68bbd-8764-51bf-8e58-79b78d0b5e85

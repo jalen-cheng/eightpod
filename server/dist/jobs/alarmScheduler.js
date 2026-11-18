@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="de7a79ee-7cc0-5230-b909-474386ef232f")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="ba3e5d3e-b624-5100-bc43-48e9e0d4e54c")}catch(e){}}();
 import schedule from 'node-schedule';
 import { markOneOffAlarmFired } from './oneOffAlarmState.js';
 import cbor from 'cbor';
@@ -73,6 +73,19 @@ export const executeAlarm = async (alarmJob, { isContinuation } = { isContinuati
         serverStatus.status.alarmSchedule.status = 'failed';
         const message = error instanceof Error ? error.message : String(error);
         serverStatus.status.alarmSchedule.message = message;
+        logger.error(error);
+    }
+};
+// A short, gentle double buzz on one side, to say "your press was taken" after a dismissal from
+// the bed. A Pod 5's firmware runs a 2-second request as given (anything shorter it drops). It
+// is not an alarm: nothing tracks it and nothing follows it.
+const CONFIRM_BUZZ = { strength: 25, seconds: 2, pattern: 'double' };
+export const buzzDismissalConfirmation = async (side) => {
+    try {
+        const payload = { pl: CONFIRM_BUZZ.strength, du: CONFIRM_BUZZ.seconds, pi: CONFIRM_BUZZ.pattern, tt: moment().unix() };
+        await executeFunction(side === 'left' ? 'ALARM_LEFT' : 'ALARM_RIGHT', cbor.encode(payload).toString('hex'));
+    }
+    catch (error) {
         logger.error(error);
     }
 };
@@ -314,4 +327,4 @@ export const scheduleAlarmPreWarm = (settingsData, side, day, dailySchedule) => 
     });
 };
 //# sourceMappingURL=alarmScheduler.js.map
-//# debugId=de7a79ee-7cc0-5230-b909-474386ef232f
+//# debugId=ba3e5d3e-b624-5100-bc43-48e9e0d4e54c

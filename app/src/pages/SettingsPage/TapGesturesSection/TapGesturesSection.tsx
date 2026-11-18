@@ -105,7 +105,7 @@ export default function TapGesturesSection({ settings, updateSettings }: TapGest
             <Divider/>
             <TapSettingRow
               gesture="Hold the middle button"
-              action="Two seconds or more turns that side on or off (both sides when linked)"
+              action="A second and a half or more turns that side on or off (both sides when linked)"
             />
           </>
         ) }

@@ -216,3 +216,25 @@ test('an alarm dismissed in the moment between two stretches stays dismissed', a
   assert.equal(session.isAlarmActive('left'), false);
 });
 
+
+test('alarms that began together are one alarm; alarms minutes apart are two', async () => {
+  mock.timers.reset();
+  mock.timers.enable({ apis: ['setTimeout', 'Date'] });
+  const session = createAlarmSession({ startAlarm: async () => {}, setAlarmVibrating: async () => {}, logDebug: () => {} });
+  const alarm = side => ({ side, vibrationIntensity: 100, vibrationPattern: 'rise', duration: 600 });
+  await session.alarmStarted(alarm('left'), 180);
+  mock.timers.tick(2_000);
+  await session.alarmStarted(alarm('right'), 180);
+  assert.equal(session.didAlarmsStartTogether(60_000), true);
+
+  // One side dismissed: there is no pair any more
+  await session.alarmCleared('right');
+  assert.equal(session.didAlarmsStartTogether(60_000), false);
+
+  // Two alarms: the right side's begins two minutes after the left's
+  await session.alarmCleared('left');
+  await session.alarmStarted(alarm('left'), 180);
+  mock.timers.tick(120_000);
+  await session.alarmStarted(alarm('right'), 180);
+  assert.equal(session.didAlarmsStartTogether(60_000), false);
+});

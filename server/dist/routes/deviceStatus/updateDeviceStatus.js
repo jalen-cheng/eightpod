@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="4b34884b-2e7f-5950-b928-054f292b32df")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="2c4bb1f9-4474-5b2c-858c-06e49a6bf92f")}catch(e){}}();
 import _ from 'lodash';
 import cbor from 'cbor';
 import { executeFunction } from '../../8sleep/deviceApi.js';
@@ -23,17 +23,20 @@ const finishDismissedAlarm = async (side) => {
         await updateSide(side, { isOn: false }, {});
     }
 };
+// Alarms that began this close together are one alarm for the whole bed
+const SAME_ALARM_WINDOW_MS = 60_000;
 // Stops a side's alarm.
 // The firmware's clear command takes no side and stops both (confirmed on a Pod 5). So the other
-// side is dealt with here: with the sides linked it is one sleeper's alarm and is dismissed too;
-// otherwise the other side's alarm is started again if it was still going off.
+// side is dealt with here. If both sides began going off together it is one alarm, and it is
+// dismissed too. Otherwise it is someone else's alarm, and it is started again if it was still
+// going off.
 export const dismissAlarm = async (side) => {
     logger.debug(`Clearing alarm, requested by ${side} side`);
+    const otherSide = side === 'left' ? 'right' : 'left';
+    const isOneAlarm = alarmSession.didAlarmsStartTogether(SAME_ALARM_WINDOW_MS);
     await executeFunction('ALARM_CLEAR', 'empty');
     await finishDismissedAlarm(side);
-    const otherSide = side === 'left' ? 'right' : 'left';
-    await settingsDB.read();
-    if (settingsDB.data.linkSides) {
+    if (isOneAlarm) {
         await finishDismissedAlarm(otherSide);
     }
     else {
@@ -132,4 +135,4 @@ export const updateDeviceStatus = async (deviceStatus, options = {}) => {
     logger.info('Finished updating device status');
 };
 //# sourceMappingURL=updateDeviceStatus.js.map
-//# debugId=4b34884b-2e7f-5950-b928-054f292b32df
+//# debugId=2c4bb1f9-4474-5b2c-858c-06e49a6bf92f

@@ -27,17 +27,21 @@ const finishDismissedAlarm = async (side: 'left' | 'right') => {
   }
 };
 
+// Alarms that began this close together are one alarm for the whole bed
+const SAME_ALARM_WINDOW_MS = 60_000;
+
 // Stops a side's alarm.
 // The firmware's clear command takes no side and stops both (confirmed on a Pod 5). So the other
-// side is dealt with here: with the sides linked it is one sleeper's alarm and is dismissed too;
-// otherwise the other side's alarm is started again if it was still going off.
+// side is dealt with here. If both sides began going off together it is one alarm, and it is
+// dismissed too. Otherwise it is someone else's alarm, and it is started again if it was still
+// going off.
 export const dismissAlarm = async (side: 'left' | 'right') => {
   logger.debug(`Clearing alarm, requested by ${side} side`);
+  const otherSide = side === 'left' ? 'right' : 'left';
+  const isOneAlarm = alarmSession.didAlarmsStartTogether(SAME_ALARM_WINDOW_MS);
   await executeFunction('ALARM_CLEAR', 'empty');
   await finishDismissedAlarm(side);
-  const otherSide = side === 'left' ? 'right' : 'left';
-  await settingsDB.read();
-  if (settingsDB.data.linkSides) {
+  if (isOneAlarm) {
     await finishDismissedAlarm(otherSide);
   } else {
     await alarmSession.restartIfVibrating(otherSide);
