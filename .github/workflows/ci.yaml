@@ -72,6 +72,35 @@ jobs:
             exit 1
           fi
 
+  tests:
+    name: Tests (schedules, alarms, in-bed detection)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+          cache-dependency-path: |
+            ./app/package-lock.json
+            ./server/package-lock.json
+
+      # The tests import TypeScript sources from both packages and moment from the server's
+      - name: Install dependencies (server)
+        working-directory: server
+        run: npm ci --ignore-scripts
+
+      - name: Install dependencies (app)
+        working-directory: app
+        run: npm ci --ignore-scripts
+
+      - name: Run tests
+        run: node --test tests/*.test.mjs
+
   lint:
     name: Lint
     runs-on: ubuntu-latest

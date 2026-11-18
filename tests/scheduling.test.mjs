@@ -3,10 +3,10 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { test } from 'node:test';
 import {
-  findNewChangeTime, isNightLengthValid, isPowerScheduleDurationValid, isTimeDuringNight, minutesBetween,
+  findNewChangeTime, isChangeBeforeWake, isNightLengthValid, isPowerScheduleDurationValid, isTimeDuringNight, minutesBetween,
 } from '../app/src/pages/SchedulePage/scheduleValidation.ts';
 import {
-  DAYS_OF_WEEK, findAlarmReplacedByOneOff, findNextScheduledAlarm, getDayIndexForSchedule, minutesAlarmIsAfterOff, parseClockTime,
+  DAYS_OF_WEEK, findAlarmReplacedByOneOff, findNightDay, findNextScheduledAlarm, getDayIndexForSchedule, minutesAlarmIsAfterOff, parseClockTime,
   subtractMinutesFromTime,
 } from '../server/src/jobs/scheduleTiming.ts';
 
@@ -211,4 +211,25 @@ test('a new change goes an hour after the last, or halfway to wake, or nowhere',
   assert.equal(findNewChangeTime('22:00', '21:30', '07:00', ['23:00']), '02:30');
   // No room left before wake
   assert.equal(findNewChangeTime('06:58', '21:30', '07:00', []), undefined);
+});
+
+test('a temperature change must come after bed on and before wake', () => {
+  assert.equal(isChangeBeforeWake('06:00', '21:15', '06:30'), true);
+  // At the wake time, or between wake and the off time 30 minutes later: on top of the alarm
+  assert.equal(isChangeBeforeWake('06:30', '21:15', '06:30'), false);
+  assert.equal(isChangeBeforeWake('07:00', '21:15', '06:30'), false);
+  // At the bed-on time itself there is nothing to change from
+  assert.equal(isChangeBeforeWake('21:15', '21:15', '06:30'), false);
+  assert.equal(isChangeBeforeWake('20:00', '21:15', '06:30'), false);
+});
+
+test('a morning alarm belongs to the night that began the day before', () => {
+  const requireMoment = createRequire(new URL('../server/package.json', import.meta.url));
+  const moment = requireMoment('moment-timezone');
+  const zone = 'America/Los_Angeles';
+  // Tuesday 17 Nov 2026, 7 AM: the end of Monday night
+  assert.equal(findNightDay(moment.tz('2026-11-17T07:00:00', zone)), 'monday');
+  assert.equal(findNightDay(moment.tz('2026-11-17T11:59:00', zone)), 'monday');
+  assert.equal(findNightDay(moment.tz('2026-11-17T22:00:00', zone)), 'tuesday');
+  assert.equal(findNightDay(moment.tz('2026-11-16T00:30:00', zone)), 'sunday');
 });

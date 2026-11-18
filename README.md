@@ -109,7 +109,7 @@ The full comparison with Free Sleep is in [CHANGELOG.md](CHANGELOG.md#compared-w
 
 - **The app has no login.** Anyone on your home network can open it. Never put it on the open internet; use [Tailscale](docs/REMOTE_ACCESS.md) to reach it from elsewhere.
 - **The internet block** stops the Pod reaching Eight Sleep or anything else, and is restored at every boot. Free Pod has no error-reporting destination built in.
-- **You need root on the Pod once**, through a serial adapter. It is not supported by Eight Sleep and may affect your warranty. A Pod 3 or 4 can be put back with a firmware reset; a reset procedure for a Pod 5 is not documented here.
+- **You need root on the Pod once**, through a serial adapter. It is not supported by Eight Sleep and may affect your warranty. A Pod 3 or 4 can be put back with a firmware reset. **A Pod 5 cannot currently be put back to stock**; see the [FAQ](#faq).
 
 ## Which Pods
 
@@ -134,6 +134,62 @@ on a Pod 3 or Pod 4. [CHANGELOG.md](CHANGELOG.md) keeps the full list.
 **Biometrics are untested.** Sleep tracking, heart rate and the other measurements on the Data
 page are Free Sleep's code, unchanged, and off unless you enable them. They produced nothing on
 the test Pod 5 and were not looked into further.
+
+## FAQ
+
+**Is it reversible?**
+On a Pod 3 or Pod 4, yes: a firmware reset puts the Pod back as it left the factory, and it works
+with Eight Sleep's app again. On a Pod 5, treat it as not reversible for now. Nobody has
+established how to reset one, and the software-only way back in the
+[install guide](INSTALLATION.md#going-back-to-eight-sleep) has not been tried.
+
+**Will I brick my Pod?**
+The install does not touch the firmware that runs the bed; it adds a program beside it and
+switches a few services off. The risk is in the steps before that: you open the hub and type
+commands as root, and a wrong command can stop the Pod booting. Follow the guide step by step and
+do not improvise. A Pod 3 with an SD card is the riskiest, because the card itself is modified.
+
+**Will it void my warranty?**
+It may. Free Pod is not supported by Eight Sleep. Opening the hub is visible to anyone who looks,
+and a Pod 5 cannot currently be put back to stock.
+
+**Do I still need an Eight Sleep subscription or account?**
+No. Nothing here talks to Eight Sleep. Their app stops working with the Pod once it is installed.
+
+**Does it work without internet?**
+Yes. The Pod is blocked from the internet on purpose and everything runs on it. You need your
+home Wi-Fi to reach the app from your phone, and the side buttons and schedule work without that.
+
+**Can I control it away from home?**
+Yes, with [Tailscale on the Pod](docs/REMOTE_ACCESS.md). It is optional, takes one script, and
+keeps the internet block on. A shortcut can open the app at home and offer Tailscale when you are
+away.
+
+**Does sleep tracking work?**
+Not on a Pod 5: its firmware publishes sensor data where the analysis does not read. On a Pod 3 or
+4 the code is the original's, unchanged and untested here. Help is [wanted](https://github.com/jalen-cheng/free-sleep/issues).
+
+**Does the bed know when I am in it?**
+On a Pod 5, yes. It can turn on when you get in, turn off about 15 minutes after you get out, and
+vibrate if you have been in bed longer than you chose. A Pod 3 or 4 does not report the sensors
+this needs.
+
+**Do the buttons or taps on the bed work?**
+Pod 5 buttons do: + and - for temperature, hold the middle to switch a side on or off, any button
+to stop an alarm. Pod 4 taps are handled by the same code and have not been run. A Pod 3 has
+neither.
+
+**Two of us share the bed. Does each side get its own settings?**
+Yes: its own temperature, schedule and alarm. Or link the sides and control the bed as one.
+
+**How do I update?**
+The app shows when a newer version is out. **Settings > Device > Update** takes about four
+minutes, keeps your settings, and puts the old version back if anything fails. The internet block
+is lifted for the download and put back afterwards.
+
+**Can I go back to the original Free Sleep?**
+Yes. One command over SSH reinstalls it and keeps your schedules; see
+[docs/POD_MODELS.md](docs/POD_MODELS.md).
 
 ## Documentation
 
@@ -162,7 +218,8 @@ keep the name `free-sleep`, so an existing install updates in place.
 
 ## Contributing
 
-Issues and pull requests are welcome. The most useful contribution is a report from hardware Free
+Issues and pull requests are welcome, within a few rules: nothing that sends data off the Pod or
+needs the cloud, one change per pull request, and a test where the code can be tested. The most useful contribution is a report from hardware Free
 Pod has not seen: a Pod 3 or Pod 4, or a newer Pod 5. [CONTRIBUTING.md](CONTRIBUTING.md) says how,
 and issues labelled [needs testing](https://github.com/jalen-cheng/free-sleep/issues?q=is%3Aissue+is%3Aopen+label%3A%22needs+testing%22)
 list what is waiting to be checked.

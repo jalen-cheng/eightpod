@@ -7,6 +7,7 @@
 // without those subjects, simply never produces a reading: presence stays "not available", no
 // measured temperature is shown, and nothing else is affected.
 import { readFileSync, writeFileSync } from 'fs';
+import { registerInBedCheck } from '../jobs/inBedCheck.js';
 import cbor from 'cbor';
 import moment from 'moment-timezone';
 import { Msg, NatsConnection, NatsError, connect } from 'nats';
@@ -126,6 +127,7 @@ export class BedSensorMonitor {
 
   start() {
     markRunningBedEmpty = () => this.markBedEmpty();
+    registerInBedCheck(side => this.isSomeoneOn(side));
     void this.listen();
     this.actionTimer = setInterval(() => void this.runActions(), ACTION_CHECK_INTERVAL_MS);
     this.saveTimer = setInterval(() => this.saveState(), STATE_SAVE_INTERVAL_MS);

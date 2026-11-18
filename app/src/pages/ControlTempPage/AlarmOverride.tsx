@@ -62,6 +62,7 @@ export default function AlarmOverride({
             value={ alarmTimeLocalOverride || scheduledAlarmTimeHhMm }
             onChange={ setAlarmTimeLocalOverride }
             disabled={ isSaving }
+            isLarge
           />
         </Box>
       </DialogContent>

@@ -14,7 +14,7 @@ import { TemperatureSelect, TimeField } from './ScheduleFields.tsx';
 import AlarmOptionsDialog from './AlarmOptionsDialog.tsx';
 import { OFF_AFTER_ALARM_MINUTES, offTimeAfterAlarm } from '@api/automaticOffTime.ts';
 import { getTemperatureColor } from '@lib/temperatureConversions.ts';
-import { findNewChangeTime, isNightLengthValid, isTimeDuringNight, minutesBetween } from './scheduleValidation.ts';
+import { findNewChangeTime, isChangeBeforeWake, isNightLengthValid, minutesBetween } from './scheduleValidation.ts';
 
 const NEW_CHANGE_TEMPERATURE_F = 70;
 // Wide enough for the longest label ("Bed on") so every row's controls start at the same place
@@ -148,14 +148,14 @@ export default function NightTimeline() {
             key={ changeIndex }
             label={ changeIndex === 0 ? 'Then' : undefined }
             dotColor={ getTemperatureColor(temperatureF) }
-            error={ isTimeDuringNight(time, power.on, power.off) ? undefined : 'Outside this night' }
+            error={ isChangeBeforeWake(time, power.on, alarm.time) ? undefined : 'Must be after Bed on and before Wake' }
           >
             <TimeField
               label="Change time"
               value={ time }
               onChange={ (newTime) => replaceChange(time, newTime, temperatureF) }
               disabled={ disabled }
-              error={ !isTimeDuringNight(time, power.on, power.off) }
+              error={ !isChangeBeforeWake(time, power.on, alarm.time) }
             />
             <TemperatureSelect
               label="Change temperature"

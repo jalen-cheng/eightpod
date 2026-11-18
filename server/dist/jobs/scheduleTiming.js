@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="896199b5-28a3-5e81-a7ac-3a814754af65")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="a07fb0e0-cfb9-5e92-8f6b-1437825e91fd")}catch(e){}}();
 export const DAYS_OF_WEEK = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 const MINUTES_PER_DAY = 24 * 60;
 // Returns the HH:mm that is `minutes` before `time`, wrapping past midnight ("00:10" - 30 -> "23:40")
@@ -34,6 +34,11 @@ export function findNextScheduledAlarm(sideSchedule, now) {
             nextAlarm = candidate;
     }
     return nextAlarm;
+}
+// The schedule day a moment belongs to. A night is filed under the day it starts on, so a
+// morning alarm belongs to the day before: anything before noon counts as the previous day.
+export function findNightDay(at) {
+    return at.clone().subtract(12, 'hours').format('dddd').toLowerCase();
 }
 // The scheduled alarm a one-off alarm stands in for: the side's next scheduled alarm, when the
 // two are no more than `withinHours` apart. An alarm set for 6:00 replaces the 8:45 of the same
@@ -87,4 +92,4 @@ export function minutesAlarmIsAfterOff(alarmTime, power) {
     return minutesAfterBedtime(alarmTime, power.on) - minutesAfterBedtime(power.off, power.on);
 }
 //# sourceMappingURL=scheduleTiming.js.map
-//# debugId=896199b5-28a3-5e81-a7ac-3a814754af65
+//# debugId=a07fb0e0-cfb9-5e92-8f6b-1437825e91fd

@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="d1fce698-53af-5ef5-a0f5-07d569d6dafa")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="3345b5fb-9ec7-59dd-85cf-7afd3faaa68b")}catch(e){}}();
 import schedule from 'node-schedule';
 import { markOneOffAlarmFired } from './oneOffAlarmState.js';
 import cbor from 'cbor';
@@ -10,7 +10,9 @@ import serverStatus from '../serverStatus.js';
 import schedulesDB from '../db/schedules.js';
 import settingsDB from '../db/settings.js';
 import { LATE_ALARM_WINDOW_HOURS, MAX_ALARM_SECONDS, MAX_FIRMWARE_ALARM_SECONDS, } from '../db/schedulesSchema.js';
-import { minutesAlarmIsAfterOff } from './scheduleTiming.js';
+import { findNightDay, minutesAlarmIsAfterOff } from './scheduleTiming.js';
+import { isSomeoneInBed } from './inBedCheck.js';
+import { shouldRunJob } from './recentRuns.js';
 import { executeFunction } from '../8sleep/deviceApi.js';
 import { getDayIndexForSchedule, logJob, subtractMinutesFromTime } from './utils.js';
 import { startPreWarm } from './preWarmState.js';
@@ -135,7 +137,8 @@ const runPreWarm = async (side, preWarmMinutes, alarmTemperatureF) => {
 };
 // How a one-off alarm vibrates: the settings of the weekly alarm on the day it goes off
 export const getOneOffAlarmSettings = (settingsData, side, firesAt) => {
-    const dayKey = firesAt.clone().tz(settingsData.timeZone).format('dddd').toLowerCase();
+    // The settings of the night the alarm ends, not of the calendar day it goes off on
+    const dayKey = findNightDay(firesAt.clone().tz(settingsData.timeZone));
     return schedulesDB.data?.[side]?.[dayKey]?.alarm ?? {
         vibrationIntensity: 100,
         duration: MAX_ALARM_SECONDS,
@@ -219,6 +222,7 @@ export function scheduleAlarmOverride(settingsData, side) {
         await moveOffTimeToOneOffAlarm(side);
     });
 }
+const REPEATED_HOUR_GUARD_MS = 2 * 60 * 60_000;
 export const scheduleAlarm = (settingsData, side, day, dailySchedule) => {
     if (!dailySchedule.power.enabled)
         return;
@@ -237,8 +241,14 @@ export const scheduleAlarm = (settingsData, side, day, dailySchedule) => {
     alarmRule.minute = alarmMinute;
     alarmRule.tz = settingsData.timeZone;
     logJob('Scheduling alarm job', side, day, dayIndex, time);
-    schedule.scheduleJob(`${side}-${day}-${time}-alarm`, alarmRule, async () => {
+    const alarmJobName = `${side}-${day}-${time}-alarm`;
+    schedule.scheduleJob(alarmJobName, alarmRule, async () => {
         try {
+            // The night clocks go back, a time between 1 and 2 AM comes round twice
+            if (!shouldRunJob(alarmJobName, REPEATED_HOUR_GUARD_MS)) {
+                logJob('Skipping alarm job, it already ran within the last two hours', side, day, dayIndex, time);
+                return;
+            }
             logJob('Executing alarm job', side, day, dayIndex, time);
             await settingsDB.read();
             if (settingsDB.data[side].scheduleOverrides.alarm.expiresAt) {
@@ -255,6 +265,9 @@ export const scheduleAlarm = (settingsData, side, day, dailySchedule) => {
                 duration: dailySchedule.alarm.duration,
                 vibrationPattern: dailySchedule.alarm.vibrationPattern,
                 turnOffAfterDismiss: dailySchedule.alarm.turnOffAfterDismiss,
+                // A side that is off is normally left alone. But if its timer ran out early and the
+                // sensors say someone is still in bed, the alarm they set still wakes them.
+                force: isSomeoneInBed(side),
             });
         }
         catch (error) {
@@ -301,4 +314,4 @@ export const scheduleAlarmPreWarm = (settingsData, side, day, dailySchedule) => 
     });
 };
 //# sourceMappingURL=alarmScheduler.js.map
-//# debugId=d1fce698-53af-5ef5-a0f5-07d569d6dafa
+//# debugId=3345b5fb-9ec7-59dd-85cf-7afd3faaa68b

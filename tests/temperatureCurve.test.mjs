@@ -63,3 +63,18 @@ test('a one-degree step always moves the level, even across the gap above the co
   assert.equal(stepTemperatureF(108, 1, 50, 108), 108);
   assert.equal(stepTemperatureF(60, -10, 55, 110), 55);
 });
+
+test('from every whole degree, one step up or down changes what the bed is told', () => {
+  for (let temperatureF = 50; temperatureF <= 108; temperatureF++) {
+    const level = temperatureFToLevel(temperatureF);
+    if (level < 100) {
+      const warmer = stepTemperatureF(temperatureF, 1, 50, 108);
+      assert.ok(temperatureFToLevel(warmer) > level, `${temperatureF}°F up gave ${warmer}°F, still level ${level}`);
+    }
+    if (level > -100) {
+      const cooler = stepTemperatureF(temperatureF, -1, 50, 108);
+      assert.ok(temperatureFToLevel(cooler) < level, `${temperatureF}°F down gave ${cooler}°F, still level ${level}`);
+    }
+  }
+});
+

@@ -12,11 +12,13 @@ type TimeFieldProps = {
   onChange: (time: Time) => void;
   disabled?: boolean;
   error?: boolean;
+  // A field that stands alone in a dialog, where it is the one thing to set
+  isLarge?: boolean;
 };
 
 // A time of day. Uses the browser's own time picker; a click anywhere on the field opens it, so
 // the field needs no clock icon.
-export function TimeField({ label, value, onChange, disabled, error }: TimeFieldProps) {
+export function TimeField({ label, value, onChange, disabled, error, isLarge }: TimeFieldProps) {
   return (
     <TextField
       type="time"
@@ -26,8 +28,9 @@ export function TimeField({ label, value, onChange, disabled, error }: TimeField
       disabled={ disabled }
       error={ error }
       sx={ {
-        width: 104, flexShrink: 0,
-        '& input': { fontWeight: 500, textAlign: 'center', px: 1 },
+        // Wider off a phone: some browsers write "a.m." in full and keep their own picker icon
+        width: isLarge ? { xs: 168, sm: 208 } : { xs: 104, sm: 148 }, flexShrink: 0,
+        '& input': { fontWeight: 500, textAlign: 'center', px: 1, ...(isLarge ? { fontSize: 22, py: 1.5 } : {}) },
         '& input::-webkit-calendar-picker-indicator': { display: 'none' },
       } }
       slotProps={ {

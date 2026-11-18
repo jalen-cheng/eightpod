@@ -7,8 +7,9 @@
 // without those subjects, simply never produces a reading: presence stays "not available", no
 // measured temperature is shown, and nothing else is affected.
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="f8d0d8f1-c048-5de8-9aea-e7c2497074b9")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="3c1f211f-7749-5478-8fba-237394ad1ec2")}catch(e){}}();
 import { readFileSync, writeFileSync } from 'fs';
+import { registerInBedCheck } from '../jobs/inBedCheck.js';
 import cbor from 'cbor';
 import moment from 'moment-timezone';
 import { connect } from 'nats';
@@ -105,6 +106,7 @@ export class BedSensorMonitor {
     }
     start() {
         markRunningBedEmpty = () => this.markBedEmpty();
+        registerInBedCheck(side => this.isSomeoneOn(side));
         void this.listen();
         this.actionTimer = setInterval(() => void this.runActions(), ACTION_CHECK_INTERVAL_MS);
         this.saveTimer = setInterval(() => this.saveState(), STATE_SAVE_INTERVAL_MS);
@@ -263,4 +265,4 @@ export class BedSensorMonitor {
     }
 }
 //# sourceMappingURL=bedSensorMonitor.js.map
-//# debugId=f8d0d8f1-c048-5de8-9aea-e7c2497074b9
+//# debugId=3c1f211f-7749-5478-8fba-237394ad1ec2
