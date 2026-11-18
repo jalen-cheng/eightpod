@@ -1,7 +1,7 @@
 # Changelog
 
 What EightPod changed from [throwaway31265/free-sleep](https://github.com/throwaway31265/free-sleep),
-what was checked on a real Pod, and what was not. EightPod is at version 3.8.0. Everything was
+what was checked on a real Pod, and what was not. EightPod is at version 3.8.1. Everything was
 developed and tested on one Pod 5 between 13 and 17 Nov 2026.
 
 **The API.** Everything the app does goes through a documented local API, and every command the
@@ -234,3 +234,4 @@ acted on it).
 | [#93](https://github.com/jalen-cheng/eightpod/pull/93) | Design, fix | **Status** is a link, not a tab: "Status: Healthy" (or Needs attention, Offline) at the bottom right on a computer and beside each page's heading on a phone. The API guide is folded into Device settings; the tabs are Temperature, Schedules, Data, Settings. **Settings:** rows are one line each with aligned controls, in named groups; time zones read "PST (UTC−8)"; alarm strength is Low, Medium or High, under Length; the hub's light is on or off; states are a dot and plain text in place of pills; section names sit above squarer cards. **Fixes:** the server no longer refuses a change to how the alarm vibrates because of an old night it does not touch; the away switch clears a side set away through the API in one press. |
 | [#94](https://github.com/jalen-cheng/eightpod/pull/94) | Design | Device settings has no group headings; away mode, flip and the light come before turning on by hand; the Alarm section has no caption. |
 | [#95](https://github.com/jalen-cheng/eightpod/pull/95) | Design | **Phone layout:** the side picker is L, R or Both (Both links the sides; the link button is gone); the tab bar is four equal columns; settings sections are cards with every row on one line; the status link shows beside the heading of Data and Settings only. **Settings:** sections renamed General, Sleep tracking, Pod and Help; the API guide is a page of its own (`/api-guide`), opened from an API section above Help. The Temperature page drops the "Bed temperature" label. |
+| [#96](https://github.com/jalen-cheng/eightpod/pull/96) | Fix | The Temperature page's "Turns off at" follows a one-time alarm still to come: 30 minutes after it, as the bed itself does, where it used to show the schedule's off time. |

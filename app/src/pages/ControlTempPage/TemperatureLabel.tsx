@@ -4,8 +4,28 @@ import moment from 'moment-timezone';
 import { useSchedules } from '@api/schedules.ts';
 import { useSettings } from '@api/settings.ts';
 import { useAppStore } from '@state/appStore.tsx';
-import { DayOfWeek } from '@api/schedulesSchema.ts';
+import { DayOfWeek, LATE_ALARM_WINDOW_HOURS } from '@api/schedulesSchema.ts';
+import { Settings } from '@api/settingsSchema.ts';
+import { offTimeAfterAlarm } from '@api/automaticOffTime.ts';
 import { TemperatureFormat, describeTemperature, getTemperatureParts } from '@lib/temperatureConversions.ts';
+
+// When a side that is on will turn off. Normally the schedule's off time; a one-time alarm
+// still to come moves it to 30 minutes after that alarm, as the server does (the server only
+// waits for an alarm up to LATE_ALARM_WINDOW_HOURS after the off time).
+const findOffTime = (scheduledOff: string, oneTimeAlarm: Settings['left']['scheduleOverrides']['alarm'], timeZone: string): string => {
+  const now = moment.tz(timeZone);
+  const isWaiting = !oneTimeAlarm.disabled && Boolean(oneTimeAlarm.timeOverride) && moment(oneTimeAlarm.expiresAt).isAfter(now);
+  if (!isWaiting) return scheduledOff;
+  // The next time the clock shows a time of day
+  const nextAt = (time: string) => {
+    const [hour, minute] = time.split(':').map(Number);
+    const at = now.clone().hour(hour).minute(minute).second(0).millisecond(0);
+    return at.isAfter(now) ? at : at.add(1, 'day');
+  };
+  const alarmAt = nextAt(oneTimeAlarm.timeOverride);
+  if (alarmAt.isAfter(nextAt(scheduledOff).add(LATE_ALARM_WINDOW_HOURS, 'hours'))) return scheduledOff;
+  return offTimeAfterAlarm(oneTimeAlarm.timeOverride);
+};
 
 type TemperatureLabelProps = {
   isOn: boolean;
@@ -29,6 +49,7 @@ export default function TemperatureLabel({
   const scheduleMoment = settings?.timeZone ? moment.tz(settings.timeZone).subtract(isOn ? 12 : 0, 'hours') : undefined;
   const currentDay = scheduleMoment && scheduleMoment.format('dddd').toLowerCase() as DayOfWeek;
   const power = currentDay ? schedules?.[side]?.[currentDay]?.power : undefined;
+  const offTime = power && settings ? findOffTime(power.off, settings[side].scheduleOverrides.alarm, settings.timeZone) : undefined;
   const temperature = getTemperatureParts(sliderTemp, temperatureFormat);
   const isAdjusting = sliderTemp !== currentTargetTemp;
   let targetLabel = '';
@@ -75,7 +96,7 @@ export default function TemperatureLabel({
       ) }
       { power?.enabled && (isOn || !settings?.[side]?.awayMode) && (
         <Typography variant="caption" sx={ { color: 'text.secondary', display: 'block', mt: 0.75 } }>
-          { isOn ? 'Turns off at' : 'Turns on at' } { moment(isOn ? power.off : power.on, 'HH:mm').format('h:mm A') }
+          { isOn ? 'Turns off at' : 'Turns on at' } { moment(isOn ? offTime ?? power.off : power.on, 'HH:mm').format('h:mm A') }
         </Typography>
       ) }
     </Box>
