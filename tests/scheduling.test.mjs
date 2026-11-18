@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { test } from 'node:test';
 import {
-  findNewChangeTime, isChangeBeforeWake, isNightLengthValid, isPowerScheduleDurationValid, isTimeDuringNight, minutesBetween,
+  findChangeProblem, findNewChangeTime, isChangeBeforeWake, isNightLengthValid, isPowerScheduleDurationValid, isTimeDuringNight, minutesBetween,
 } from '../app/src/pages/SchedulePage/scheduleValidation.ts';
 import {
   DAYS_OF_WEEK, findAlarmReplacedByOneOff, findNightDay, findNextScheduledAlarm, getDayIndexForSchedule, minutesAlarmIsAfterOff, parseClockTime,
@@ -232,4 +232,15 @@ test('a morning alarm belongs to the night that began the day before', () => {
   assert.equal(findNightDay(moment.tz('2026-11-17T11:59:00', zone)), 'monday');
   assert.equal(findNightDay(moment.tz('2026-11-17T22:00:00', zone)), 'tuesday');
   assert.equal(findNightDay(moment.tz('2026-11-16T00:30:00', zone)), 'sunday');
+});
+
+test('a misplaced temperature change is blamed on the end of the night it is nearer', () => {
+  assert.equal(findChangeProblem('02:00', '21:15', '06:30'), undefined);
+  // On or just past the wake time: the alarm is in the way
+  assert.equal(findChangeProblem('06:30', '21:15', '06:30'), 'notBeforeWake');
+  assert.equal(findChangeProblem('07:00', '21:15', '06:30'), 'notBeforeWake');
+  // On or just short of the bed-on time
+  assert.equal(findChangeProblem('21:15', '21:15', '06:30'), 'notAfterBedOn');
+  assert.equal(findChangeProblem('20:00', '21:15', '06:30'), 'notAfterBedOn');
+  assert.equal(findChangeProblem('', '21:15', '06:30'), 'notBeforeWake');
 });

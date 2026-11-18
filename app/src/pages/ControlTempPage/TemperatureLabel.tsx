@@ -70,6 +70,9 @@ export default function TemperatureLabel({
           </Typography>
         </Box>
       ) }
+      { !isOn && !settings?.[side]?.awayMode && (
+        <Typography variant="body2" sx={ { color: 'text.secondary' } }>Tap to turn on</Typography>
+      ) }
       { power?.enabled && (isOn || !settings?.[side]?.awayMode) && (
         <Typography variant="caption" sx={ { color: 'text.secondary', display: 'block', mt: 0.75 } }>
           { isOn ? 'Turns off at' : 'Turns on at' } { moment(isOn ? power.off : power.on, 'HH:mm').format('h:mm A') }
