@@ -2,12 +2,16 @@
 // Copy demo-stage.html into app/public while recording (it must be served from the same address
 // as the app), and remove it afterwards.
 // Usage: node record.mjs <port> <frames folder>
-// Then: ffmpeg -f concat -safe 0 -i <frames folder>/frames.txt -vf "fps=30,scale=1920:1080,format=yuv420p" -c:v libx264 -crf 18 demo.mp4
+// Then: ffmpeg -f concat -safe 0 -i <frames folder>/frames.txt -vf "fps=60,scale=1920:1080,format=yuv420p" -c:v libx264 -crf 18 demo.mp4
 import { mkdirSync, writeFileSync } from 'node:fs';
 
 const [debugPort, framesFolder] = process.argv.slice(2);
 mkdirSync(framesFolder, { recursive: true });
-const pause = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
+// Everything is recorded this many times slower and sped back up when encoding, so the finished
+// video has that many times more frames per second than Chrome delivers
+const SLOW = 2;
+const realPause = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
+const pause = milliseconds => realPause(milliseconds * SLOW);
 
 const tab = await (await fetch(`http://127.0.0.1:${debugPort}/json/new?about:blank`, { method: 'PUT' })).json();
 const socket = new WebSocket(tab.webSocketDebuggerUrl);
@@ -51,7 +55,11 @@ const cardWith = text => `${HEADINGS}.find(element => element.textContent.trim()
 await send('Emulation.setDeviceMetricsOverride', { width: 1280, height: 720, deviceScaleFactor: 1.5, mobile: false });
 await send('Emulation.setEmulatedMedia', { features: [{ name: 'prefers-color-scheme', value: 'dark' }] });
 await send('Page.navigate', { url: 'http://localhost:5199/demo-stage.html' });
-await pause(7000);
+await realPause(7000);
+// Slow motion: the stage's timers, and every transition and animation on the page
+await send('Animation.enable');
+await send('Animation.setPlaybackRate', { playbackRate: 1 / SLOW });
+await run(`window.SLOW = ${SLOW}`);
 // No scroll bar inside the window
 await run("(() => { const style = appDocument().createElement('style'); style.textContent = 'html{scrollbar-width:none}::-webkit-scrollbar{display:none}'; appDocument().head.append(style); return true })()");
 
@@ -112,9 +120,25 @@ const switchBeside = label => `(() => { let node = ${HEADINGS}.find(element => e
 await run(`press(${switchBeside('Alarm after a long time in bed')})`);
 await pause(1300);
 
+// The API: a request typed in a terminal changes the bed
+await run("caption('A local API for scripts, Shortcuts and assistants')");
+// The recording is made on a development address; show the one a Pod has
+await run("(() => { appDocument().querySelectorAll('code').forEach(code => { code.textContent = code.textContent.replaceAll(appFrame.contentWindow.location.origin, 'http://eightpod.local'); }); return true })()");
+await run(`scrollAppTo(${HEADINGS}.find(element => element.textContent.trim() === 'API'), 330)`);
+await pause(900);
+await run('zoomOut()');
+await run('showTerminal()');
+await run(`typeCommand("curl -X POST eightpod.local/api/deviceStatus -d '{\\"left\\": {\\"targetTemperatureF\\": 70}}'")`);
+await pause(250);
+await run("sendRequest('/api/deviceStatus', { left: { targetTemperatureF: 70 } })");
+await pause(900);
+await run('hideTerminal()');
+await run("press(findInApp('a[href=\"/temperature\"]') ?? findInApp('a[href=\"/\"]'))");
+await pause(1900);
+
 // End card
 await run('zoomOut()');
-await pause(500);
+await pause(300);
 await run('showCard()');
 await pause(2400);
 
@@ -124,11 +148,11 @@ await send('Page.stopScreencast');
 // Each frame is shown until the next one arrived; the last one is held for a moment
 const lines = ['ffconcat version 1.0'];
 frames.forEach((frame, index) => {
-  const duration = index + 1 < frames.length ? frames[index + 1].at - frame.at : 1.0;
-  lines.push(`file '${frame.name}'`, `duration ${Math.max(duration, 0.01).toFixed(4)}`);
+  const duration = (index + 1 < frames.length ? frames[index + 1].at - frame.at : 1.0 * SLOW) / SLOW;
+  lines.push(`file '${frame.name}'`, `duration ${Math.max(duration, 0.001).toFixed(5)}`);
 });
 lines.push(`file '${frames[frames.length - 1].name}'`);
 writeFileSync(`${framesFolder}/frames.txt`, lines.join('\n'));
-console.log(frames.length, 'frames over', (frames[frames.length - 1].at - frames[0].at).toFixed(1), 'seconds');
+console.log(frames.length, 'frames for', ((frames[frames.length - 1].at - frames[0].at) / SLOW).toFixed(1), 'seconds of video');
 await send('Page.close');
 socket.close();
