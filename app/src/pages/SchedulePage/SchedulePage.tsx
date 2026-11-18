@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Box, Button, IconButton, Paper, Switch, Tooltip, Typography } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { DeepPartial } from 'ts-essentials';
@@ -51,10 +51,19 @@ export default function SchedulePage() {
     updateSelectedSchedule,
   } = useScheduleStore();
 
+  // Tonight is opened once. Later reloads (after a save, or a change made elsewhere) keep the
+  // day that is open, and keep edits that have not been saved.
+  const hasOpenedTonight = useRef(false);
   useEffect(() => {
     if (!schedules) return;
     setOriginalSchedules(schedules);
-    selectDay(LOWERCASE_DAYS.indexOf(getAdjustedDayOfWeek()));
+    if (!hasOpenedTonight.current) {
+      hasOpenedTonight.current = true;
+      selectDay(LOWERCASE_DAYS.indexOf(getAdjustedDayOfWeek()));
+      return;
+    }
+    checkForChanges();
+    if (!useScheduleStore.getState().hasEdits) reloadScheduleData();
   }, [schedules]);
 
   useEffect(() => {
@@ -86,7 +95,8 @@ export default function SchedulePage() {
   return (
     <PageContainer sx={ { width: '100%', mx: 'auto', maxWidth: 800 } }>
       <PageHeader title="Schedules"/>
-      <SideControl/>
+      { /* Like the day tabs, the side waits for Save or Discard: switching would drop the edits */ }
+      <SideControl disabled={ hasEdits }/>
       <DayPicker/>
 
       { /* The night being edited, and whether its schedule runs at all */ }

@@ -2,7 +2,9 @@
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { test } from 'node:test';
-import { isPowerScheduleDurationValid } from '../app/src/pages/SchedulePage/scheduleValidation.ts';
+import {
+  findNewChangeTime, isNightLengthValid, isPowerScheduleDurationValid, isTimeDuringNight, minutesBetween,
+} from '../app/src/pages/SchedulePage/scheduleValidation.ts';
 import {
   DAYS_OF_WEEK, findAlarmReplacedByOneOff, findNextScheduledAlarm, getDayIndexForSchedule, minutesAlarmIsAfterOff, parseClockTime,
   subtractMinutesFromTime,
@@ -135,6 +137,16 @@ test('a one-off alarm replaces the scheduled alarm of the same morning only', ()
   // An afternoon nap alarm leaves tomorrow morning's alarm alone
   const afternoon = moment.tz('2026-11-12T14:00:00', zone);
   assert.equal(replaced('2026-11-12T15:00:00', afternoon), undefined);
+  // Set in the evening for the next evening: the morning alarm in between still goes off
+  const evening = moment.tz('2026-11-11T21:00:00', zone);
+  assert.equal(replaced('2026-11-12T20:00:00', evening), undefined);
+});
+
+test('a dotted date is not read as a time of day', () => {
+  assert.equal(parseClockTime('16.11.2026, 21:30'), '21:30');
+  assert.equal(parseClockTime('16.11.26 06:45'), '06:45');
+  assert.equal(parseClockTime('9.05 pm'), '21:05');
+  assert.equal(parseClockTime('16.11.2026'), undefined);
 });
 
 test('a time of day is read however a phone writes it', () => {
@@ -168,4 +180,35 @@ test('an alarm is measured against the off time within its own night', () => {
   // Bedtime before midnight, off after it
   assert.equal(minutesAlarmIsAfterOff('07:30', { on: '22:00', off: '07:00' }), 30);
   assert.equal(minutesAlarmIsAfterOff('23:30', { on: '22:00', off: '07:00' }), -450);
+});
+
+test('a night is valid when wake is 1 to 23 hours after bed on', () => {
+  assert.equal(minutesBetween('21:30', '07:00'), 570);
+  assert.equal(isNightLengthValid('21:30', '07:00'), true);
+  assert.equal(isNightLengthValid('01:00', '09:00'), true);
+  // Equal, 15 minutes apart, and wake just before bedtime (a 23.5 hour night) are all mistakes
+  assert.equal(isNightLengthValid('21:15', '21:15'), false);
+  assert.equal(isNightLengthValid('21:15', '21:30'), false);
+  assert.equal(isNightLengthValid('21:15', '20:45'), false);
+  assert.equal(isNightLengthValid('21:15', '20:15'), true);
+  assert.equal(isNightLengthValid('21:15', ''), false);
+});
+
+test('a temperature change must fall between bed on and bed off', () => {
+  assert.equal(isTimeDuringNight('23:00', '21:30', '07:30'), true);
+  assert.equal(isTimeDuringNight('07:30', '21:30', '07:30'), true);
+  assert.equal(isTimeDuringNight('08:00', '21:30', '07:30'), false);
+  assert.equal(isTimeDuringNight('20:00', '21:30', '07:30'), false);
+  assert.equal(isTimeDuringNight('6:00', '21:30', '07:30'), false);
+});
+
+test('a new change goes an hour after the last, or halfway to wake, or nowhere', () => {
+  assert.equal(findNewChangeTime('21:30', '21:30', '07:00', []), '22:30');
+  assert.equal(findNewChangeTime('23:30', '21:30', '07:00', []), '00:30');
+  // An hour later would be past wake: halfway instead
+  assert.equal(findNewChangeTime('06:30', '21:30', '07:00', []), '06:45');
+  // An hour later is taken: halfway
+  assert.equal(findNewChangeTime('22:00', '21:30', '07:00', ['23:00']), '02:30');
+  // No room left before wake
+  assert.equal(findNewChangeTime('06:58', '21:30', '07:00', []), undefined);
 });

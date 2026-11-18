@@ -7,6 +7,9 @@ type SideAlarmState = {
   // The alarm that last started on this side, re-run if the other side's dismissal stops it
   lastAlarm?: AlarmJob;
   vibrationEndTimer?: ReturnType<typeof setTimeout>;
+  // True from the alarm starting until it ends or is dismissed, including the moments between
+  // two stretches when no timer is running
+  isActive?: boolean;
 };
 
 // The firmware's "rise" pattern vibrates at one steady strength (felt on a Pod 5), and it ignores
@@ -74,30 +77,42 @@ export function createAlarmSession({ startAlarm, setAlarmVibrating, logDebug }: 
     { continuation, isContinuation = false }: { continuation?: AlarmJob; isContinuation?: boolean } = {},
   ) => {
     const { side } = alarmJob;
+    // A further stretch of an alarm that was dismissed while it was being sent is not tracked
+    if (isContinuation && !sideStates[side].isActive) return;
     cancelVibrationEndTimer(side);
     // A restart re-runs the whole alarm, so later stretches must not replace it
     if (!isContinuation) sideStates[side].lastAlarm = alarmJob;
+    sideStates[side].isActive = true;
     await setAlarmVibrating(side, true);
     const stretchTimer = setTimeout(() => {
       sideStates[side].vibrationEndTimer = undefined;
       if (!continuation) {
+        sideStates[side].isActive = false;
         void setAlarmVibrating(side, false);
         return;
       }
       void startAlarm(continuation, { isContinuation: true }).then(() => {
         // The next stretch reports back through alarmStarted. If it did not start (the side
         // was switched off, say), nothing is vibrating any more.
-        if (sideStates[side].vibrationEndTimer === undefined) void setAlarmVibrating(side, false);
+        if (sideStates[side].vibrationEndTimer === undefined) {
+          sideStates[side].isActive = false;
+          void setAlarmVibrating(side, false);
+        }
       });
     }, durationSeconds * 1_000);
     sideStates[side].vibrationEndTimer = stretchTimer;
   };
 
+  // True while a side's alarm is going off. A further stretch checks this before it is sent, so
+  // an alarm dismissed in the moment between two stretches does not start again.
+  const isAlarmActive = (side: Side): boolean => Boolean(sideStates[side].isActive);
+
   // Call when the alarm was stopped on the Pod (dismissed from the app or by a tap).
   // Returns the alarm that was vibrating, or undefined if none was, so the caller can tell a
   // real dismissal from a clear sent when nothing was going off.
   const alarmCleared = async (side: Side): Promise<AlarmJob | undefined> => {
-    const wasVibrating = sideStates[side].vibrationEndTimer !== undefined;
+    const wasVibrating = Boolean(sideStates[side].isActive);
+    sideStates[side].isActive = false;
     cancelVibrationEndTimer(side);
     await setAlarmVibrating(side, false);
     return wasVibrating ? sideStates[side].lastAlarm : undefined;
@@ -107,15 +122,18 @@ export function createAlarmSession({ startAlarm, setAlarmVibrating, logDebug }: 
   // did not ask for it: if its alarm was still going off it is started again, so one sleeper
   // dismissing their alarm does not silence the other's. Returns whether it restarted one.
   const restartIfVibrating = async (side: Side): Promise<boolean> => {
-    const { lastAlarm, vibrationEndTimer } = sideStates[side];
-    if (vibrationEndTimer === undefined || !lastAlarm) return false;
+    const { lastAlarm, isActive } = sideStates[side];
+    if (!isActive || !lastAlarm) return false;
     logDebug(`Restarting ${side} alarm, which the other side's dismissal stopped`);
     cancelVibrationEndTimer(side);
+    sideStates[side].isActive = false;
     await startAlarm(lastAlarm);
+    // If it could not start again (the side was switched off, say), nothing is vibrating
+    if (!sideStates[side].isActive) await setAlarmVibrating(side, false);
     return true;
   };
 
-  return { alarmStarted, alarmCleared, restartIfVibrating };
+  return { alarmStarted, alarmCleared, restartIfVibrating, isAlarmActive };
 }
 
 export type AlarmSession = ReturnType<typeof createAlarmSession>;

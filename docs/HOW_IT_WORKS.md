@@ -1,7 +1,7 @@
-# How this fork works
+# How Free Pod works
 
 Everything that runs on the Pod, what each part does, and how the features affect each other.
-What changed from the original project is in the [README](../README.md); this fork builds on ([throwaway31265/free-sleep](https://github.com/throwaway31265/free-sleep)).
+What changed from the original project is in the [README](../README.md); Free Pod builds on [throwaway31265/free-sleep](https://github.com/throwaway31265/free-sleep).
 Written from the code on `main` on 17 Nov 2026. File references are for anyone who wants to check.
 
 For how to use the app, see [USING.md](USING.md). For the list of changes and what was tested on a Pod, see [CHANGELOG.md](../CHANGELOG.md).
@@ -49,8 +49,8 @@ numbered commands one at a time and waits up to 10 seconds for each answer
 
 A side is "on" when the firmware reports time left on its timer. There is no separate on/off flag.
 
-At start-up the server loads its saved files, builds the schedule's jobs, starts listening on port
-3000, connects to the firmware, and starts two watchers: one polls the firmware's status (every
+At start-up the server loads its saved files, builds the schedule's jobs, starts listening on ports
+3000 and 80, connects to the firmware, and starts two watchers: one polls the firmware's status (every
 half second on a Pod 4 or 5), the other follows the firmware's log for Pod 5 button presses.
 
 ## 2. Where things are stored
@@ -99,7 +99,7 @@ but would have meant a different level, so on first start with the new curve eve
 temperature was converted to keep its *level*. The originals are in
 `schedulesDB.before-measured-temperatures.json`.
 
-**Display units** (Settings > Temperature format): °F, °C (to half a degree), or **Level** (-10 to
+**Display units** (Settings > Device settings > Temperature format): °F, °C (to half a degree), or **Level** (-10 to
 +10, matching Eight Sleep's app). In Level, the + and - buttons move one level; in °F and °C, one
 degree.
 
@@ -284,7 +284,8 @@ publishes their readings twice a second on its local message bus. Free Pod liste
   slowly while the bed looks empty. A sleeper is never learned as "empty".
 - Someone is **in bed** when the signal stays above the empty level by the sensitivity's margin for
   30 seconds, and **out** when it has dropped for a minute. Sensitivity (Low, Medium, High) is in
-  Settings > In-bed detection, which also shows what each side reads right now.
+  Settings > In-bed detection, which shows what each side reads right now as two chips beside the
+  heading (for example "L · in bed").
 - A **stay** bridges gaps of up to 15 minutes, so getting up briefly does not end it.
 - **One person, two sides.** Someone lying towards the middle raises the other side's sensors
   too (by up to 1,300 against 3,000 or more on their own side). A side whose rise is under half
@@ -297,7 +298,8 @@ bed" was forgotten, so the bed stayed on. The monitor now writes what it has lea
 `/persistent/free-sleep-data/presence_state.json` every minute and on shutdown, and reads it back
 on start if it is under 30 minutes old. The file sits outside the `lowdb` folder on purpose:
 anything written there rebuilds every scheduled job. If detection ever looks stuck, delete that
-file and restart Free Pod with the bed empty.
+file and restart Free Pod with the bed empty. **Settings > In-bed detection > Bed is empty now** does
+the same without a restart.
 
 Two optional actions, both off by default, each run once per stay:
 
@@ -321,7 +323,7 @@ seen: it turning off after they got out, and the long-stay alarm.
 
 ## 9. Daily housekeeping: priming, reboot, calibration
 
-All three are timed from Settings > "Prime daily" (default 14:00, on by default in this fork).
+All three are timed from Settings > "Prime daily" (default 14:00, on by default in Free Pod).
 
 | Job | When | Notes |
 |---|---|---|
@@ -337,8 +339,9 @@ back by themselves. Anything held in memory (a vibrating alarm, a running warm-u
 The app refreshes the bed's state every 5 seconds.
 
 **Temperature.** Side picker and link button; the dial with the target, the current reading and
-"Turns off at"; + and -; the power button; and a row for the next alarm. That row opens "Change
-the next alarm" (a one-time alarm) or disables tonight's alarm. While an alarm vibrates, a dialog
+"Turns off at"; + and -; the power button; and a row for the next alarm. On that row the time
+opens "Change the next alarm" (a one-time alarm), and **Skip** turns off tonight's alarm (the button
+then reads **Turn on**). While an alarm vibrates, a dialog
 offers to dismiss it.
 
 **Schedules.**
@@ -346,7 +349,8 @@ offers to dismiss it.
   because a night belongs to the day it started).
 - "Monday night" with a copy button (save this night to other days) and a switch: whether that night's schedule runs at all.
 - A chart of the night, then the night as one line per event: bed on, each temperature change,
-  and wake up (time, and one button that says whether the alarm is on and opens its options),
+  and **Wake** (time, and one button reading "Alarm on" or "Alarm off" that opens the "Alarm"
+  dialog, with its on/off switch at the top),
   joined by a line whose dots take the colour of each temperature. There is no bed-off row: the
   bed turns off 30 minutes after wake up. This mirrors Eight Sleep's own app, which has a bedtime, temperature phases and
   alarms, and no off time.
@@ -357,11 +361,13 @@ offers to dismiss it.
 **Data.** Sleep records and logs. Sleep needs biometrics.
 
 **Status.** Wi-Fi strength and whether Free Pod is up to date, then each internal service with
-its state. Services that are jobs have a Run button.
+its state. Services that are jobs have a Run button. The biometrics and sleep-analysis rows are greyed and
+marked "Untested in this version".
 
 **Settings.** Time zone (set this first: the schedule runs in it), temperature format, how long
 the bed stays on when turned on by hand and whether the schedule is ignored meanwhile, LED
-brightness, side names and away mode, side buttons, in-bed detection, priming, biometrics, and
+brightness, side names and away mode, side buttons, in-bed detection (its state shows as two chips beside the
+heading), priming, biometrics, and
 the device: Wi-Fi, versions, update, reboot.
 
 ## 11. The API and phone shortcuts
@@ -414,7 +420,7 @@ Details, limits and alternatives: [REMOTE_ACCESS.md](REMOTE_ACCESS.md).
 
 ## 13. Installing and updating
 
-**Install** (`scripts/install.sh`, as root) downloads this fork, installs Node, finds the
+**Install** (`scripts/install.sh`, as root) downloads Free Pod, installs Node, finds the
 firmware's socket path, sets up the database, creates the `free-sleep` service (and gives it
 permission to read the firmware log), adds the `fs-*` shortcuts, switches on the `.local` name, and
 refreshes Tailscale's files if Tailscale is installed.

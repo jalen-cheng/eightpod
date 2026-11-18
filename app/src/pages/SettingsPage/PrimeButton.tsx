@@ -21,7 +21,8 @@ export default function PrimeButton({ refetch }: PrimeButtonProps) {
       .then(() => refetch())
       .catch(error => {
         console.error(error);
-      });
+      })
+      .finally(() => setIsUpdating(false));
   };
 
   return (

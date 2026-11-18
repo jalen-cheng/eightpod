@@ -56,7 +56,8 @@ class FirewallScriptTests(unittest.TestCase):
         # DNS must get out, or the time servers cannot be found by name and the clock drifts
         for rules in (first_rules, self.read_rules('ip6tables.rules')):
             self.assertIn('-A OUTPUT -p udp --dport 53 -j ACCEPT', rules)
-            self.assertIn('-A INPUT -p tcp --sport 53 -j ACCEPT', rules)
+            self.assertIn('-A INPUT -p tcp --sport 53 ! --syn -j ACCEPT', rules)
+            self.assertNotIn('-A INPUT -p tcp --sport 53 -j ACCEPT', rules)
         self.assertEqual(first_rules[-3:], ['-A INPUT -j DROP', '-A OUTPUT -j DROP', 'COMMIT'])
         self.assertEqual(self.read_rules('ip6tables.rules')[-3:], ['-A INPUT -j DROP', '-A OUTPUT -j DROP', 'COMMIT'])
         unit = (self.units / 'free-sleep-firewall.service').read_text()

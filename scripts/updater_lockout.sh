@@ -13,7 +13,7 @@ UPDATER_UNITS="swupdate.service swupdate.socket swupdate-progress.service defibr
 BLOCKED_HOSTS="raw-api-upload.8slp.net update-api.8slp.net device-api.8slp.net"
 HOSTS_FILE="${HOSTS_FILE:-/etc/hosts}"
 HOSTS_MARKER="# free-sleep-updater-lockout"
-# Units masked by this script. Units that were already masked (install step 11) are left out,
+# Units masked by this script. Units that were already masked (install step 9) are left out,
 # so "disable" never re-enables an updater that was turned off before this script ran.
 MASKED_UNITS_FILE="${MASKED_UNITS_FILE:-/etc/free-sleep/updater_lockout_units}"
 

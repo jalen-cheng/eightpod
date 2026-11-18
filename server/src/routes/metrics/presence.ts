@@ -3,7 +3,7 @@ import moment from 'moment-timezone';
 import { z } from 'zod';
 import logger from '../../logger.js';
 import settingsDB from '../../db/settings.js';
-import { getPresenceSnapshot } from '../../8sleep/bedSensorMonitor.js';
+import { getPresenceSnapshot, markBedEmpty } from '../../8sleep/bedSensorMonitor.js';
 
 const router: Router = express.Router();
 
@@ -101,6 +101,15 @@ router.get('/presence', (req: Request, res: Response) => {
  */
 router.get('/presence/sensors', (req: Request, res: Response) => {
   return res.status(200).json(getPresenceSnapshot());
+});
+
+/**
+ * POST /presence/sensors/empty
+ * Says the bed is empty right now, so in-bed detection learns the empty bed again
+ */
+router.post('/presence/sensors/empty', (req: Request, res: Response) => {
+  if (!markBedEmpty()) return res.status(503).json({ error: 'The bed sensors are not running on this Pod' });
+  return res.status(204).end();
 });
 
 export default router;

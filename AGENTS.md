@@ -58,7 +58,7 @@
 
 
 # Releases
-- `server/src/serverInfo.json` holds the fork's version. The app compares it with the copy on `main` to offer an update, so raise it (semver) in any PR whose change people should update for.
+- `server/src/serverInfo.json` holds Free Pod's version. The app compares it with the copy on `main` to offer an update, so raise it (semver) in any PR whose change people should update for.
 
 # Code smells
 - Any complicated functions should have concise, short comments explaining what the function does

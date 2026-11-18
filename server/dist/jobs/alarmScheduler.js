@@ -1,6 +1,7 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="9c35d295-356e-58bd-a98b-d6e8faeba476")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="d1fce698-53af-5ef5-a0f5-07d569d6dafa")}catch(e){}}();
 import schedule from 'node-schedule';
+import { markOneOffAlarmFired } from './oneOffAlarmState.js';
 import cbor from 'cbor';
 import moment from 'moment-timezone';
 import logger from '../logger.js';
@@ -34,6 +35,10 @@ export const executeAlarm = async (alarmJob, { isContinuation } = { isContinuati
                 return;
             }
         }
+        // A further stretch of an alarm that has been dismissed meanwhile is not sent
+        // eslint-disable-next-line no-use-before-define
+        if (isContinuation && !alarmSession.isAlarmActive(side))
+            return;
         // Exit if side is off
         const franken = await connectFranken();
         const resp = await franken.getDeviceStatus();
@@ -171,6 +176,8 @@ const moveOffTimeToOneOffAlarm = async (side) => {
         if (!deviceStatus[side].isOn || isManualHoldActive(side))
             return;
         await updateDeviceStatus({ [side]: { secondsRemaining: OFF_AFTER_ALARM_MINUTES * SECONDS_PER_MINUTE } });
+        // From here the bed's own timer turns the side off; the schedule's off job stands back
+        markOneOffAlarmFired(side);
     }
     catch (error) {
         logger.error(error);
@@ -294,4 +301,4 @@ export const scheduleAlarmPreWarm = (settingsData, side, day, dailySchedule) => 
     });
 };
 //# sourceMappingURL=alarmScheduler.js.map
-//# debugId=9c35d295-356e-58bd-a98b-d6e8faeba476
+//# debugId=d1fce698-53af-5ef5-a0f5-07d569d6dafa

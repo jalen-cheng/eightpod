@@ -139,7 +139,8 @@ Other commands:
 - **No direct connections.** All traffic goes through a relay. That is slower than a direct link
   but plenty for this page, and it avoids opening UDP to the whole internet.
 - **Userspace mode.** Tailscale adds no routes or firewall rules of its own. Connections from your
-  devices are passed to the Pod's own ports, 3000 for the page and 8822 for SSH.
+  devices are passed to whatever port the request names. Ports 80 and 3000 answer for the page and
+  8822 for SSH.
 - **The relay list keeps itself current.** Tailscale moves relays now and then and advises against
   typing their addresses into a firewall. The relay list is served from the fixed sign-in range,
   so a daily timer on the Pod (`free-sleep-tailscale-relays.timer`) fetches it and rewrites the

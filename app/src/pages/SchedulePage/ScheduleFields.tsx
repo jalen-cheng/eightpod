@@ -54,8 +54,11 @@ type TemperatureSelectProps = {
 // A temperature, picked from the values the chosen display unit can show
 export function TemperatureSelect({ label, value, onChange, disabled }: TemperatureSelectProps) {
   const temperatureFormat = useTemperatureFormat();
-  // A temperature saved in another unit may sit between the options, so it is added
-  const temperatureOptions = _.sortBy(_.union(getTemperatureOptions(temperatureFormat), [value]));
+  // A temperature saved in another unit may sit between the options, so it is added. It takes
+  // the place of the option that reads the same, so the menu never shows one label twice.
+  const valueLabel = formatTemperature(value, temperatureFormat);
+  const otherOptions = getTemperatureOptions(temperatureFormat).filter(option => formatTemperature(option, temperatureFormat) !== valueLabel);
+  const temperatureOptions = _.sortBy(_.union(otherOptions, [value]));
 
   return (
     <TextField

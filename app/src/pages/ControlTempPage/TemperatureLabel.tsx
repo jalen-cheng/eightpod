@@ -24,7 +24,10 @@ export default function TemperatureLabel({
   const { side } = useAppStore();
   const { data: schedules } = useSchedules();
   const { data: settings } = useSettings();
-  const currentDay = settings?.timeZone && moment.tz(settings.timeZone).format('dddd').toLowerCase() as DayOfWeek;
+  // A bed that is on is in the night that began on the day it was 12 hours ago; a bed that is
+  // off is waiting for today's bed-on time
+  const scheduleMoment = settings?.timeZone ? moment.tz(settings.timeZone).subtract(isOn ? 12 : 0, 'hours') : undefined;
+  const currentDay = scheduleMoment && scheduleMoment.format('dddd').toLowerCase() as DayOfWeek;
   const power = currentDay ? schedules?.[side]?.[currentDay]?.power : undefined;
   const temperature = getTemperatureParts(sliderTemp, temperatureFormat);
   const isAdjusting = sliderTemp !== currentTargetTemp;

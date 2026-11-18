@@ -11,7 +11,7 @@
 // raised it by about 870. Medium sits between the laptop and the person; Low is for heavier
 // things left on the bed, High for a light sleeper or a thick topper.
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="1b0c5c57-014d-556e-8a28-aaae1e06785e")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="fa4a7f91-4051-52de-a3c4-793eb0296896")}catch(e){}}();
 export const PRESENCE_DELTAS = { low: 1500, medium: 1100, high: 500 };
 // Readings are noisy one by one, so the middle of the last few is used (5 seconds' worth)
 const SMOOTHING_SAMPLES = 10;
@@ -77,7 +77,15 @@ export function createPresenceDetector(remembered) {
         }
         return { present, signal, baseline };
     };
-    return { update };
+    // Forgets the baseline, so the next reading is taken as the empty bed. For when the detector
+    // has learned something on the bed (a topper, a laptop, a person at start-up) as "empty".
+    const reset = () => {
+        recentSignals.length = 0;
+        baseline = undefined;
+        present = false;
+        disagreeingSinceMs = undefined;
+    };
+    return { update, reset };
 }
 //# sourceMappingURL=presenceDetector.js.map
-//# debugId=1b0c5c57-014d-556e-8a28-aaae1e06785e
+//# debugId=fa4a7f91-4051-52de-a3c4-793eb0296896

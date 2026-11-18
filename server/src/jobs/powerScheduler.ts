@@ -11,6 +11,8 @@ import logger from '../logger.js';
 import servicesDB from '../db/services.js';
 import memoryDB from '../db/memoryDB.js';
 import { findLateAlarmEnd } from './alarmScheduler.js';
+import { didOneOffAlarmFireWithin } from './oneOffAlarmState.js';
+import { OFF_AFTER_ALARM_MINUTES } from '../db/automaticOffTime.js';
 import { isManualHoldActive } from './manualHold.js';
 import { connectFranken } from '../8sleep/frankenServer.js';
 
@@ -69,7 +71,7 @@ const scheduleAnalyzeSleep = (dayOfWeekIndex: number, offHour: number, offMinute
   dailyRule.tz = timeZone;
   const time = `${String(offHour).padStart(2, '0')}:${String(adjustedOffMinute).padStart(2, '0')}`;
   logJob('Scheduling daily sleep analyzer job', side, day, dayOfWeekIndex, time);
-  schedule.scheduleJob(`daily-analyze-sleep-${time}-${side}`, dailyRule, async () => {
+  schedule.scheduleJob(`daily-analyze-sleep-${day}-${time}-${side}`, dailyRule, async () => {
     await servicesDB.read();
     if (!servicesDB.data.biometrics.enabled) {
       logger.debug('Not executing sleep analyzer job, biometrics is disabled');
@@ -116,6 +118,11 @@ export const schedulePowerOffAndSleepAnalysis = (settingsData: Settings, side: S
     try {
       if (isManualHoldActive(side)) {
         logJob('Skipping power off job, the side was switched on by hand', side, day, dayOfWeekIndex, time);
+        return;
+      }
+      // A one-time alarm that has just gone off set the bed's own timer; it turns the side off
+      if (didOneOffAlarmFireWithin(side, OFF_AFTER_ALARM_MINUTES * 60_000)) {
+        logJob('Skipping power off job, a one-time alarm went off and the side turns itself off', side, day, dayOfWeekIndex, time);
         return;
       }
       logJob('Executing power off job', side, day, dayOfWeekIndex, time);

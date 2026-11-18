@@ -1,4 +1,5 @@
 import schedule from 'node-schedule';
+import { markOneOffAlarmFired } from './oneOffAlarmState.js';
 import cbor from 'cbor';
 import moment from 'moment-timezone';
 
@@ -42,6 +43,10 @@ export const executeAlarm = async (
         return;
       }
     }
+
+    // A further stretch of an alarm that has been dismissed meanwhile is not sent
+    // eslint-disable-next-line no-use-before-define
+    if (isContinuation && !alarmSession.isAlarmActive(side)) return;
 
     // Exit if side is off
     const franken = await connectFranken();
@@ -191,6 +196,8 @@ const moveOffTimeToOneOffAlarm = async (side: Side) => {
     const deviceStatus = await franken.getDeviceStatus();
     if (!deviceStatus[side].isOn || isManualHoldActive(side)) return;
     await updateDeviceStatus({ [side]: { secondsRemaining: OFF_AFTER_ALARM_MINUTES * SECONDS_PER_MINUTE } });
+    // From here the bed's own timer turns the side off; the schedule's off job stands back
+    markOneOffAlarmFired(side);
   } catch (error: unknown) {
     logger.error(error);
   }

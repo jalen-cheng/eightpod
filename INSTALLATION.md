@@ -3,10 +3,10 @@
 This guide takes a Pod from sealed to a working Free Pod install with the internet blocked.
 It covers the Pod 3, Pod 4 and Pod 5.
 
-**Only a Pod 5 was tested.** This fork was installed and run on one Pod 5. The Pod 3 and Pod 4
+**Only a Pod 5 was tested.** Free Pod was installed and run on one Pod 5. The Pod 3 and Pod 4
 steps and photos come from the original project
 ([throwaway31265/free-sleep](https://github.com/throwaway31265/free-sleep)) and were not run with
-this fork. [docs/POD_MODELS.md](docs/POD_MODELS.md) lists what differs on a Pod 3 or 4.
+Free Pod. [docs/POD_MODELS.md](docs/POD_MODELS.md) lists what differs on a Pod 3 or 4.
 
 Plan for about two hours. The commands are for a Mac or Linux computer; Windows is not covered.
 
@@ -18,15 +18,15 @@ the output of `fs-debug` if the install got that far.
 | Pod | Status |
 |---|---|
 | Pod 1, Pod 2 | Not compatible |
-| Pod 3 with an SD card | Different way in; see below. Not tested with this fork |
-| Pod 3 without an SD card (FCC ID 2AYXT61100001) | Steps below. Not tested with this fork |
-| Pod 4 | Steps below. Not tested with this fork |
+| Pod 3 with an SD card | Different way in; see below. Not tested with Free Pod |
+| Pod 3 without an SD card (FCC ID 2AYXT61100001) | Steps below. Not tested with Free Pod |
+| Pod 4 | Steps below. Not tested with Free Pod |
 | Pod 5 | Steps below. Tested on one Pod |
 
 The FCC ID is on the back of the Pod, where the water tubes plug in.
 
 **Pod 3 with an SD card.** Root access is gained through the SD card, not the serial cable. The
-original project recommends doing it from Linux and gives two routes; neither was tried with this fork:
+original project recommends doing it from Linux and gives two routes; neither was tried with Free Pod:
 
 - Follow https://blopker.com/writing/04-zerosleep-1/ to get root, then start this guide at
   [step 9](#9-disable-eight-sleeps-updates) and skip [step 10](#10-wi-fi). Run step 9 as soon as
@@ -220,8 +220,10 @@ screen looks a little different from this Pod 3 one.
 
 ## 9. Disable Eight Sleep's updates
 
-Do this before the Pod joins Wi-Fi, so it cannot update itself in between. Some lines will say a
-service was not loaded or does not exist. That is expected.
+Do this straight after logging in, without delay. Until it is done the Pod can update itself. On a
+Pod 5 it may already know your Wi-Fi from the Eight Sleep app, and step 7 reboots it with Eight
+Sleep's services running, so it can be online before you get here. Some lines will say a service
+was not loaded or does not exist. That is expected.
 
 1. Stop and disable the services:
    ```
@@ -312,15 +314,16 @@ is wrong.
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/jalen-cheng/free-sleep/main/scripts/install.sh)"
 ```
 
-This installs this fork (`jalen-cheng/free-sleep`) and sets up a service that starts it at every
-boot. Later updates come from this fork too. The source is saved here:
+This installs Free Pod (`jalen-cheng/free-sleep`) and sets up a service that starts it at every
+boot. Later updates come from Free Pod too. The source is saved here:
 
 ```
 cat /etc/free-sleep/update_source.conf
 ```
 
 To install the original project or another fork instead, set the source first. It is saved to the
-same file and reused by every later update:
+same file and reused by every later update. The app's "update available" notice always compares
+with Free Pod's own repository, so on an install from another source it is not meaningful:
 
 ```
 export FREE_SLEEP_REPO=throwaway31265/free-sleep FREE_SLEEP_BRANCH=main
@@ -379,6 +382,9 @@ block ever cuts the Pod off from your network, the serial cable is the only way 
 Optional, but recommended. With the block on, the Pod cannot reach Eight Sleep or anything else
 outside your home network.
 
+> **Pod 3 and Pod 4:** the block and the updater lock-out were tested on a Pod 5 only. Do
+> [step 17](#17-check-the-block-then-close-the-hub) with care before closing the hub.
+
 1. Optional: preview the rules without changing anything.
    ```
    sh /home/dac/free-sleep/scripts/block_internet_access.sh --print-rules
@@ -387,11 +393,12 @@ outside your home network.
    ```
    sh /home/dac/free-sleep/scripts/block_internet_access.sh
    ```
-3. Optional: add the updater lock-out. Step 9 already disabled Eight Sleep's updater. This masks
-   the updater services again and points Eight Sleep's cloud hosts (`raw-api-upload.8slp.net`,
-   `update-api.8slp.net`, `device-api.8slp.net`) nowhere in `/etc/hosts`, so they stay unreachable
-   even while the block is briefly lifted for a Free Pod update. Warnings that a unit was "not
-   found" are harmless; the unit names were only confirmed on a Pod 3.
+3. Optional: add the updater lock-out. If you followed step 9, the updater services are already
+   masked, and the script leaves those alone. What it adds is entries in `/etc/hosts` that point
+   Eight Sleep's cloud hosts (`raw-api-upload.8slp.net`, `update-api.8slp.net`,
+   `device-api.8slp.net`) at `0.0.0.0`, so they stay unreachable even while the block is briefly
+   lifted for a Free Pod update. Warnings that a unit was "not found" are harmless; the unit names
+   were only confirmed on a Pod 3.
    ```
    sh /home/dac/free-sleep/scripts/updater_lockout.sh enable
    ```
@@ -483,6 +490,10 @@ Once the checks pass, the serial cable can come off:
 4. After about ten minutes the two sides should feel clearly different. If they do, the install works.
 5. If not, connect over SSH, run `fs-debug`, and open an issue with its output.
 
+> **Pod 3 and Pod 4:** nothing below this line has been run on your model. A Pod 3 has no taps or
+> buttons. A Pod 4 has taps instead of buttons: double and triple tap change the temperature, and
+> four taps dismiss an alarm or switch the side (see [docs/POD_MODELS.md](docs/POD_MODELS.md)).
+
 **Pod 5 buttons.** Press + and - on the side of the bed, then hold the middle button for two
 seconds: the target in the app should move, then that side should switch off or on. If nothing
 happens, look for the word "button" in the logs:
@@ -495,7 +506,7 @@ grep -i "button" /persistent/free-sleep-data/logs/*.log | tail -20
 
 - Pod 5: do not install it. It does not work on the tested Pod 5, whose firmware publishes sensor
   data where the analysis does not read it.
-- Pod 3 and Pod 4: the code is unchanged from the original project and untested in this fork. To
+- Pod 3 and Pod 4: the code is unchanged from the original project and untested in Free Pod. To
   try it, run `sh /home/dac/free-sleep/scripts/enable_biometrics.sh` over SSH. It lifts the
   internet block while it downloads and switches it on when it finishes.
 
@@ -525,11 +536,47 @@ from there too:
 FREE_SLEEP_REPO=throwaway31265/free-sleep sh /home/dac/free-sleep/scripts/update.sh
 ```
 
+Two limits. The app's "update available" notice always compares with Free Pod's own repository,
+so after going back it is not meaningful. The original project's installer does not keep the
+saved-source file, so after going back its own update script decides where updates come from.
+
 ## Going back to Eight Sleep
 
+**With a firmware reset (Pod 3 and Pod 4).** This puts the Pod's software back as it left the factory.
+
 1. In the Eight Sleep app, remove the Pod from your account.
-2. Reset the Pod's firmware:
-   - [Pod 3](docs/pod_3_teardown/6_firmware_reset.jpeg)
-   - [Pod 4](docs/pod_4_teardown/3_reset_firmware.png)
-   - Pod 5: the firmware reset is not documented here. It was not done on the test Pod.
+2. Reset the Pod's firmware: [Pod 3](docs/pod_3_teardown/6_firmware_reset.jpeg),
+   [Pod 4](docs/pod_4_teardown/3_reset_firmware.png).
 3. Set the Pod up as a new Pod in the app.
+
+**Pod 5: there is no reset procedure here.** Two reasons:
+
+- Where the reset is on a Pod 5's board, and whether it works the way a Pod 3 or 4's does, has
+  not been established. The photos above are of other boards.
+- It could not be tried safely. A reset hands the Pod back to Eight Sleep's updater, and a newer
+  firmware may remove the boot prompt this guide depends on (see "Newer Pod 5 units" at the top).
+  On the one test Pod that could have been a one-way trip.
+
+**Without a reset (any Pod, untested).** This undoes what the guide did and leaves the files in
+place. It has not been run; it is the reverse of steps 9, 12 and 16, written from the scripts.
+
+1. Stop Free Pod and keep it from starting:
+   ```
+   systemctl disable --now free-sleep free-sleep-stream free-sleep-update.timer free-sleep-firewall
+   ```
+2. Lift the internet block:
+   ```
+   sh /home/dac/free-sleep/scripts/unblock_internet_access.sh
+   ```
+3. Give the services from step 9 back. Lines about units that do not exist are expected:
+   ```
+   systemctl unmask swupdate-progress swupdate defibrillator eight-kernel telegraf vector frankenfirmware dac swupdate.socket
+   ```
+   ```
+   systemctl enable --now swupdate.socket swupdate defibrillator eight-kernel telegraf vector frankenfirmware dac
+   ```
+4. If the installer renamed the Pod, give it its old name back: `sh /home/dac/free-sleep/scripts/setup_local_name.sh name eight-pod`.
+5. Reboot. The Pod should reach Eight Sleep again and may update its firmware, after which the
+   way back into it may be closed.
+
+If you try either on a Pod 5, please [say what happened](CONTRIBUTING.md).

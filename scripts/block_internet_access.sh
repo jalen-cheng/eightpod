@@ -69,7 +69,13 @@ build_ipv4_rules() {
   # networks hand out public DNS servers, which the LAN ranges below would not cover.
   for dns_protocol in udp tcp; do
     echo "-A OUTPUT -p $dns_protocol --dport 53 -j ACCEPT"
-    echo "-A INPUT -p $dns_protocol --sport 53 -j ACCEPT"
+    # Replies only: without "! --syn" anyone could reach the Pod's open ports by connecting
+    # from source port 53. (UDP has no such flag; its replies are matched by port alone.)
+    if [ "$dns_protocol" = "tcp" ]; then
+      echo "-A INPUT -p tcp --sport 53 ! --syn -j ACCEPT"
+    else
+      echo "-A INPUT -p udp --sport 53 -j ACCEPT"
+    fi
   done
   # DHCP: address requests are broadcast, so the LAN ranges below do not cover them.
   # Without this the Pod could fail to get an address and drop off the network.
@@ -115,7 +121,13 @@ build_ipv6_rules() {
   echo "-A OUTPUT -p udp --dport 123 -j ACCEPT"
   for dns_protocol in udp tcp; do
     echo "-A OUTPUT -p $dns_protocol --dport 53 -j ACCEPT"
-    echo "-A INPUT -p $dns_protocol --sport 53 -j ACCEPT"
+    # Replies only: without "! --syn" anyone could reach the Pod's open ports by connecting
+    # from source port 53. (UDP has no such flag; its replies are matched by port alone.)
+    if [ "$dns_protocol" = "tcp" ]; then
+      echo "-A INPUT -p tcp --sport 53 ! --syn -j ACCEPT"
+    else
+      echo "-A INPUT -p udp --sport 53 -j ACCEPT"
+    fi
   done
   echo "-A INPUT -i lo -j ACCEPT"
   echo "-A OUTPUT -o lo -j ACCEPT"

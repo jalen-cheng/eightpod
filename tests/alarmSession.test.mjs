@@ -183,3 +183,36 @@ test('pulses do not ramp, a weaker alarm ramps to its own strength, and a short 
   const short = planAlarmStretch({ side: 'left', vibrationIntensity: 100, vibrationPattern: 'rise', duration: 5 }, 180);
   assert.deepEqual([short.strength, short.seconds, short.continuation], [100, 10, undefined]);
 });
+
+test('an alarm dismissed in the moment between two stretches stays dismissed', async () => {
+  const vibrating = { left: false, right: false };
+  const sentStretches = [];
+  let releaseSend;
+  const session = createAlarmSession({
+    // The next stretch takes a moment to reach the Pod; the dismissal lands meanwhile
+    startAlarm: async (alarmJob, options) => {
+      await new Promise((resolve) => { releaseSend = resolve; });
+      if (options?.isContinuation && !session.isAlarmActive(alarmJob.side)) return;
+      sentStretches.push(alarmJob);
+      await session.alarmStarted(alarmJob, alarmJob.duration, { isContinuation: options?.isContinuation });
+    },
+    setAlarmVibrating: async (side, isAlarmVibrating) => { vibrating[side] = isAlarmVibrating; },
+    logDebug: () => {},
+  });
+
+  const dismissOnOff = { ...leftAlarm, turnOffAfterDismiss: true };
+  await session.alarmStarted(dismissOnOff, 10, { continuation: { ...dismissOnOff, duration: 20 } });
+  assert.equal(session.isAlarmActive('left'), true);
+  // The first stretch ends and the next one starts being sent
+  mock.timers.tick(10_000);
+  await flushPromises();
+  // Dismissed now: it must count as a real dismissal, so "bed off on dismiss" can act on it
+  const dismissed = await session.alarmCleared('left');
+  assert.equal(dismissed?.turnOffAfterDismiss, true);
+  releaseSend();
+  await flushPromises();
+  assert.deepEqual(sentStretches, []);
+  assert.equal(vibrating.left, false);
+  assert.equal(session.isAlarmActive('left'), false);
+});
+

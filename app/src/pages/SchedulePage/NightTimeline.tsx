@@ -14,7 +14,7 @@ import { TemperatureSelect, TimeField } from './ScheduleFields.tsx';
 import AlarmOptionsDialog from './AlarmOptionsDialog.tsx';
 import { OFF_AFTER_ALARM_MINUTES, offTimeAfterAlarm } from '@api/automaticOffTime.ts';
 import { getTemperatureColor } from '@lib/temperatureConversions.ts';
-import { isPowerScheduleDurationValid } from './scheduleValidation.ts';
+import { findNewChangeTime, isNightLengthValid, isTimeDuringNight, minutesBetween } from './scheduleValidation.ts';
 
 const NEW_CHANGE_TEMPERATURE_F = 70;
 // Wide enough for the longest label ("Bed on") so every row's controls start at the same place
@@ -77,17 +77,6 @@ const NightRow = ({ label, info, error, dotColor, isMainEvent, children }: Night
 };
 
 
-// Minutes from bedtime to a time later that night (past midnight counts as later)
-const minutesAfterBedtime = (time: Time, bedtime: Time) => {
-  const difference = moment(time, 'HH:mm').diff(moment(bedtime, 'HH:mm'), 'minutes');
-  return difference < 0 ? difference + 24 * 60 : difference;
-};
-
-// True when a time falls between bedtime and the time the bed turns off
-const isDuringNight = (time: Time, { power }: DailySchedule) => {
-  return minutesAfterBedtime(time, power.on) <= minutesAfterBedtime(power.off, power.on);
-};
-
 // One night, top to bottom in the order it happens: bedtime, temperature changes and wake-up.
 // One line each, joined by a line down the left whose dots take the colour of each temperature.
 // There is no off time to choose: the bed turns off OFF_AFTER_ALARM_MINUTES after wake-up. The
@@ -102,9 +91,11 @@ export default function NightTimeline() {
   const { power, alarm, temperatures } = selectedSchedule;
   const disabled = isUpdating || !power.enabled;
   const changes = Object.entries(temperatures)
-    .sort(([timeA], [timeB]) => minutesAfterBedtime(timeA, power.on) - minutesAfterBedtime(timeB, power.on));
+    .sort(([timeA], [timeB]) => minutesBetween(power.on, timeA) - minutesBetween(power.on, timeB));
 
   const replaceChange = (oldTime: Time, newTime: Time, temperatureF: number) => {
+    // Two changes cannot share a time; moving one onto another would silently delete it
+    if (newTime !== oldTime && newTime in temperatures) return;
     const nextTemperatures = { ...temperatures };
     delete nextTemperatures[oldTime];
     nextTemperatures[newTime] = temperatureF;
@@ -117,12 +108,11 @@ export default function NightTimeline() {
     updateSelectedTemperatures(nextTemperatures);
   };
 
-  // A new change goes an hour after the last one (or after bedtime), if that time is free
+  // Where a new change would go, if the night has room for one
+  const lastChangeTime = changes.length > 0 ? changes[changes.length - 1][0] : power.on;
+  const newChangeTime = findNewChangeTime(lastChangeTime, power.on, alarm.time, Object.keys(temperatures));
   const addChange = () => {
-    const lastTime = changes.length > 0 ? changes[changes.length - 1][0] : power.on;
-    const nextTime = moment(lastTime, 'HH:mm').add(1, 'hour').format('HH:mm');
-    if (nextTime in temperatures) return;
-    updateSelectedTemperatures({ ...temperatures, [nextTime]: NEW_CHANGE_TEMPERATURE_F });
+    if (newChangeTime) updateSelectedTemperatures({ ...temperatures, [newChangeTime]: NEW_CHANGE_TEMPERATURE_F });
   };
 
   // Applies a change to the wake-up time or the alarm; the off time always follows the wake-up time
@@ -131,7 +121,7 @@ export default function NightTimeline() {
     updateSelectedSchedule({ alarm: alarmChanges, power: { off: offTimeAfterAlarm(nextAlarm.time) } });
   };
 
-  const isNightLengthValid = isPowerScheduleDurationValid(power.on, power.off);
+  const isNightValid = isNightLengthValid(power.on, alarm.time);
 
   return (
     <Paper sx={ { p: { xs: 1.5, sm: 2.5 }, width: '100%', borderRadius: '16px' } }>
@@ -154,17 +144,18 @@ export default function NightTimeline() {
 
         { changes.map(([time, temperatureF], changeIndex) => (
           <NightRow
-            key={ time }
+            // Keyed by position, so a row keeps focus while its time is typed
+            key={ changeIndex }
             label={ changeIndex === 0 ? 'Then' : undefined }
             dotColor={ getTemperatureColor(temperatureF) }
-            error={ isDuringNight(time, selectedSchedule) ? undefined : 'Outside this night' }
+            error={ isTimeDuringNight(time, power.on, power.off) ? undefined : 'Outside this night' }
           >
             <TimeField
               label="Change time"
               value={ time }
               onChange={ (newTime) => replaceChange(time, newTime, temperatureF) }
               disabled={ disabled }
-              error={ !isDuringNight(time, selectedSchedule) }
+              error={ !isTimeDuringNight(time, power.on, power.off) }
             />
             <TemperatureSelect
               label="Change temperature"
@@ -190,7 +181,7 @@ export default function NightTimeline() {
             color="inherit"
             startIcon={ <AddIcon/> }
             onClick={ addChange }
-            disabled={ disabled }
+            disabled={ disabled || !newChangeTime }
             sx={ { ml: -0.5, color: 'text.secondary' } }
           >
             Add a change
@@ -201,14 +192,14 @@ export default function NightTimeline() {
           label="Wake"
           dotColor={ alarm.enabled ? 'warning.main' : 'text.disabled' }
           isMainEvent
-          error={ isNightLengthValid ? undefined : 'Must differ from bedtime' }
+          error={ isNightValid ? undefined : '1 to 23 hours after Bed on' }
         >
           <TimeField
             label="Wake-up time"
             value={ alarm.time }
             onChange={ (time) => updateWakeUp({ time }) }
             disabled={ disabled }
-            error={ !isNightLengthValid }
+            error={ !isNightValid }
           />
           <Button
             size="small"

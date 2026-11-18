@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="dc1bdbcd-345b-5bc0-9482-413545bf8086")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="38358a7d-eeca-53b9-a096-163761946bcc")}catch(e){}}();
 import schedule from 'node-schedule';
 import { updateDeviceStatus } from '../routes/deviceStatus/updateDeviceStatus.js';
 import { getDayIndexForSchedule, getDayOfWeekIndex, logJob } from './utils.js';
@@ -10,6 +10,8 @@ import logger from '../logger.js';
 import servicesDB from '../db/services.js';
 import memoryDB from '../db/memoryDB.js';
 import { findLateAlarmEnd } from './alarmScheduler.js';
+import { didOneOffAlarmFireWithin } from './oneOffAlarmState.js';
+import { OFF_AFTER_ALARM_MINUTES } from '../db/automaticOffTime.js';
 import { isManualHoldActive } from './manualHold.js';
 import { connectFranken } from '../8sleep/frankenServer.js';
 // How long the bed stays on after an alarm that was later than the schedule's off time
@@ -63,7 +65,7 @@ const scheduleAnalyzeSleep = (dayOfWeekIndex, offHour, offMinute, timeZone, side
     dailyRule.tz = timeZone;
     const time = `${String(offHour).padStart(2, '0')}:${String(adjustedOffMinute).padStart(2, '0')}`;
     logJob('Scheduling daily sleep analyzer job', side, day, dayOfWeekIndex, time);
-    schedule.scheduleJob(`daily-analyze-sleep-${time}-${side}`, dailyRule, async () => {
+    schedule.scheduleJob(`daily-analyze-sleep-${day}-${time}-${side}`, dailyRule, async () => {
         await servicesDB.read();
         if (!servicesDB.data.biometrics.enabled) {
             logger.debug('Not executing sleep analyzer job, biometrics is disabled');
@@ -109,6 +111,11 @@ export const schedulePowerOffAndSleepAnalysis = (settingsData, side, day, power)
                 logJob('Skipping power off job, the side was switched on by hand', side, day, dayOfWeekIndex, time);
                 return;
             }
+            // A one-time alarm that has just gone off set the bed's own timer; it turns the side off
+            if (didOneOffAlarmFireWithin(side, OFF_AFTER_ALARM_MINUTES * 60_000)) {
+                logJob('Skipping power off job, a one-time alarm went off and the side turns itself off', side, day, dayOfWeekIndex, time);
+                return;
+            }
             logJob('Executing power off job', side, day, dayOfWeekIndex, time);
             // An alarm still to come keeps the bed on: the firmware is told to switch the side off
             // itself shortly after the alarm ends, which holds even if the jobs are rebuilt meanwhile
@@ -138,4 +145,4 @@ export const schedulePowerOffAndSleepAnalysis = (settingsData, side, day, power)
     });
 };
 //# sourceMappingURL=powerScheduler.js.map
-//# debugId=dc1bdbcd-345b-5bc0-9482-413545bf8086
+//# debugId=38358a7d-eeca-53b9-a096-163761946bcc
