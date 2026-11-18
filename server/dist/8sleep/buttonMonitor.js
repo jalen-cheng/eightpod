@@ -1,8 +1,10 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="93c5bd40-9178-5d33-bd15-9e1a41d1db36")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="342ab6d8-fb1d-5e5e-b7a2-59f2f7a7cae7")}catch(e){}}();
 import { spawn } from 'child_process';
 import { createInterface } from 'readline';
+import moment from 'moment-timezone';
 import logger from '../logger.js';
+import serverStatus from '../serverStatus.js';
 import config from '../config.js';
 import settingsDB from '../db/settings.js';
 import { Version } from '../routes/deviceStatus/deviceStatusSchema.js';
@@ -13,6 +15,8 @@ import { noteAlarmGestureHandled, runSideGestures, setSidePower } from './gestur
 // Presses are collected for this long before acting, so a quick run of "+" presses becomes one
 // temperature change from one reading of the current target
 const PRESS_BATCH_MS = 400;
+// How long a log follower must stay running before the buttons count as being read
+const FOLLOWER_SETTLE_MS = 5_000;
 // The firmware takes a moment to report a target it was just given. A press that follows
 // within this time builds on the target we last set instead of the stale reported one.
 const RECENT_TARGET_MS = 5_000;
@@ -82,6 +86,11 @@ export class ButtonMonitor {
             stdio: ['ignore', 'pipe', 'ignore'],
         });
         this.logFollower = logFollower;
+        // A follower that may not read the journal exits at once; one still running after a moment is working
+        setTimeout(() => {
+            if (this.logFollower === logFollower && logFollower.exitCode === null)
+                this.reportStatus('healthy', '');
+        }, FOLLOWER_SETTLE_MS);
         createInterface({ input: logFollower.stdout }).on('line', (line) => {
             this.hasWarnedAboutLog = false;
             const press = parseLine(line);
@@ -98,11 +107,22 @@ export class ButtonMonitor {
                     + 'The server user needs the systemd-journal group; reinstalling EightPod sets it. Retrying quietly...');
                 this.hasWarnedAboutLog = true;
             }
+            // Shown on the Status page, so buttons that have stopped working are not a silent failure
+            this.reportStatus('failed', 'The server cannot read the firmware log, so button presses are not seen. Update or reinstall EightPod.');
             setTimeout(() => {
                 if (this.isRunning)
                     this.followFirmwareLog();
             }, RESTART_WAIT_MS);
         });
+    }
+    reportStatus(status, message) {
+        serverStatus.status.sideButtons = {
+            name: 'Side buttons',
+            description: 'Reads the presses of a Pod 5\'s buttons',
+            status,
+            message,
+            timestamp: moment.tz().format(),
+        };
     }
     // `firmwarePress` names the side as the firmware does; it is turned into EightPod's side here
     addPress(firmwarePress) {
@@ -162,4 +182,4 @@ export class ButtonMonitor {
     }
 }
 //# sourceMappingURL=buttonMonitor.js.map
-//# debugId=93c5bd40-9178-5d33-bd15-9e1a41d1db36
+//# debugId=342ab6d8-fb1d-5e5e-b7a2-59f2f7a7cae7

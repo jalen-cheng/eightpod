@@ -36,6 +36,8 @@ export type ServerStatus = {
   rebootSchedule: StatusInfo;
   systemDate: StatusInfo;
   temperatureSchedule: StatusInfo;
+  // Only on a Pod 5, whose buttons are read from the firmware's log
+  sideButtons?: StatusInfo;
   analyzeSleepLeft?: StatusInfo;
   analyzeSleepRight?: StatusInfo;
   biometricsInstallation?: StatusInfo;
