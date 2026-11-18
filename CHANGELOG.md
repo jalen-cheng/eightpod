@@ -1,7 +1,7 @@
 # Changelog
 
 What Free Pod changed from [throwaway31265/free-sleep](https://github.com/throwaway31265/free-sleep),
-what was checked on a real Pod, and what was not. Free Pod is at version 3.5.0. Everything was
+what was checked on a real Pod, and what was not. Free Pod is at version 3.5.1. Everything was
 developed and tested on one Pod 5 between 13 and 17 Nov 2026.
 
 - [Tested on the Pod](#tested-on-the-pod)
@@ -52,6 +52,9 @@ Each of these was seen working on the test Pod 5, in its log or by the person on
 - Daily priming does not check whether the bed is in use. (The daily reboot does.)
 - The night clocks go forward, a scheduled time between 2 and 3 AM does not happen that night.
 - `{"shiftMinutes": ...}` moves tonight's alarm even if it was skipped from the app, which turns it back on.
+- Setting a one-time alarm, or cancelling one, also clears a skip of the next scheduled alarm: the two share one slot.
+- The API accepts a wake time the app refuses (less than 1 hour or more than 23 hours after Bed on), and the bed then turns off at the wrong time.
+- With a night shorter than the alarm's warm-up, the warm-up runs a day late.
 - Flipping left and right while someone is in bed, or mid-alarm, leaves that state on the old side until it ends.
 - Hardware differences between Pod 3, 4 and 5 are checked in several places instead of one table.
 
@@ -217,3 +220,4 @@ acted on it).
 | [#67](https://github.com/jalen-cheng/free-sleep/pull/67) | Fix, feature, docs | A review pass with fixes. **Alarms:** a shortcut or dial press on a bed that is already on no longer shortens its night; a one-time alarm moved up to 30 minutes later keeps the bed on; a one-time alarm only replaces a scheduled alarm within 6 hours of it; a dismissal between two stretches of an alarm counts; "Bed off on dismiss" ends a hold by hand; a date written with dots is not read as a time. **In-bed detection:** turning on when you get in holds the schedule for the stay, not for the manual length; a "Bed is empty now" button relearns the empty bed. **App:** Prime now no longer locks the app; saving keeps the open day; the side cannot be switched with unsaved edits; a night must be 1 to 23 hours and its changes inside it; Skip applies to both linked sides; filled buttons are grey. **Updates:** however an update ends, the server is started and the internet block is put back; downloads time out; DNS replies over TCP can no longer open a connection. **Docs:** CONTRIBUTING.md, a test-report template, notices where a Pod 3 or 4 differs, and what going back to Eight Sleep involves. |
 | [#76](https://github.com/jalen-cheng/free-sleep/pull/76) | Design | Every tab has the same width and its heading in the same place. The schedule's save bar has one Save button; copying a night to other days is the copy button's job, with a tidier day picker. Sliders are drawn like the dial. |
 | [#77](https://github.com/jalen-cheng/free-sleep/pull/77) | Fix, design, docs | **Schedule page:** Discard and Save sit under the night instead of floating; a temperature change must come before Wake; time fields are wider on a computer and the one-time alarm's is large. **Server:** a one-degree step always changes what the bed is told; a one-time alarm uses the settings of the night it ends; a scheduled alarm still vibrates when its side is off but someone is on it; an alarm cannot fire twice the night clocks go back; the daily reboot is skipped while the bed is in use. **Contributors:** the tests run on every pull request, with a pull-request template and rules for what is and is not accepted. README has an FAQ. |
+| [#79](https://github.com/jalen-cheng/free-sleep/pull/79) | Design, docs | **Temperature page:** a side that is off turns on with a tap anywhere in the dial's section; the power mark at its top right replaces the Turn on / Turn off button. **Schedule page:** a misplaced change says what it collides with ("Must be before the 6:30 AM alarm"). **Docs:** the README's FAQ opens question by question; the install guide covers Linux and Windows computers (not run on either), says how to turn off flow control, makes the SSH key optional, and its way back to Eight Sleep undoes the updater lock-out and no longer names a unit that does not exist. **Server:** a night longer than 12 hours no longer loses the bed before its alarm (the Pod is told to stay on past the off time); a one-time alarm on a night that starts after midnight uses that night's settings; a change saved while the jobs are being rebuilt is no longer dropped. |

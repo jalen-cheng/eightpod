@@ -129,7 +129,10 @@ export default function NightTimeline() {
     const problem = findChangeProblem(time, power.on, alarm.time);
     if (problem === undefined) return undefined;
     if (problem === 'notAfterBedOn') return 'Must be after Bed on';
-    const wakeLabel = moment(alarm.time, 'HH:mm').format('h:mm A');
+    const wakeMoment = moment(alarm.time, 'HH:mm', true);
+    // While the wake time is being typed, its own row carries the error
+    if (!wakeMoment.isValid()) return 'Must be before Wake';
+    const wakeLabel = wakeMoment.format('h:mm A');
     return alarm.enabled ? `Must be before the ${wakeLabel} alarm` : `Must be before Wake at ${wakeLabel}`;
   };
 

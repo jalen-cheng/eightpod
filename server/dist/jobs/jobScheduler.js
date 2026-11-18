@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="1e316307-e2e9-5426-8429-51f3ad2dc1a3")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="3a967f69-50b1-538b-a213-45ce1e95a3e1")}catch(e){}}();
 import path from 'path';
 import chokidar from 'chokidar';
 import moment from 'moment-timezone';
@@ -14,10 +14,14 @@ import { scheduleAlarm, scheduleAlarmOverride, scheduleAlarmPreWarm } from './al
 import { schedulePowerOffAndSleepAnalysis, schedulePowerOn } from './powerScheduler.js';
 import { schedulePrimingRebootAndCalibration } from './primeScheduler.js';
 import { scheduleTemperatures } from './temperatureScheduler.js';
+// Set when a change arrives while the jobs are being rebuilt, so that change is not lost
+let isRebuildQueued = false;
+// Cancels every job and creates them again from the saved settings and schedules
 async function setupJobs() {
     try {
         if (serverStatus.status.jobs.status === 'started') {
-            logger.debug('Job setup already running, skipping duplicate execution.');
+            logger.debug('Job setup already running, it will run again when it finishes.');
+            isRebuildQueued = true;
             return;
         }
         serverStatus.status.jobs.status = 'started';
@@ -58,6 +62,10 @@ async function setupJobs() {
         const message = error instanceof Error ? error.message : String(error);
         logger.error(error);
         serverStatus.status.jobs.message = message;
+    }
+    if (isRebuildQueued) {
+        isRebuildQueued = false;
+        void setupJobs();
     }
 }
 let RETRY_COUNT = 0;
@@ -103,4 +111,4 @@ chokidar.watch(config.lowDbFolder).on('change', (changedPath) => {
 // Initial job setup
 waitForValidDateAndSetupJobs();
 //# sourceMappingURL=jobScheduler.js.map
-//# debugId=1e316307-e2e9-5426-8429-51f3ad2dc1a3
+//# debugId=3a967f69-50b1-538b-a213-45ce1e95a3e1

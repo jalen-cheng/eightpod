@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="a07fb0e0-cfb9-5e92-8f6b-1437825e91fd")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="e74b5250-603b-573d-9c36-2e674fd5ee2e")}catch(e){}}();
 export const DAYS_OF_WEEK = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 const MINUTES_PER_DAY = 24 * 60;
 // Returns the HH:mm that is `minutes` before `time`, wrapping past midnight ("00:10" - 30 -> "23:40")
@@ -37,8 +37,25 @@ export function findNextScheduledAlarm(sideSchedule, now) {
 }
 // The schedule day a moment belongs to. A night is filed under the day it starts on, so a
 // morning alarm belongs to the day before: anything before noon counts as the previous day.
-export function findNightDay(at) {
+// The exception is a night that itself starts after midnight (bed on at 00:30): given the side's
+// schedule, a morning moment at or after that day's bed-on time belongs to its own day.
+export function findNightDay(at, sideSchedule) {
+    const calendarDay = at.format('dddd').toLowerCase();
+    const bedOn = sideSchedule?.[calendarDay]?.power;
+    const clock = at.format('HH:mm');
+    if (bedOn?.enabled && bedOn.on < '12:00' && clock < '12:00' && bedOn.on <= clock)
+        return calendarDay;
     return at.clone().subtract(12, 'hours').format('dddd').toLowerCase();
+}
+const DEFAULT_ON_MINUTES = 12 * 60;
+// Kept on a little past the off time, so the Pod's own timer never beats the off job
+const ON_MARGIN_MINUTES = 30;
+// How long the Pod is told to stay on when the schedule turns a side on. The Pod switches itself
+// off when this runs out, so it must outlast the night: 12 hours, or longer for a longer night.
+export function getScheduledOnSeconds(onTime, offTime) {
+    const toMinutes = (time) => Number(time.slice(0, 2)) * 60 + Number(time.slice(3, 5));
+    const nightMinutes = (toMinutes(offTime) - toMinutes(onTime) + MINUTES_PER_DAY) % MINUTES_PER_DAY;
+    return Math.max(DEFAULT_ON_MINUTES, nightMinutes + ON_MARGIN_MINUTES) * 60;
 }
 // The scheduled alarm a one-off alarm stands in for: the side's next scheduled alarm, when the
 // two are no more than `withinHours` apart. An alarm set for 6:00 replaces the 8:45 of the same
@@ -92,4 +109,4 @@ export function minutesAlarmIsAfterOff(alarmTime, power) {
     return minutesAfterBedtime(alarmTime, power.on) - minutesAfterBedtime(power.off, power.on);
 }
 //# sourceMappingURL=scheduleTiming.js.map
-//# debugId=a07fb0e0-cfb9-5e92-8f6b-1437825e91fd
+//# debugId=e74b5250-603b-573d-9c36-2e674fd5ee2e

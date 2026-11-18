@@ -1,4 +1,4 @@
-import { KeyboardEvent, useEffect } from 'react';
+import { useEffect } from 'react';
 import { Alert, Box, Button, IconButton, Paper, Skeleton, Typography } from '@mui/material';
 import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
 import ThermostatOutlinedIcon from '@mui/icons-material/ThermostatOutlined';
@@ -78,18 +78,9 @@ export default function ControlTempPage() {
         onLinkSidesChange={ handleLinkSidesChange }
       />
       <Paper
-        { ...(isTurnOnTarget && {
-          role: 'button',
-          tabIndex: 0,
-          'aria-label': 'Turn on',
-          'aria-disabled': power.disabled,
-          onClick: turnOn,
-          onKeyDown: (event: KeyboardEvent<HTMLDivElement>) => {
-            if (event.key !== 'Enter' && event.key !== ' ') return;
-            event.preventDefault();
-            turnOn();
-          },
-        }) }
+        // A press anywhere in the section turns an off side on. The power button in the corner
+        // does the same for the keyboard and screen readers, so the section itself is not a button.
+        onClick={ isTurnOnTarget ? turnOn : undefined }
         sx={ {
           px: { xs: 0, sm: 3 }, py: { xs: 1.5, sm: 3 }, overflow: 'hidden', my: { xs: 'auto', md: 0 },
           bgcolor: { xs: 'transparent', sm: 'background.paper' },
@@ -98,7 +89,6 @@ export default function ControlTempPage() {
             cursor: power.disabled ? 'default' : 'pointer',
             transition: 'background-color 120ms, border-color 120ms',
             '@media (hover: hover)': { '&:hover': { borderColor: 'text.secondary' } },
-            '&:focus-visible': { outline: '2px solid', outlineColor: 'text.primary', outlineOffset: 2 },
           }),
         } }>
         <Box sx={ { display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5, minHeight: 44 } }>
@@ -106,23 +96,21 @@ export default function ControlTempPage() {
             <ThermostatOutlinedIcon sx={ { color: 'text.secondary', fontSize: 17 } }/>
             <Typography variant="body2" sx={ { fontWeight: 500 } }>Bed temperature</Typography>
           </Box>
-          { /* The power mark: lit and a button of its own while the side is on, a dim hint that
-               the section can be pressed while it is off */ }
+          { /* One button for both directions, so it keeps focus through a toggle: lit while the
+               side is on, dim while it is off */ }
           { !isPending && !isError && power.canToggle && (
-            isOn ? (
-              <IconButton
-                aria-label="Turn off"
-                disabled={ power.disabled }
-                onClick={ () => power.setPower(false) }
-                sx={ { color: 'success.main' } }
-              >
-                <PowerSettingsNewIcon sx={ { fontSize: 22 } }/>
-              </IconButton>
-            ) : (
-              <Box aria-hidden sx={ { width: 44, height: 44, display: 'grid', placeItems: 'center', color: 'text.secondary' } }>
-                <PowerSettingsNewIcon sx={ { fontSize: 22 } }/>
-              </Box>
-            )
+            <IconButton
+              aria-label={ isOn ? 'Turn off' : 'Turn on' }
+              disabled={ power.disabled }
+              onClick={ (event) => {
+                // The section's own press handler must not also run
+                event.stopPropagation();
+                power.setPower(!isOn);
+              } }
+              sx={ { color: isOn ? 'success.main' : 'text.secondary' } }
+            >
+              <PowerSettingsNewIcon sx={ { fontSize: 22 } }/>
+            </IconButton>
           ) }
         </Box>
         { isPending ? (
@@ -142,8 +130,8 @@ export default function ControlTempPage() {
         { isError && (
           <Button fullWidth variant="contained" onClick={ () => refetch() } disabled={ isUpdating }>Reconnect</Button>
         ) }
-        <AnalyzeSleepPrompt isOffered={ power.isAnalyzeOffered }/>
       </Paper>
+      <AnalyzeSleepPrompt isOffered={ power.isAnalyzeOffered }/>
       <Box sx={ { display: 'flex', flexDirection: 'column', gap: 1.5 } }>
         { deviceStatus?.isPriming && <PrimingNotification/> }
         <ErrorBoundary componentName="Alarm notification"><AlarmNotification/></ErrorBoundary>

@@ -157,7 +157,7 @@ const runPreWarm = async (side: Side, preWarmMinutes: number, alarmTemperatureF:
 // How a one-off alarm vibrates: the settings of the weekly alarm on the day it goes off
 export const getOneOffAlarmSettings = (settingsData: Settings, side: Side, firesAt: moment.Moment) => {
   // The settings of the night the alarm ends, not of the calendar day it goes off on
-  const dayKey = findNightDay(firesAt.clone().tz(settingsData.timeZone));
+  const dayKey = findNightDay(firesAt.clone().tz(settingsData.timeZone), schedulesDB.data?.[side]);
   return schedulesDB.data?.[side]?.[dayKey]?.alarm ?? {
     vibrationIntensity: 100,
     duration: MAX_ALARM_SECONDS,

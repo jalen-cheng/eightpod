@@ -29,7 +29,8 @@ and alarms run in this time zone, and it starts as UTC.
   and the button reads **Unlink**. Linking copies this side's state to the other side at once.
 - **The dial**: drag it to set the target temperature.
 - **- and +**: one step colder or warmer. The app waits a moment after your last tap, then sends one change.
-- **Turn on / Turn off**: the power button under the dial.
+- **Power**: the power mark at the top right of the dial's section turns the side off. While the
+  side is off, tap anywhere in that section to turn it on.
 - **Bed at**: the water temperature the Pod measures, shown under the target. A Pod that does not
   report it shows "Currently at", the firmware's own estimate.
 - **Turns off at / Turns on at**: the next scheduled power change, when tonight's schedule is on.

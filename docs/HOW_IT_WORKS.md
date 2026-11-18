@@ -339,7 +339,8 @@ back by themselves. Anything held in memory (a vibrating alarm, a running warm-u
 The app refreshes the bed's state every 5 seconds.
 
 **Temperature.** Side picker and link button; the dial with the target, the current reading and
-"Turns off at"; + and -; the power button; and a row for the next alarm. On that row the time
+"Turns off at"; + and -; the power mark at the top right, which turns the side off (a side that is
+off turns on with a tap anywhere in the section); and a row for the next alarm. On that row the time
 opens "Change the next alarm" (a one-time alarm), and **Skip** turns off tonight's alarm (the button
 then reads **Turn on**). While an alarm vibrates, a dialog
 offers to dismiss it.
@@ -355,7 +356,7 @@ offers to dismiss it.
   bed turns off 30 minutes after wake up. This mirrors Eight Sleep's own app, which has a bedtime, temperature phases and
   alarms, and no off time.
 - Editing anything shows **Discard** and **Save** under the night. A temperature change must
-  come after Bed on and before Wake, or Save stays off. Other day tabs
+  come after Bed on and before Wake (the row names the alarm it runs into), or Save stays off. Other day tabs
   and the side picker are locked until you save or discard. The copy button beside the night's
   name copies a saved night to any other days.
 - Saving always writes the whole night shown, to each chosen day, on both sides when linked.

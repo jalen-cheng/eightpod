@@ -16,10 +16,15 @@ import { schedulePrimingRebootAndCalibration } from './primeScheduler.js';
 import { scheduleTemperatures } from './temperatureScheduler.js';
 
 
+// Set when a change arrives while the jobs are being rebuilt, so that change is not lost
+let isRebuildQueued = false;
+
+// Cancels every job and creates them again from the saved settings and schedules
 async function setupJobs() {
   try {
     if (serverStatus.status.jobs.status === 'started') {
-      logger.debug('Job setup already running, skipping duplicate execution.');
+      logger.debug('Job setup already running, it will run again when it finishes.');
+      isRebuildQueued = true;
       return;
     }
     serverStatus.status.jobs.status = 'started';
@@ -66,6 +71,10 @@ async function setupJobs() {
     const message = error instanceof Error ? error.message : String(error);
     logger.error(error);
     serverStatus.status.jobs.message = message;
+  }
+  if (isRebuildQueued) {
+    isRebuildQueued = false;
+    void setupJobs();
   }
 }
 

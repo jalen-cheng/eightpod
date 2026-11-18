@@ -103,7 +103,7 @@ No Pod yet? **[freepod.vercel.app](https://freepod.vercel.app)** is the app on m
 - **Turning on by hand** lasts 3, 6 or 12 hours, and can ignore the schedule meanwhile.
 - **Updates from the app.** It shows when a newer version exists and updates in about four minutes, putting the old version back if anything fails.
 - **Housekeeping.** Daily priming is on by default at 2 PM, the daily reboot has its own switch, left and right can be flipped, and Eight Sleep's updater can be locked out.
-- **Controls respond at once** instead of locking after every press, and the power button waits for the Pod's real state.
+- **Controls respond at once** instead of locking after every press, and power waits for the Pod's real state. A bed that is off turns on with one tap anywhere on the dial.
 
 The full comparison with Free Sleep is in [CHANGELOG.md](CHANGELOG.md#compared-with-free-sleep).
 
