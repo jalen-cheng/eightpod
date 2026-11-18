@@ -2,6 +2,9 @@ name: CI
 
 on:
   pull_request:
+  # Also on main, so the README's tests badge has a result to show
+  push:
+    branches: [main]
 
 jobs:
   biometrics:
