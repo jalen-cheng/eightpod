@@ -239,7 +239,7 @@ login_tailscale() {
     echo "Open the link below on a phone or computer and sign in to your Tailscale account."
     "$TAILSCALE_BIN_DIR/tailscale" up --hostname="$(hostname)" --accept-dns=false
   fi
-  echo "Signed in. On a device with Tailscale, the page is at: http://$(hostname):3000"
+  echo "Signed in. On a device with Tailscale, the page is at: http://$(hostname)"
   echo "In the Tailscale admin page, switch off key expiry for this Pod so it stays signed in."
 }
 

@@ -1,0 +1,6 @@
+{
+  "installCommand": "npm ci --prefix server --ignore-scripts && npm ci --prefix app",
+  "buildCommand": "npm run build:demo --prefix app",
+  "outputDirectory": "app/dist",
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+}

@@ -1,4 +1,4 @@
-# Developing Free Sleep
+# Developing Free Pod
 
 This guide covers working on this fork: running the app and server, the checks to run, and what a pull request must contain.
 
@@ -24,7 +24,7 @@ cd server && npm ci
 
 ## Running the app
 
-Against a Pod that is running Free Sleep:
+Against a Pod that is running Free Pod:
 
 ```bash
 cd app && VITE_POD_IP=<pod-ip> npm run dev
@@ -132,3 +132,19 @@ Issues and pull requests go to https://github.com/jalen-cheng/free-sleep.
   - Give any complicated function a short comment saying what it does.
   - No abbreviated variable names of two characters or fewer.
   - No one-off hacks. Put new files and code where they belong.
+
+## Demo and screenshots
+
+The demo at [freepod.vercel.app](https://freepod.vercel.app) is the app built with made-up data
+(`npm run build:demo` in `app/`, settings in `vercel.json`). Deploy it with `npx vercel --prod`
+from the repository root.
+
+The screenshots in `docs/screenshots/` are taken from the demo, all at one phone size, and put in
+phone frames by the scripts in `docs/screenshots/tools/`:
+
+1. Run the demo locally (`VITE_ENV=demo VITE_USE_MSW=true npx vite --port 5199` in `app/`).
+2. Start Chrome with `--headless=new --remote-debugging-port=9333`.
+3. In `docs/screenshots/tools/`, run `CAPTURE_HEIGHT=800 node capture.mjs 9333 raw '<list of pages>'`
+   (the list format is at the top of the script; name the pages `temperature`, `schedule`,
+   `alarm_options` and `settings`), then `node frame.mjs 9333 ..`.
+

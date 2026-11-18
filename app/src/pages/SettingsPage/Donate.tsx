@@ -32,7 +32,7 @@ export default function Donate() {
     <Section title="Support the original author" icon={ <AttachMoneyIcon/> }>
       <Box sx={ { display: 'flex', flexDirection: 'column', gap: 2 } }>
         <Typography variant="body2" sx={ { color: 'text.secondary', fontSize: 12 } }>
-          Free Sleep was created by the author of the original project, which this version builds on. These donations go to them.
+          Free Pod builds on Free Sleep, created by the author of the original project. These donations go to them.
         </Typography>
         <Box
           sx={ {

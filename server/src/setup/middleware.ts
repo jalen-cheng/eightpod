@@ -5,7 +5,8 @@ import logger from '../logger.js';
 import os from 'os';
 import { isAllowedOrigin } from './allowedOrigin.js';
 
-const originRules = { podHostname: os.hostname(), extraAllowedOrigin: process.env.ALLOWED_ORIGIN };
+// Read on every request: the Pod can be renamed while the server runs (setup_local_name.sh)
+const getOriginRules = () => ({ podHostname: os.hostname(), extraAllowedOrigin: process.env.ALLOWED_ORIGIN });
 
 export default function (app: Express) {
   app.use((req, res, next) => {
@@ -26,7 +27,7 @@ export default function (app: Express) {
   app.use(
     cors({
       origin: (origin, callback) => {
-        if (isAllowedOrigin(origin, originRules)) {
+        if (isAllowedOrigin(origin, getOriginRules())) {
           return callback(null, true);
         }
 

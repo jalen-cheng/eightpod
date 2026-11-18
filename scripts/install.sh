@@ -253,6 +253,8 @@ WorkingDirectory=$SERVER_DIR
 Restart=always
 User=$USERNAME
 $JOURNAL_GROUP_LINE
+# Lets the server also answer on port 80, so the app opens without ":3000"
+AmbientCapabilities=CAP_NET_BIND_SERVICE
 Environment=NODE_ENV=production
 Environment=VOLTA_HOME=/home/$USERNAME/.volta
 Environment=PATH=/home/$USERNAME/.volta/bin:/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin
@@ -381,7 +383,7 @@ sh /home/dac/free-sleep/scripts/setup_tailscale.sh sync-scripts || echo "WARNING
 echo "This is your dac.sock path (if it doesn't end in dac.sock, contact support):"
 cat /persistent/free-sleep-data/dac_sock_path.txt 2>/dev/null || echo "No dac.sock path found."
 
-echo -e "\033[0;32mInstallation complete! The Free Sleep server is running and will start automatically on boot.\033[0m"
+echo -e "\033[0;32mInstallation complete! The Free Pod server is running and will start automatically on boot.\033[0m"
 echo -e "\033[0;32mSee logs with: journalctl -u free-sleep --no-pager --output=cat\033[0m"
 
 if [ "$migration_failed" = "true" ]; then

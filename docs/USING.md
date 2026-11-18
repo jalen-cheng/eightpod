@@ -1,4 +1,4 @@
-# Using Free Sleep
+# Using Free Pod
 
 A first-use guide for the app, once it is installed ([INSTALLATION.md](../INSTALLATION.md)).
 It was written against a Pod 5, the only model this fork was tested on. Where a Pod 3 or 4
@@ -7,7 +7,7 @@ differs, it says so; [POD_MODELS.md](POD_MODELS.md) has the detail.
 ## 1. Open the app
 
 On a phone or computer on the same Wi-Fi as the Pod, open `http://<pod-ip>:3000`, for example
-`http://192.168.1.50:3000`. On a Pod 5, `http://eight-pod.local:3000` also works.
+`http://192.168.1.50:3000`. `http://bed.local` also works where the installer could set the name up.
 
 To keep it on your phone's home screen: in Safari, tap Share, then **Add to Home Screen**. In
 Chrome on Android, open the three-dot menu, then **Add to Home screen**.
@@ -96,7 +96,7 @@ A scheduled alarm only vibrates if that side is on at the alarm time.
 - **Pod 4:** tap the bed four times. Not tested in this fork.
 - **Any Pod:** open the app. The Temperature page shows a **Dismiss Alarm** button while the bed vibrates.
 
-The firmware stops both sides at once. If the sides are not linked, Free Sleep restarts the
+The firmware stops both sides at once. If the sides are not linked, Free Pod restarts the
 other side's alarm from the beginning.
 
 ## 7. A one-time alarm

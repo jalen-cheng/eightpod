@@ -1,7 +1,7 @@
 import './instrument.js';
 import express from 'express';
 import schedule from 'node-schedule';
-import { Server } from 'http';
+import { createServer, Server } from 'http';
 import logger from './logger.js';
 import { connectFranken, disconnectFranken } from './8sleep/frankenServer.js';
 import { FrankenMonitor } from './8sleep/frankenMonitor.js';
@@ -20,6 +20,10 @@ import { setupSentryTags } from './setupSentryTags.js';
 import { loadWifiSignalStrength } from './8sleep/wifiSignalStrength.js';
 
 const port = 3000;
+// The standard web port, so the app also opens without ":3000". Binding it needs the capability
+// the installer gives the service; without it the app stays on port 3000 only.
+const WEB_PORT = 80;
+let webPortServer: Server | undefined;
 const app = express();
 let server: Server | undefined;
 let frankenMonitor: FrankenMonitor | undefined;
@@ -73,6 +77,7 @@ async function gracefulShutdown(signal: string) {
         logger.debug('Closed out remaining HTTP connections.');
       });
     }
+    webPortServer?.close();
 
     if (!config.remoteDevMode) {
       frankenMonitor?.stop();
@@ -126,6 +131,14 @@ async function startServer() {
   server = app.listen(port, () => {
     logger.debug(`Server running on http://localhost:${port}`);
   });
+  if (!config.remoteDevMode) {
+    webPortServer = createServer(app);
+    webPortServer.on('error', (error) => {
+      logger.info(`Port ${WEB_PORT} is not available (${error.message}); the app is on port ${port} only.`);
+      webPortServer = undefined;
+    });
+    webPortServer.listen(WEB_PORT, () => logger.debug(`Also serving on port ${WEB_PORT}`));
+  }
   serverStatus.status.express.status = 'healthy';
   serverStatus.status.logger.status = 'healthy';
 

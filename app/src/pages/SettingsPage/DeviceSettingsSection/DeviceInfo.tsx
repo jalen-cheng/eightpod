@@ -29,7 +29,7 @@ export default function DeviceInfo() {
           </Box>
         </Box>
         <Box sx={ { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 1 } }>
-          <Typography variant="body2" sx={ { color: 'text.secondary' } }>Free Sleep Build</Typography>
+          <Typography variant="body2" sx={ { color: 'text.secondary' } }>Free Pod Build</Typography>
           <Box sx={ { display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-end', gap: 0.75 } }>
             <Chip label={ `v${deviceStatus?.freeSleep?.version}` } size="small"/>
             <Chip label={ deviceStatus?.freeSleep?.branch } size="small"/>
