@@ -151,6 +151,7 @@ export default function AlarmOptionsDialog({ open, onClose }: AlarmOptionsDialog
             max={ 100 }
             onChange={ (_event, vibrationIntensity) => updateAlarm({ vibrationIntensity: vibrationIntensity as number }) }
             aria-label="Vibration strength"
+            sx={ { width: 'calc(100% - 24px)', mx: 1.5, display: 'block' } }
           />
         </Box>
 

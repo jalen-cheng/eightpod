@@ -53,7 +53,7 @@ Each side has one schedule per night of the week. A night is named after the day
 6. On the **Wake** row, set the wake-up time.
 7. Tap **Alarm off** on the Wake row and turn the switch on if you want the bed to vibrate at that time.
    With it off, the wake-up time still decides when the bed turns off.
-8. Tap **Save for Mon** in the bar that appears at the bottom.
+8. Tap **Save** in the bar that appears at the bottom.
 
 **There is no bed-off setting.** The bed turns off 30 minutes after the wake-up time.
 
@@ -62,8 +62,7 @@ The bar appears as soon as you edit anything:
 | Button | What it does |
 |---|---|
 | **Discard** | Throws away your edits |
-| **Other days…** | Opens "Save for which days?". Tick the days, then **Save**. This night replaces the one saved for each day you tick |
-| **Save for Mon** | Saves to the open day only (the label names that day) |
+| **Save** | Saves to the open day. To use the same night on other days, save, then use the copy button beside the night's name |
 
 Other day tabs are locked until you save or discard.
 

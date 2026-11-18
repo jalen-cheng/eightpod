@@ -43,7 +43,9 @@ export default function LedBrightnessSlider() {
         <Typography variant="body2" sx={ { fontWeight: 500 } }>
         LED Brightness
         </Typography>
-        <Typography variant="caption" sx={ { color: 'text.secondary' } }>{ settingsCopy?.ledBrightness || 0 }%</Typography>
+        <Typography variant="caption" sx={ { color: 'text.secondary' } }>
+          { settingsCopy?.ledBrightness ? `${settingsCopy.ledBrightness}%` : 'Off' }
+        </Typography>
       </Box>
       <Slider
         aria-label="LED Brightness"
@@ -57,12 +59,9 @@ export default function LedBrightnessSlider() {
         min={ 0 }
         max={ 100 }
         step={ 1 }
-        marks={ [
-          { value: 0, label: 'Off' },
-          { value: 100, label: '100%' },
-        ] }
         disabled={ isUpdating }
-        sx={ { width: 'calc(100% - 16px)', mx: 1, mb: 1, '& .MuiSlider-markLabel': { fontSize: 11 } } }
+        // Inset by half the handle so it stays inside the row at both ends
+        sx={ { width: 'calc(100% - 24px)', mx: 1.5, display: 'block' } }
       />
     </Box>
   );

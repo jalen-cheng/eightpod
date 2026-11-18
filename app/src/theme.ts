@@ -106,16 +106,18 @@ const buildComponents = (colors: typeof DARK_COLORS): ThemeOptions['components']
       track: { borderRadius: 5, backgroundColor: colors.track, opacity: 1, transition: 'background-color 200ms ease' },
     },
   },
+  // Drawn like the temperature dial: a thick rounded track and a ring for a handle
   MuiSlider: {
     styleOverrides: {
-      root: { height: 6 },
+      root: { height: 10, padding: '14px 0' },
       rail: { backgroundColor: colors.track, opacity: 1 },
       track: { border: 0 },
-      thumb: {
-        width: 22, height: 22, backgroundColor: '#ffffff', boxShadow: '0 1px 4px rgba(0, 0, 0, 0.4)',
-        '&:hover, &.Mui-focusVisible, &.Mui-active': { boxShadow: '0 1px 4px rgba(0, 0, 0, 0.4)' },
+      thumb: ({ theme }) => ({
+        width: 24, height: 24, backgroundColor: theme.palette.background.paper, border: '4px solid currentColor',
+        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.45)',
+        '&:hover, &.Mui-focusVisible, &.Mui-active': { boxShadow: '0 1px 3px rgba(0, 0, 0, 0.45)' },
         '&::before': { display: 'none' },
-      },
+      }),
     },
   },
   MuiToggleButtonGroup: {
