@@ -367,7 +367,7 @@ offers to dismiss it.
   name copies a saved night to any other days.
 - Saving always writes the whole night shown, to each chosen day, on both sides when linked.
 
-**Data.** Sleep records and logs. Sleep needs biometrics.
+**Data.** Sleep records and logs. Sleep needs biometrics. Nights lists every stay in bed the autopilot has saved (Pod 5), with the bed's sleep and wake times beside a linked tracker's, the tuning in use, and an Export button.
 
 **Status** (opened from the "Status: Healthy" link, bottom right on a computer and beside the heading of Data and Settings on a phone; it has no tab). Wi-Fi strength and whether EightPod is up to date, then each internal service with
 its state. Services that are jobs have a Run button. The biometrics and sleep-analysis rows are greyed and

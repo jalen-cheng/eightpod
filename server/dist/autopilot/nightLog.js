@@ -3,13 +3,13 @@
 // low megabytes. Kept beside the settings folder, not in it, so writing a night does not make
 // the job scheduler rebuild every job.
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="440d5875-caa0-565e-8c83-f81510e16f8e")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="72085679-80e9-5e49-a185-3996ab05f211")}catch(e){}}();
 import { mkdirSync, readFileSync, readdirSync, unlinkSync, writeFileSync } from 'fs';
 import config from '../config.js';
 import logger from '../logger.js';
 const NIGHTS_FOLDER = `${config.dbFolder}autopilot_nights/`;
-// Both sides together: about two months of nights and naps for two sleepers
-const MAX_FILES_KEPT = 160;
+// Both sides together: about three months of nights for two sleepers, more for one
+const MAX_FILES_KEPT = 180;
 // Named by start time, so sorting the names sorts the nights
 const fileNameOf = (record) => (`${new Date(record.startedAtMs).toISOString().slice(0, 16).replace(/[-:]/g, '')}_${record.side}.json`);
 const listFileNames = () => {
@@ -63,4 +63,4 @@ export function pruneNights() {
     }
 }
 //# sourceMappingURL=nightLog.js.map
-//# debugId=440d5875-caa0-565e-8c83-f81510e16f8e
+//# debugId=72085679-80e9-5e49-a185-3996ab05f211

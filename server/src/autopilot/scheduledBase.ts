@@ -23,19 +23,54 @@ export function findScheduledTemperatureF(night: Pick<DailySchedule, 'power' | '
   return temperatureF;
 }
 
-// Falling asleep up to this long before the scheduled bedtime still counts as the night
-const EARLY_NIGHT_MINUTES = 3 * 60;
-// With no schedule to go by, sleep that begins between these hours is a nap
-const NAP_HOURS_WITHOUT_SCHEDULE = { from: 9, until: 19 };
+// A sleep shorter than this is a nap
+export const NAP_UNDER_MINUTES = 3 * 60;
 
-// Whether a sleep that began at `onsetClock` is the night's sleep or a nap. It is the night when
-// it begins between a little before the scheduled bedtime and the wake-up time.
-export function classifySleep(onsetClock: Time, night: Pick<DailySchedule, 'power' | 'alarm'> | undefined): SleepKind {
-  if (!night?.power.enabled) {
-    const hour = toMinutes(onsetClock) / 60;
-    return hour >= NAP_HOURS_WITHOUT_SCHEDULE.from && hour < NAP_HOURS_WITHOUT_SCHEDULE.until ? 'nap' : 'night';
-  }
-  const minutesSinceBedtime = minutesAfterBedtime(onsetClock, night.power.on);
-  const nightMinutes = minutesAfterBedtime(night.alarm.time, night.power.on);
-  return minutesSinceBedtime < nightMinutes || minutesSinceBedtime >= MINUTES_PER_DAY - EARLY_NIGHT_MINUTES ? 'night' : 'nap';
+export const kindOfSleep = (minutesAsleep: number): SleepKind => (minutesAsleep < NAP_UNDER_MINUTES ? 'nap' : 'night');
+
+// When this sleeper usually falls asleep and wakes, as clock minutes, worked out from saved nights
+export type UsualSleep = { asleepMinutes: number; awakeMinutes: number };
+
+// Falling asleep up to this long before the usual time still looks like the night
+const EARLY_NIGHT_MINUTES = 3 * 60;
+// With nothing else to go by, sleep that begins between these hours looks like a nap
+const NAP_HOURS_WITH_NOTHING_TO_GO_BY = { from: 9, until: 19 };
+// Fewer saved nights than this say too little about habit
+const MIN_NIGHTS_FOR_USUAL = 3;
+
+const middleOf = (values: number[]) => [...values].sort((first, second) => first - second)[Math.floor(values.length / 2)];
+
+// The usual times from some nights' sleep and wake clock minutes. Bedtimes straddle midnight,
+// so they are lined up from noon before the middle one is taken.
+export function findUsualSleep(nights: { asleepMinutes: number; awakeMinutes: number }[]): UsualSleep | undefined {
+  if (nights.length < MIN_NIGHTS_FOR_USUAL) return undefined;
+  const half = MINUTES_PER_DAY / 2;
+  const fromNoon = (minutes: number) => (minutes + half) % MINUTES_PER_DAY;
+  return {
+    asleepMinutes: (middleOf(nights.map(night => fromNoon(night.asleepMinutes))) + half) % MINUTES_PER_DAY,
+    awakeMinutes: middleOf(nights.map(night => night.awakeMinutes)),
+  };
+}
+
+const isWithinNight = (onsetMinutes: number, nightStartMinutes: number, nightEndMinutes: number): boolean => {
+  const sinceStart = (onsetMinutes - nightStartMinutes + MINUTES_PER_DAY) % MINUTES_PER_DAY;
+  const nightMinutes = (nightEndMinutes - nightStartMinutes + MINUTES_PER_DAY) % MINUTES_PER_DAY;
+  return sinceStart < nightMinutes || sinceStart >= MINUTES_PER_DAY - EARLY_NIGHT_MINUTES;
+};
+
+// Whether a sleep that has just begun looks like the night's, so the autopilot may steer it
+// from the start. Nobody can know yet how long it will last, so this goes by when it began:
+// first against when this sleeper has actually been sleeping (the schedule's times are when the
+// bed runs, not when anyone sleeps), then against the schedule, then by the hour. A sleep that
+// does not look like the night is left alone until it has lasted too long to be a nap.
+export function isNightExpected(
+  onsetClock: Time,
+  usual: UsualSleep | undefined,
+  night: Pick<DailySchedule, 'power' | 'alarm'> | undefined,
+): boolean {
+  const onsetMinutes = toMinutes(onsetClock);
+  if (usual) return isWithinNight(onsetMinutes, usual.asleepMinutes, usual.awakeMinutes);
+  if (night?.power.enabled) return isWithinNight(onsetMinutes, toMinutes(night.power.on), toMinutes(night.alarm.time));
+  const hour = onsetMinutes / 60;
+  return hour < NAP_HOURS_WITH_NOTHING_TO_GO_BY.from || hour >= NAP_HOURS_WITH_NOTHING_TO_GO_BY.until;
 }
