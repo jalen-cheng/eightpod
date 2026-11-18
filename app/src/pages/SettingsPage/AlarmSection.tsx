@@ -1,6 +1,5 @@
-import AlarmOutlinedIcon from '@mui/icons-material/AlarmOutlined';
 import {
-  Box, Button, MenuItem, Slider, TextField, ToggleButton, ToggleButtonGroup, Typography,
+  Box, Button, MenuItem, TextField, ToggleButton, ToggleButtonGroup, Typography,
 } from '@mui/material';
 import _ from 'lodash';
 import { useEffect, useState } from 'react';
@@ -14,6 +13,7 @@ import { buildSidesPayload } from '@lib/sides.ts';
 import { Side, useAppStore } from '@state/appStore.tsx';
 import { LOWERCASE_DAYS } from '../SchedulePage/days.ts';
 import Section from './Section.tsx';
+import { CONTROL_WIDTH_PX } from './SettingRow.tsx';
 
 const SIDES: Side[] = ['left', 'right'];
 const SECONDS_PER_MINUTE = 60;
@@ -21,6 +21,9 @@ const SECONDS_PER_MINUTE = 60;
 const ALARM_LENGTH_MINUTES = [10, 15, 20, 30];
 // A test runs the ramp-up and a little of full strength, then stops by itself
 const TEST_SECONDS = 60;
+
+// Three strengths are enough to choose between; the firmware takes a percentage
+const STRENGTH_LEVELS = [{ name: 'Low', percent: 40 }, { name: 'Medium', percent: 70 }, { name: 'High', percent: 100 }];
 
 const PATTERN_NAMES: Record<AlarmSchedule['vibrationPattern'], string> = { rise: 'Ramp up', double: 'Pulses' };
 type VibrationSettings = Pick<AlarmSchedule, 'vibrationPattern' | 'vibrationIntensity' | 'duration'>;
@@ -31,13 +34,9 @@ export default function AlarmSection() {
   const { data: schedules, refetch } = useSchedules();
   const { isUpdating, setIsUpdating } = useAppStore();
   const [isTesting, setIsTesting] = useState(false);
+  const [hasSaveFailed, setHasSaveFailed] = useState(false);
   // Every night is kept the same, so any one of them can be read
   const savedAlarm = schedules?.left.monday.alarm;
-  // The slider moves freely and is saved when it is let go
-  const [strength, setStrength] = useState(savedAlarm?.vibrationIntensity ?? 0);
-  useEffect(() => {
-    if (savedAlarm) setStrength(savedAlarm.vibrationIntensity);
-  }, [savedAlarm?.vibrationIntensity]);
   // The test ends by itself; the button goes back to "Test" when it has
   useEffect(() => {
     if (!isTesting) return undefined;
@@ -46,31 +45,45 @@ export default function AlarmSection() {
   }, [isTesting]);
   if (!savedAlarm) return null;
 
+  const stopTest = () => {
+    setIsTesting(false);
+    postDeviceStatus(buildSidesPayload(SIDES, { isAlarmVibrating: false })).catch(error => console.error(error));
+  };
+
+  // Writes all three settings to every night on both sides, not just the one that changed, so
+  // nights that differed before this was one setting are brought into line
   const saveVibration = (changes: Partial<VibrationSettings>) => {
-    const everyNight = Object.fromEntries(LOWERCASE_DAYS.map(day => [day, { alarm: changes }]));
+    const { vibrationPattern, vibrationIntensity, duration } = savedAlarm;
+    const vibration: VibrationSettings = { vibrationPattern, vibrationIntensity, duration, ...changes };
+    const everyNight = Object.fromEntries(LOWERCASE_DAYS.map(day => [day, { alarm: vibration }]));
     const payload: DeepPartial<Schedules> = buildSidesPayload(SIDES, everyNight);
+    // A test under way is of the old settings
+    if (isTesting) stopTest();
+    setHasSaveFailed(false);
     setIsUpdating(true);
     postSchedules(payload)
       .then(() => refetch())
-      .catch(error => console.error(error))
+      .catch((error) => {
+        console.error(error);
+        setHasSaveFailed(true);
+      })
       .finally(() => setIsUpdating(false));
   };
 
   // Vibrates both sides now, whether or not they are on, so the settings can be felt
   const startTest = () => {
     setIsTesting(true);
-    Promise.all(SIDES.map(side => postAlarm({
-      side, vibrationIntensity: strength, vibrationPattern: savedAlarm.vibrationPattern, duration: TEST_SECONDS, force: true,
-    }))).catch((error) => {
+    const { vibrationIntensity, vibrationPattern } = savedAlarm;
+    const test = { vibrationIntensity, vibrationPattern, duration: TEST_SECONDS, force: true };
+    Promise.all(SIDES.map(side => postAlarm({ side, ...test }))).catch((error) => {
       console.error(error);
-      setIsTesting(false);
+      // One side may have started: stop both
+      stopTest();
     });
   };
-  const stopTest = () => {
-    setIsTesting(false);
-    postDeviceStatus(buildSidesPayload(SIDES, { isAlarmVibrating: false })).catch(error => console.error(error));
-  };
 
+  // A strength saved as some other percentage shows as the level nearest to it
+  const strengthLevel = _.minBy(STRENGTH_LEVELS, level => Math.abs(level.percent - savedAlarm.vibrationIntensity))?.percent;
   const lengthMinutes = Math.round(savedAlarm.duration / SECONDS_PER_MINUTE);
   // An alarm saved with some other length keeps it until a new one is picked
   const lengthOptions = _.sortBy(_.union(ALARM_LENGTH_MINUTES, [lengthMinutes]));
@@ -78,7 +91,6 @@ export default function AlarmSection() {
   return (
     <Section
       title="Alarm"
-      icon={ <AlarmOutlinedIcon/> }
       action={ <Button size="small" onClick={ isTesting ? stopTest : startTest }>{ isTesting ? 'Stop test' : 'Test for a minute' }</Button> }
     >
       <Box sx={ { display: 'flex', flexDirection: 'column', gap: 2 } }>
@@ -101,20 +113,6 @@ export default function AlarmSection() {
           </ToggleButtonGroup>
         </Box>
 
-        <Box>
-          <Typography variant="body2" sx={ { fontWeight: 500 } }>Strength { strength }%</Typography>
-          <Slider
-            value={ strength }
-            min={ 1 }
-            max={ 100 }
-            disabled={ isUpdating }
-            onChange={ (_event, value) => setStrength(value as number) }
-            onChangeCommitted={ (_event, value) => saveVibration({ vibrationIntensity: value as number }) }
-            aria-label="Vibration strength"
-            sx={ { width: 'calc(100% - 24px)', mx: 1.5, display: 'block' } }
-          />
-        </Box>
-
         <Box sx={ { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2 } }>
           <Typography variant="body2" sx={ { fontWeight: 500 } }>
             Length <InfoTip text="How long it keeps going. It stops sooner if you dismiss it."/>
@@ -125,7 +123,7 @@ export default function AlarmSection() {
             disabled={ isUpdating }
             value={ lengthMinutes }
             onChange={ (event) => saveVibration({ duration: Number(event.target.value) * SECONDS_PER_MINUTE }) }
-            sx={ { width: 132 } }
+            sx={ { width: CONTROL_WIDTH_PX } }
             slotProps={ { htmlInput: { 'aria-label': 'Alarm length' } } }
           >
             { lengthOptions.map(minutes => (
@@ -133,6 +131,26 @@ export default function AlarmSection() {
             )) }
           </TextField>
         </Box>
+        <Box sx={ { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2 } }>
+          <Typography variant="body2" sx={ { fontWeight: 500 } }>Strength</Typography>
+          <ToggleButtonGroup
+            exclusive
+            size="small"
+            disabled={ isUpdating }
+            value={ strengthLevel }
+            onChange={ (_event, level: number | null) => {
+              if (level !== null) saveVibration({ vibrationIntensity: level });
+            } }
+            aria-label="Vibration strength"
+          >
+            { STRENGTH_LEVELS.map(({ name, percent }) => (
+              <ToggleButton key={ percent } value={ percent } sx={ { whiteSpace: 'nowrap', px: 2 } }>{ name }</ToggleButton>
+            )) }
+          </ToggleButtonGroup>
+        </Box>
+        { hasSaveFailed && (
+          <Typography variant="caption" color="error">That was not saved. Check the Pod is reachable and try again.</Typography>
+        ) }
         <Typography variant="caption" sx={ { color: 'text.secondary' } }>
           For every night and both sides. Each night&apos;s wake time, warm-up and whether it vibrates are set in Schedules.
         </Typography>

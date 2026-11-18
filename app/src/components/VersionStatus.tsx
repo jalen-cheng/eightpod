@@ -1,14 +1,9 @@
-import { Chip } from '@mui/material';
 import { useServerInfo } from '@api/serverInfo.ts';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import UpdateIcon from '@mui/icons-material/Update';
+import StatusTag from './StatusTag.tsx';
 
-// One small chip saying whether EightPod is up to date, for use in a line of chips
+// Whether EightPod is up to date, in two words
 export default function VersionStatus() {
   const { data: serverInfo, isLoading, isError } = useServerInfo();
   if (isError || isLoading) return null;
-
-  return serverInfo?.updateAvailable
-    ? <Chip icon={ <UpdateIcon/> } label="Update available" color="info" size="small"/>
-    : <Chip icon={ <CheckCircleIcon/> } label="Up to date" color="success" size="small"/>;
+  return serverInfo?.updateAvailable ? <StatusTag tone="info" label="Update available"/> : <StatusTag tone="good" label="Up to date"/>;
 }

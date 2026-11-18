@@ -59,7 +59,7 @@ Everything EightPod keeps lives in `/persistent/free-sleep-data/` on the Pod.
 
 | File | Holds | Notes |
 |---|---|---|
-| `lowdb/settingsDB.json` | Time zone, display unit, link sides, side names, away mode, button settings, daily priming and reboot, and the one-time alarm | Defaults: UTC, °F, daily reboot on, daily priming on at 14:00, sides not linked |
+| `lowdb/settingsDB.json` | Time zone, display unit, link sides, side names (API only), away mode, button settings, daily priming and reboot, and the one-time alarm | Defaults: UTC, °F, daily reboot on, daily priming on at 14:00, sides not linked |
 | `lowdb/schedulesDB.json` | For each side and each day: bedtime, off time, temperature changes, the alarm | See section 4 |
 | `lowdb/servicesDB.json` | Biometrics and error-reporting switches and their status | |
 | `free-sleep.db` | Sleep, heart and movement records (SQLite) | Only filled when biometrics works |
@@ -341,7 +341,7 @@ The app refreshes the bed's state every 5 seconds.
 **Temperature.** Side picker and link button; the dial with the target, the current reading and
 "Turns off at"; + and -; the power mark at the top right, which turns the side off (a side that is
 off turns on with a tap anywhere in the section); and a row for the next alarm. On that row the time
-opens "Change next alarm only" (a one-time alarm), and **Skip** turns off tonight's alarm (the button
+opens "Change next alarm only (overrides schedule)" (a one-time alarm), and **Skip** turns off tonight's alarm (the button
 then reads **Turn on**). While an alarm vibrates, a dialog
 offers to dismiss it.
 
@@ -363,15 +363,17 @@ offers to dismiss it.
 
 **Data.** Sleep records and logs. Sleep needs biometrics.
 
-**Status.** Wi-Fi strength and whether EightPod is up to date, then each internal service with
+**Status** (opened from the "Status: Healthy" link, bottom right on a computer and beside each page's heading on a phone; it has no tab). Wi-Fi strength and whether EightPod is up to date, then each internal service with
 its state. Services that are jobs have a Run button. The biometrics and sleep-analysis rows are greyed and
 marked "Untested in this version".
 
-**Settings.** Time zone (set this first: the schedule runs in it), temperature format, how long
-the bed stays on when turned on by hand and whether the schedule is ignored meanwhile, LED
-brightness, away mode, flipping the sides and the side buttons' step, how the alarm vibrates, in-bed detection (its state shows as two chips beside the
-heading), priming, biometrics, and
-the device: Wi-Fi, versions, update, reboot.
+**Settings.** Device settings, in groups: Temperature (units, and a Pod 5's − and + button
+step), Clock (time zone; set this first, the schedule runs in it), Turning on by hand (how long
+the bed stays on, and whether the schedule is ignored meanwhile), Bed (away mode for both sides,
+flip left and right, the light on the hub) and API (the common requests, behind **Show**). Then
+Alarm (one setting for every night and both sides: vibration, length, strength, a test), Tap
+gestures (Pod 4), Priming, In-bed detection (its state shows beside the heading), Features
+(biometrics), and Device (the Pod, Wi-Fi, version and Update, reboot).
 
 ## 11. The API and phone shortcuts
 

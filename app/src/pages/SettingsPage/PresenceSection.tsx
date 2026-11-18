@@ -1,8 +1,8 @@
 /* eslint-disable react/no-multi-comp */
 import { DeepPartial } from 'ts-essentials';
 import { PropsWithChildren } from 'react';
-import { Box, Button, Chip, Divider, MenuItem, Switch, TextField, Typography } from '@mui/material';
-import SensorsOutlinedIcon from '@mui/icons-material/SensorsOutlined';
+import { Box, Button, Divider, MenuItem, Switch, TextField, Typography } from '@mui/material';
+import StatusTag from '@components/StatusTag.tsx';
 import _ from 'lodash';
 import { Settings } from '@api/settingsSchema.ts';
 import { postBedIsEmpty, usePresenceSensors } from '@api/presence.ts';
@@ -10,6 +10,7 @@ import { useAppStore } from '@state/appStore.tsx';
 import InfoTip from '@components/InfoTip.tsx';
 import Section from './Section.tsx';
 import SettingToggle from './SettingToggle.tsx';
+import { CONTROL_WIDTH_PX } from './SettingRow.tsx';
 import { TemperatureSelect } from '../SchedulePage/ScheduleFields.tsx';
 
 type PresenceSectionProps = {
@@ -78,15 +79,12 @@ export default function PresenceSection({ settings, updateSettings }: PresenceSe
   return (
     <Section
       title="In-bed detection"
-      icon={ <SensorsOutlinedIcon/> }
       // What the sensors say right now, beside the title
       action={ (['left', 'right'] as const).map(side => (
-        <Chip
+        <StatusTag
           key={ side }
-          size="small"
-          color={ sensors[side]?.present ? 'success' : 'default' }
-          label={ [side === 'left' ? 'L' : 'R', sensors[side]?.present ? 'in bed' : 'empty'].join(' · ') }
-          aria-label={ `${settings[side].name}: ${sensors[side]?.present ? 'in bed' : 'empty'}` }
+          tone={ sensors[side]?.present ? 'good' : 'neutral' }
+          label={ `${side === 'left' ? 'Left' : 'Right'} ${sensors[side]?.present ? 'in bed' : 'empty'}` }
         />
       )) }
     >
@@ -99,7 +97,7 @@ export default function PresenceSection({ settings, updateSettings }: PresenceSe
             value={ sensitivity }
             onChange={ (event) => updatePresence({ sensitivity: event.target.value as Settings['presence']['sensitivity'] }) }
             disabled={ isUpdating }
-            sx={ { width: 120, flexShrink: 0 } }
+            sx={ { width: CONTROL_WIDTH_PX, flexShrink: 0 } }
             slotProps={ { htmlInput: { 'aria-label': 'In-bed detection sensitivity' } } }
           >
             { Object.entries(SENSITIVITY_NAMES).map(([value, name]) => <MenuItem key={ value } value={ value }>{ name }</MenuItem>) }

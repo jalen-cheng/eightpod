@@ -84,7 +84,7 @@ export default function ControlTempPage() {
         sx={ {
           px: { xs: 0, sm: 3 }, py: { xs: 1.5, sm: 3 }, overflow: 'hidden', my: { xs: 'auto', md: 0 },
           bgcolor: { xs: 'transparent', sm: 'background.paper' },
-          borderWidth: { xs: 0, sm: 1 }, borderRadius: { xs: 0, sm: 3 },
+          borderWidth: { xs: 0, sm: 1 }, borderRadius: { xs: 0, sm: '16px' },
           ...(isTurnOnTarget && {
             cursor: power.disabled ? 'default' : 'pointer',
             transition: 'background-color 120ms, border-color 120ms',

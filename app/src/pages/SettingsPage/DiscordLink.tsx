@@ -1,5 +1,4 @@
 import { Link } from '@mui/material';
-import ForumOutlinedIcon from '@mui/icons-material/ForumOutlined';
 import ArrowOutwardIcon from '@mui/icons-material/ArrowOutward';
 import Section from './Section.tsx';
 
@@ -9,7 +8,7 @@ const ISSUES_LINK = 'https://github.com/jalen-cheng/eightpod/issues';
 
 export default function DiscordLink() {
   return (
-    <Section title="Support & Feature Requests" icon={ <ForumOutlinedIcon/> }>
+    <Section title="Support & Feature Requests">
       <Link
         href={ ISSUES_LINK }
         target="_blank"

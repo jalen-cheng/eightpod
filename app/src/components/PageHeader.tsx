@@ -1,9 +1,17 @@
 import { Box, Typography } from '@mui/material';
 import { ReactNode } from 'react';
+import StatusLink from './StatusLink.tsx';
 
-type PageHeaderProps = { title: string; children?: ReactNode };
+type PageHeaderProps = {
+  title: string;
+  children?: ReactNode;
+  // The Status page itself has no use for a link to it
+  hideStatus?: boolean;
+};
 
-export default function PageHeader({ title, children }: PageHeaderProps) {
+// The heading of a page. On a phone it also carries the Pod's status, which on a computer sits
+// at the bottom right of the window.
+export default function PageHeader({ title, children, hideStatus }: PageHeaderProps) {
   return (
     <Box
       sx={ {
@@ -12,6 +20,7 @@ export default function PageHeader({ title, children }: PageHeaderProps) {
     >
       <Typography variant="h2" component="h1" sx={ { fontSize: { xs: 27, md: 30 } } }>{ title }</Typography>
       { children }
+      { !hideStatus && !children && <Box sx={ { display: { xs: 'flex', md: 'none' } } }><StatusLink/></Box> }
     </Box>
   );
 }

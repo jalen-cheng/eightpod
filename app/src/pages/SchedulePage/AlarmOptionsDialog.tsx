@@ -17,11 +17,6 @@ const SET_UP_ALARM_SECONDS = 600;
 
 const BED_OFF_ON_DISMISS_INFO = 'The bed turns off the moment you dismiss the alarm, instead of 30 minutes after the wake-up time.';
 
-export const PATTERN_NAMES: Record<AlarmSchedule['vibrationPattern'], string> = {
-  rise: 'Ramp up',
-  double: 'Pulses',
-};
-
 type OptionRowProps = PropsWithChildren<{
   label: string;
   // Extra detail, shown from an "i" beside the label
@@ -57,21 +52,22 @@ export default function AlarmOptionsDialog({ open, onClose, onSave }: AlarmOptio
   // The alarm as it was when the dialog opened, for Discard
   const [alarmAtOpen, setAlarmAtOpen] = useState<AlarmSchedule | undefined>(undefined);
   useEffect(() => {
-    if (open) setAlarmAtOpen(useScheduleStore.getState().selectedSchedule?.alarm);
+    // Forgotten on close, so the next opening never compares against the last one's
+    setAlarmAtOpen(open ? useScheduleStore.getState().selectedSchedule?.alarm : undefined);
   }, [open]);
   if (!selectedSchedule) return null;
 
   const { alarm } = selectedSchedule;
   const updateAlarm = (changes: Partial<AlarmSchedule>) => updateSelectedSchedule({ alarm: changes });
-  // Switching the alarm on gives it sensible settings if it has never been set up: a ramp-up
-  // that keeps going until dismissed
+  // Switching on an alarm that was never set up gives it a length that keeps going until
+  // dismissed. Its pattern and strength are left to Settings.
   const setAlarmEnabled = (enabled: boolean) => {
-    const needsDefaults = enabled && alarm.duration < SET_UP_ALARM_SECONDS;
-    updateAlarm(needsDefaults ? { enabled, duration: MAX_ALARM_SECONDS, vibrationPattern: 'rise' } : { enabled });
+    const needsLength = enabled && alarm.duration < SET_UP_ALARM_SECONDS;
+    updateAlarm(needsLength ? { enabled, duration: MAX_ALARM_SECONDS } : { enabled });
   };
   const preWarmMinutes = alarm.preWarmMinutes ?? 0;
 
-  const hasAlarmChanged = !_.isEqual(alarm, alarmAtOpen);
+  const hasAlarmChanged = alarmAtOpen !== undefined && !_.isEqual(alarm, alarmAtOpen);
   const discard = () => {
     if (alarmAtOpen) replaceSelectedAlarm(alarmAtOpen);
     onClose();

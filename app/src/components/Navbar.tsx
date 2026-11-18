@@ -4,8 +4,8 @@ import { ReactElement } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAppStore } from '@state/appStore.tsx';
 import { useServerInfo } from '@api/serverInfo.ts';
-import { PAGES, PHONE_PAGES, getPageForPath } from './pages';
-import ConnectionBadge from './ConnectionBadge';
+import { PAGES, getPageForPath } from './pages';
+import StatusLink, { STATUS_ROUTE } from './StatusLink.tsx';
 
 export default function Navbar() {
   const { pathname } = useLocation();
@@ -14,9 +14,6 @@ export default function Navbar() {
   const { data: serverInfo, isError: versionError } = useServerInfo();
   const updateAvailable = Boolean(serverInfo?.updateAvailable) && !versionError;
   const activePage = getPageForPath(pathname);
-  const firstPodPageIndex = PAGES.findIndex(page => page.isAboutThePod);
-  const settingsPage = PHONE_PAGES.find(page => page.route === '/settings') ?? activePage;
-  const phoneTabPage = activePage.isComputerOnly ? settingsPage : activePage;
 
   // Use the same cached version check as Settings for both navigation layouts.
   const navigationIcon = (route: string, icon: ReactElement) => (
@@ -44,23 +41,20 @@ export default function Navbar() {
           <Box component="img" src="/eightpod-icon.svg" alt="" sx={ { width: 30, height: 30, borderRadius: '8px' } }/>
           <Typography sx={ { color: 'text.primary', fontSize: 17, fontWeight: 600, letterSpacing: '-0.02em' } }>EightPod</Typography>
         </Box>
-        { /* The bed's pages at the top; the Pod's own (settings, status, API) at the foot */ }
-        <Box component="nav" aria-label="Main navigation" sx={ { display: 'flex', flexDirection: 'column', gap: 0.5, flex: 1 } }>
-          { PAGES.map(({ title, route, icon }, index) => (
+        <Box component="nav" aria-label="Main navigation" sx={ { display: 'flex', flexDirection: 'column', gap: 0.5 } }>
+          { PAGES.map(({ title, route, icon }) => (
             <Button
               key={ route }
               component={ Link }
               to={ route }
               startIcon={ navigationIcon(route, icon) }
-              aria-current={ activePage.route === route ? 'page' : undefined }
+              aria-current={ activePage?.route === route ? 'page' : undefined }
               aria-label={ route === '/settings' && updateAvailable ? 'Settings, update available' : title }
               sx={ {
                 justifyContent: 'flex-start', px: 1.5, py: 1.15,
-                // The first of the Pod's pages takes the free space above it, pushing the group down
-                mt: index === firstPodPageIndex ? 'auto' : 0,
-                color: activePage.route === route ? 'text.primary' : 'text.secondary',
-                bgcolor: activePage.route === route ? 'action.selected' : 'transparent',
-                '& .MuiButton-startIcon': { mr: 1.5, color: activePage.route === route ? 'primary.main' : 'text.secondary' },
+                color: activePage?.route === route ? 'text.primary' : 'text.secondary',
+                bgcolor: activePage?.route === route ? 'action.selected' : 'transparent',
+                '& .MuiButton-startIcon': { mr: 1.5, color: activePage?.route === route ? 'primary.main' : 'text.secondary' },
                 '& .MuiSvgIcon-root': { fontSize: 19 },
               } }
             >
@@ -68,8 +62,12 @@ export default function Navbar() {
             </Button>
           )) }
         </Box>
-        <Box sx={ { px: 1, pt: 2 } }><ConnectionBadge/></Box>
       </Box>
+      { /* The Pod's health, and the way to the Status page: bottom right on a computer. A phone
+           has no free corner, so there it sits in the heading of each page (see PageHeader). */ }
+      { pathname !== STATUS_ROUTE && (
+        <Box sx={ { display: { xs: 'none', md: 'block' }, position: 'fixed', right: 20, bottom: 16, zIndex: 1100 } }><StatusLink/></Box>
+      ) }
       <Box
         component="nav"
         aria-label="Mobile navigation"
@@ -81,9 +79,9 @@ export default function Navbar() {
       >
         <BottomNavigation
           showLabels
-          // A page with no tab of its own (the API guide) is reached from Settings, so that tab is lit
-          value={ PHONE_PAGES.indexOf(phoneTabPage) }
-          onChange={ (_, index) => navigate(PHONE_PAGES[index].route) }
+          // false lights no tab, for a page that has none (Status)
+          value={ activePage ? PAGES.indexOf(activePage) : false }
+          onChange={ (_, index) => navigate(PAGES[index].route) }
           sx={ {
             bgcolor: 'transparent', height: 68,
             '& .MuiBottomNavigationAction-root': { minWidth: 0, color: 'text.secondary', px: 0.5, gap: 0.75 },
@@ -92,12 +90,12 @@ export default function Navbar() {
             '& .MuiSvgIcon-root': { fontSize: 22 },
           } }
         >
-          { PHONE_PAGES.map(({ title, route, icon }) => (
+          { PAGES.map(({ title, route, icon }) => (
             <BottomNavigationAction
               key={ route }
               label={ title }
               icon={ navigationIcon(route, icon) }
-              aria-current={ activePage.route === route ? 'page' : undefined }
+              aria-current={ activePage?.route === route ? 'page' : undefined }
               aria-label={ route === '/settings' && updateAvailable ? 'Settings, update available' : title }
             />
           )) }

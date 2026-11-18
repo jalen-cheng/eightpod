@@ -20,7 +20,7 @@ export default function StatusPage() {
   return (
     <PageContainer>
       <Box>
-        <PageHeader title="Status">
+        <PageHeader title="Status" hideStatus>
           <Box sx={ { display: 'flex', flexWrap: 'wrap', gap: 0.75 } }>
             <WifiStrength/>
             <VersionStatus/>
