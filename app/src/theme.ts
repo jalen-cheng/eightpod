@@ -67,10 +67,12 @@ const buildComponents = (colors: typeof DARK_COLORS): ThemeOptions['components']
         '&:hover': { borderColor: colors.track, backgroundColor: colors.line },
       }),
       contained: ({ theme }) => ({
+        // The main action on a surface: a step lighter than an outlined button, never a white block
         '&.MuiButton-colorPrimary': {
-          backgroundColor: theme.palette.primary.main,
-          color: theme.palette.primary.contrastText,
-          '&:hover': { backgroundColor: theme.palette.mode === 'dark' ? '#ffffff' : '#333333' },
+          backgroundColor: colors.track,
+          color: theme.palette.text.primary,
+          '&:hover': { backgroundColor: theme.palette.mode === 'dark' ? '#4d4d4d' : '#bdbdbd' },
+          '&.Mui-disabled': { backgroundColor: colors.raised, color: theme.palette.text.disabled },
         },
       }),
     },

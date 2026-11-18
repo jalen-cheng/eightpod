@@ -172,22 +172,22 @@ const createSchedules = (): Schedules => ({
       alarm: { time: '06:30', vibrationIntensity: 80, vibrationPattern: 'double', duration: 600, enabled: true, alarmTemperature: 83 },
     },
     wednesday: {
-      temperatures: { '05:00': 82, '6:00': 100 },
+      temperatures: { '05:00': 82, '06:00': 100 },
       power: { on: '21:15', off: '07:00', enabled: true, onTemperature: 60 },
       alarm: { time: '06:30', vibrationIntensity: 60, vibrationPattern: 'double', duration: 600, enabled: true, alarmTemperature: 83 },
     },
     thursday: {
-      temperatures: { '05:00': 82, '6:00': 100 },
+      temperatures: { '05:00': 82, '06:00': 100 },
       power: { on: '21:15', off: '07:00', enabled: true, onTemperature: 60 },
       alarm: { time: '06:30', vibrationIntensity: 60, vibrationPattern: 'double', duration: 600, enabled: true, alarmTemperature: 83 },
     },
     friday: {
-      temperatures: { '05:00': 82, '6:00': 100 },
+      temperatures: { '05:00': 82, '06:00': 100 },
       power: { on: '22:00', off: '08:00', enabled: true, onTemperature: 60 },
       alarm: { time: '07:30', vibrationIntensity: 80, vibrationPattern: 'rise', duration: 900, enabled: true, alarmTemperature: 85 },
     },
     saturday: {
-      temperatures: { '05:00': 82, '6:00': 100 },
+      temperatures: { '05:00': 82, '06:00': 100 },
       power: { on: '22:30', off: '09:00', enabled: true, onTemperature: 60 },
       alarm: { time: '08:30', vibrationIntensity: 60, vibrationPattern: 'rise', duration: 900, enabled: true, alarmTemperature: 86 },
     },
@@ -546,8 +546,14 @@ export const updateSettings = (partial: Partial<Settings>) => {
 };
 
 export const getDeviceStatus = () => deviceStatus;
+// How long the demo pretends to prime for
+const DEMO_PRIMING_MS = 8_000;
+
 export const updateDeviceStatus = (partial: Partial<DeviceStatus>) => {
   deviceStatus = mergeDeep(clone(deviceStatus), partial) as DeviceStatus;
+  if (partial.isPriming) {
+    setTimeout(() => { deviceStatus = { ...deviceStatus, isPriming: false }; }, DEMO_PRIMING_MS);
+  }
   return deviceStatus;
 };
 

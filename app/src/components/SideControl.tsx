@@ -11,13 +11,15 @@ type SideControlProps = {
   showTemp?: boolean;
   // Called after the link is switched on or off, for pages that need to act on it right away
   onLinkSidesChange?: (linkSides: boolean) => void;
+  // For a page with unsaved edits that changing side or linking would throw away
+  disabled?: boolean;
 };
 
 // The side picker's value while the sides are linked and controlled as one
 const BOTH_SIDES = 'both';
 
 // Picks the side being viewed, with a button to link both sides so changes apply to the whole bed
-export default function SideControl({ showTemp, onLinkSidesChange }: SideControlProps) {
+export default function SideControl({ showTemp, onLinkSidesChange, disabled }: SideControlProps) {
   const { side, setSide, linkSides, setLinkSides, isUpdating } = useAppStore();
   const { data: settings } = useSettings();
   const { data: deviceStatus } = useDeviceStatus();
@@ -42,6 +44,7 @@ export default function SideControl({ showTemp, onLinkSidesChange }: SideControl
             if (selectedSide === 'left' || selectedSide === 'right') setSide(selectedSide);
           } }
           size="small"
+          disabled={ disabled }
           aria-label="Bed side"
           sx={ { flex: 1, minWidth: 0, '& .MuiToggleButton-root': { flex: 1, minWidth: 0 } } }
         >
@@ -69,7 +72,7 @@ export default function SideControl({ showTemp, onLinkSidesChange }: SideControl
         <ToggleButton
           value="linkSides"
           size="small"
-          disabled={ isUpdating }
+          disabled={ isUpdating || disabled }
           onChange={ handleLinkToggle }
           aria-label={ linkSides ? 'Unlink sides' : 'Link both sides' }
           sx={ { gap: 0.75, px: 1.5, flexShrink: 0 } }

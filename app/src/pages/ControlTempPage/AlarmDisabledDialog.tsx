@@ -3,6 +3,7 @@ import { Button, Dialog, DialogActions, DialogTitle } from '@mui/material';
 import moment from 'moment-timezone';
 import { postSettings, useSettings } from '@api/settings.ts';
 import { useAppStore } from '@state/appStore.tsx';
+import { buildSidesPayload, getControlledSides } from '@lib/sides.ts';
 
 
 export interface AlarmDisabledDialogProps {
@@ -20,7 +21,7 @@ export default function AlarmDisabledDialog({
 }: AlarmDisabledDialogProps) {
   const [isSaving, setIsSaving] = useState(false);
   const { data: settings, refetch } = useSettings();
-  const side = useAppStore(state => state.side);
+  const { side, linkSides } = useAppStore();
 
   const handleSave = () => {
     if (!settings) return null;
@@ -44,17 +45,16 @@ export default function AlarmDisabledDialog({
     ).add(2, 'minutes').format();
     setIsSaving(true);
     const disabled = !alarmDisabled;
-    postSettings({
-      [side]: {
-        scheduleOverrides: {
-          alarm: {
-            disabled: disabled,
-            timeOverride: '',
-            expiresAt: disabled ? expiresAt : '',
-          }
+    // With the sides linked the alarm is skipped on both, like every other change
+    postSettings(buildSidesPayload(getControlledSides(side, linkSides), {
+      scheduleOverrides: {
+        alarm: {
+          disabled: disabled,
+          timeOverride: '',
+          expiresAt: disabled ? expiresAt : '',
         }
       }
-    })
+    }))
       .then(() => {
         setOpen(false);
         return refetch();
@@ -73,11 +73,11 @@ export default function AlarmDisabledDialog({
 
   return (
     <Dialog open={ open } onClose={ handleCancel } fullWidth maxWidth="xs">
-      <DialogTitle>{ alarmDisabled ? 'Enable' : 'Disable' } the alarm for tonight?</DialogTitle>
+      <DialogTitle>{ alarmDisabled ? 'Turn the next alarm back on?' : 'Skip the next alarm?' }</DialogTitle>
       <DialogActions sx={ { px: 3, pb: 2 } }>
         <Button onClick={ handleCancel } disabled={ isSaving } sx={ { mr: 'auto' } }>Cancel</Button>
         <Button variant="contained" onClick={ handleSave } disabled={ isSaving }>
-          { alarmDisabled ? 'Enable' : 'Disable' }
+          { alarmDisabled ? 'Turn on' : 'Skip' }
         </Button>
       </DialogActions>
     </Dialog>

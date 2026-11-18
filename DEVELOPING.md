@@ -1,6 +1,6 @@
 # Developing Free Pod
 
-This guide covers working on this fork: running the app and server, the checks to run, and what a pull request must contain.
+This guide covers working on Free Pod: running the app and server, the checks to run, and what a pull request must contain.
 
 ## Layout
 
@@ -125,7 +125,7 @@ Raise `version` in `server/src/serverInfo.json` when people should update. The a
 
 Issues and pull requests go to https://github.com/jalen-cheng/free-sleep.
 
-- This fork is tested on one Pod 5. Say in the pull request what you tested on hardware, on which Pod, and what you did not test.
+- Free Pod is tested on one Pod 5. Say in the pull request what you tested on hardware, on which Pod, and what you did not test.
 - Keep a pull request to one purpose, and include the rebuilt output.
 - The scripts in `scripts/` run as root on people's beds. Change them when needed, run `scripts/tests`, and say how you tried the change.
 - Code style, from AGENTS.md:

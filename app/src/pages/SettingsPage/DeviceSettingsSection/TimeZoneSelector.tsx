@@ -27,8 +27,9 @@ export default function TimeZoneSelector({ settings, updateSettings }: TimeZoneS
   return (
     <Box sx={ { minWidth: 0, width: '100%' } }>
       <FormControl fullWidth size="small">
-        <InputLabel>Time Zone</InputLabel>
+        <InputLabel id="time-zone-label">Time Zone</InputLabel>
         <Select
+          labelId="time-zone-label"
           error={ settings?.timeZone === null }
           disabled={ isUpdating }
           value={ settings?.timeZone || '' }

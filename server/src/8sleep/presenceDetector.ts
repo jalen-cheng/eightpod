@@ -108,5 +108,14 @@ export function createPresenceDetector(remembered?: DetectorMemory) {
     return { present, signal, baseline };
   };
 
-  return { update };
+  // Forgets the baseline, so the next reading is taken as the empty bed. For when the detector
+  // has learned something on the bed (a topper, a laptop, a person at start-up) as "empty".
+  const reset = () => {
+    recentSignals.length = 0;
+    baseline = undefined;
+    present = false;
+    disagreeingSinceMs = undefined;
+  };
+
+  return { update, reset };
 }

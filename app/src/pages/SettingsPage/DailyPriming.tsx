@@ -37,7 +37,7 @@ export default function DailyPriming({ settings, updateSettings }: PrimePodSched
           size="small"
           variant="outlined"
           value={ settings?.primePodDaily?.time || '12:00' }
-          onChange={ (e) => updateSettings({ primePodDaily: { time: e.target.value } }) }
+          onChange={ (e) => { if (e.target.value) updateSettings({ primePodDaily: { time: e.target.value } }); } }
           disabled={ isUpdating || settings?.primePodDaily?.enabled === false }
           sx={ {
             width: '100%',

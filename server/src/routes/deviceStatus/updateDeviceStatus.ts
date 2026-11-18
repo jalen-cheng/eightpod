@@ -4,6 +4,7 @@ import cbor from 'cbor';
 
 import { DeviceStatus, SideStatus } from './deviceStatusSchema.js';
 import { executeFunction } from '../../8sleep/deviceApi.js';
+import { connectFranken } from '../../8sleep/frankenServer.js';
 import logger from '../../logger.js';
 import settingsDB from '../../db/settings.js';
 import { temperatureFToLevel } from '../../db/temperatureCurve.js';
@@ -20,8 +21,9 @@ const finishDismissedAlarm = async (side: 'left' | 'right') => {
   const dismissedAlarm = await alarmSession.alarmCleared(side);
   if (dismissedAlarm?.turnOffAfterDismiss) {
     logger.debug(`Alarm dismissed, switching ${side} side off`);
-    await executeFunction(side === 'left' ? 'LEFT_TEMP_DURATION' : 'RIGHT_TEMP_DURATION', '0');
-    cancelPreWarm(side);
+    // Through the usual path, so a hold by hand ends and a side in away mode follows
+    // eslint-disable-next-line no-use-before-define
+    await updateSide(side, { isOn: false }, {});
   }
 };
 
@@ -50,9 +52,13 @@ export type UpdateOptions = {
   // True when a person asked for the change (app, shortcut, buttons) and not the schedule.
   // A side switched on by hand stays on for the length chosen in settings.manualOn.
   isManual?: boolean;
+  // How long a side switched on by this change stays on, in place of the length in settings.
+  // Used when being in bed turns the bed on for a length of its own.
+  onSeconds?: number;
 };
 
-const updateSide = async (side: 'left' | 'right', sideStatus: DeepPartial<SideStatus>, { isManual = false }: UpdateOptions) => {
+const updateSide = async (side: 'left' | 'right', sideStatus: DeepPartial<SideStatus>, options: UpdateOptions) => {
+  const { isManual = false, onSeconds: requestedOnSeconds } = options;
   await settingsDB.read();
   const settings = settingsDB.data;
   if (side === 'left') {
@@ -76,12 +82,16 @@ const updateSide = async (side: 'left' | 'right', sideStatus: DeepPartial<SideSt
 
   const updatedSides = [...(updateLeft ? ['left' as const] : []), ...(updateRight ? ['right' as const] : [])];
   if (isOn !== undefined) {
-    const onSeconds = isManual ? settings.manualOn.hours * SECONDS_PER_HOUR : SCHEDULED_ON_SECONDS;
-    const onDuration = isOn ? onSeconds.toString() : '0';
-    if (updateLeft) await executeFunction('LEFT_TEMP_DURATION', onDuration);
-    if (updateRight) await executeFunction('RIGHT_TEMP_DURATION', onDuration);
-    // Switched on by hand with "ignore the schedule": the schedule stays away until it turns off
+    const requestedSeconds = requestedOnSeconds ?? (isManual ? settings.manualOn.hours * SECONDS_PER_HOUR : SCHEDULED_ON_SECONDS);
+    // A side that is already on keeps the time it has left when that is longer. Otherwise a
+    // shortcut that sets the temperature at night would cut the night short (it says "on" too),
+    // and the bed would be off before the morning alarm.
+    const currentStatus = isOn && isManual ? await (await connectFranken()).getDeviceStatus() : undefined;
     for (const updatedSide of updatedSides) {
+      const secondsLeft = currentStatus?.[updatedSide].isOn ? currentStatus[updatedSide].secondsRemaining : 0;
+      const onSeconds = Math.max(requestedSeconds, secondsLeft);
+      await executeFunction(updatedSide === 'left' ? 'LEFT_TEMP_DURATION' : 'RIGHT_TEMP_DURATION', isOn ? onSeconds.toString() : '0');
+      // Switched on by hand with "ignore the schedule": the schedule stays away until it turns off
       if (isOn && isManual && settings.manualOn.overridesSchedule) startManualHold(updatedSide, onSeconds);
       else cancelManualHold(updatedSide);
     }

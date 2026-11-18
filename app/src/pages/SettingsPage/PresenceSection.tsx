@@ -1,11 +1,11 @@
 /* eslint-disable react/no-multi-comp */
 import { DeepPartial } from 'ts-essentials';
 import { PropsWithChildren } from 'react';
-import { Box, Chip, Divider, MenuItem, Switch, TextField, Typography } from '@mui/material';
+import { Box, Button, Chip, Divider, MenuItem, Switch, TextField, Typography } from '@mui/material';
 import SensorsOutlinedIcon from '@mui/icons-material/SensorsOutlined';
 import _ from 'lodash';
 import { Settings } from '@api/settingsSchema.ts';
-import { usePresenceSensors } from '@api/presence.ts';
+import { postBedIsEmpty, usePresenceSensors } from '@api/presence.ts';
 import { useAppStore } from '@state/appStore.tsx';
 import InfoTip from '@components/InfoTip.tsx';
 import Section from './Section.tsx';
@@ -28,6 +28,8 @@ const WAKE_INFO = 'Vibrates like that day\'s alarm once someone has been in bed 
   + 'than 15 minutes does not restart the count.';
 const TURN_ON_INFO = 'When someone gets into a bed that is off, it turns on at this temperature. It turns off again after '
   + 'the hours chosen, or 15 minutes after they get out.';
+const EMPTY_INFO = 'Press with nobody and nothing extra on the bed if a side shows "in bed" when it is empty, or never does. '
+  + 'Detection starts over from the bed as it is now.';
 const UNTIL_OUT_OF_BED = 'untilOutOfBed';
 
 // The picked "stay on" choice as it is saved: a number of hours, or until out of bed
@@ -67,7 +69,7 @@ const HoursSelect = ({ label, value, choices, onChange, disabled }: HoursSelectP
 // report them. Shows what the sensors say now, so the settings can be checked against reality.
 export default function PresenceSection({ settings, updateSettings }: PresenceSectionProps) {
   const { isUpdating } = useAppStore();
-  const { data: sensors } = usePresenceSensors(REFRESH_MS);
+  const { data: sensors, refetch: refetchSensors } = usePresenceSensors(REFRESH_MS);
   if (!settings || !sensors?.available) return null;
 
   const { sensitivity, wakeAfterHours, turnOnWhenInBed } = settings.presence;
@@ -104,6 +106,18 @@ export default function PresenceSection({ settings, updateSettings }: PresenceSe
           </TextField>
         </Box>
 
+        <Box sx={ { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2 } }>
+          <Typography sx={ { fontSize: 14, fontWeight: 500 } }>Wrong reading? <InfoTip text={ EMPTY_INFO }/></Typography>
+          <Button
+            size="small"
+            variant="outlined"
+            disabled={ isUpdating }
+            onClick={ () => void postBedIsEmpty().then(() => refetchSensors()).catch(error => console.error(error)) }
+          >
+            Bed is empty now
+          </Button>
+        </Box>
+
         <Divider/>
 
         <SettingToggle
@@ -136,7 +150,8 @@ export default function PresenceSection({ settings, updateSettings }: PresenceSe
                 slotProps={ { htmlInput: { 'aria-label': 'How long the bed stays on' } } }
               >
                 <MenuItem value={ UNTIL_OUT_OF_BED }>until I get out of bed</MenuItem>
-                { TURN_ON_HOUR_CHOICES.map(hours => <MenuItem key={ hours } value={ hours }>for { hours } h</MenuItem>) }
+                { _.sortBy(_.union(TURN_ON_HOUR_CHOICES, typeof turnOnWhenInBed.stayOn === 'number' ? [turnOnWhenInBed.stayOn] : []))
+                  .map(hours => <MenuItem key={ hours } value={ hours }>for { hours } h</MenuItem>) }
               </TextField>
             </SettingDetail>
           ) }

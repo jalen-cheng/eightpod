@@ -49,7 +49,7 @@ done
 # --------------------------------------------------------------------------------
 # Download the repository
 echo "Downloading the repository from $FREE_SLEEP_REPO ($FREE_SLEEP_BRANCH)..."
-curl -fL -o "$ZIP_FILE" "$REPO_URL"
+curl -fL --connect-timeout 20 --max-time 600 -o "$ZIP_FILE" "$REPO_URL"
 
 echo ""
 echo "Unzipping the repository..."

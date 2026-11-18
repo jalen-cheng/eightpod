@@ -1,11 +1,11 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="aeadc0bb-6b15-5e7b-8c7d-ab5130b6e1e3")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="e06e9a45-b0db-5c23-ac18-c7d6fe02c6ee")}catch(e){}}();
 import express from 'express';
 import moment from 'moment-timezone';
 import { z } from 'zod';
 import logger from '../../logger.js';
 import settingsDB from '../../db/settings.js';
-import { getPresenceSnapshot } from '../../8sleep/bedSensorMonitor.js';
+import { getPresenceSnapshot, markBedEmpty } from '../../8sleep/bedSensorMonitor.js';
 const router = express.Router();
 const PresenceSideSchema = z.object({
     present: z.boolean(),
@@ -85,6 +85,15 @@ router.get('/presence', (req, res) => {
 router.get('/presence/sensors', (req, res) => {
     return res.status(200).json(getPresenceSnapshot());
 });
+/**
+ * POST /presence/sensors/empty
+ * Says the bed is empty right now, so in-bed detection learns the empty bed again
+ */
+router.post('/presence/sensors/empty', (req, res) => {
+    if (!markBedEmpty())
+        return res.status(503).json({ error: 'The bed sensors are not running on this Pod' });
+    return res.status(204).end();
+});
 export default router;
 //# sourceMappingURL=presence.js.map
-//# debugId=aeadc0bb-6b15-5e7b-8c7d-ab5130b6e1e3
+//# debugId=e06e9a45-b0db-5c23-ac18-c7d6fe02c6ee

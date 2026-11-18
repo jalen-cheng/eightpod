@@ -39,9 +39,10 @@ export function findNextScheduledAlarm(sideSchedule: SideSchedule, now: moment.M
   return nextAlarm;
 }
 
-// The scheduled alarm a one-off alarm stands in for: the side's next scheduled alarm, when it
-// falls no more than `withinHours` after the one-off. An alarm set for 6:00 replaces the 8:45 of
-// the same morning; an afternoon nap alarm leaves tomorrow morning's alone.
+// The scheduled alarm a one-off alarm stands in for: the side's next scheduled alarm, when the
+// two are no more than `withinHours` apart. An alarm set for 6:00 replaces the 8:45 of the same
+// morning; an afternoon nap alarm leaves tomorrow morning's alone, and so does one set in the
+// evening for the next evening.
 export function findAlarmReplacedByOneOff(
   sideSchedule: SideSchedule,
   now: moment.Moment,
@@ -50,11 +51,14 @@ export function findAlarmReplacedByOneOff(
 ): moment.Moment | undefined {
   const nextScheduled = findNextScheduledAlarm(sideSchedule, now);
   if (!nextScheduled) return undefined;
-  return nextScheduled.isSameOrBefore(oneOffFiresAt.clone().add(withinHours, 'hours')) ? nextScheduled : undefined;
+  const hoursApart = Math.abs(nextScheduled.diff(oneOffFiresAt, 'minutes')) / 60;
+  return hoursApart <= withinHours ? nextScheduled : undefined;
 }
 
-// "9:05", "09:05:00", "9.05 pm", or either inside a longer text such as a full date
-const CLOCK_WITH_MINUTES = /(\d{1,2})[:.](\d{2})(?::\d{2})?\s*(a\.?m|p\.?m)?/i;
+// "9:05", "09:05:00", or either inside a longer text such as a full date
+const CLOCK_WITH_COLON = /(\d{1,2}):(\d{2})(?::\d{2})?\s*(a\.?m|p\.?m)?/i;
+// "9.05 pm". A dot only counts with AM or PM after it, so a date such as 16.11.2026 is not a time
+const CLOCK_WITH_DOT = /(\d{1,2})\.(\d{2})\s*(a\.?m|p\.?m)/i;
 // "9 pm"
 const CLOCK_HOUR_ONLY = /\b(\d{1,2})\s*(a\.?m|p\.?m)/i;
 
@@ -62,7 +66,7 @@ const CLOCK_HOUR_ONLY = /\b(\d{1,2})\s*(a\.?m|p\.?m)/i;
 // "2026-11-16T21:30:00-08:00", "9 pm") and returns it as HH:mm, or undefined if there is none.
 // Phones on a 12-hour clock send AM/PM even when asked for 24-hour time.
 export function parseClockTime(text: string): Time | undefined {
-  const withMinutes = CLOCK_WITH_MINUTES.exec(text);
+  const withMinutes = CLOCK_WITH_COLON.exec(text) ?? CLOCK_WITH_DOT.exec(text);
   const hourOnly = withMinutes ? null : CLOCK_HOUR_ONLY.exec(text);
   const hourText = withMinutes?.[1] ?? hourOnly?.[1];
   if (hourText === undefined) return undefined;

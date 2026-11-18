@@ -46,7 +46,8 @@ trap '
 ' EXIT
 
 
-sh /home/dac/free-sleep/scripts/unblock_internet_access.sh
+# Temporary: the saved rules stay, so a reboot mid-install comes back blocked
+sh /home/dac/free-sleep/scripts/unblock_internet_access.sh --temporary
 if [ "$biometrics_installed" = false ] || [ ! -x /home/dac/venv/bin/python ]; then
   sh /home/dac/free-sleep/scripts/setup_python.sh
 fi

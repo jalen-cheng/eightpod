@@ -1,7 +1,7 @@
 # Using Free Pod
 
 A first-use guide for the app, once it is installed ([INSTALLATION.md](../INSTALLATION.md)).
-It was written against a Pod 5, the only model this fork was tested on. Where a Pod 3 or 4
+It was written against a Pod 5, the only model Free Pod was tested on. Where a Pod 3 or 4
 differs, it says so; [POD_MODELS.md](POD_MODELS.md) has the detail.
 
 ## 1. Open the app
@@ -50,7 +50,7 @@ Each side has one schedule per night of the week. A night is named after the day
 4. On the **Bed on** row, set the time the bed turns on and the temperature it starts at.
 5. To change the temperature during the night, tap **Add a change**, then set its time and
    temperature. Add as many as you like. The X at the end of a row removes it.
-6. On the **Wake up** row, set the wake-up time.
+6. On the **Wake** row, set the wake-up time.
 7. Tap **Alarm off** on the Wake row and turn the switch on if you want the bed to vibrate at that time.
    With it off, the wake-up time still decides when the bed turns off.
 8. Tap **Save for Mon** in the bar that appears at the bottom.
@@ -73,7 +73,7 @@ Other day tabs are locked until you save or discard.
 ## 5. Alarm options and testing
 
 The **Alarm on** / **Alarm off** button on the Wake row opens everything about the alarm, with
-its on/off switch at the top:
+its on/off switch at the top. The dialog is titled "Alarm":
 
 <img src="screenshots/alarm_options.png" width="260" alt="Alarm options">
 
@@ -93,7 +93,7 @@ A scheduled alarm only vibrates if that side is on at the alarm time.
 ## 6. Dismiss an alarm
 
 - **Pod 5:** press any button on the side of the bed.
-- **Pod 4:** tap the bed four times. Not tested in this fork.
+- **Pod 4:** tap the bed four times. Not tested in Free Pod.
 - **Any Pod:** open the app. The Temperature page shows a **Dismiss Alarm** button while the bed vibrates.
 
 The firmware stops both sides at once. If the sides are not linked, Free Pod restarts the
@@ -103,13 +103,14 @@ other side's alarm from the beginning.
 
 To wake at a different time once, without touching the weekly schedule:
 
-1. On the **Temperature** page, find the "Alarm at" row. It only shows when tonight's schedule and its alarm are on.
-2. Tap the time. **Change the next alarm** opens.
+1. On the **Temperature** page, find the "Alarm" row. It only shows when tonight's schedule and its alarm are on.
+2. Tap the time on that row. **Change the next alarm** opens.
 3. Pick the time and tap **Set**.
 
 It goes off the next time the clock shows that time and replaces that morning's scheduled alarm.
 The bed turns off 30 minutes after it. To undo it, open the same dialog and tap **Back to schedule**.
-**Disable** on the same row skips tonight's alarm.
+**Skip** at the end of the same row skips tonight's alarm after you confirm. Once skipped, the button
+reads **Turn on** and brings it back.
 
 ## 8. Display units
 
@@ -117,6 +118,9 @@ The bed turns off 30 minutes after it. To undo it, open the same dialog and tap 
 +10, the scale Eight Sleep's own app uses. The dial and the schedule follow your choice.
 
 ## 9. Pod 5 buttons
+
+> **Pod 3:** no buttons or taps. **Pod 4:** taps instead, set up in **Settings > Tap gestures**;
+> multi-tap handling changed from Free Sleep and has not been run on a Pod 4.
 
 | Button | Bed on | Bed off |
 |---|---|---|
@@ -139,6 +143,7 @@ When the sides are linked, the buttons on either side control both. The step siz
 | **Flip left and right** | Side settings | Swaps which physical side the app calls left and right. Each side keeps its name, schedule and settings |
 | **Prime daily** | Priming | Runs the water priming cycle every day at **Prime time**, 2 PM by default. It does not check whether the bed is in use |
 | **Reboot once a day** | Device | Restarts the Pod one hour before the priming time. A vibrating alarm or running warm-up is lost in a reboot, so keep the time in the afternoon |
+| **Status page** | Its own page | Shows Wi-Fi strength, whether Free Pod is up to date, and each service. The biometrics and sleep-analysis rows are greyed and marked untested |
 | **In-bed detection** | Its own section, Pod 5 only | Two options, both off by default: **Turn on when I get into bed** and **Alarm after a long time in bed**. Detection was checked with one person on one Pod; the first option has been seen turning the bed on, the rest has not been seen working yet |
 
 ## 11. Updating

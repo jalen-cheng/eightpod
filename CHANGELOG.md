@@ -1,13 +1,14 @@
 # Changelog
 
-What this fork changed from [throwaway31265/free-sleep](https://github.com/throwaway31265/free-sleep),
-what was checked on a real Pod, and what was not. The fork is called Free Pod and is at version 3.3.2. Everything was
+What Free Pod changed from [throwaway31265/free-sleep](https://github.com/throwaway31265/free-sleep),
+what was checked on a real Pod, and what was not. Free Pod is at version 3.4.0. Everything was
 developed and tested on one Pod 5 between 13 and 17 Nov 2026.
 
 - [Tested on the Pod](#tested-on-the-pod)
 - [Not tested](#not-tested)
 - [Known gaps](#known-gaps)
 - [Temperature calibration](#temperature-calibration)
+- [Compared with Free Sleep](#compared-with-free-sleep)
 - [Changes](#changes)
 
 ## Tested on the Pod
@@ -16,7 +17,7 @@ Each of these was seen working on the test Pod 5, in its log or by the person on
 
 | Area | What was seen |
 |---|---|
-| Install and update | Installed from this fork; `fs-update` works and ends with the internet block on; survives a reboot |
+| Install and update | Installed from Free Pod; `fs-update` works and ends with the internet block on; survives a reboot |
 | Temperature | Every level sets the target the curve predicts; the measured water temperature is read and shown |
 | Schedule | Power on, temperature changes and power off fire at their times; the bed turns off 30 minutes after the wake-up time |
 | Alarm | Stepped ramp felt (20, 40, 60, 80%, then full); a 10-minute alarm sent as chained stretches; dismissed by any button, by the app and by a request |
@@ -24,7 +25,7 @@ Each of these was seen working on the test Pod 5, in its log or by the person on
 | Buttons | +, -, and the middle button held, on both sides and with sides linked |
 | Shortcuts | Setting the temperature by -10..+10, a one-time alarm by time, and reading the bed's state, from an iPhone |
 | Internet block | Blocks everything but the home network, time sync, DNS and address requests; restored at boot |
-| `.local` name | `http://eight-pod.local:3000` loads on the home network |
+| `.local` name | `http://eight-pod.local:3000` loads on the home network (the Pod has since been renamed `bed`; the address is now `http://bed.local`) |
 | Tailscale on the Pod | Installed with the block on; reaches only its sign-in servers and two relay regions; page opened from an iPhone on cellular; comes back after a reboot |
 | In-bed detection | One person detected on each side within about a minute; "Turn on when I get into bed" turned both linked sides on |
 
@@ -104,6 +105,36 @@ measured water temperature over the next three.
 From -5 to +10 the water settles within 2°F of the target. At -10 it reached about 63°F in 20
 minutes; whether it gets to 50°F with more time is not known from this run.
 
+## Compared with Free Sleep
+
+| Area | Free Sleep | Free Pod |
+|---|---|---|
+| **Pod 5 side buttons** | Do nothing | + and - change the temperature and switch an off side on. Holding the middle button two seconds switches the side on or off. Any button stops an alarm |
+| **Temperatures** | Levels spread evenly over 55 to 110°F | What the firmware aims for at each level, measured on a Pod 5: 50 to 108°F. The page also shows the temperature the bed measures |
+| **Display units** | °F or °C | °F, °C, or the -10 to +10 scale of Eight Sleep's app |
+| **Both sides at once** | Each side set separately | Link the sides: temperature, power, schedules, buttons and shortcuts apply to both |
+| **A night's schedule** | Power on and off times, temperature changes and an alarm, set separately | Bed-on time, temperature changes and a wake-up time, as one list with a tab per day. No off time: the bed turns off 30 minutes after wake-up |
+| **Alarm length** | Up to 3 minutes | Until dismissed, for 10 to 30 minutes |
+| **Alarm ramp-up** | The firmware's "rise" pattern, which on a Pod 5 is one steady strength | On a Pod 5, a real ramp: 20, 40, 60, 80% of the chosen strength, then full |
+| **Before the alarm** | Nothing | Optional warm-up to a chosen temperature 15, 30 or 45 minutes before |
+| **After the alarm** | Bed stays on until its off time | Bed turns off 30 minutes after the wake-up time, or the moment the alarm is dismissed |
+| **One-time alarm** | Overrides tonight's alarm | Set in the app or by one request. Replaces that morning's alarm, goes off even if the bed is off, and the bed stays on for it |
+| **Two sleepers' alarms** | Dismissing one stops both, so the other is lost | Linked sides stop together; otherwise the other side's alarm starts again |
+| **In-bed detection** (Pod 5) | None | Knows when someone is in bed. Optionally turns the bed on when you get in, and vibrates after a long stay |
+| **Turning on by hand** | Stays on 12 hours | 3, 6 or 12 hours, and can ignore the schedule meanwhile |
+| **Left and right** | As the firmware has them | Can be flipped in Settings |
+| **iPhone Shortcuts** | Possible with the general API | Short requests: set by -10..+10, set an alarm by time ("6:30 AM" works), read the bed in one sentence |
+| **Opening by name** | Blank page under any name | `http://bed.local` at home and `http://bed` with Tailscale, with no port to remember |
+| **Internet block** | Also blocks DNS, which can stop the clock syncing | DNS, address requests and time sync keep working; restored at every boot; Eight Sleep's updater can be locked out |
+| **Remote access** | None | Optional Tailscale on the Pod, set up by one script, with the block still on |
+| **Updates** | From the original project | From this fork; the app shows when a newer version exists |
+| **Housekeeping** | Daily priming off by default; daily reboot only while priming is on | Daily priming on at 2 PM by default; the daily reboot has its own switch |
+
+Smaller changes: temperature controls respond at once instead of locking after every press; the
+power button waits for the Pod's real state; alarm options has a one-minute test; a schedule can be
+saved for one day or any set of days; snooze was removed (the original stored the setting and never
+acted on it).
+
 ## Changes
 
 ### Before pull requests were used (merged straight to `main`)
@@ -118,7 +149,7 @@ minutes; whether it gets to 50°F with more time is not known from this run.
 | `tap-settings-ui` | Tap gestures section on the Settings page. |
 | `ios-shortcuts-docs` | `docs/IOS_SHORTCUTS.md`: control the Pod from Apple Shortcuts. |
 
-### Pull requests on this fork
+### Pull requests on Free Pod
 
 | PR | Type | What changed |
 |---|---|---|
@@ -181,3 +212,4 @@ minutes; whether it gets to 50°F with more time is not known from this run.
 | [#64](https://github.com/jalen-cheng/free-sleep/pull/64) | Design, docs | New look: a night-blue palette with one accent, the Geist typeface, one text size across fields, pill switches, filled fields without outlines. The dial's handle is a ring. Turn on is a pill button. The schedule's wake-up line has one "Alarm on/off" button that opens everything about the alarm, and the off time is shown as the last line. In-bed state sits beside its heading. New icon. README has Demo and Install sections; a shortcut recipe opens the app at home or offers Tailscale away. |
 | [#65](https://github.com/jalen-cheng/free-sleep/pull/65) | Design | Neutral dark greys with a white accent in place of the blue palette. Small square switches. The Temperature page has a heading and the dial's digits are spaced normally. The schedule's Bed off line is gone again. Biometrics is greyed out in Settings. |
 | [#66](https://github.com/jalen-cheng/free-sleep/pull/66) | Design, docs | The schedule's last row is labelled "Wake". The icon is the app's dial. Biometrics rows on the Status page are greyed; the Biometrics switch in Settings works again. The README is reshaped: banner, summary, install, quick start, how it fits together, security, documentation, credits. |
+| [#67](https://github.com/jalen-cheng/free-sleep/pull/67) | Fix, feature, docs | A review pass with fixes. **Alarms:** a shortcut or dial press on a bed that is already on no longer shortens its night; a one-time alarm moved up to 30 minutes later keeps the bed on; a one-time alarm only replaces a scheduled alarm within 6 hours of it; a dismissal between two stretches of an alarm counts; "Bed off on dismiss" ends a hold by hand; a date written with dots is not read as a time. **In-bed detection:** turning on when you get in holds the schedule for the stay, not for the manual length; a "Bed is empty now" button relearns the empty bed. **App:** Prime now no longer locks the app; saving keeps the open day; the side cannot be switched with unsaved edits; a night must be 1 to 23 hours and its changes inside it; Skip applies to both linked sides; filled buttons are grey. **Updates:** however an update ends, the server is started and the internet block is put back; downloads time out; DNS replies over TCP can no longer open a connection. **Docs:** CONTRIBUTING.md, a test-report template, notices where a Pod 3 or 4 differs, and what going back to Eight Sleep involves. |

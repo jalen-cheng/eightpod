@@ -13,28 +13,45 @@
 
 Free Pod controls an Eight Sleep Pod from your own network. Each Pod has a small Linux computer
 inside; Free Pod installs a server on it that talks to the Pod's firmware and serves a web app
-you open on your phone: temperature, a schedule for each night, a vibrating alarm, the Pod 5's
-side buttons, in-bed detection and iPhone Shortcuts.
+you open on your phone.
+
+It started as a fork of [Free Sleep](https://github.com/throwaway31265/free-sleep) by
+throwaway31265 and its contributors, and grew into a rework: the Pod 5's side buttons, calibrated
+temperatures, in-bed detection, a redesigned app, a schedule built around one night at a time,
+alarms that run until you dismiss them, and an address you can remember (`http://bed.local`). It
+was developed and tested on one Pod 5.
 
 **Local, with no catch.** No cloud, no account and no subscription. The Pod is blocked from the
 internet, so nothing is sent to Eight Sleep or anyone else, and the bed keeps working when your
-internet does not. Free Pod builds on [Free Sleep](https://github.com/throwaway31265/free-sleep)
-by throwaway31265 and its contributors, and was developed and tested on one Pod 5.
+internet does not.
 
 [Demo](https://freepod.vercel.app) · [Install](INSTALLATION.md) · [Using the app](docs/USING.md) · [How it works](docs/HOW_IT_WORKS.md) · [Shortcuts](docs/IOS_SHORTCUTS.md) · [API](server/API.md) · [Changelog](CHANGELOG.md)
 
 ## Install
 
-You need a Pod 3, 4 or 5, a USB serial adapter (about $10) and around an hour. The one hands-on
-step is opening the Pod's hub and attaching the adapter to get a root shell; the
-[install guide](INSTALLATION.md) has photos for each Pod. Then, on the Pod:
+You need a Pod 3, 4 or 5, about two hours, and $20 to $70 of parts: a USB serial adapter, plus
+either a tag-connect cable or three soldered wires. The one hands-on step is opening the Pod's hub
+and attaching the adapter to get a root shell; the [install guide](INSTALLATION.md) has photos for
+each Pod. Then, on the Pod:
 
 ```bash
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/jalen-cheng/free-sleep/main/scripts/install.sh)"
 ```
 
-Already running Free Sleep? Run the same command over SSH. Settings and schedules are kept;
-[what changes](docs/POD_MODELS.md).
+Already running Free Sleep? Over SSH, lift its internet block, run the same installer, and block
+again. Settings and schedules are kept:
+
+```bash
+sh /home/dac/free-sleep/scripts/unblock_internet_access.sh
+```
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/jalen-cheng/free-sleep/main/scripts/install.sh)"
+```
+```bash
+sh /home/dac/free-sleep/scripts/block_internet_access.sh
+```
+
+Read [what changes](docs/POD_MODELS.md) first.
 
 ## Quick start
 
@@ -57,45 +74,36 @@ No Pod yet? **[freepod.vercel.app](https://freepod.vercel.app)** is the app on m
 
 ## What it changes
 
-Free Sleep is what makes any of this possible. On the test Pod 5 it fell short in ways that add
-up to most of this project:
+**The big ones**
 
-| Area | Free Sleep | Free Pod |
-|---|---|---|
-| **Pod 5 side buttons** | Do nothing | + and - change the temperature and switch an off side on. Holding the middle button two seconds switches the side on or off. Any button stops an alarm |
-| **Temperatures** | Levels spread evenly over 55 to 110°F | What the firmware aims for at each level, measured on a Pod 5: 50 to 108°F. The page also shows the temperature the bed measures |
-| **Display units** | °F or °C | °F, °C, or the -10 to +10 scale of Eight Sleep's app |
-| **Both sides at once** | Each side set separately | Link the sides: temperature, power, schedules, buttons and shortcuts apply to both |
-| **A night's schedule** | Power on and off times, temperature changes and an alarm, set separately | Bed-on time, temperature changes and a wake-up time, as one list with a tab per day. No off time: the bed turns off 30 minutes after wake-up |
-| **Alarm length** | Up to 3 minutes | Until dismissed, for 10 to 30 minutes |
-| **Alarm ramp-up** | The firmware's "rise" pattern, which on a Pod 5 is one steady strength | On a Pod 5, a real ramp: 20, 40, 60, 80% of the chosen strength, then full |
-| **Before the alarm** | Nothing | Optional warm-up to a chosen temperature 15, 30 or 45 minutes before |
-| **After the alarm** | Bed stays on until its off time | Bed turns off 30 minutes after the wake-up time, or the moment the alarm is dismissed |
-| **One-time alarm** | Overrides tonight's alarm | Set in the app or by one request. Replaces that morning's alarm, goes off even if the bed is off, and the bed stays on for it |
-| **Two sleepers' alarms** | Dismissing one stops both, so the other is lost | Linked sides stop together; otherwise the other side's alarm starts again |
-| **In-bed detection** (Pod 5) | None | Knows when someone is in bed. Optionally turns the bed on when you get in, and vibrates after a long stay |
-| **Turning on by hand** | Stays on 12 hours | 3, 6 or 12 hours, and can ignore the schedule meanwhile |
-| **Left and right** | As the firmware has them | Can be flipped in Settings |
-| **iPhone Shortcuts** | Possible with the general API | Short requests: set by -10..+10, set an alarm by time ("6:30 AM" works), read the bed in one sentence |
-| **Opening by name** | Blank page under any name | `http://bed.local` at home and `http://bed` with Tailscale, with no port to remember |
-| **Internet block** | Also blocks DNS, which can stop the clock syncing | DNS, address requests and time sync keep working; restored at every boot; Eight Sleep's updater can be locked out |
-| **Remote access** | None | Optional Tailscale on the Pod, set up by one script, with the block still on |
-| **Updates** | From the original project | From this fork; the app shows when a newer version exists |
-| **Housekeeping** | Daily priming off by default; daily reboot only while priming is on | Daily priming on at 2 PM by default; the daily reboot has its own switch |
+- **Pod 5 side buttons work.** + and - change the temperature, holding the middle button switches the side on or off, and any button stops an alarm.
+- **Temperatures are calibrated.** The number shown is what the firmware aims for at each level, measured on a Pod 5, and the page also shows the temperature the bed measures. Units are °F, °C, or the -10 to +10 scale of Eight Sleep's app.
+- **In-bed detection (Pod 5).** The bed knows when someone is in it, and can turn itself on when you get in and off after you get out, or vibrate after a long stay.
+- **Networking.** The app opens at `http://bed.local`, with no IP address or port to remember. The internet block keeps the clock and name lookups working and is restored at every boot. Optional Tailscale reaches the Pod from anywhere with the block still on.
 
-Smaller changes: temperature controls respond at once instead of locking after every press; the
-power button waits for the Pod's real state; alarm options has a one-minute test; a schedule can be
-saved for one day or any set of days; snooze was removed (the original stored the setting and never
-acted on it).
+**The app**
 
-Fixes offered back to the original project, each small and standing on its own:
-[#67](https://github.com/throwaway31265/free-sleep/pull/67),
-[#68](https://github.com/throwaway31265/free-sleep/pull/68),
-[#69](https://github.com/throwaway31265/free-sleep/pull/69),
-[#70](https://github.com/throwaway31265/free-sleep/pull/70),
-[#72](https://github.com/throwaway31265/free-sleep/pull/72),
-[#73](https://github.com/throwaway31265/free-sleep/pull/73),
-[#74](https://github.com/throwaway31265/free-sleep/pull/74).
+- **A new look.** Dark grey, one typeface and text size, a dial with the bed's real temperature under the target, and layouts made for a phone first.
+- **A night is one list.** Bed on, temperature changes and wake time on one screen with a tab per day and a chart of the night. Save a night for one day or any set of days.
+- **No off time to manage.** The bed turns off 30 minutes after the wake time, or the moment you dismiss the alarm if you choose.
+- **Less text.** Explanations sit behind an "i" instead of under every control, and one button opens everything about the alarm.
+- **Status at a glance.** Wi-Fi strength, whether an update is out, and each internal service on one page.
+
+**Alarms and two sleepers**
+
+- **Alarms that wake you.** They run until dismissed (10 to 30 minutes) with a real ramp-up on a Pod 5, an optional warm-up beforehand, and a one-minute test.
+- **One-time alarm.** Change tomorrow's alarm without touching the schedule; it goes off even if the bed is off.
+- **Linked sides.** Control the whole bed at once: temperature, power, schedules, buttons and shortcuts. Unlinked, dismissing one alarm no longer cancels the other.
+
+**Quality of life**
+
+- **iPhone Shortcuts.** One request sets the temperature, sets an alarm by time ("6:30 AM" works), or reads the bed in a sentence.
+- **Turning on by hand** lasts 3, 6 or 12 hours, and can ignore the schedule meanwhile.
+- **Updates from the app.** It shows when a newer version exists and updates in about four minutes, putting the old version back if anything fails.
+- **Housekeeping.** Daily priming is on by default at 2 PM, the daily reboot has its own switch, left and right can be flipped, and Eight Sleep's updater can be locked out.
+- **Controls respond at once** instead of locking after every press, and the power button waits for the Pod's real state.
+
+The full comparison with Free Sleep is in [CHANGELOG.md](CHANGELOG.md#compared-with-free-sleep).
 
 ## Security
 
@@ -139,6 +147,7 @@ the test Pod 5 and were not looked into further.
 | Understand every part and how they interact | [docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md) |
 | Use the API | [server/API.md](server/API.md) |
 | See what changed and what was tested | [CHANGELOG.md](CHANGELOG.md) |
+| Help test or contribute | [CONTRIBUTING.md](CONTRIBUTING.md) |
 
 ## Development
 
@@ -153,8 +162,10 @@ keep the name `free-sleep`, so an existing install updates in place.
 
 ## Contributing
 
-Issues and pull requests are welcome on [this repository](https://github.com/jalen-cheng/free-sleep).
-Most useful: reports from a Pod 3 or Pod 4, and anything that gets biometrics working.
+Issues and pull requests are welcome. The most useful contribution is a report from hardware Free
+Pod has not seen: a Pod 3 or Pod 4, or a newer Pod 5. [CONTRIBUTING.md](CONTRIBUTING.md) says how,
+and issues labelled [needs testing](https://github.com/jalen-cheng/free-sleep/issues?q=is%3Aissue+is%3Aopen+label%3A%22needs+testing%22)
+list what is waiting to be checked.
 
 ## Credits
 

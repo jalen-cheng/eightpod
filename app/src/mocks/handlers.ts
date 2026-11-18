@@ -42,9 +42,16 @@ const toFilters = (request: Request): Filters => {
   return { startTime, endTime, side };
 };
 
+// The sides a request for 'left', 'right' or 'both' applies to
+const alarmSides = (side: Side | 'both' | undefined): Side[] => (side === 'left' || side === 'right' ? [side] : ['left', 'right']);
+
 const notFound = (message: string) => HttpResponse.json({ message }, { status: 404 });
 
 export const handlers = [
+  http.post('/api/metrics/presence/sensors/empty', async () => {
+    await delay(120);
+    return new HttpResponse(null, { status: 204 });
+  }),
   // The bed's presence sensors: someone on the left, nobody on the right
   http.get('/api/metrics/presence/sensors', async () => {
     await delay(60);
@@ -84,6 +91,28 @@ export const handlers = [
     const updated = updateSettings(body);
     await delay(120);
     return HttpResponse.json(deepClone(updated));
+  }),
+  // A one-time alarm is kept as an override on each side's settings, as the server does
+  http.post('/api/alarm/time', async ({ request }) => {
+    const body = (await request.json()) as { side?: Side | 'both'; time?: string };
+    if (!body.time) return HttpResponse.json({ error: 'Invalid request data' }, { status: 400 });
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1_000).toISOString();
+    const override = { scheduleOverrides: { alarm: { disabled: false, timeOverride: body.time, expiresAt } } };
+    updateSettings(Object.fromEntries(alarmSides(body.side).map(alarmSide => [alarmSide, override])));
+    await delay(120);
+    return HttpResponse.json(deepClone(getSettings()));
+  }),
+  http.post('/api/alarm/time/cancel', async ({ request }) => {
+    const body = (await request.json()) as { side?: Side | 'both' };
+    const override = { scheduleOverrides: { alarm: { disabled: false, timeOverride: '', expiresAt: '' } } };
+    updateSettings(Object.fromEntries(alarmSides(body.side).map(alarmSide => [alarmSide, override])));
+    await delay(120);
+    return HttpResponse.json(deepClone(getSettings()));
+  }),
+  // "Test for a minute": nothing to vibrate in the demo
+  http.post('/api/alarm', async () => {
+    await delay(120);
+    return new HttpResponse(null, { status: 204 });
   }),
   http.get('/api/deviceStatus', async () => {
     await delay(120);

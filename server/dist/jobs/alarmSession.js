@@ -2,7 +2,7 @@
 // a new alarm while one is vibrating. So a ramp-up is made here: short stretches one after
 // another, each stronger than the last, then full strength.
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="2204fe9c-c44f-594c-9454-e49bb46aa06b")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="cec66a41-818a-5a55-ad02-7ed60c176d42")}catch(e){}}();
 const RAMP_STEP_SECONDS = 10;
 const RAMP_STRENGTH_FRACTIONS = [0.2, 0.4, 0.6, 0.8];
 // The firmware does not run an alarm shorter than this
@@ -44,31 +44,42 @@ export function createAlarmSession({ startAlarm, setAlarmVibrating, logDebug }) 
     // vibrating throughout. Dismissing cancels the timer, which ends the chain.
     const alarmStarted = async (alarmJob, durationSeconds, { continuation, isContinuation = false } = {}) => {
         const { side } = alarmJob;
+        // A further stretch of an alarm that was dismissed while it was being sent is not tracked
+        if (isContinuation && !sideStates[side].isActive)
+            return;
         cancelVibrationEndTimer(side);
         // A restart re-runs the whole alarm, so later stretches must not replace it
         if (!isContinuation)
             sideStates[side].lastAlarm = alarmJob;
+        sideStates[side].isActive = true;
         await setAlarmVibrating(side, true);
         const stretchTimer = setTimeout(() => {
             sideStates[side].vibrationEndTimer = undefined;
             if (!continuation) {
+                sideStates[side].isActive = false;
                 void setAlarmVibrating(side, false);
                 return;
             }
             void startAlarm(continuation, { isContinuation: true }).then(() => {
                 // The next stretch reports back through alarmStarted. If it did not start (the side
                 // was switched off, say), nothing is vibrating any more.
-                if (sideStates[side].vibrationEndTimer === undefined)
+                if (sideStates[side].vibrationEndTimer === undefined) {
+                    sideStates[side].isActive = false;
                     void setAlarmVibrating(side, false);
+                }
             });
         }, durationSeconds * 1_000);
         sideStates[side].vibrationEndTimer = stretchTimer;
     };
+    // True while a side's alarm is going off. A further stretch checks this before it is sent, so
+    // an alarm dismissed in the moment between two stretches does not start again.
+    const isAlarmActive = (side) => Boolean(sideStates[side].isActive);
     // Call when the alarm was stopped on the Pod (dismissed from the app or by a tap).
     // Returns the alarm that was vibrating, or undefined if none was, so the caller can tell a
     // real dismissal from a clear sent when nothing was going off.
     const alarmCleared = async (side) => {
-        const wasVibrating = sideStates[side].vibrationEndTimer !== undefined;
+        const wasVibrating = Boolean(sideStates[side].isActive);
+        sideStates[side].isActive = false;
         cancelVibrationEndTimer(side);
         await setAlarmVibrating(side, false);
         return wasVibrating ? sideStates[side].lastAlarm : undefined;
@@ -77,15 +88,19 @@ export function createAlarmSession({ startAlarm, setAlarmVibrating, logDebug }) 
     // did not ask for it: if its alarm was still going off it is started again, so one sleeper
     // dismissing their alarm does not silence the other's. Returns whether it restarted one.
     const restartIfVibrating = async (side) => {
-        const { lastAlarm, vibrationEndTimer } = sideStates[side];
-        if (vibrationEndTimer === undefined || !lastAlarm)
+        const { lastAlarm, isActive } = sideStates[side];
+        if (!isActive || !lastAlarm)
             return false;
         logDebug(`Restarting ${side} alarm, which the other side's dismissal stopped`);
         cancelVibrationEndTimer(side);
+        sideStates[side].isActive = false;
         await startAlarm(lastAlarm);
+        // If it could not start again (the side was switched off, say), nothing is vibrating
+        if (!sideStates[side].isActive)
+            await setAlarmVibrating(side, false);
         return true;
     };
-    return { alarmStarted, alarmCleared, restartIfVibrating };
+    return { alarmStarted, alarmCleared, restartIfVibrating, isAlarmActive };
 }
 // Decides what an alarm tap does. While an alarm vibrates it dismisses it; otherwise it toggles
 // the side's power if configured to. (The saved config still carries a snooze choice, which
@@ -102,4 +117,4 @@ export async function handleAlarmGesture(tapConfig, deps) {
     return 'none';
 }
 //# sourceMappingURL=alarmSession.js.map
-//# debugId=2204fe9c-c44f-594c-9454-e49bb46aa06b
+//# debugId=cec66a41-818a-5a55-ad02-7ed60c176d42

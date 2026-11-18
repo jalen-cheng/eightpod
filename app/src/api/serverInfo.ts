@@ -14,7 +14,7 @@ type LatestVersion = {
   branch: string;
 }
 
-// Where updates come from: this fork, the same place scripts/update.sh installs from by default
+// Where updates come from: this repository, the same place scripts/update.sh installs from by default
 const LATEST_VERSION_URL = 'https://raw.githubusercontent.com/jalen-cheng/free-sleep/main/server/src/serverInfo.json';
 
 export const getLatestVersion = async () => {
@@ -26,10 +26,7 @@ export const useServerInfo = () => useQuery<ServerInfo>({
   queryKey: ['useServerInfo'],
   queryFn: async () => {
     const response = await getLatestVersion();
-    let updateAvailable = semver.gt(response.data.version, serverInfo.version);
-    if (import.meta.env.VITE_ENV === 'demo') {
-      updateAvailable = true;
-    }
+    const updateAvailable = semver.gt(response.data.version, serverInfo.version);
     return {
       ...response.data,
       updateAvailable

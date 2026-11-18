@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="5e590837-7557-5728-baf1-2c606c3eac24")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="261d5176-41da-5a19-ab3c-2c6f5959f34e")}catch(e){}}();
 import express from 'express';
 import { z } from 'zod';
 import moment from 'moment-timezone';
@@ -103,6 +103,10 @@ router.post('/alarm/time', async (req, res) => {
     }
     const { side, time, shiftMinutes, days, enabled = true } = validationResult.data;
     const alarmSides = await resolveSides(side);
+    if (days?.length === 0) {
+        res.status(400).json({ error: 'Invalid request data', details: 'days must name at least one day' });
+        return;
+    }
     if (days && time) {
         await schedulesDB.read();
         for (const alarmSide of alarmSides) {
@@ -154,4 +158,4 @@ router.post('/alarm/time/cancel', async (req, res) => {
 });
 export default router;
 //# sourceMappingURL=alarm.js.map
-//# debugId=5e590837-7557-5728-baf1-2c606c3eac24
+//# debugId=261d5176-41da-5a19-ab3c-2c6f5959f34e

@@ -54,6 +54,8 @@ rename_pod() {
   # The hosts file maps the name to this machine; programs such as sudo look it up there
   if grep -q "[[:space:]]$old_name\$" "$HOSTS_FILE"; then
     sed -i "s/\([[:space:]]\)$old_name\$/\1$new_name/" "$HOSTS_FILE"
+  elif ! grep -q "[[:space:]]$new_name\$" "$HOSTS_FILE"; then
+    printf '127.0.1.1 %s\n' "$new_name" >> "$HOSTS_FILE"
   fi
   if [ -x "$TAILSCALE_PROGRAM" ]; then
     "$TAILSCALE_PROGRAM" set --hostname="$new_name" \
@@ -66,7 +68,7 @@ rename_pod() {
 # A Pod still carrying Eight Sleep's name gets the short one
 rename_factory_named_pod() {
   case "$(hostname)" in
-    eight*) rename_pod "$DEFAULT_POD_NAME" ;;
+    eight-pod*) rename_pod "$DEFAULT_POD_NAME" ;;
   esac
 }
 
@@ -88,6 +90,12 @@ elif [ "$ACTION" = "enable" ]; then
   rename_factory_named_pod
 fi
 
+# Remembered first, so "disable" sticks even where there is no name service to switch off
+if [ "$ACTION" = "disable" ]; then
+  mkdir -p "$(dirname "$OPT_OUT_FILE")"
+  touch "$OPT_OUT_FILE"
+fi
+
 if ! systemctl is-active --quiet systemd-resolved; then
   echo "systemd-resolved is not running on this Pod, so a .local name cannot be set up this way." >&2
   exit 0
@@ -96,8 +104,6 @@ fi
 if [ "$ACTION" = "disable" ]; then
   MDNS_SETTING="no"
   rm -f "$DROP_IN_FILE"
-  mkdir -p "$(dirname "$OPT_OUT_FILE")"
-  touch "$OPT_OUT_FILE"
 else
   MDNS_SETTING="yes"
   rm -f "$OPT_OUT_FILE"
@@ -124,5 +130,4 @@ if [ "$ACTION" = "disable" ]; then
   echo "The Pod no longer answers to a .local name."
 else
   echo "The Pod now answers at http://$(hostname).local on your home network."
-  echo "If the internet block is on, re-run block_internet_access.sh once so it allows the name lookups."
 fi

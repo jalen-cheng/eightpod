@@ -1,6 +1,7 @@
 # API reference
 
-The server on the Pod serves the web app and a JSON API on port 3000. API paths start with `/api`.
+The server on the Pod serves the web app and a JSON API on port 3000 and also on port 80. API paths start with `/api`, so
+`http://<pod-ip>/api/deviceStatus` works too.
 
 ```bash
 curl http://<pod-ip>:3000/api/deviceStatus
@@ -61,7 +62,7 @@ The current state of the Pod, read from the firmware.
   },
   "coverVersion": "Pod 5",
   "hubVersion": "Pod 5",
-  "freeSleep": { "version": "3.1.0", "branch": "main" },
+  "freeSleep": { "version": "3.4.0", "branch": "main" },
   "waterLevel": "true",
   "isPriming": false,
   "settings": { "v": 1, "gainLeft": 400, "gainRight": 400, "ledBrightness": 0 },
@@ -297,7 +298,7 @@ Stored in `schedulesDB.json`: `left` and `right`, each with `sunday` to `saturda
         "enabled": true,
         "vibrationIntensity": 100,
         "vibrationPattern": "rise",
-        "duration": 10,
+        "duration": 600,
         "alarmTemperature": 82,
         "preWarmMinutes": 15,
         "turnOffAfterDismiss": false
@@ -420,7 +421,7 @@ Merges the body into the stored services and returns the result (200).
 { "biometrics": { "enabled": true } }
 ```
 
-`sentryLogging.enabled` switches error reporting on or off. This fork has no built-in destination: nothing is sent unless `SENTRY_DSN` is set in the server's environment (`server/src/instrument.ts`).
+`sentryLogging.enabled` switches error reporting on or off. Free Pod has no built-in destination: nothing is sent unless `SENTRY_DSN` is set in the server's environment (`server/src/instrument.ts`).
 
 ---
 
@@ -560,6 +561,11 @@ What the bed's own presence sensors say now (Pod 5). The settings that act on th
 - `left` and `right` are missing until that side has a reading.
 - `signal` is the smoothed sum of the side's three zones; `baseline` is the level taken as an empty bed.
 - A side that only picks up the person on the other side is reported with `present: false`.
+
+### `POST /api/metrics/presence/sensors/empty`
+
+Says the bed is empty right now. In-bed detection forgets what it learned and takes the next
+readings as the empty bed. No body. Returns 204, or 503 when the sensors are not running.
 
 ### `GET /api/metrics/presence`
 

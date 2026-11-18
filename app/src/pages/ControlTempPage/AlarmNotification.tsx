@@ -56,6 +56,12 @@ export default function AlarmNotification() {
   }, [settings, schedules, side]);
 
   if (!power?.enabled || !alarm?.enabled || !settings) return null;
+  // Away mode stops this side's schedule and alarm
+  if (settings[side].awayMode) return null;
+  // In the morning, after the alarm has gone off, there is nothing left to change until tonight
+  const now = moment.tz(settings.timeZone);
+  const alarmToday = moment.tz(`${now.format('YYYY-MM-DD')} ${scheduledAlarmTimeHhMm}`, 'YYYY-MM-DD HH:mm', settings.timeZone);
+  if (now.hour() < 12 && scheduledAlarmTimeHhMm && now.isAfter(alarmToday.add(2, 'minutes'))) return null;
   const oneTimeAlarm = settings[side].scheduleOverrides.alarm;
   const hasOneTimeAlarm = !oneTimeAlarm.disabled && !!oneTimeAlarm.timeOverride && moment(oneTimeAlarm.expiresAt).isAfter(moment());
 

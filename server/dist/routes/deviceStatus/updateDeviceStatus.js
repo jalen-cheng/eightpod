@@ -1,8 +1,9 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="df5da8d7-49bd-51e4-9a50-545086d1e18e")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="4b34884b-2e7f-5950-b928-054f292b32df")}catch(e){}}();
 import _ from 'lodash';
 import cbor from 'cbor';
 import { executeFunction } from '../../8sleep/deviceApi.js';
+import { connectFranken } from '../../8sleep/frankenServer.js';
 import logger from '../../logger.js';
 import settingsDB from '../../db/settings.js';
 import { temperatureFToLevel } from '../../db/temperatureCurve.js';
@@ -17,8 +18,9 @@ const finishDismissedAlarm = async (side) => {
     const dismissedAlarm = await alarmSession.alarmCleared(side);
     if (dismissedAlarm?.turnOffAfterDismiss) {
         logger.debug(`Alarm dismissed, switching ${side} side off`);
-        await executeFunction(side === 'left' ? 'LEFT_TEMP_DURATION' : 'RIGHT_TEMP_DURATION', '0');
-        cancelPreWarm(side);
+        // Through the usual path, so a hold by hand ends and a side in away mode follows
+        // eslint-disable-next-line no-use-before-define
+        await updateSide(side, { isOn: false }, {});
     }
 };
 // Stops a side's alarm.
@@ -41,7 +43,8 @@ export const dismissAlarm = async (side) => {
 const SECONDS_PER_HOUR = 3_600;
 // How long the schedule switches a side on for. Its own off time ends the night long before this.
 const SCHEDULED_ON_SECONDS = 12 * SECONDS_PER_HOUR;
-const updateSide = async (side, sideStatus, { isManual = false }) => {
+const updateSide = async (side, sideStatus, options) => {
+    const { isManual = false, onSeconds: requestedOnSeconds } = options;
     await settingsDB.read();
     const settings = settingsDB.data;
     if (side === 'left') {
@@ -63,14 +66,16 @@ const updateSide = async (side, sideStatus, { isManual = false }) => {
     }
     const updatedSides = [...(updateLeft ? ['left'] : []), ...(updateRight ? ['right'] : [])];
     if (isOn !== undefined) {
-        const onSeconds = isManual ? settings.manualOn.hours * SECONDS_PER_HOUR : SCHEDULED_ON_SECONDS;
-        const onDuration = isOn ? onSeconds.toString() : '0';
-        if (updateLeft)
-            await executeFunction('LEFT_TEMP_DURATION', onDuration);
-        if (updateRight)
-            await executeFunction('RIGHT_TEMP_DURATION', onDuration);
-        // Switched on by hand with "ignore the schedule": the schedule stays away until it turns off
+        const requestedSeconds = requestedOnSeconds ?? (isManual ? settings.manualOn.hours * SECONDS_PER_HOUR : SCHEDULED_ON_SECONDS);
+        // A side that is already on keeps the time it has left when that is longer. Otherwise a
+        // shortcut that sets the temperature at night would cut the night short (it says "on" too),
+        // and the bed would be off before the morning alarm.
+        const currentStatus = isOn && isManual ? await (await connectFranken()).getDeviceStatus() : undefined;
         for (const updatedSide of updatedSides) {
+            const secondsLeft = currentStatus?.[updatedSide].isOn ? currentStatus[updatedSide].secondsRemaining : 0;
+            const onSeconds = Math.max(requestedSeconds, secondsLeft);
+            await executeFunction(updatedSide === 'left' ? 'LEFT_TEMP_DURATION' : 'RIGHT_TEMP_DURATION', isOn ? onSeconds.toString() : '0');
+            // Switched on by hand with "ignore the schedule": the schedule stays away until it turns off
             if (isOn && isManual && settings.manualOn.overridesSchedule)
                 startManualHold(updatedSide, onSeconds);
             else
@@ -127,4 +132,4 @@ export const updateDeviceStatus = async (deviceStatus, options = {}) => {
     logger.info('Finished updating device status');
 };
 //# sourceMappingURL=updateDeviceStatus.js.map
-//# debugId=df5da8d7-49bd-51e4-9a50-545086d1e18e
+//# debugId=4b34884b-2e7f-5950-b928-054f292b32df

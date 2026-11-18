@@ -110,6 +110,10 @@ router.post('/alarm/time', async (req: Request, res: Response) => {
   const { side, time, shiftMinutes, days, enabled = true } = validationResult.data;
   const alarmSides = await resolveSides(side);
 
+  if (days?.length === 0) {
+    res.status(400).json({ error: 'Invalid request data', details: 'days must name at least one day' });
+    return;
+  }
   if (days && time) {
     await schedulesDB.read();
     for (const alarmSide of alarmSides) {

@@ -61,7 +61,9 @@ const STATE_SAVE_INTERVAL_MS = 60_000;
 function loadSavedState(nowMs: number): SavedState | undefined {
   try {
     const savedState = JSON.parse(readFileSync(STATE_FILE, 'utf8')) as SavedState;
-    return nowMs - savedState.savedAtMs <= STATE_MAX_AGE_MS ? savedState : undefined;
+    // A file from the future means the clock was wrong when one of the two was read: not trusted
+    const ageMs = nowMs - savedState.savedAtMs;
+    return ageMs >= 0 && ageMs <= STATE_MAX_AGE_MS ? savedState : undefined;
   } catch {
     return undefined;
   }
@@ -69,6 +71,15 @@ function loadSavedState(nowMs: number): SavedState | undefined {
 
 const latest: Partial<Record<Side, SidePresence>> = {};
 let lastReadingAtMs = 0;
+// Set by the running monitor, for requests that act on it
+let markRunningBedEmpty: (() => void) | undefined;
+
+// Tells the detectors the bed is empty right now. Returns false when the sensors are not running.
+export function markBedEmpty(): boolean {
+  if (!markRunningBedEmpty) return false;
+  markRunningBedEmpty();
+  return true;
+}
 
 // What the sensors say right now, for the API and the app
 export function getPresenceSnapshot(nowMs: number = Date.now()): PresenceSnapshot {
@@ -103,7 +114,18 @@ export class BedSensorMonitor {
     Object.assign(latest, savedState?.sides);
   }
 
+  // Starts every side afresh from an empty bed: baselines are learned again and no stay is open
+  markBedEmpty() {
+    for (const side of ['left', 'right'] as const) {
+      this.detectors[side].reset();
+      delete latest[side];
+    }
+    Object.assign(this.sessions, { left: createBedSession(), right: createBedSession(), both: createBedSession() });
+    logger.info('Bed sensor monitor was told the bed is empty; learning the empty bed again');
+  }
+
   start() {
+    markRunningBedEmpty = () => this.markBedEmpty();
     void this.listen();
     this.actionTimer = setInterval(() => void this.runActions(), ACTION_CHECK_INTERVAL_MS);
     this.saveTimer = setInterval(() => this.saveState(), STATE_SAVE_INTERVAL_MS);
@@ -250,8 +272,10 @@ export class BedSensorMonitor {
     // Turn on at the chosen temperature. "Until I get out of bed" uses the firmware's longest
     // timer; the stay ending is what turns the bed off (the 'turnOff' action above).
     const { temperatureF, stayOn } = settings.presence.turnOnWhenInBed;
-    const secondsRemaining = (stayOn === UNTIL_OUT_OF_BED ? MAX_ON_HOURS : stayOn) * SECONDS_PER_HOUR;
-    const update = Object.fromEntries(sides.map(side => [side, { isOn: true, targetTemperatureF: temperatureF, secondsRemaining }]));
-    await updateDeviceStatus(update, { isManual: true });
+    // The length is passed as the on-time itself, so "ignore the schedule" holds for the stay
+    // and not for the length set for turning on by hand
+    const onSeconds = (stayOn === UNTIL_OUT_OF_BED ? MAX_ON_HOURS : stayOn) * SECONDS_PER_HOUR;
+    const update = Object.fromEntries(sides.map(side => [side, { isOn: true, targetTemperatureF: temperatureF }]));
+    await updateDeviceStatus(update, { isManual: true, onSeconds });
   }
 }
