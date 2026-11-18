@@ -125,7 +125,7 @@ export const COOLING_COLOR = '#45a3ff';
 export const WARMING_COLOR = '#ff8562';
 
 export function getTemperatureColor(tempF: number | undefined) {
-  if (tempF === undefined) return '#212838';
+  if (tempF === undefined) return '#2b2b2b';
   if (tempF <= 70) return COOLING_COLOR;
   if (tempF <= 82) return '#7ea6ff';
   if (tempF <= 95) return WARMING_COLOR;

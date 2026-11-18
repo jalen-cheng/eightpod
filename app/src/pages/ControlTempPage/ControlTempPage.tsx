@@ -6,6 +6,7 @@ import AlarmNotification from './AlarmNotification.tsx';
 import AwayNotification from './AwayNotification.tsx';
 import ErrorBoundary from '@components/ErrorBoundary.tsx';
 import PageContainer from '../PageContainer.tsx';
+import PageHeader from '@components/PageHeader.tsx';
 import PowerButton from './PowerButton.tsx';
 import PrimingNotification from './PrimingNotification.tsx';
 import SideControl from '@components/SideControl.tsx';
@@ -62,6 +63,7 @@ export default function ControlTempPage() {
         minHeight: { xs: `calc(100dvh - ${MOBILE_NAV_SPACE_PX}px - env(safe-area-inset-bottom))`, md: 0 },
       } }
     >
+      <PageHeader title="Temperature"/>
       <SideControl
         showTemp
         onLinkSidesChange={ handleLinkSidesChange }

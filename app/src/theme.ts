@@ -4,16 +4,18 @@ const FONT_FAMILY = '"Geist Variable", -apple-system, BlinkMacSystemFont, "Segoe
 // One size for the text inside every field, select and button, so controls on a line match
 const CONTROL_FONT_SIZE = 14;
 
-// The night palette: blue-black surfaces, one periwinkle accent. Blue and coral are kept for
-// cooling and warming (see lib/temperatureConversions.ts) and are not used for anything else.
+// Neutral greys, like the chat apps this follows: dark grey surfaces, near-white text, and
+// near-white as the accent (a filled button is white with dark text). Colour is kept for meaning:
+// blue and coral for cooling and warming (see lib/temperatureConversions.ts), green, amber and
+// red for state.
 const DARK_COLORS = {
-  background: '#0a0d14', surface: '#11151f', raised: '#181d2a', line: '#212838', track: '#2b3345',
-  text: '#e9ecf3', mutedText: '#8b94a8', accent: '#8ea2ff', onAccent: '#0b0e17',
-  success: '#6fd3a8', info: '#7fb4ff', warning: '#e3bd7c', error: '#f08a8f',
+  background: '#141414', surface: '#1b1b1b', raised: '#262626', line: '#2b2b2b', track: '#3f3f3f',
+  text: '#ececec', mutedText: '#9b9b9b', accent: '#ececec', onAccent: '#141414',
+  success: '#6fcf9f', info: '#8ab4f8', warning: '#e0b877', error: '#ef8a8a',
 };
 const LIGHT_COLORS: typeof DARK_COLORS = {
-  background: '#f4f5f9', surface: '#ffffff', raised: '#eef0f6', line: '#e1e4ec', track: '#cdd2df',
-  text: '#1a1e2b', mutedText: '#636b7e', accent: '#4a59d9', onAccent: '#ffffff',
+  background: '#f7f7f7', surface: '#ffffff', raised: '#efefef', line: '#e3e3e3', track: '#cfcfcf',
+  text: '#1a1a1a', mutedText: '#6b6b6b', accent: '#1a1a1a', onAccent: '#ffffff',
   success: '#23805b', info: '#3a6fc4', warning: '#946c1c', error: '#c9505a',
 };
 
@@ -68,7 +70,7 @@ const buildComponents = (colors: typeof DARK_COLORS): ThemeOptions['components']
         '&.MuiButton-colorPrimary': {
           backgroundColor: theme.palette.primary.main,
           color: theme.palette.primary.contrastText,
-          '&:hover': { backgroundColor: theme.palette.primary.light },
+          '&:hover': { backgroundColor: theme.palette.mode === 'dark' ? '#ffffff' : '#333333' },
         },
       }),
     },
@@ -82,30 +84,24 @@ const buildComponents = (colors: typeof DARK_COLORS): ThemeOptions['components']
   MuiDialog: { styleOverrides: { paper: { borderRadius: 20 } } },
   MuiDialogTitle: { styleOverrides: { root: { fontSize: 17, fontWeight: 600, letterSpacing: '-0.01em' } } },
   MuiCardContent: { styleOverrides: { root: { padding: 20, '&:last-child': { paddingBottom: 20 } } } },
-  // An iOS-style switch: a pill that fills with the accent, and a white knob
+  // A small square switch: a dark slot that turns to the accent, with a square knob
   MuiSwitch: {
     styleOverrides: {
-      root: {
-        width: 44, height: 26, padding: 0, overflow: 'visible', flexShrink: 0,
-        '&.MuiSwitch-sizeSmall': {
-          width: 36, height: 22,
-          '& .MuiSwitch-thumb': { width: 18, height: 18 },
-          '& .MuiSwitch-switchBase': { padding: 2, '&.Mui-checked': { transform: 'translateX(14px)' } },
-        },
-      },
+      root: { width: 34, height: 20, padding: 0, overflow: 'visible', flexShrink: 0 },
       switchBase: ({ theme }) => ({
-        padding: 2,
+        padding: 3,
+        color: theme.palette.text.secondary,
         '&:hover': { backgroundColor: 'transparent' },
         '&.Mui-checked': {
-          transform: 'translateX(18px)', color: '#ffffff',
+          transform: 'translateX(14px)', color: theme.palette.primary.contrastText,
           '&:hover': { backgroundColor: 'transparent' },
           '& + .MuiSwitch-track': { backgroundColor: theme.palette.primary.main, opacity: 1 },
         },
-        '&.Mui-disabled': { color: '#ffffff', '& + .MuiSwitch-track': { opacity: 0.45 } },
-        '&.Mui-disabled .MuiSwitch-thumb': { opacity: 0.7 },
+        '&.Mui-disabled': { color: theme.palette.text.secondary, '& + .MuiSwitch-track': { opacity: 0.4 } },
+        '&.Mui-disabled .MuiSwitch-thumb': { opacity: 0.6 },
       }),
-      thumb: { width: 22, height: 22, backgroundColor: '#ffffff', boxShadow: '0 1px 3px rgba(0, 0, 0, 0.35)' },
-      track: { borderRadius: 13, backgroundColor: colors.track, opacity: 1, transition: 'background-color 200ms ease' },
+      thumb: { width: 14, height: 14, borderRadius: 3, backgroundColor: 'currentColor', boxShadow: 'none' },
+      track: { borderRadius: 5, backgroundColor: colors.track, opacity: 1, transition: 'background-color 200ms ease' },
     },
   },
   MuiSlider: {
