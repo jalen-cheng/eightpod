@@ -221,7 +221,7 @@ finish. When the alarm then goes off, the timer is set again, to 30 minutes. So 
 
 ### Testing an alarm
 
-Alarm options > "Test for a minute" vibrates now with the settings on screen, saved or not, on
+Settings > Alarm > "Test for a minute" vibrates now with the saved vibration settings, on
 both sides when linked, whether or not the bed is on.
 
 ## 6. Pod 5 buttons and Pod 4 taps
@@ -242,7 +242,7 @@ installer. A **Pod 4** reports double, triple and quadruple taps as counters, re
 - Presses within 0.4 seconds of each other are handled together, so three quick presses move three steps.
 - A second alarm or power press within 3 seconds is ignored, so one press is never counted twice.
 - When the sides are linked, buttons on either side control both.
-- The step is set in Settings > Side buttons. In Level the choices are 1, 2 or 3 levels.
+- The step is set in Settings > Device settings. In Level the choices are 1, 2 or 3 levels.
 - Snooze was removed. Any press stops the alarm.
 
 ## 7. Linked sides and away mode
@@ -262,11 +262,11 @@ side picker is one "Both sides" button and the chain button reads "Unlink":
 Linking is applied by the app and by those server paths. A hand-written request to
 `/api/deviceStatus` or `/api/schedules` naming one side changes only that side.
 
-**Flip left and right** (Settings > Side settings) swaps which physical side the app calls left
+**Flip left and right** (Settings > Device settings) swaps which physical side the app calls left
 and right. It is applied where EightPod meets the firmware (commands, status, buttons, sensors),
 so each side keeps its name, schedule and settings and simply drives the other half of the bed.
 
-**Away mode** (Settings, per side) is for one person being away: that side's schedule, alarm and
+**Away mode** (Settings > Device settings) switches both sides away together. The API can still set it per side, which is for one person being away: that side's schedule, alarm and
 warm-up do not run, and its controls are hidden. While either side is away, every temperature or
 power change to the other side is **mirrored to the away side**, so the whole bed follows the
 person who is there. One-time alarms and the alarm test still vibrate an away side.
@@ -369,7 +369,7 @@ marked "Untested in this version".
 
 **Settings.** Time zone (set this first: the schedule runs in it), temperature format, how long
 the bed stays on when turned on by hand and whether the schedule is ignored meanwhile, LED
-brightness, side names and away mode, side buttons, in-bed detection (its state shows as two chips beside the
+brightness, away mode, flipping the sides and the side buttons' step, how the alarm vibrates, in-bed detection (its state shows as two chips beside the
 heading), priming, biometrics, and
 the device: Wi-Fi, versions, update, reboot.
 

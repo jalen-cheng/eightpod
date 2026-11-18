@@ -42,7 +42,8 @@ const BUTTON_LABELS: typeof TAP_LABELS = {
 export default function TapGesturesSection({ settings, updateSettings }: TapGesturesSectionProps) {
   const { data: deviceStatus } = useDeviceStatus();
   const { isUpdating } = useAppStore();
-  if (!settings || !deviceStatus || deviceStatus.coverVersion === Version.Pod3) return null;
+  // A Pod 3 cover has no tap sensors. A Pod 5's buttons have one choice, which is in Device settings.
+  if (!settings || !deviceStatus || deviceStatus.coverVersion === Version.Pod3 || deviceStatus.coverVersion === Version.Pod5) return null;
 
   const hasButtons = deviceStatus.coverVersion === Version.Pod5;
   const labels = hasButtons ? BUTTON_LABELS : TAP_LABELS;

@@ -1,7 +1,7 @@
 # Changelog
 
 What EightPod changed from [throwaway31265/free-sleep](https://github.com/throwaway31265/free-sleep),
-what was checked on a real Pod, and what was not. EightPod is at version 3.6.4. Everything was
+what was checked on a real Pod, and what was not. EightPod is at version 3.7.0. Everything was
 developed and tested on one Pod 5 between 13 and 17 Nov 2026.
 
 **The API.** Everything the app does goes through a documented local API, and every command the
@@ -230,3 +230,4 @@ acted on it).
 | [#82](https://github.com/jalen-cheng/eightpod/pull/82) | Design, docs | A new Pod is named `eightpod`, so the app is at `http://eightpod.local` (a Pod already named is left alone). The one-time alarm dialog is titled "Change next alarm only (overrides schedule)" and no longer has Back to schedule. Shortcut and API docs say what a refused request returns. README: evenly spaced links, new screenshots. Clearer names in the code for times and counters. |
 | [#85](https://github.com/jalen-cheng/eightpod/pull/85) | Design, docs | Dialogs stand off the page: the page behind is dimmed and blurred, and the dialog has an edge and a shadow. Close sits on the left of the alarm dialog. Long menus scroll inside a short list, and the in-bed "stay on" choice is only as wide as its text. A shorter, more open contributing guide; README wording on reversibility and warranty. |
 | [#89](https://github.com/jalen-cheng/eightpod/pull/89) | Feature, docs | Settings has an **API** section: what the API is for, two requests to copy with the Pod's own address filled in, and a link to the reference. The demo video gains an API scene and is recorded at 60 frames a second. |
+| [#92](https://github.com/jalen-cheng/eightpod/pull/92) | Design | **Settings:** how the alarm vibrates (pattern, strength, length, test) is one **Alarm** section for every night and both sides; a night's dialog keeps the alarm switch, warm-up and bed off on dismiss. Side settings are gone: away mode is one switch for both sides, and it, flip left and right and the side buttons' step are in Device settings. In-bed detection's options sit in a line under their labels. The Device section reads top to bottom: the Pod, its version and update, restarting. **Navigation:** an **API** page with the common requests; on a computer the sidebar has Settings, Status and API at the foot; on a phone the tabs end Settings, Status, and the API page is reached from Settings. |

@@ -70,24 +70,31 @@ Other day tabs are locked until you save or discard.
 **Copying a saved night.** Tap the copy icon on the "Monday night" row, tick the days, then
 **Save**. The icon is greyed out while there are unsaved edits.
 
-## 5. Alarm options and testing
+## 5. Wake-up options and the alarm
 
-The **Alarm on** / **Alarm off** button on the Wake row opens everything about the alarm, with
-its on/off switch at the top. The dialog is titled "Alarm":
+The **Alarm on** / **Alarm off** button on the Wake row opens that night's wake-up options:
 
-<img src="screenshots/alarm_options.png" width="260" alt="Alarm options">
+<img src="screenshots/alarm_options.png" width="260" alt="Wake-up options">
 
 | Option | Choices |
+|---|---|
+| **Vibrating alarm** | On or off for this night |
+| **Warm-up** | Off, or 15, 30 or 45 minutes before the alarm, with a **Warm up to** temperature |
+| **Bed off on dismiss** | The bed turns off the moment you dismiss the alarm, not 30 minutes after the wake-up time |
+
+**Save** saves the night with these options; **Discard** puts them back as they were when you
+opened the dialog.
+
+How the alarm vibrates is one choice for every night and both sides, in **Settings > Alarm**:
+
+| Setting | Choices |
 |---|---|
 | **Vibration** | **Ramp up** builds to full strength over 40 seconds (Pod 5; a Pod 3 or 4 uses the firmware's own pattern). **Pulses** starts at full strength |
 | **Strength** | 1 to 100% |
 | **Length** | 10, 15, 20 or 30 minutes. It stops sooner if you dismiss it |
-| **Warm-up** | Off, or 15, 30 or 45 minutes before the alarm, with a **Warm up to** temperature |
-| **Bed off on dismiss** | The bed turns off the moment you dismiss the alarm, not 30 minutes after the wake-up time |
 
-**Test for a minute**, beside the strength, vibrates the bed now with the settings on screen, saved
-or not, even if the bed is off. **Stop test** ends it. **Save** saves the night with these
-options; **Discard** puts the alarm back as it was when you opened the dialog.
+**Test for a minute**, at the top of that section, vibrates both sides now with those settings,
+even if the bed is off. **Stop test** ends it.
 
 A scheduled alarm only vibrates if that side is on at the alarm time.
 
@@ -130,7 +137,7 @@ reads **Turn on** and brings it back.
 | Any button, while an alarm vibrates | Dismisses the alarm | |
 
 When the sides are linked, the buttons on either side control both. The step size is in
-**Settings > Side buttons**. A Pod 4 has tap gestures in place of buttons (**Settings > Tap gestures**).
+**Settings > Device settings**. A Pod 4 has tap gestures in place of buttons (**Settings > Tap gestures**).
 
 ## 10. Settings worth knowing
 
@@ -140,12 +147,12 @@ When the sides are linked, the buttons on either side control both. The step siz
 |---|---|---|
 | **When turned on by hand, stay on for** | Device settings | 3, 6 or 12 hours. Applies when you turn the bed on from the app, a shortcut or the buttons |
 | **Ignore the schedule until it turns off** | Device settings | While a side you turned on yourself is on, its schedule is skipped. Alarms still go off |
-| **Away mode** | Side settings, per side | For one person being away. That side's schedule and alarm stop, and it follows the other side |
-| **Flip left and right** | Side settings | Swaps which physical side the app calls left and right. Each side keeps its name, schedule and settings |
+| **Away mode** | Device settings | For when nobody is home. The schedule and alarms stop on both sides until you switch it off |
+| **Flip left and right** | Device settings | Swaps which physical side the app calls left and right. Each side keeps its schedule and settings |
 | **Prime daily** | Priming | Runs the water priming cycle every day at **Prime time**, 2 PM by default. It does not check whether the bed is in use |
 | **Reboot once a day** | Device | Restarts the Pod one hour before the priming time. A vibrating alarm or running warm-up is lost in a reboot, so keep the time in the afternoon |
 | **Status page** | Its own page | Shows Wi-Fi strength, whether EightPod is up to date, and each service. The biometrics and sleep-analysis rows are greyed and marked untested |
-| **API** | Its own section | Two example requests with your Pod's address filled in, and a link to every request. Tap a command to select it |
+| **API** | Its own page: in the sidebar on a computer, from **Settings > API** on a phone | The common requests, two examples with your Pod's address filled in, and a link to every request. Tap a command to select it |
 | **In-bed detection** | Its own section, Pod 5 only | Two options, both off by default: **Turn on when I get into bed** and **Alarm after a long time in bed**. Detection was checked with one person on one Pod; the first option has been seen turning the bed on, the rest has not been seen working yet |
 
 ## 11. Updating

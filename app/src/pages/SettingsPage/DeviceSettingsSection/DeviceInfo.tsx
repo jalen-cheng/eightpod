@@ -1,54 +1,64 @@
-import { Box, Chip, Divider, Typography } from '@mui/material';
+import { PropsWithChildren, ReactNode } from 'react';
+import { Box, Divider, Typography } from '@mui/material';
+import { DeepPartial } from 'ts-essentials';
 import { useDeviceStatus } from '@api/deviceStatus.ts';
 import { Version } from '@api/deviceStatusSchema';
-import VersionStatus from '@components/VersionStatus.tsx';
+import { useServerInfo } from '@api/serverInfo.ts';
+import { Settings } from '@api/settingsSchema.ts';
 import WifiStrength from '@components/WifiStrength.tsx';
+import DailyReboot from './DailyReboot.tsx';
 import RebootButton from './RebootButton.tsx';
+import UpdateButton from './UpdateButton.tsx';
 
-export default function DeviceInfo() {
+type InfoRowProps = PropsWithChildren<{ title: string; detail?: ReactNode }>;
+
+// One line of the section: what it is and a word about it on the left, its control on the right
+const InfoRow = ({ title, detail, children }: InfoRowProps) => (
+  <Box sx={ { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, minHeight: 36 } }>
+    <Box sx={ { minWidth: 0 } }>
+      <Typography variant="body2" sx={ { fontWeight: 500 } }>{ title }</Typography>
+      { detail && <Typography variant="caption" sx={ { color: 'text.secondary', display: 'block' } }>{ detail }</Typography> }
+    </Box>
+    <Box sx={ { flexShrink: 0, display: 'flex', alignItems: 'center', gap: 0.75 } }>{ children }</Box>
+  </Box>
+);
+
+type DeviceInfoProps = {
+  settings?: Settings;
+  updateSettings: (settings: DeepPartial<Settings>) => void;
+};
+
+// The Pod itself, top to bottom: what it is, whether its software is current, and restarting it
+// eslint-disable-next-line react/no-multi-comp
+export default function DeviceInfo({ settings, updateSettings }: DeviceInfoProps) {
   const { data: deviceStatus, isLoading } = useDeviceStatus();
+  const { data: latest } = useServerInfo();
   if (isLoading || !deviceStatus) return null;
-  const hideCover = deviceStatus.coverVersion === Version.NotFound;
-  const hideHub = deviceStatus.hubVersion === Version.NotFound;
+
+  const { coverVersion, hubVersion, eightPod } = deviceStatus;
+  // A cover and hub of the same model are named once
+  const models = [coverVersion, hubVersion].filter(version => version !== Version.NotFound);
+  const podName = models.length === 0 ? 'Pod'
+    : models[0] === models[1] || models.length === 1 ? models[0]
+      : `${coverVersion} cover, ${hubVersion} hub`;
+  const branchNote = eightPod.branch && eightPod.branch !== 'main' ? ` (${eightPod.branch})` : '';
 
   return (
-    <Box sx={ { display: 'flex', flexDirection: 'column', gap: 2 } }>
-      <Box sx={ { display: 'flex', flexDirection: 'column', gap: 1.5 } }>
-        <Box sx={ { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 1 } }>
-          <Typography variant="body2" sx={ { color: 'text.secondary' } }>Status</Typography>
-          <Box sx={ { display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-end', gap: 0.75 } }>
-            <WifiStrength/>
-            <VersionStatus variant="chip"/>
-          </Box>
-        </Box>
-        <Box sx={ { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 1 } }>
-          <Typography variant="body2" sx={ { color: 'text.secondary' } }>Device</Typography>
-          <Box sx={ { display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-end', gap: 0.75 } }>
-            { !hideCover && <Chip label={ `${deviceStatus.coverVersion} Cover` } size="small"/> }
-            { !hideHub && <Chip label={ `${deviceStatus.hubVersion} Hub` } size="small"/> }
-          </Box>
-        </Box>
-        <Box sx={ { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 1 } }>
-          <Typography variant="body2" sx={ { color: 'text.secondary' } }>EightPod Build</Typography>
-          <Box sx={ { display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-end', gap: 0.75 } }>
-            <Chip label={ `v${deviceStatus?.eightPod?.version}` } size="small"/>
-            <Chip label={ deviceStatus?.eightPod?.branch } size="small"/>
-          </Box>
-        </Box>
-      </Box>
-      <Box
-        sx={ {
-          '& .MuiAlert-root': { alignItems: 'flex-start', width: '100%' },
-          '& .MuiAlert-message': { minWidth: 0, width: '100%' },
-          '& .MuiAlertTitle-root': { fontSize: 13, fontWeight: 500 },
-          '& .MuiAlert-root .MuiTypography-root': { fontSize: 12 },
-          '& .MuiAlert-root .MuiButton-root': { mt: 1 },
-        } }
+    <Box sx={ { display: 'flex', flexDirection: 'column', gap: 1.5 } }>
+      <InfoRow title={ podName } detail="Connected to your Wi-Fi">
+        <WifiStrength/>
+      </InfoRow>
+      <InfoRow
+        title={ `EightPod ${eightPod.version}${branchNote}` }
+        detail={ latest?.updateAvailable ? `Version ${latest.version} is available` : latest ? 'Up to date' : undefined }
       >
-        <VersionStatus variant="alert"/>
-      </Box>
+        { latest?.updateAvailable && <UpdateButton/> }
+      </InfoRow>
       <Divider/>
-      <RebootButton/>
+      <DailyReboot settings={ settings } updateSettings={ updateSettings }/>
+      <InfoRow title="Reboot now" detail="Takes about three minutes. The bed turns off until it is back.">
+        <RebootButton/>
+      </InfoRow>
     </Box>
   );
 }
