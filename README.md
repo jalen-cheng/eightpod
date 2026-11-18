@@ -1,240 +1,130 @@
-# Free Sleep — Local Control for 8 Sleep Pods
+# Free Sleep: local control for Eight Sleep Pods
 
-## About this fork
+Free Sleep lets you control an Eight Sleep Pod from your own network, with no cloud and no
+subscription. Each Pod has a small Linux computer inside. Free Sleep installs a server on it that
+talks to the Pod's firmware, and serves a web app you open on your phone or computer.
 
-This is a fork of [throwaway31265/free-sleep](https://github.com/throwaway31265/free-sleep), built for and
-tested on one **Pod 5**. Everything upstream does still applies, and upstream's own README follows
-this section unchanged. Thanks to the upstream author and contributors for the project this builds on.
+This repository is a fork of [throwaway31265/free-sleep](https://github.com/throwaway31265/free-sleep),
+the original project by its author and contributors. The fork was **built and tested on one Pod 5**.
+It adds Pod 5 support the original lacks and changes how schedules and alarms work.
 
-Start here:
+<table><tr>
+<td align="center"><img src="docs/screenshots/temperature.png" width="230" alt="Temperature, with the measured bed temperature"><br>Temperature</td>
+<td align="center"><img src="docs/screenshots/schedule.png" width="230" alt="A night: bed on, temperature changes and wake up, one tab per day"><br>A night, one tab per day</td>
+<td align="center"><img src="docs/screenshots/alarm_options.png" width="230" alt="Alarm options"><br>Alarm options</td>
+<td align="center"><img src="docs/screenshots/settings.png" width="230" alt="In-bed detection and what it sets off"><br>In-bed detection</td>
+</tr></table>
+
+Screenshots are from the test Pod 5, 17 Nov 2026.
+
+## Where to go
 
 | If you want to | Read |
 |---|---|
-| Install on a Pod 5, step by step | [docs/POD5_FIRST_DAY.md](docs/POD5_FIRST_DAY.md) |
-| Know what works on a Pod 3 or Pod 4 | [docs/POD_MODELS.md](docs/POD_MODELS.md) (reviewed against the original project; not run on either) |
-| Understand how every part works | [docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md) |
+| Install it on a Pod | [INSTALLATION.md](INSTALLATION.md) |
+| Use the app: set a night, alarms, settings | [docs/USING.md](docs/USING.md) |
+| Know what works on a Pod 3 or Pod 4 | [docs/POD_MODELS.md](docs/POD_MODELS.md) |
+| Keep the Pod's address stable, or reach it away from home | [docs/REMOTE_ACCESS.md](docs/REMOTE_ACCESS.md) |
 | Control the bed from iPhone Shortcuts | [docs/IOS_SHORTCUTS.md](docs/IOS_SHORTCUTS.md) |
-| Keep the Pod's address stable, or reach it away from home | [docs/REMOTE_ACCESS.md](docs/REMOTE_ACCESS.md) (Tailscale on the Pod, set up with one script) |
-| See every change, what was tested on a Pod, and what is not done | [docs/FORK_STATUS.md](docs/FORK_STATUS.md) |
-| Use the API directly | [server/API.md](server/API.md) |
+| Understand how every part works and interacts | [docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md) |
+| Use the API | [server/API.md](server/API.md) |
+| See what changed, and what was tested | [CHANGELOG.md](CHANGELOG.md) |
+| Work on the code | [DEVELOPING.md](DEVELOPING.md) |
 
-### What is different from upstream
+## Which Pods
 
-| Area | Upstream | This fork |
+| Pod | Status |
+|---|---|
+| Pod 5 | Tested on one unit. Some newer units cannot be opened up the way the install guide needs; the guide says how to tell. |
+| Pod 4 | Same code as the original project in the hardware paths, with the differences in [docs/POD_MODELS.md](docs/POD_MODELS.md). **Not run on a Pod 4.** |
+| Pod 3 (with or without SD card) | As Pod 4: reviewed against the original, **not run**. |
+| Pod 1, Pod 2 | Not compatible. |
+
+## Things to know before using it
+
+- **You need to open the Pod's hub and attach a serial adapter once** to get root access. It is
+  reversible on a Pod 3 and Pod 4 with a firmware reset; a reset procedure for a Pod 5 is not
+  documented here.
+- **It is not supported by Eight Sleep** and may affect your warranty.
+- **Sleep tracking (Biometrics) does not work on the tested Pod 5.** Its firmware publishes sensor
+  data where the analysis does not read. Heart rate was validated by the original project on
+  earlier Pods; that code is unchanged here.
+- **The app has no login.** Anyone on your home network can open it. Do not put it on the open internet;
+  [docs/REMOTE_ACCESS.md](docs/REMOTE_ACCESS.md) has a private way to reach it from elsewhere.
+- **Nothing is sent anywhere.** The internet block stops the Pod reaching Eight Sleep or anyone
+  else, and this fork has no error-reporting destination built in.
+- **Updating from the original project changes some behaviour**: saved temperatures are converted
+  once, and the bed's off time now follows the wake-up time. [docs/POD_MODELS.md](docs/POD_MODELS.md) lists them.
+
+## What is different from the original project
+
+| Area | Original | This fork |
 |---|---|---|
-| **Pod 5 side buttons** | Do nothing | + and - change the temperature and switch an off side on. Holding the middle button two seconds switches the side on or off. Any button stops an alarm. |
-| **Temperatures** | Levels spread evenly over 55-110°F, off by up to 5°F | What the firmware aims for at each level, measured on a Pod 5. Range is 50-108°F. |
+| **Pod 5 side buttons** | Do nothing | + and - change the temperature and switch an off side on. Holding the middle button two seconds switches the side on or off. Any button stops an alarm |
+| **Temperatures** | Levels spread evenly over 55 to 110°F | What the firmware aims for at each level, measured on a Pod 5: 50 to 108°F. The page also shows the temperature the bed measures |
 | **Display units** | °F or °C | °F, °C, or the -10 to +10 scale of Eight Sleep's app |
-| **Both sides at once** | Each side set separately | A link switch: temperature, power, schedules, buttons and shortcuts apply to both sides |
-| **Schedule page** | Separate sections per setting, one day at a time | One night as a list of events in order, with a tab per day. Save for that day or for any set of days. |
-| **Alarm length** | A set time, 3 minutes at most | Keeps going until dismissed, for 10 to 30 minutes |
-| **Alarm ramp-up** | The firmware's "rise" pattern, which on a Pod 5 is one steady strength | A real ramp: 20, 40, 60, 80% of the chosen strength, then full |
+| **Both sides at once** | Each side set separately | Link the sides: temperature, power, schedules, buttons and shortcuts apply to both |
+| **A night's schedule** | Power on and off times, temperature changes and an alarm, set separately | Bed-on time, temperature changes and a wake-up time, as one list with a tab per day. No off time: the bed turns off 30 minutes after wake-up |
+| **Alarm length** | Up to 3 minutes | Until dismissed, for 10 to 30 minutes |
+| **Alarm ramp-up** | The firmware's "rise" pattern, which on a Pod 5 is one steady strength | On a Pod 5, a real ramp: 20, 40, 60, 80% of the chosen strength, then full |
 | **Before the alarm** | Nothing | Optional warm-up to a chosen temperature 15, 30 or 45 minutes before |
-| **After the alarm** | Bed stays on until its off time | Optionally switches off when the alarm is dismissed |
-| **One-time alarm** | "Override tonight's alarm" on the temperature page | Same place, or one request from a shortcut. For the next time the clock shows that time; goes off even if the bed is off. |
-| **Alarm after the off time** | Skipped, because the bed is off | The bed stays on until the alarm has gone off (up to 6 hours past the off time) |
-| **Two sleepers' alarms** | Dismissing one stops both (the firmware's doing), so the other is lost | The other side's alarm is started again |
-| **iPhone Shortcuts** | Possible with the general API | Three short requests: set by -10..+10, set an alarm by time ("6:30 AM" works), read the bed in one sentence |
-| **Internet block** | Blocks outbound traffic including DNS, which can stop the clock syncing | Also re-applied by its own service at every boot. DNS, DHCP and time sync keep working. Eight Sleep's updater is locked out. |
-| **Updates** | From upstream | From whichever repository it was installed from; works on a Pod without Python's `json` and `sqlite3` |
-| **Install on a Pod 5** | Wi-Fi step breaks a Pod already set up in the app; firmware socket not found | Both handled, with a walkthrough written from a real install |
+| **After the alarm** | Bed stays on until its off time | Bed turns off 30 minutes after the wake-up time, or the moment the alarm is dismissed |
+| **One-time alarm** | Overrides tonight's alarm | Set in the app or by one request. Replaces that morning's alarm, goes off even if the bed is off, and the bed stays on for it |
+| **Two sleepers' alarms** | Dismissing one stops both, so the other is lost | Linked sides stop together; otherwise the other side's alarm starts again |
+| **In-bed detection** (Pod 5) | None | Knows when someone is in bed. Optionally turns the bed on when you get in, and vibrates after a long stay |
+| **Turning on by hand** | Stays on 12 hours | 3, 6 or 12 hours, and can ignore the schedule meanwhile |
+| **Left and right** | As the firmware has them | Can be flipped in Settings |
+| **iPhone Shortcuts** | Possible with the general API | Short requests: set by -10..+10, set an alarm by time ("6:30 AM" works), read the bed in one sentence |
+| **Opening by name** | Blank page under any name | `http://eight-pod.local:3000` at home; the Tailscale name away |
+| **Internet block** | Also blocks DNS, which can stop the clock syncing | DNS, address requests and time sync keep working; restored at every boot; Eight Sleep's updater can be locked out |
+| **Remote access** | None | Optional Tailscale on the Pod, set up by one script, with the block still on |
+| **Updates** | From the original project | From this fork; the app shows when a newer version exists |
+| **Housekeeping** | Daily priming off by default; daily reboot only while priming is on | Daily priming on at 2 PM by default; the daily reboot has its own switch |
 
-### Smaller quality-of-life changes
+Smaller changes: temperature controls respond at once instead of locking after every press; the
+power button waits for the Pod's real state; alarm options has a one-minute test; a schedule can be
+saved for one day or any set of days; snooze was removed (the original stored the setting and never
+acted on it).
 
-- Temperature controls respond at once instead of locking after every press, and the app refreshes
-  the bed's state every 5 seconds.
-- The dial is blue when cooling and red when warming, and labels its range and step size.
-- The power button waits for the Pod's state instead of acting on a guess.
-- Alarm options has a one-minute test that vibrates the bed as currently set.
-- Saving a schedule says what it will write to ("Save for Tuesday"), or lets you tick the days.
-- The schedule chart's time axis marks the events you set, and its temperature axis is right in °C.
-- Tap and button settings are one short set of choices for both sides, named for the buttons on a Pod 5.
-- `GET /api/deviceStatus/raw` shows the firmware's unparsed status, for seeing what a Pod reports.
-- A calibration script that reads the firmware's own targets in ten minutes.
+Fixes offered back to the original project, each small and standing on its own:
+[#67](https://github.com/throwaway31265/free-sleep/pull/67),
+[#68](https://github.com/throwaway31265/free-sleep/pull/68),
+[#69](https://github.com/throwaway31265/free-sleep/pull/69),
+[#70](https://github.com/throwaway31265/free-sleep/pull/70),
+[#72](https://github.com/throwaway31265/free-sleep/pull/72),
+[#73](https://github.com/throwaway31265/free-sleep/pull/73),
+[#74](https://github.com/throwaway31265/free-sleep/pull/74).
 
-### Removed
+## What has and has not been tested
 
-- Snooze. Upstream defines the setting but never acts on it; this fork briefly did, then took it out.
+On the test Pod 5: install and update, temperature and power, the measured temperature curve,
+schedules, alarms with the stepped ramp, one-time alarms and the bed staying on for them, buttons,
+linked sides, shortcuts, the internet block, the `.local` name, Tailscale on the Pod (from a phone
+on cellular), in-bed detection and the bed turning on when someone gets in.
 
-### Sent back to upstream
+Not yet seen working on a Pod: the bed turning off after someone gets out, the long-stay alarm,
+"ignore the schedule" after turning on by hand, and flipping left and right. Nothing has been run
+on a Pod 3 or Pod 4. [CHANGELOG.md](CHANGELOG.md) keeps the full list.
 
-Open pull requests on the original project, each a small fix that stands on its own:
-[#67](https://github.com/throwaway31265/free-sleep/pull/67) Pod 5 Wi-Fi step,
-[#68](https://github.com/throwaway31265/free-sleep/pull/68) chart axis in °C,
-[#69](https://github.com/throwaway31265/free-sleep/pull/69) +/- button range,
-[#70](https://github.com/throwaway31265/free-sleep/pull/70) power button loading,
-[#72](https://github.com/throwaway31265/free-sleep/pull/72) measured temperatures,
-[#73](https://github.com/throwaway31265/free-sleep/pull/73) partial alarm updates,
-[#74](https://github.com/throwaway31265/free-sleep/pull/74) alarm flag on both sides.
+## Help and contributing
 
-### Things to know before using it
+Open an issue or pull request on [this repository](https://github.com/jalen-cheng/free-sleep).
+Reports from a Pod 3 or Pod 4 are especially useful. [DEVELOPING.md](DEVELOPING.md) covers setup
+and checks.
 
-- **Tested on one Pod 5 only.** Pod 3 and Pod 4 run the same code but have not been tried with this
-  fork. [docs/POD_MODELS.md](docs/POD_MODELS.md) lists, per model, what is unchanged from the
-  original project, what was changed on purpose, and what nobody has checked.
-- **Sleep tracking (Biometrics) does not work on the tested Pod 5**: its firmware publishes sensor
-  data somewhere the analysis does not read. This is the same upstream.
-- **Some newer Pod 5 units cannot be opened up this way.** See the first section of the walkthrough.
-- **Saved schedules are converted once** when updating to the measured temperatures, so each keeps
-  setting the same level. The originals are kept beside them.
-- The installer in [INSTALLATION.md](INSTALLATION.md) installs this fork, and updates come from it.
-- How everything fits together, feature by feature: [docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md).
-- **Error reporting is off.** This fork has no error-reporting destination built in, so nothing is sent anywhere.
+## The original project
 
----
+This fork exists because of the original Free Sleep. Its community, support and donations are its
+author's, not this fork's:
 
-## 💬 [Discord Server](https://discord.gg/JpArXnBgEj)
-- Support
-- Feature requests
-- Updates
-- Contributing
-
-## [🤖 Custom ChatGPT Support Bot](https://chatgpt.com/g/g-68fb217791dc8191b82d2d0ae7b29940-free-sleep-bot)
-
-- A custom ChatGPT with Free Sleep documentation and related resources. It can help troubleshoot installations, answer setup questions, and guide you through common issues.
-
----
-
-## 🛠️ [Installation Instructions](./INSTALLATION.md) 🛠
-
---- 
-
-## Overview
-Free Sleep is an open-source project that lets you control your Eight Sleep Pod locally — without relying on the cloud or the official app.
-Each Pod actually runs a small Linux computer inside it. Free Sleep installs a lightweight server on that computer, giving you full local control.
-- **Server**: Runs directly on the Pod and talks to its hardware using custom APIs.
-- **App**: A simple, user-friendly web interface for changing temperatures, schedules, alarms, and settings. Screenshots are below.
-
-## Compatability
-- Pod 1 - ❌ **NOT COMPATIBLE**
-- Pod 2 - ❌ **NOT COMPATIBLE**
-- Pod 3 - **(With SD card)** - ✅
-- Pod 3 - **(No SD card)** - ✅ FCC ID: 2AYXT61100001 (The FCC ID is located in the back of the pod where you plug in the water tubes)
-- Pod 4 ✅
-- Pod 5 ✅
-
----  
-Taken from the test Pod 5 on 17 Nov 2026:
-
-<table><tr>
-<td align="center"><img src="docs/screenshots/temperature.png" width="230" alt="Temperature, with the measured bed temperature"><br>Temperature, with the measured bed temperature</td>
-<td align="center"><img src="docs/screenshots/schedule.png" width="230" alt="A night, one tab per day"><br>A night, one tab per day</td>
-<td align="center"><img src="docs/screenshots/schedule_alarm.png" width="230" alt="Bed on, temperature changes and wake up"><br>Bed on, temperature changes and wake up</td>
-<td align="center"><img src="docs/screenshots/alarm_options.png" width="230" alt="Alarm options"><br>Alarm options</td>
-<td align="center"><img src="docs/screenshots/settings.png" width="230" alt="In-bed detection and what it sets off"><br>In-bed detection and what it sets off</td>
-</tr></table>
-
----
-## FAQ
-### Is it reversible?
-Yes, you can easily firmware reset the pod and go back to the official 8 Sleep App
-
-### Will I brick my pod?
-Pod 3 **without** the SD card, Pod 4, and Pod 5 are impossible to brick - _as long as you follow the directions_ 
-
-### Will it void my warranty?
-Free Sleep is not officially supported by 8 Sleep, so there’s always a chance it could affect your warranty.
-That said, you can fully reset the firmware and return the Pod to its original state at any time, and there’s no permanent modification made to the hardware.
-
-
-## Features
-- Allows complete control of device WITHOUT requiring internet access. If you lose internet, your pod WILL NOT turn off, it will continue working! You can completely block WAN internet access if you'd like too. (I blocked all internet access from my pod on my router...)
-- WARNING: This will bypass blocked devices, please use responsibly
-- Dynamic temperature control with real-time updates
-- Schedule management: 
-  - Set power on/off times 
-  - Schedule temperature adjustments
-  - Schedule daily time to prime the pod
-  - Alarms - If you turn off the Pod prior to the alarm running, then the alarm will not run
-- Settings customization: Configure timezones, away mode, brightness of LED on pod
-- Website works on desktop and mobile
-
-
-### Biometrics 📈
-- **The only biometrics data that has been validated is heart rate**, HRV & breathing rates have not been validated & may be inaccurate.
-Heart rates were validated over 33 sleep periods from 3 males & 3 females against mostly Apple Watches. 
-**Heart rate calculations tend to be slightly less accurate for females**
-- Summary statistics for all 33 periods:
-  - RMSE - 2.88 average, 1.45 min, 7.63 max 
-  - Correlation - 80.8% average, 27% min, 95% max
-  - MAE - 1.83 average, 1 min, 5.77 max
-- How to enable:
-  - `sh /home/dac/free-sleep/scripts/enable_biometrics.sh`
-- How to disable:
-  - `sh /home/dac/free-sleep/scripts/disable_biometrics.sh`
-
-#### Biometrics Overview
-
-All biometric and sleep data is inserted into SQLite @ `/persistent/free-sleep-data/free-sleep.db`.
-
-1. Vitals (Heart rate, breath rate, HRV) `biometrics/stream/stream.py` - This runs 24/7 and calculates vitals when it detects presence.
-Vitals are inserted once every 60 seconds & you can access the raw data @ <POD_IP>/api/metrics/vitals
-
-
----
-## Technical details
-
-### **Server**
-- REST API for managing device settings, schedules, and status.
-- Modular design with routes for `deviceStatus`, `settings`, `schedules`, and `execute`.
-- Uses Node.js and Express for lightweight, fast operations.
-
----
-
-## Tech Stack
-- **Server**: Node.js, Express, TypeScript.
-- **App**: React, Material-UI, Zustand, React Query.
-- **Database**: LowDB for simple JSON-based storage.
-
-## Contributing
-- Read [contributing docs](CONTRIBUTING.md) 
-
-### Developing
-- [front-end](app/README_APP.md)
-- [back-end](server/README_SERVER.md)
-
-
----
-
-## Support
-
-If you find this project helpful and would like to support its continued development, you can send a tip to my Bitcoin address or PayPal
-
-- [PayPal](https://paypal.me/realfreesleep)
-- BTC Address: `bc1qjapkufh65gs68v2mkvrzq2ney3vnvv87jdxxg6`
-
-Thank you for your support!
-
-
----
-## Supporters
-
-### Sentry.io 
-Sentry
-has generously sponsored error monitoring for the Free Sleep open-source project.
-Their support helps us maintain a more reliable experience for users by 
-enabling real-time visibility into issues and performance data — thank you, Sentry, 
-for supporting open-source innovation!
-
----
+- [throwaway31265/free-sleep](https://github.com/throwaway31265/free-sleep), with its Discord
+  server and support bot linked from its README. They describe the original's behaviour, which
+  differs from this fork's in the ways listed above.
+- To support the original author, use the donation links in the original's README.
+- The original's error monitoring is sponsored by Sentry. This fork does not use it.
+- Thanks to [@bobobo1618](https://github.com/bobobo1618) for the research into how the Pod is
+  controlled through `dac.sock`.
 
 ## License
-This project is licensed under the MIT License. See the `LICENSE.md` file for details.
 
----
-
-## Acknowledgments
-- Huge thanks to [@bobobo1618](https://github.com/bobobo1618) & their research on how the device is controlled via dac.sock
-
-
----
-
-## Screenshots from the original project
-The Data and Status pages are unchanged in this fork. Data needs biometrics, which does not work on a Pod 5 yet.
-
-![Health status](docs/health_status.PNG)
-![Biometrics - 1](docs/sleep_data.PNG)
-![Biometrics - 2](docs/metrics.PNG)
-![Biometrics - 3](docs/movement.PNG)
-
-
+See [LICENSE.md](LICENSE.md).

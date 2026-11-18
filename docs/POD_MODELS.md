@@ -7,7 +7,7 @@ what should behave as it did there, what was changed on purpose, and what nobody
 
 If you try it on a Pod 3 or 4, the installer keeps your previous install and puts it back if the
 new one fails, and `FREE_SLEEP_REPO=throwaway31265/free-sleep sh /home/dac/free-sleep/scripts/update.sh`
-takes you back to the original.
+takes you back to the original. Like every update, that ends with the internet block switched on.
 
 ## What works on which Pod
 
@@ -91,4 +91,4 @@ takes you back to the original.
 - Whether the half-second status polling suits a Pod 4's firmware.
 - Whether a Pod 3 or 4's system image has the IPv6 firewall, `systemd-resolved` and NetworkManager.
 
-Reports from a Pod 3 or 4 are welcome as issues on this repository.
+Reports from a Pod 3 or 4 are welcome as issues on [this repository](https://github.com/jalen-cheng/free-sleep/issues).

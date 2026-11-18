@@ -2,19 +2,12 @@
 
 Two separate problems:
 
-1. **At home**, the Pod's address (`10.0.0.x`) is handed out by the router and can change, which
+1. **At home**, the Pod's address (for example `192.168.1.50`) is handed out by the router and can change, which
    breaks bookmarks and phone shortcuts.
 2. **Away from home**, the Pod cannot be reached at all, by design.
 
-**Status on the test Pod 5 (17 Nov 2026):**
-
-| | State |
-|---|---|
-| `.local` name | On by default. `http://eight-pod.local:3000` loads from a Mac on the home network. |
-| Tailscale on the Pod | Installed and running with the internet block on. The Pod reaches Tailscale's sign-in servers and two relay regions, and nothing else (`example.com` and `github.com` time out). |
-| Daily refresh of the relay addresses | Works with the block on. |
-| Signing in and opening the page from a phone away from home | Signed in, and an iPhone on cellular reached the Pod through the Los Angeles relay. The page was blank at first because the server refused the app's own files under the name `eight-pod`; that is fixed (PR 44) and checked with the same request headers, but the phone has not been tried again since. |
-| Reboot | Tailscale comes back signed in, and the bed's firmware starts within a minute. |
+Needs SSH access to the Pod ([INSTALLATION.md](../INSTALLATION.md)). Everything here was set up
+and tried on a Pod 5 only. Addresses such as `192.168.1.50` are examples: use your own.
 
 ## 1. A stable address at home
 
@@ -45,8 +38,8 @@ whatever address it has. A Pod 5's hostname is `eight-pod`; run `hostname` on th
 ### B. Reserve the address in the router
 
 In the router's admin page, find the Pod in the list of connected devices and mark its address as
-reserved (also called a static lease or DHCP reservation). On an Xfinity gateway: open
-`http://10.0.0.1`, **Connected Devices**, **Edit** next to the Pod, choose **Reserved IP**, save.
+reserved (also called a static lease or DHCP reservation). The wording differs by router. On an Xfinity gateway, for example: open the gateway's page,
+**Connected Devices**, **Edit** next to the Pod, choose **Reserved IP**, save.
 The Pod shows up by its hardware address, which `cat /sys/class/net/wlan0/address` prints.
 
 ### C. Add a fixed second address
@@ -54,14 +47,15 @@ The Pod shows up by its hardware address, which `cat /sys/class/net/wlan0/addres
 NetworkManager can keep asking the router for an address and also hold one you choose:
 
 ```
-nmcli connection modify customer-wifi +ipv4.addresses 10.0.0.254/24
-nmcli connection up customer-wifi
+nmcli connection modify <connection> +ipv4.addresses 192.168.1.254/24
+nmcli connection up <connection>
 ```
 
 The second command restarts Wi-Fi, so an SSH session will drop for a few seconds. The Pod then
-answers on both addresses. Choose one the router will never give out: on an Xfinity gateway the
-pool is usually `10.0.0.2` to `10.0.0.253`, which leaves `.254`; check that nothing answers there
-first (`ping 10.0.0.254`). Because the router's address is kept as well, a wrong choice cannot lock
+answers on both addresses. `<connection>` is the Wi-Fi profile's name, shown by
+`nmcli connection show` (`customer-wifi` on a Pod 5). The address must be in your home range and
+one the router will never give out: check your router's pool, and that nothing answers there first
+(`ping 192.168.1.254`). Because the router's address is kept as well, a wrong choice cannot lock
 you out, unlike a fully manual address. This one has not been tried on the test Pod.
 
 ## 2. Reaching the Pod away from home
@@ -106,7 +100,7 @@ home, and `eight-pod` only while Tailscale is connected. To use a single link ev
 
 - Leave Tailscale connected on the phone (the iOS app has "VPN On Demand") and always use `http://eight-pod:3000`; or
 - Run `sh /home/dac/free-sleep/scripts/setup_tailscale.sh home-address`, approve the route it names in
-  the Tailscale admin page, and always use the Pod's home address, for example `http://10.0.0.177:3000`.
+  the Tailscale admin page, and always use the Pod's home address, for example `http://192.168.1.50:3000`.
   At home with Tailscale off the phone reaches it directly; with Tailscale on, at home or away, it
   goes through Tailscale. Reserve the address in the router first (part 1, B), since everything
   then points at it. Not yet tried from a phone.
@@ -150,9 +144,6 @@ Other commands:
 
 What can still go wrong:
 
-- Pods that installed Tailscale from the first version of the script (17 Nov 2026) booted two
-  minutes slower, bed firmware included, because its unit waited for a network service the Pod
-  does not use. Updating Free Sleep rewrites the unit.
 - If Tailscale ever changes its sign-in range, the Pod loses remote access until the range in
   `block_internet_access.sh` is updated. Home access is not affected.
 - A firmware update from Eight Sleep may remove the files under `/etc`. Re-run
@@ -174,6 +165,18 @@ route (Apple TV: **Subnet Router**, **Advertise New Route**, for example `10.0.0
 route in the admin page, switch off key expiry for that device, and reserve the Pod's address
 (part 1, B). Its weakness: it fails when you are on another network that uses the same range as
 home, and `10.0.0.x` is common.
+
+## Results on the test Pod 5
+
+As of 17 Nov 2026:
+
+| | State |
+|---|---|
+| `.local` name | On by default. `http://eight-pod.local:3000` loads from a Mac on the home network. |
+| Tailscale on the Pod | Installed and running with the internet block on. The Pod reaches Tailscale's sign-in servers and two relay regions, and nothing else (`example.com` and `github.com` time out). |
+| Daily refresh of the relay addresses | Works with the block on. |
+| Signing in and opening the page from a phone away from home | Signed in, and an iPhone on cellular reached the Pod through the Los Angeles relay. The page was blank at first because the server refused the app's own files under the name `eight-pod`; that is fixed (PR 44) and checked with the same request headers, but the phone has not been tried again since. |
+| Reboot | Tailscale comes back signed in, and the bed's firmware starts within a minute. |
 
 ## Sources
 

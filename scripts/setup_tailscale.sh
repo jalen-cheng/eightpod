@@ -16,7 +16,7 @@
 #   sh setup_tailscale.sh login         Sign the Pod in (prints a link to open on your phone)
 #   sh setup_tailscale.sh status        Show the connection, regions and allowed relay addresses
 #   sh setup_tailscale.sh regions       List every relay region code
-#   sh setup_tailscale.sh home-address  Make the Pod's home address (for example 10.0.0.177) work
+#   sh setup_tailscale.sh home-address  Make the Pod's home address (for example 192.168.1.50) work
 #                                       over Tailscale too, so one link works at home and away
 #   sh setup_tailscale.sh policy        Print the entry for your Tailscale policy file that makes
 #                                       all your devices use the Pod's relay regions

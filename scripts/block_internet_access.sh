@@ -139,10 +139,10 @@ fi
 echo "Blocking internet access..."
 if [ "$ALLOW_SENTRY" = "true" ]; then
   printf '\033[33m%s\033[0m\n' "Sentry servers are allowed (ALLOW_SENTRY=true)."
-  printf '\033[33m%s\033[0m\n' "Error logs are only sent if error logging is enabled in the UI (off by default)."
+  printf '\033[33m%s\033[0m\n' "Nothing is sent unless you have set your own SENTRY_DSN for the server."
   printf '\033[33m%s\033[0m\n' "To block Sentry again, run: 'ALLOW_SENTRY=false sh scripts/block_internet_access.sh'"
 else
-  echo "Sentry servers are blocked. To allow error logs, run: 'ALLOW_SENTRY=true sh scripts/block_internet_access.sh'"
+  echo "Sentry servers are blocked (this version sends no error reports unless you set your own SENTRY_DSN)."
 fi
 
 if [ "$ALLOW_TAILSCALE" = "true" ]; then

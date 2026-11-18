@@ -26,16 +26,21 @@ type NightWithAlarm = {
   power: { off: string };
 };
 
-// Keeps a night's off time OFF_AFTER_ALARM_MINUTES after its wake-up time. Changes the night in
+// Sets a night's off time from its wake-up time. Used on every write: whatever off time was
+// sent, the wake-up time (the alarm's time, alarm on or off) decides it. Changes the night in
 // place and returns it.
-// - Alarm on: the alarm's time is the wake-up time, and the off time follows it.
-// - Alarm off: nights saved before there was a wake-up time only have an off time worth keeping,
-//   so the wake-up time is taken from it. Once the two agree this changes nothing.
 export function applyAutomaticOffTime<Night extends NightWithAlarm>(night: Night): Night {
-  if (night.alarm.enabled) {
-    night.power.off = offTimeAfterAlarm(night.alarm.time);
-  } else if (night.power.off !== offTimeAfterAlarm(night.alarm.time)) {
+  night.power.off = offTimeAfterAlarm(night.alarm.time);
+  return night;
+}
+
+// For nights saved before there was a wake-up time, run once when the schedules are loaded.
+// With the alarm on, the alarm's time already is the wake-up time. With it off, the only time
+// worth keeping is the off time, so the wake-up time is taken from that. Then the rule above
+// holds for every night, and this changes nothing on later loads.
+export function adoptSavedOffTime<Night extends NightWithAlarm>(night: Night): Night {
+  if (!night.alarm.enabled && night.power.off !== offTimeAfterAlarm(night.alarm.time)) {
     night.alarm.time = addMinutesToTime(night.power.off, -OFF_AFTER_ALARM_MINUTES);
   }
-  return night;
+  return applyAutomaticOffTime(night);
 }

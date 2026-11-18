@@ -1,3 +1,5 @@
+> These steps also apply to a Pod 5. On its board the serial header is J7; see [INSTALLATION.md](../../INSTALLATION.md).
+
 For tearing pod4 down: just remove the 4 screws under the rubber feet on the bottom. 
 
 I believe they are T10 torx bits. I don't recall. If you have an assorted kit of torx bits you should be good. 

@@ -7,10 +7,12 @@
 // How far above the empty baseline the three zones together must rise to count as someone in
 // bed. Measured on one Pod 5 with one person (17 Nov 2026): an empty side read about 3,900 and
 // moved by up to 140 as the water went from coldest to hottest; lying on a side raised it by
-// 1,800 to 3,000, and lying on the other side raised it by up to 1,200 for a moment.
+// 1,800 to 3,000, lying on the other side raised it by up to 1,300, and a laptop left on the bed
+// raised it by about 870. Medium sits between the laptop and the person; Low is for heavier
+// things left on the bed, High for a light sleeper or a thick topper.
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="0689a7db-11cc-5899-a016-2ebd3ceec1c3")}catch(e){}}();
-export const PRESENCE_DELTAS = { low: 1400, medium: 800, high: 400 };
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="1b0c5c57-014d-556e-8a28-aaae1e06785e")}catch(e){}}();
+export const PRESENCE_DELTAS = { low: 1500, medium: 1100, high: 500 };
 // Readings are noisy one by one, so the middle of the last few is used (5 seconds' worth)
 const SMOOTHING_SAMPLES = 10;
 // A rise must last this long to count as getting in, so leaning or sitting on the bed for a
@@ -18,8 +20,9 @@ const SMOOTHING_SAMPLES = 10;
 const ENTER_HOLD_MS = 30_000;
 // A drop must last this long to count as getting out, so turning over does not
 const LEAVE_HOLD_MS = 60_000;
-// Once in bed, the signal may fall to this fraction of the rise before it counts as a drop
-const LEAVE_FRACTION = 0.6;
+// Once in bed, the signal may fall to this fraction of the rise before it counts as a drop.
+// High enough that something left on the bed after a person gets up does not keep them "in bed".
+const LEAVE_FRACTION = 0.8;
 // Below this fraction of the rise the bed is taken as empty and the baseline follows the signal
 const EMPTY_FRACTION = 0.5;
 // How much of the gap the baseline closes per reading while empty (a few minutes to catch up)
@@ -77,4 +80,4 @@ export function createPresenceDetector(remembered) {
     return { update };
 }
 //# sourceMappingURL=presenceDetector.js.map
-//# debugId=0689a7db-11cc-5899-a016-2ebd3ceec1c3
+//# debugId=1b0c5c57-014d-556e-8a28-aaae1e06785e
