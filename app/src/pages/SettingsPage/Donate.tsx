@@ -2,7 +2,6 @@ import { useState, useRef } from 'react';
 import { Link, TextField, IconButton, InputAdornment, Typography, Box, Tooltip } from '@mui/material';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import CurrencyBitcoinIcon from '@mui/icons-material/CurrencyBitcoin';
-import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import Section from './Section.tsx';
 import paypalIcon from './paypal.png';
 
@@ -29,7 +28,7 @@ export default function Donate() {
   };
 
   return (
-    <Section title="Support the original author" icon={ <AttachMoneyIcon/> }>
+    <Section title="Support the original author">
       <Box sx={ { display: 'flex', flexDirection: 'column', gap: 2 } }>
         <Typography variant="body2" sx={ { color: 'text.secondary', fontSize: 12 } }>
           EightPod builds on Free Sleep, created by the author of the original project. These donations go to them.

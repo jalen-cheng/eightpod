@@ -1,4 +1,3 @@
-import ExtensionOutlinedIcon from '@mui/icons-material/ExtensionOutlined';
 import { SENTRY_DSN } from '../../../sentry.tsx';
 import { Box, CircularProgress, Switch } from '@mui/material';
 import Section from '../Section.tsx';
@@ -26,7 +25,7 @@ export default function FeaturesSection() {
   if (isLoading || !services) return <CircularProgress />;
 
   return (
-    <Section title="Features" icon={ <ExtensionOutlinedIcon/> }>
+    <Section title="Features">
       <Box sx={ { display: 'flex', flexDirection: 'column', gap: 2.5 } }>
         <SettingToggle
           control={

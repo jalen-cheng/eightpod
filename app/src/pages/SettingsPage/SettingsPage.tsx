@@ -1,7 +1,5 @@
 import { DeepPartial } from 'ts-essentials';
 import { Box, Divider } from '@mui/material';
-import WaterDropOutlinedIcon from '@mui/icons-material/WaterDropOutlined';
-import MemoryOutlinedIcon from '@mui/icons-material/MemoryOutlined';
 import PageContainer from '../PageContainer.tsx';
 import { Settings } from '@api/settingsSchema.ts';
 import { postSettings, useSettings } from '@api/settings.ts';
@@ -15,13 +13,11 @@ import FeaturesSection from './FeaturesSection/FeaturesSection.tsx';
 import Section from './Section.tsx';
 import TapGesturesSection from './TapGesturesSection/TapGesturesSection.tsx';
 import PresenceSection from './PresenceSection.tsx';
-import ApiSection from './ApiSection.tsx';
 import AlarmSection from './AlarmSection.tsx';
 import DeviceSettingsSection from './DeviceSettingsSection/DeviceSettingsSection.tsx';
 import DeviceInfo from './DeviceSettingsSection/DeviceInfo.tsx';
 import ErrorBoundary from '@components/ErrorBoundary.tsx';
 import PageHeader from '@components/PageHeader.tsx';
-import ConnectionBadge from '@components/ConnectionBadge.tsx';
 
 
 export default function SettingsPage() {
@@ -41,9 +37,7 @@ export default function SettingsPage() {
 
   return (
     <PageContainer>
-      <PageHeader title="Settings">
-        <Box sx={ { display: { xs: 'flex', md: 'none' } } }><ConnectionBadge/></Box>
-      </PageHeader>
+      <PageHeader title="Settings"/>
       <ErrorBoundary componentName="Device settings">
         <DeviceSettingsSection updateSettings={ updateSettings }/>
       </ErrorBoundary>
@@ -54,7 +48,7 @@ export default function SettingsPage() {
         <TapGesturesSection settings={ settings } updateSettings={ updateSettings }/>
       </ErrorBoundary>
       <ErrorBoundary componentName="Priming settings">
-        <Section title="Priming" icon={ <WaterDropOutlinedIcon/> }>
+        <Section title="Priming">
           <Box sx={ { display: 'flex', flexDirection: 'column', gap: 2 } }>
             <DailyPriming settings={ settings } updateSettings={ updateSettings }/>
             <Divider/>
@@ -65,10 +59,9 @@ export default function SettingsPage() {
       <ErrorBoundary componentName="In-bed detection">
         <PresenceSection settings={ settings } updateSettings={ updateSettings }/>
       </ErrorBoundary>
-      <ApiSection/>
       <FeaturesSection/>
       <ErrorBoundary componentName="Device info">
-        <Section title="Device" icon={ <MemoryOutlinedIcon/> }>
+        <Section title="Device">
           <DeviceInfo settings={ settings } updateSettings={ updateSettings }/>
         </Section>
       </ErrorBoundary>

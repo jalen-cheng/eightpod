@@ -1,7 +1,6 @@
 import { Box, Divider, MenuItem, TextField } from '@mui/material';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
-import TouchAppOutlinedIcon from '@mui/icons-material/TouchAppOutlined';
 import { DeepPartial } from 'ts-essentials';
 
 import { useDeviceStatus } from '@api/deviceStatus.ts';
@@ -57,7 +56,7 @@ export default function TapGesturesSection({ settings, updateSettings }: TapGest
   };
 
   return (
-    <Section title={ labels.title } icon={ <TouchAppOutlinedIcon/> }>
+    <Section title={ labels.title }>
       <Box sx={ { display: 'flex', flexDirection: 'column', gap: 2 } }>
         <TapSettingRow gesture={ labels.temperature } action="Cooler / warmer, by this much">
           <TextField
