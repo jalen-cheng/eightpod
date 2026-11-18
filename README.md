@@ -17,12 +17,13 @@ EightPod controls an Eight Sleep Pod from your own network. Each Pod has a small
 inside; EightPod installs a server on it that talks to the Pod's firmware and serves a web app
 you open on your phone.
 
-**No cloud, no subscription.** Other tools for the Pod, such as
-[eightctl](https://github.com/steipete/eightctl) and the Home Assistant integrations, are remote
-controls for Eight Sleep's cloud: they sign in with your Eight Sleep account, need the internet,
-and can break when Eight Sleep changes or rate-limits an API it does not publish. EightPod takes
-the cloud's place instead of calling it. The server runs on the Pod itself, so there is no
-account, nothing leaves your home network, and the bed keeps working with the internet down.
+**No cloud, no subscription.** The server runs on the Pod itself: no account, nothing sent to
+Eight Sleep or anyone else, and the Pod is blocked from the internet. Other tools for the Pod,
+such as [eightctl](https://github.com/steipete/eightctl) and the Home Assistant integrations, are
+remote controls for Eight Sleep's cloud, so they stop when it does. When AWS went down on 20
+October 2025, Eight Sleep's cloud went with it and Pods were left stuck at their last setting,
+some of them heating ([PCWorld](https://www.pcworld.com/article/2948826/these-smart-beds-began-roasting-their-owners-during-aws-outage.html)).
+A Pod running EightPod has nothing upstream to go down.
 
 **If sleep metrics matter to you, the real thing may suit you better.** EightPod controls the
 bed. Sleep stages, heart rate and Autopilot are Eight Sleep's, and EightPod's own sleep tracking
@@ -30,10 +31,6 @@ does not work on a Pod 5. If you want those, Eight Sleep's app and plan (from $1
 the way to get them.
 
 It started as a fork of [Free Sleep](https://github.com/throwaway31265/free-sleep) and was developed and tested on one Pod 5.
-
-**Local, with no catch.** No cloud, no account and no subscription. The Pod is blocked from the
-internet, so nothing is sent to Eight Sleep or anyone else, and the bed keeps working when your
-internet does not.
 
 <table>
   <tr>
@@ -108,14 +105,14 @@ No Pod yet? **[eightpod.vercel.app](https://eightpod.vercel.app)** is the app on
 - **A local API:** every control is a documented request to the Pod itself, so it keeps working when your internet or Eight Sleep's servers are down, which tools built on the cloud cannot do. Anything that sends a web request can drive the bed: iPhone Shortcuts, Home Assistant, a script, or an AI assistant. See [server/API.md](server/API.md).
 - **A private tunnel for access away from home:** optional Tailscale on the Pod opens the same app from anywhere, with the Pod still blocked from the internet.
 - **Pod 5 side buttons enabled:** + and - change the temperature, holding the middle button switches the side on or off, and any button stops an alarm.
-- **In-bed detection (Pod 5):** the bed knows when someone is in it, and can turn on when you get in, off after you get out, or vibrate after a long stay.
-- **Wake-up heat:** the bed warms to a temperature you choose 15 to 45 minutes before the alarm.
-- **Calibrated temperatures:** the number shown is what the firmware aims for at each level, measured on a Pod 5, beside the temperature the bed measures. Units are °F, °C, or Eight Sleep's -10 to +10.
-- **An address you can remember:** `http://eightpod.local`, with no IP address or port.
 
 **Quality of life**
 
 - **A redesigned app:** dark, phone-first and quiet, with one screen per night, explanations behind an "i", and controls that respond at once.
+- **In-bed detection (Pod 5):** the bed knows when someone is in it, and can turn on when you get in, off after you get out, or vibrate after a long stay.
+- **Calibrated temperatures:** the number shown is what the firmware aims for at each level, measured on a Pod 5, beside the temperature the bed measures. Units are °F, °C, or Eight Sleep's -10 to +10.
+- **An address you can remember:** `http://eightpod.local`, with no IP address or port.
+- **Wake-up heat:** the bed warms to a temperature you choose 15 to 45 minutes before the alarm.
 - **Alarms that keep going:** they vibrate until you dismiss them, with a real ramp-up on a Pod 5, and go off even if the bed is off.
 - **One-time alarms:** change one morning's alarm without touching the schedule.
 - **Linked sides:** control the whole bed as one, across temperature, power, schedules, buttons and shortcuts.

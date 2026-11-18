@@ -15,7 +15,7 @@
       #111827; }
   /* Everything the camera looks at. Zooming scales this around the top-left corner. */
   #camera { position: fixed; left: 0; top: 0; width: 1280px; height: 720px; transform-origin: 0 0;
-    transition: transform 900ms cubic-bezier(0.22, 1, 0.36, 1); will-change: transform; }
+    transition: transform 1100ms cubic-bezier(0.65, 0, 0.35, 1); will-change: transform; }
   #window { position: absolute; left: 80px; top: 44px; width: 1120px; height: 632px; border-radius: 14px; overflow: hidden;
     background: #141414; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.10), 0 40px 100px rgba(0, 0, 0, 0.55), 0 8px 24px rgba(0, 0, 0, 0.35); }
   #bar { height: 36px; display: flex; align-items: center; gap: 8px; padding: 0 14px; background: #1b1b1b; border-bottom: 1px solid #2b2b2b; }
@@ -23,10 +23,19 @@
   #bar span { margin: 0 auto; transform: translateX(-28px); padding: 4px 80px; border-radius: 7px; background: #262626; color: #9b9b9b; font-size: 12px; }
   iframe { display: block; width: 1120px; height: 596px; border: 0; }
   #cursor { position: absolute; left: 0; top: 0; width: 22px; height: 22px; z-index: 5; pointer-events: none;
-    transform: translate(640px, 420px); transition: transform 700ms cubic-bezier(0.22, 1, 0.36, 1); filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5)); }
+    transform: translate(640px, 420px); transition: transform 520ms cubic-bezier(0.45, 0, 0.2, 1); filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5)); }
+  /* The arrow dips as it presses, like a finger on a trackpad */
+  #cursor svg { transform-origin: 3px 2px; transition: transform 120ms ease; }
+  #cursor.down svg { transform: scale(0.8); }
   #ripple { position: absolute; left: -17px; top: -17px; width: 36px; height: 36px; border-radius: 50%; border: 2px solid rgba(255, 255, 255, 0.85); opacity: 0; }
   #ripple.go { animation: ripple 420ms ease-out; }
   @keyframes ripple { from { opacity: 0.9; transform: scale(0.3); } to { opacity: 0; transform: scale(1.5); } }
+  /* A line of words under the window saying what is being shown */
+  #caption { position: fixed; left: 50%; bottom: 26px; transform: translate(-50%, 12px); padding: 11px 24px; border-radius: 999px;
+    background: rgba(12, 13, 16, 0.78); backdrop-filter: blur(14px); border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #f2f2f2; font-size: 22px; font-weight: 500; letter-spacing: -0.01em; white-space: nowrap; opacity: 0;
+    transition: opacity 260ms ease, transform 260ms ease; z-index: 15; }
+  #caption.show { opacity: 1; transform: translate(-50%, 0); }
   #card { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px;
     background: rgba(8, 9, 12, 0.72); backdrop-filter: blur(18px); color: #f2f2f2; opacity: 0; transition: opacity 600ms ease; z-index: 20; }
   #card.show { opacity: 1; }
@@ -51,8 +60,8 @@
     <img src="/eightpod-icon.svg" alt="">
     <h1>EightPod</h1>
     <p>Local control for Eight Sleep Pods. No cloud, no subscription.</p>
-    <b>github.com/jalen-cheng/eightpod</b>
   </div>
+  <div id="caption"></div>
 <script>
   const STAGE = { width: 1280, height: 720 };
   const appFrame = document.getElementById('app');
@@ -93,7 +102,7 @@
     if (!element) return false;
     const point = stagePoint(element);
     cursor.style.transform = `translate(${point.x}px, ${point.y}px)`;
-    await wait(720);
+    await wait(540);
     return true;
   };
 
@@ -103,7 +112,9 @@
     ripple.classList.remove('go');
     void ripple.offsetWidth;
     ripple.classList.add('go');
+    cursor.classList.add('down');
     await wait(110);
+    setTimeout(() => cursor.classList.remove('down'), 130);
     if (pressWith === 'mousedown') element.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0 }));
     else element.click();
     return true;
@@ -117,6 +128,17 @@
     return true;
   };
 
-  window.showCard = () => { document.getElementById('card').classList.add('show'); return true; };
+  // Swaps the words under the window; an empty text hides them
+  window.caption = async (text) => {
+    const line = document.getElementById('caption');
+    line.classList.remove('show');
+    if (!text) return true;
+    await wait(200);
+    line.textContent = text;
+    line.classList.add('show');
+    return true;
+  };
+
+  window.showCard = () => { document.getElementById('caption').classList.remove('show'); document.getElementById('card').classList.add('show'); return true; };
 </script>
 </body>
