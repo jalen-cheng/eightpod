@@ -1,7 +1,7 @@
 import express, { Request, Response } from 'express';
 import { z } from 'zod';
 import { SideChoiceSchema, resolveSides } from '../sideChoice.js';
-import { levelToTemperatureF, temperatureFToLevel } from '../../db/temperatureCurve.js';
+import { FIRMWARE_LEVELS_PER_DIAL_LEVEL, levelToTemperatureF, temperatureFToLevel } from '../../db/temperatureCurve.js';
 import { connectFranken } from '../../8sleep/frankenServer.js';
 import { DeviceStatus, DeviceStatusSchema } from './deviceStatusSchema.js';
 import logger from '../../logger.js';
@@ -45,7 +45,6 @@ const DialSchema = z.object({
   dial: z.number().min(-10).max(10),
 }).strict();
 
-const FIRMWARE_LEVELS_PER_DIAL_STEP = 10;
 const formatDial = (dial: number) => `${dial > 0 ? '+' : ''}${dial}`;
 
 // What each side is set to and has reached, on the -10..+10 scale, with a sentence a phone
@@ -55,8 +54,8 @@ router.get('/deviceStatus/dial', async (req: Request, res: Response) => {
   const deviceStatus = await franken.getDeviceStatus();
   const describeSide = (side: 'left' | 'right') => {
     const { isOn, targetTemperatureF, currentTemperatureLevel } = deviceStatus[side];
-    const targetDial = Math.round(temperatureFToLevel(targetTemperatureF) / FIRMWARE_LEVELS_PER_DIAL_STEP * 2) / 2;
-    const currentDial = Math.round(currentTemperatureLevel / FIRMWARE_LEVELS_PER_DIAL_STEP * 2) / 2;
+    const targetDial = Math.round(temperatureFToLevel(targetTemperatureF) / FIRMWARE_LEVELS_PER_DIAL_LEVEL * 2) / 2;
+    const currentDial = Math.round(currentTemperatureLevel / FIRMWARE_LEVELS_PER_DIAL_LEVEL * 2) / 2;
     const summary = isOn ? `set to ${formatDial(targetDial)}, now at ${formatDial(currentDial)}` : 'off';
     return { isOn, targetDial, currentDial, summary };
   };
@@ -77,7 +76,7 @@ router.post('/deviceStatus/dial', async (req: Request, res: Response) => {
     return;
   }
   const { side, dial } = validationResult.data;
-  const sideStatus = { isOn: true, targetTemperatureF: levelToTemperatureF(dial * FIRMWARE_LEVELS_PER_DIAL_STEP) };
+  const sideStatus = { isOn: true, targetTemperatureF: levelToTemperatureF(dial * FIRMWARE_LEVELS_PER_DIAL_LEVEL) };
   const sides = await resolveSides(side);
   await updateDeviceStatus(Object.fromEntries(sides.map(dialSide => [dialSide, sideStatus])), { isManual: true });
   res.status(200).json({ sides, dial, targetTemperatureF: sideStatus.targetTemperatureF });

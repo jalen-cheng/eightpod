@@ -1,7 +1,7 @@
 # Changelog
 
 What EightPod changed from [throwaway31265/free-sleep](https://github.com/throwaway31265/free-sleep),
-what was checked on a real Pod, and what was not. EightPod is at version 3.9.1. Everything was
+what was checked on a real Pod, and what was not. EightPod is at version 3.9.2. Everything was
 developed and tested on one Pod 5 between 13 and 18 Nov 2026.
 
 **The API.** Everything the app does goes through a documented local API, and every command the
@@ -241,3 +241,4 @@ acted on it).
 | [#100](https://github.com/jalen-cheng/eightpod/pull/100) | Feature, fix | **Dismissing from the bed:** a press stops the alarm on its own side only, unless both sides began going off together; the side that pressed gets a short double buzz to confirm (Pod 5; it is sent a moment after the stop, since 3.8.4, because the firmware dropped it otherwise). Holding the middle button for a second and a half switches the side, down from two seconds. |
 | [#102](https://github.com/jalen-cheng/eightpod/pull/102) | Feature | **Autopilot (Pod 5, experimental, off by default):** reads a heart rate and movement from the cover's piezo sensor, judges asleep and deep sleep, and moves a sleeping side up to 4°F around its set temperature: a fixed night curve, 1°F cooler in deep sleep, your own changes learned per third of the night, and the room's drift. `GET /api/autopilot`; [docs/AUTOPILOT.md](docs/AUTOPILOT.md) (3.9.0). Heart rate checked against a real capture; the rest in tests only |
 | [#103](https://github.com/jalen-cheng/eightpod/pull/103) | Change | **Autopilot no longer tries to detect deep sleep.** The extra degree of cooling now runs from 20 to 90 minutes after falling asleep, where most deep sleep usually falls (3.9.1) |
+| [#104](https://github.com/jalen-cheng/eightpod/pull/104) | Fix | **Side buttons step by levels when the app is set to levels.** '1 level a press' moved 1°F, about a third of a level; a press now moves whole levels. Holding the middle button for 1 second (was 1.5) switches the side (3.9.2) |

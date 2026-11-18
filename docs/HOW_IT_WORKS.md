@@ -239,7 +239,7 @@ installer. A **Pod 4** reports double, triple and quadruple taps as counters, re
 | Bed on, - or + | Cooler or warmer by the step set in Settings, per press | Double tap cooler, triple tap warmer |
 | Bed off, - or + | Turns the side on. No temperature change | Changes the temperature setting |
 | Middle button, short press | Nothing | (Four taps) turns the side on or off |
-| Middle button, held 1.5 seconds | Turns the side on or off | Not available |
+| Middle button, held 1 second | Turns the side on or off | Not available |
 | Alarm vibrating | **Any** short press of any button dismisses it | Four taps dismiss it |
 
 - Presses within 0.4 seconds of each other are handled together, so three quick presses move three steps.

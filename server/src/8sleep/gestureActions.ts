@@ -12,7 +12,7 @@ import { handleAlarmGesture } from '../jobs/alarmSession.js';
 import { Version } from '../routes/deviceStatus/deviceStatusSchema.js';
 import { buzzDismissalConfirmation } from '../jobs/alarmScheduler.js';
 import { TapCounts, processSideGestures } from './gestures.js';
-import { stepTemperatureF } from '../db/temperatureCurve.js';
+import { stepDialLevels, stepFToDialLevels, stepTemperatureF } from '../db/temperatureCurve.js';
 
 // One press can reach us twice: through the tap counters and through the Pod 5 button log, or as
 // a long hold that the firmware follows with a second, shorter event. Running an alarm or power
@@ -39,6 +39,14 @@ const updateControlledSides = (side: Side, sideStatus: DeepPartial<DeviceStatus[
   return updateDeviceStatus(update, { isManual: true });
 };
 
+// One press of a temperature button or tap. The step is saved in °F; with the app set to
+// levels it is taken as whole levels instead, so "1 level a press" moves one level.
+const stepForChosenUnit = (temperatureF: number, deltaF: number, minTemperatureF: number, maxTemperatureF: number): number => (
+  settingsDB.data.temperatureFormat === 'level'
+    ? stepDialLevels(temperatureF, Math.sign(deltaF) * stepFToDialLevels(deltaF), minTemperatureF, maxTemperatureF)
+    : stepTemperatureF(temperatureF, deltaF, minTemperatureF, maxTemperatureF)
+);
+
 export const setSidePower = (side: Side, isOn: boolean) => updateControlledSides(side, { isOn });
 
 // Runs a side's configured actions for the gestures made between two sets of counts.
@@ -58,7 +66,7 @@ export async function runSideGestures(
       tapSettings: settingsDB.data[side].taps,
       targetTemperatureF: deviceStatus[side].targetTemperatureF,
       temperatureLimits: {
-        minTemperatureF: MIN_TARGET_TEMPERATURE_F, maxTemperatureF: MAX_TARGET_TEMPERATURE_F, stepTemperature: stepTemperatureF,
+        minTemperatureF: MIN_TARGET_TEMPERATURE_F, maxTemperatureF: MAX_TARGET_TEMPERATURE_F, stepTemperature: stepForChosenUnit,
       },
       actions: {
         setTargetTemperature: async (temperatureF) => {

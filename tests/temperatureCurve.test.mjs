@@ -2,7 +2,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
-  MAX_TEMPERATURE_F, MIN_TEMPERATURE_F, convertFromEvenSpreadF, levelToTemperatureF, stepTemperatureF, temperatureFToLevel,
+  MAX_TEMPERATURE_F, MIN_TEMPERATURE_F, convertFromEvenSpreadF, levelToTemperatureF, stepDialLevels, stepFToDialLevels,
+  stepTemperatureF, temperatureFToLevel,
 } from '../server/src/db/temperatureCurve.ts';
 
 const closeTo = (actual, expected) => assert.ok(Math.abs(actual - expected) < 0.01, `${actual} is not ${expected}`);
@@ -78,3 +79,30 @@ test('from every whole degree, one step up or down changes what the bed is told'
   }
 });
 
+// The whole °F a dial level (-10 to +10) stands for
+const dialLevelF = (dialLevel) => Math.round(levelToTemperatureF(dialLevel * 10));
+
+test('with the app set to levels, a press moves whole dial levels', () => {
+  // A step saved as 1°F is one level, 6°F is two, 8°F is three
+  assert.deepEqual([1, 3, 6, 8, 10].map(stepFToDialLevels), [1, 1, 2, 3, 4]);
+  for (let dialLevel = -9; dialLevel <= 9; dialLevel++) {
+    const temperatureF = dialLevelF(dialLevel);
+    assert.equal(stepDialLevels(temperatureF, 1, 50, 110), dialLevelF(dialLevel + 1), `up from ${dialLevel}`);
+    assert.equal(stepDialLevels(temperatureF, -1, 50, 110), dialLevelF(dialLevel - 1), `down from ${dialLevel}`);
+  }
+  assert.equal(stepDialLevels(dialLevelF(0), 2, 50, 110), dialLevelF(2));
+  assert.equal(stepDialLevels(dialLevelF(0), -3, 50, 110), dialLevelF(-3));
+  // Every level has its own whole degree
+  assert.equal(new Set(Array.from({ length: 21 }, (_unused, index) => dialLevelF(index - 10))).size, 21);
+  // The ends of the dial hold
+  assert.equal(stepDialLevels(dialLevelF(10), 1, 50, 110), dialLevelF(10));
+  assert.equal(stepDialLevels(dialLevelF(-10), -1, 50, 110), dialLevelF(-10));
+});
+
+test('a temperature between two levels steps to the next level, not past it', () => {
+  const betweenF = Math.round((dialLevelF(2) + dialLevelF(3)) / 2);
+  if (betweenF !== dialLevelF(2) && betweenF !== dialLevelF(3)) {
+    assert.equal(stepDialLevels(betweenF, 1, 50, 110), dialLevelF(3));
+    assert.equal(stepDialLevels(betweenF, -1, 50, 110), dialLevelF(2));
+  }
+});

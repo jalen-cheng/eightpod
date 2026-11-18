@@ -32,7 +32,7 @@ const MIDDLE_HELD_PATTERN = /\[buttons\] middle button held for (\d+)ms/;
 const HELD_LINE_MAX_AGE_MS = 4_000;
 
 // Holding the middle button at least this long switches the side on or off
-export const POWER_HOLD_MS = 1_500;
+export const POWER_HOLD_MS = 1_000;
 
 // Each button uses the settings of the tap gesture that does the same job on a Pod 4:
 // "-" cools like a double tap, "+" warms like a triple tap, the middle button is the quadruple tap.
