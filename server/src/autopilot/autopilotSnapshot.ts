@@ -16,10 +16,12 @@ export type TrackerLink = {
 
 export type AutopilotSideSnapshot = {
   stage: SleepStage;
-  // While asleep: a night's sleep, or a nap (which is followed but not steered)
+  // While asleep: being treated as the night's sleep, or as a nap (followed but not steered)
   sleepKind?: SleepKind;
   // For showing only; sleep is judged from stillness
   heartRate?: number;
+  // Breaths a minute
+  breathingRate?: number;
   minutesAsleep?: number;
   // How far the autopilot has the side from its set temperature right now, °F
   offsetF?: number;

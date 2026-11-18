@@ -658,9 +658,10 @@ temperature is only changed when it is.
 | `available` | `false` when the piezo sensor has sent nothing in the last 2 minutes (other Pods) |
 | `room` | The air at the cover. Read as hundredths of a degree; not checked against a thermometer |
 | `stage` | `out`, `awake` or `asleep` |
-| `sleepKind` | While asleep: `night`, or `nap` (followed and saved, not adjusted) |
+| `sleepKind` | While asleep: `night` when the autopilot is treating it as the night's sleep, `nap` when it is leaving it alone (it began at an hour that looks like a nap and has not yet lasted 3 hours) |
+| `breathingRate` | Breaths a minute over the last 5 minutes; missing when no reading could be trusted |
 | `heartRate` | Beats a minute over the last 5 minutes; missing when no reading could be trusted. Shown only: sleep is judged from stillness |
-| `rules` | The stillness rules in use: still minutes before "asleep", and moving seconds that make a minute restless |
+| `rules` | The sleep rules in use: still minutes before "asleep", moving seconds that make a minute restless, and `maxBreathingSpread` when calibration has found that asking for steady breathing helps |
 | `tracker` | The last sleep tracker to report on this side, and how far the bed's sleep and wake times are from its, in minutes |
 | `offsetF` | How far the side is from its set temperature because of the autopilot |
 | `learned` | What your changes have taught it for each third of the night, in °F |
@@ -682,12 +683,23 @@ nights have tracker times). Send the two times, or a health app's raw samples:
 { "side": "left", "source": "Whoop", "asleepAt": "2026-11-18T23:12:00-08:00", "awakeAt": "2026-11-19T06:48:00-08:00" }
 ```
 
+`side` and `source` may be given in the address instead (`?side=left`), for an app that cannot
+shape its own request. The body the iPhone app Health Auto Export posts is read as it is
+(`data.metrics` with a `sleep_analysis` entry, one row a night or sample by sample); that was
+written from the app's documentation and has not been run against the app.
+
 The response says how many sleeps were read, how many matched a saved stay, and the rules now in
 use. 400 when the body is not valid or holds no sleep.
 
 ### `GET /api/autopilot/nights`
 
 The saved stays in bed, newest first, without their minute rows: `side`, `startedAtMs`,
-`minutesLogged`, `kind` (`night` or `nap`), the bed's `asleepAtMs` and `awakeAtMs`, and
-`tracker` when times were sent. `?limit=` takes 1 to 60 (default 14). The full files are on the
+`minutesLogged`, `kind` (`nap` for a sleep under 3 hours, else `night`), the bed's `asleepAtMs`
+and `awakeAtMs`, the middle `heartRate` and `breathingRate` of the asleep minutes, and `tracker`
+when times were sent. `?limit=` takes 1 to 60 (default 14).
+
+### `GET /api/autopilot/nights/export`
+
+Everything saved, as a JSON file to download: every night with its minute rows, the sleep rules,
+what was learned from corrections, and the tracker links. The newest 180 stays are kept on the
 Pod in `/persistent/free-sleep-data/autopilot_nights/`.

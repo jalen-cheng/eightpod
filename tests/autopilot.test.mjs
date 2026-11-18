@@ -7,9 +7,15 @@ import {
 import {
   MAX_OFFSET_F, NO_LEARNED_OFFSETS, curveOffsetF, learnFromCorrection, nightPartAt, planTemperature, surroundingsOffsetF,
 } from '../server/src/autopilot/nightPlan.ts';
-import { classifySleep, findScheduledTemperatureF } from '../server/src/autopilot/scheduledBase.ts';
+import {
+  findScheduledTemperatureF, findUsualSleep, isNightExpected, kindOfSleep,
+} from '../server/src/autopilot/scheduledBase.ts';
+import {
+  BREATHING_SAMPLES_PER_SECOND, BREATHING_WINDOW_SECONDS, estimateBreathingRate, measureBreathingSpread,
+} from '../server/src/autopilot/breathingRate.ts';
 import {
   DEFAULT_SLEEP_RULES, calibrateSleepRules, createSleepTracker, detectSleepTimes, findSleepPeriods, measureRules,
+  readHealthExportSleep,
 } from '../server/src/autopilot/sleepTracker.ts';
 
 // A made-up piezo signal: a short 7 Hz knock at every heartbeat, over slow breathing and noise
@@ -156,18 +162,124 @@ test('a health app\'s samples are joined into sleeps, leaving out awake and in-b
   ]);
 });
 
-test('sleep that begins in or just before the scheduled night is the night; otherwise a nap', () => {
-  const night = { power: { on: '22:00', off: '07:30', enabled: true, onTemperature: 82 }, alarm: { time: '07:00' } };
-  assert.equal(classifySleep('22:40', night), 'night');
-  assert.equal(classifySleep('03:10', night), 'night');
-  assert.equal(classifySleep('20:15', night), 'night');
-  assert.equal(classifySleep('14:00', night), 'nap');
-  assert.equal(classifySleep('07:30', night), 'nap');
-  // With no schedule, the hour decides
-  const off = { ...night, power: { ...night.power, enabled: false } };
-  assert.equal(classifySleep('14:00', off), 'nap');
-  assert.equal(classifySleep('23:00', off), 'night');
-  assert.equal(classifySleep('23:00', undefined), 'night');
+test('a sleep under three hours is a nap, whenever it happens', () => {
+  assert.equal(kindOfSleep(40), 'nap');
+  assert.equal(kindOfSleep(179), 'nap');
+  assert.equal(kindOfSleep(180), 'night');
+  assert.equal(kindOfSleep(450), 'night');
+});
+
+const clock = (hour, minute = 0) => hour * 60 + minute;
+
+test('the usual sleep times come from saved nights, with bedtimes either side of midnight', () => {
+  assert.equal(findUsualSleep([{ asleepMinutes: clock(23), awakeMinutes: clock(7) }]), undefined);
+  const usual = findUsualSleep([
+    { asleepMinutes: clock(23, 30), awakeMinutes: clock(7, 10) },
+    { asleepMinutes: clock(0, 20), awakeMinutes: clock(7, 40) },
+    { asleepMinutes: clock(23, 50), awakeMinutes: clock(6, 50) },
+  ]);
+  assert.deepEqual(usual, { asleepMinutes: clock(23, 50), awakeMinutes: clock(7, 10) });
+});
+
+test('whether a sleep looks like the night goes by habit first, then the schedule, then the hour', () => {
+  // The schedule runs the bed from 21:00 to 09:00, but this sleeper sleeps about 01:00 to 08:00
+  const night = { power: { on: '21:00', off: '09:30', enabled: true, onTemperature: 82 }, alarm: { time: '09:00' } };
+  const usual = { asleepMinutes: clock(1), awakeMinutes: clock(8) };
+  assert.equal(isNightExpected('00:40', usual, night), true);
+  assert.equal(isNightExpected('04:00', usual, night), true);
+  assert.equal(isNightExpected('22:30', usual, night), true);
+  // An evening doze inside the schedule's hours, well before this sleeper's nights begin
+  assert.equal(isNightExpected('21:15', usual, night), false);
+  assert.equal(isNightExpected('14:00', usual, night), false);
+  // With no nights saved yet, the schedule decides
+  assert.equal(isNightExpected('21:15', undefined, night), true);
+  assert.equal(isNightExpected('14:00', undefined, night), false);
+  // With neither, the hour does
+  assert.equal(isNightExpected('14:00', undefined, undefined), false);
+  assert.equal(isNightExpected('23:00', undefined, undefined), true);
+});
+
+// A made-up piezo signal: slow breathing swells, with heartbeats, drift and noise on top
+const makeBreathingSignal = (breathsPerMinute) => {
+  const samples = [];
+  let seed = 11;
+  const random = () => {
+    seed = (seed * 1103515245 + 12345) % 2147483648;
+    return seed / 2147483648 - 0.5;
+  };
+  for (let index = 0; index < BREATHING_WINDOW_SECONDS * BREATHING_SAMPLES_PER_SECOND; index++) {
+    const time = index / BREATHING_SAMPLES_PER_SECOND;
+    const breath = Math.sin(2 * Math.PI * breathsPerMinute / 60 * time);
+    const heartbeat = 0.15 * Math.sin(2 * Math.PI * 1.1 * time);
+    samples.push(Math.round(-45000 + 300000 * breath + 300000 * heartbeat + 2000 * time + 40000 * random()));
+  }
+  return samples;
+};
+
+test('a breathing rate is read from slow swells under heartbeats, drift and noise', () => {
+  for (const breathsPerMinute of [10, 13, 16, 20, 24]) {
+    const estimate = estimateBreathingRate(makeBreathingSignal(breathsPerMinute));
+    assert.ok(estimate, `an estimate for ${breathsPerMinute}`);
+    assert.ok(Math.abs(estimate.breathsPerMinute - breathsPerMinute) <= 1, `${breathsPerMinute} read as ${estimate.breathsPerMinute}`);
+    assert.ok(estimate.confidence >= 0.4, `confidence ${estimate.confidence}`);
+  }
+  assert.equal(estimateBreathingRate(new Array(15000).fill(-45000)), undefined);
+  assert.equal(estimateBreathingRate(makeBreathingSignal(14).slice(0, 5000)), undefined);
+});
+
+test('a minute\'s breathing spread needs three readings', () => {
+  assert.equal(measureBreathingSpread([14, 15]), undefined);
+  assert.equal(measureBreathingSpread([14, 15.5, 13.5, 14]), 2);
+});
+
+test('steady breathing is only asked for when the rules say so', () => {
+  const stillButUneven = { isInBed: true, movementSeconds: 0, breathingRate: 16, breathingSpread: 6 };
+  // By default stillness is enough
+  assert.equal(addMinutes(createSleepTracker(), 15, stillButUneven).stage, 'asleep');
+  // With the rule on, uneven breathing holds sleep off until it steadies
+  const strict = createSleepTracker(() => ({ ...DEFAULT_SLEEP_RULES, maxBreathingSpread: 2 }));
+  assert.equal(addMinutes(strict, 20, stillButUneven).stage, 'awake');
+  const steady = addMinutes(strict, 15, { isInBed: true, movementSeconds: 0, breathingRate: 14, breathingSpread: 1 });
+  assert.equal(steady.stage, 'asleep');
+  assert.equal(steady.breathingRate, 14);
+  // And with no breathing readings to judge by, stillness decides again
+  const blind = createSleepTracker(() => ({ ...DEFAULT_SLEEP_RULES, maxBreathingSpread: 2 }));
+  assert.equal(addMinutes(blind, 15, { isInBed: true, movementSeconds: 0 }).stage, 'asleep');
+});
+
+test('calibration turns the breathing rule on when it brings sleep onset closer to the tracker', () => {
+  // Lies awake and still for 40 minutes, breathing unevenly, then sleeps
+  const night = {
+    minutes: [
+      ...new Array(40).fill({ isInBed: true, movementSeconds: 0, breathingSpread: 6 }),
+      ...new Array(400).fill({ isInBed: true, movementSeconds: 0, breathingSpread: 1 }),
+      ...new Array(10).fill({ isInBed: true, movementSeconds: 45 }),
+    ],
+    trackerAsleepAtMinute: 40,
+    trackerAwakeAtMinute: 440,
+  };
+  assert.equal(measureRules([night], DEFAULT_SLEEP_RULES).onsetErrorMinutes, 40);
+  const calibrated = calibrateSleepRules([night, night, night]);
+  assert.ok(calibrated.rules.maxBreathingSpread !== undefined, JSON.stringify(calibrated));
+  assert.ok(calibrated.onsetErrorMinutes <= 10, JSON.stringify(calibrated));
+});
+
+test('an Apple Health export app\'s body is read, one row a night or sample by sample', () => {
+  const nightly = readHealthExportSleep({ data: { metrics: [
+    { name: 'heart_rate', data: [{ date: '2026-11-18 00:00:00 -0800', qty: 60 }] },
+    { name: 'sleep_analysis', data: [{ sleepStart: '2026-11-17 23:00:00 -0800', sleepEnd: '2026-11-18 06:30:00 -0800', source: 'Whoop' }] },
+  ] } });
+  assert.deepEqual(nightly, [{ startMs: Date.UTC(2026, 10, 18, 7), endMs: Date.UTC(2026, 10, 18, 14, 30), value: undefined }]);
+  const samples = readHealthExportSleep({ data: { metrics: [{ name: 'sleep_analysis', data: [
+    { start: '2026-11-17 23:00:00 -0800', end: '2026-11-17 23:30:00 -0800', value: 'Core' },
+    { startDate: '2026-11-17 23:30:00 -0800', endDate: '2026-11-17 23:40:00 -0800', value: 'Awake' },
+    { start: 'nonsense', end: '2026-11-17 23:30:00 -0800', value: 'Core' },
+  ] }] } });
+  assert.equal(samples.length, 2);
+  assert.equal(findSleepPeriods(samples).length, 1);
+  // Anything else is not such a body
+  assert.equal(readHealthExportSleep({ side: 'left', asleepAt: '2026-11-17T23:00:00-08:00' }), undefined);
+  assert.equal(readHealthExportSleep(undefined), undefined);
 });
 
 test('the night curve cools early, returns by late night and ends a degree warm', () => {

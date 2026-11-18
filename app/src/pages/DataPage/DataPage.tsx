@@ -2,6 +2,7 @@ import { Outlet, useLocation, Link } from 'react-router-dom';
 import { Box, Paper, Typography } from '@mui/material';
 import BedOutlinedIcon from '@mui/icons-material/BedOutlined';
 import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined';
+import NightsStayOutlinedIcon from '@mui/icons-material/NightsStayOutlined';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import PageContainer from '../PageContainer.tsx';
 import PageHeader from '@components/PageHeader.tsx';
@@ -10,6 +11,7 @@ import { useServices } from '@api/services.ts';
 const SLEEP_ROUTE = '/data/sleep';
 const DATA_PAGES = [
   { title: 'Sleep', route: SLEEP_ROUTE, icon: <BedOutlinedIcon/> },
+  { title: 'Nights', route: '/data/nights', icon: <NightsStayOutlinedIcon/> },
   { title: 'Logs', route: '/data/logs', icon: <ArticleOutlinedIcon/> },
 ];
 

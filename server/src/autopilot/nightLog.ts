@@ -9,8 +9,8 @@ import type { Side } from '../db/schedulesSchema.js';
 import type { NightRecord } from './nightRecord.js';
 
 const NIGHTS_FOLDER = `${config.dbFolder}autopilot_nights/`;
-// Both sides together: about two months of nights and naps for two sleepers
-const MAX_FILES_KEPT = 160;
+// Both sides together: about three months of nights for two sleepers, more for one
+const MAX_FILES_KEPT = 180;
 
 // Named by start time, so sorting the names sorts the nights
 const fileNameOf = (record: Pick<NightRecord, 'side' | 'startedAtMs'>) => (

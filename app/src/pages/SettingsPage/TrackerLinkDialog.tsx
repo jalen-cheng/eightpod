@@ -25,9 +25,10 @@ const describeLink = (link: AutopilotSnapshot['left']['tracker']): string => {
     + `Over ${nights} the bed was off by ${link.onsetErrorMinutes} min falling asleep and ${link.wakeErrorMinutes} min waking.`;
 };
 
-// How to send a watch's or band's sleep and wake times to the bed every morning. Whoop, Fitbit
-// (through a sync app) and Apple Watch all write sleep to Apple Health, and a Shortcut can read
-// it there, so one recipe covers them without any account or cloud link on the Pod.
+// How to send a watch's or band's sleep and wake times to the bed every morning. Apple Watch,
+// Whoop and Fitbit all write sleep to Apple Health, where only something on the phone can read
+// it: an app that posts it on a schedule, or a Shortcut run by an automation. Either way, once
+// set up it runs by itself. iPhone only: Android's Health Connect has no such route built here.
 export default function TrackerLinkDialog({ open, onClose, autopilot }: TrackerLinkDialogProps) {
   const [side, setSide] = useState<typeof SIDES[number]>('left');
   const podAddress = import.meta.env.VITE_ENV === 'demo' ? 'http://eightpod.local' : window.location.origin;
@@ -47,8 +48,10 @@ export default function TrackerLinkDialog({ open, onClose, autopilot }: TrackerL
       <DialogTitle>Link a sleep tracker</DialogTitle>
       <DialogContent sx={ { display: 'flex', flexDirection: 'column', gap: 1.5 } }>
         <Typography variant="body2" sx={ { color: 'text.secondary' } }>
-          Each morning your phone sends the times your watch or band says you fell asleep and woke. The bed compares them
-          with its own and adjusts how it judges sleep. It works with anything that writes sleep to Apple Health.
+          Each morning your iPhone sends the times your watch or band says you fell asleep and woke. The bed compares them
+          with its own and adjusts how it judges sleep. Apple Watch, Whoop and Fitbit all write sleep to Apple Health, and
+          Apple Health can only be read by something on the phone, so it is set up once there and then runs by itself.
+          Android is not supported yet.
         </Typography>
         <ToggleButtonGroup
           exclusive
@@ -61,6 +64,12 @@ export default function TrackerLinkDialog({ open, onClose, autopilot }: TrackerL
           )) }
         </ToggleButtonGroup>
         <Typography variant="body2">{ describeLink(autopilot[side].tracker) }</Typography>
+        <Typography variant="subtitle2">With an app, no Shortcut</Typography>
+        <Typography variant="body2" sx={ { fontSize: 13.5, overflowWrap: 'anywhere' } }>
+          The paid iPhone app Health Auto Export can post Apple Health data on a schedule. Add a REST API automation for
+          Sleep Analysis with the address { podAddress }/api/autopilot/sleepTimes?side={ side }
+        </Typography>
+        <Typography variant="subtitle2">With a Shortcut</Typography>
         <Box
           component="ol"
           sx={ { m: 0, pl: 2.5, display: 'flex', flexDirection: 'column', gap: 0.75, fontSize: 13.5, overflowWrap: 'anywhere' } }
@@ -68,7 +77,7 @@ export default function TrackerLinkDialog({ open, onClose, autopilot }: TrackerL
           { steps.map(step => <li key={ step }>{ step }</li>) }
         </Box>
         <Typography variant="caption" sx={ { color: 'text.secondary' } }>
-          These steps have not been run on a phone yet. Any script can send the same request; see the API guide.
+          Neither route has been run on a phone yet. Any script can send the same request; see the API guide.
         </Typography>
       </DialogContent>
       <DialogActions sx={ { px: 3, pb: 2 } }>

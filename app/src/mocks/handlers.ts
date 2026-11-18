@@ -55,6 +55,37 @@ export const handlers = [
     await delay(120);
     return new HttpResponse(null, { status: 204 });
   }),
+  // A week of saved nights on the left, each with a watch's times a few minutes off the bed's, and a nap
+  http.get('/api/autopilot/nights', async () => {
+    await delay(80);
+    const MINUTE_MS = 60_000;
+    const lastMidnight = new Date().setHours(0, 0, 0, 0);
+    const nights = Array.from({ length: 7 }, (_unused, index) => {
+      const startedAtMs = lastMidnight - index * 24 * 60 * MINUTE_MS - (70 - index * 4) * MINUTE_MS;
+      const asleepAtMs = startedAtMs + (18 + index * 2) * MINUTE_MS;
+      const awakeAtMs = asleepAtMs + (430 + index * 6) * MINUTE_MS;
+      return {
+        side: 'left', startedAtMs, minutesLogged: Math.round((awakeAtMs - startedAtMs) / MINUTE_MS) + 9, kind: 'night',
+        asleepAtMs, awakeAtMs, heartRate: 54 + (index % 3), breathingRate: 14 - (index % 2),
+        tracker: {
+          source: 'Apple Health', asleepAtMs: asleepAtMs - (9 - index) * MINUTE_MS, awakeAtMs: awakeAtMs + (index - 3) * MINUTE_MS,
+          receivedAtMs: awakeAtMs + 40 * MINUTE_MS,
+        },
+      };
+    });
+    const napStartedAtMs = lastMidnight - 9 * 60 * MINUTE_MS;
+    nights.splice(1, 0, {
+      side: 'left', startedAtMs: napStartedAtMs, minutesLogged: 58, kind: 'nap',
+      asleepAtMs: napStartedAtMs + 12 * MINUTE_MS, awakeAtMs: napStartedAtMs + 52 * MINUTE_MS, heartRate: 58, breathingRate: 15,
+    } as typeof nights[number]);
+    return HttpResponse.json(nights);
+  }),
+  http.get('/api/autopilot/nights/export', async () => {
+    await delay(80);
+    return HttpResponse.json({ exportedAt: new Date().toISOString(), nights: [] }, {
+      headers: { 'Content-Disposition': 'attachment; filename="eightpod-nights-demo.json"' },
+    });
+  }),
   // The autopilot early in the night: the left sleeper asleep, the right side empty
   http.get('/api/autopilot', async () => {
     await delay(60);
@@ -63,7 +94,7 @@ export const handlers = [
       enabled: true,
       room: { temperatureF: 68, humidityPercent: 46 },
       left: {
-        stage: 'asleep', heartRate: 54, minutesAsleep: 62, offsetF: -3,
+        stage: 'asleep', heartRate: 54, breathingRate: 14, minutesAsleep: 62, offsetF: -3,
         lastChange: '3°F cooler (time of night, first sleep cycle)', learned: { early: -0.5, middle: 0, late: 0 },
         sleepKind: 'night', rules: { stillMinutesToSleep: 10, restlessSecondsToWake: 20 },
         tracker: { source: 'Apple Health', syncedAt: new Date().toISOString(), nights: 6, onsetErrorMinutes: 7, wakeErrorMinutes: 4 },

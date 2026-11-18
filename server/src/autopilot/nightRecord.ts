@@ -4,12 +4,14 @@
 import type { Side } from '../db/schedulesSchema.js';
 import type { SleepStage } from './sleepTracker.js';
 
-// A sleep that starts in or near the scheduled night, or one at another time of day
+// A sleep of three hours or more is a night's; a shorter one is a nap
 export type SleepKind = 'night' | 'nap';
 
 export type NightMinute = {
   movementSeconds: number;
   heartRate?: number;
+  breathingRate?: number;
+  breathingSpread?: number;
   stage: SleepStage;
   // How far the autopilot had the side from its set temperature, °F
   offsetF?: number;
@@ -36,5 +38,5 @@ export type NightRecord = {
   tracker?: TrackerSleep;
 };
 
-// A night without its minute rows, for listing
-export type NightSummary = Omit<NightRecord, 'minutes'> & { minutesLogged: number };
+// A night without its minute rows, for listing, with the middle readings of its asleep minutes
+export type NightSummary = Omit<NightRecord, 'minutes'> & { minutesLogged: number; heartRate?: number; breathingRate?: number };

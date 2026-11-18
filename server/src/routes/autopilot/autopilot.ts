@@ -1,7 +1,7 @@
 import express, { Request, Response } from 'express';
 import { z } from 'zod';
-import { applyTrackerSleep, getAutopilotSnapshot, getNightSummaries } from '../../autopilot/autopilotMonitor.js';
-import { SleepPeriod, findSleepPeriods } from '../../autopilot/sleepTracker.js';
+import { applyTrackerSleep, getAutopilotSnapshot, getNightSummaries, getNightsExport } from '../../autopilot/autopilotMonitor.js';
+import { SleepPeriod, findSleepPeriods, readHealthExportSleep } from '../../autopilot/sleepTracker.js';
 
 const router = express.Router();
 
@@ -19,6 +19,12 @@ router.get('/autopilot/nights', (req: Request, res: Response) => {
   res.json(getNightSummaries(limit));
 });
 
+// Every saved night with its minute rows, and what has been learned, as a file to keep
+router.get('/autopilot/nights/export', (_req: Request, res: Response) => {
+  res.attachment(`eightpod-nights-${new Date().toISOString().slice(0, 10)}.json`);
+  res.json(getNightsExport());
+});
+
 const isDate = (text: string) => !Number.isNaN(Date.parse(text));
 const DateText = z.string().refine(isDate, 'Not a date and time');
 
@@ -34,18 +40,38 @@ const TrackerSleepSchema = z.object({
   'Send asleepAt and awakeAt, or samples',
 );
 
-// Takes sleep and wake times from a watch or band (by way of a phone shortcut or a script),
-// files them with the stays in bed they overlap, and fits the bed's own sleep rules to them
+const SideSchema = z.enum(['left', 'right']);
+
+// Takes sleep and wake times from a watch or band (by way of a phone shortcut, an app that
+// posts Apple Health data, or a script), files them with the stays in bed they overlap, and
+// fits the bed's own sleep rules to them. An app that cannot shape its own request puts the
+// side in the address (`?side=left`) and sends what it sends.
 router.post('/autopilot/sleepTimes', (req: Request, res: Response) => {
-  const validationResult = TrackerSleepSchema.safeParse(req.body);
-  if (!validationResult.success) {
-    res.status(400).json({ error: 'Invalid request', details: validationResult.error.format() });
-    return;
+  const exportedSamples = readHealthExportSleep(req.body);
+  let side: z.infer<typeof SideSchema>;
+  let source: string;
+  let periods: SleepPeriod[];
+  if (exportedSamples) {
+    const sideResult = SideSchema.safeParse(req.query.side);
+    if (!sideResult.success) {
+      res.status(400).json({ error: 'Add ?side=left or ?side=right to the address' });
+      return;
+    }
+    side = sideResult.data;
+    source = typeof req.query.source === 'string' ? req.query.source.slice(0, 40) : 'Apple Health';
+    periods = findSleepPeriods(exportedSamples);
+  } else {
+    const validationResult = TrackerSleepSchema.safeParse({ side: req.query.side, ...req.body });
+    if (!validationResult.success) {
+      res.status(400).json({ error: 'Invalid request', details: validationResult.error.format() });
+      return;
+    }
+    const { asleepAt, awakeAt, samples } = validationResult.data;
+    ({ side, source } = validationResult.data);
+    periods = samples
+      ? findSleepPeriods(samples.map(sample => ({ startMs: Date.parse(sample.start), endMs: Date.parse(sample.end), value: sample.value })))
+      : [{ asleepAtMs: Date.parse(asleepAt ?? ''), awakeAtMs: Date.parse(awakeAt ?? '') }];
   }
-  const { side, source, asleepAt, awakeAt, samples } = validationResult.data;
-  const periods: SleepPeriod[] = samples
-    ? findSleepPeriods(samples.map(sample => ({ startMs: Date.parse(sample.start), endMs: Date.parse(sample.end), value: sample.value })))
-    : [{ asleepAtMs: Date.parse(asleepAt ?? ''), awakeAtMs: Date.parse(awakeAt ?? '') }];
   if (periods.length === 0 || periods.some(period => period.awakeAtMs <= period.asleepAtMs)) {
     res.status(400).json({ error: 'No sleep found in what was sent' });
     return;

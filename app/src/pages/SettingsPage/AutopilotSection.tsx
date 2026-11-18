@@ -21,7 +21,7 @@ const SIDES = ['left', 'right'] as const;
 const AUTOPILOT_INFO = 'While you sleep, moves the bed a few degrees around the temperature you set: cooler early in the '
   + 'night, back up toward morning, and against a room that warms or cools. Change the temperature '
   + 'yourself at any time and it keeps your change and learns from it. Experimental: sleep is judged from lying still, '
-  + 'and a nap is left alone.';
+  + 'and a nap is left alone. Saved nights are under Data.';
 const TRACKER_INFO = 'Send the sleep and wake times from a watch or band each morning, and the bed tunes how it judges '
   + 'sleep to match them.';
 
@@ -33,6 +33,7 @@ const describeSide = (side: AutopilotSnapshot['left']): string => {
   const facts = [
     side.sleepKind === 'nap' && 'Nap, not adjusted',
     side.heartRate !== undefined && `${side.heartRate} bpm`,
+    side.breathingRate !== undefined && `${side.breathingRate} breaths/min`,
     side.sleepKind !== 'nap' && side.lastChange,
   ].filter(Boolean);
   return facts.length > 0 ? facts.join(' · ') : 'No change yet';

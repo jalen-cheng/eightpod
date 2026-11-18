@@ -110,7 +110,7 @@ No Pod yet? **[eightpod.vercel.app](https://eightpod.vercel.app)** is the app on
 
 - **A redesigned app:** dark, phone-first and quiet, with one screen per night, explanations behind an "i", controls that respond at once, and a page that lists the API.
 - **In-bed detection (Pod 5):** the bed knows when someone is in it, and can turn on when you get in, off after you get out, or vibrate after a long stay.
-- **Autopilot (Pod 5, experimental):** while you sleep, the bed runs cooler early in the night, warms toward morning, follows the room, learns from the changes you make, and can tune its sleep detection to a watch or band through Apple Health. Off by default. See [docs/AUTOPILOT.md](docs/AUTOPILOT.md).
+- **Autopilot (Pod 5, experimental):** while you sleep, the bed runs cooler early in the night, warms toward morning, follows the room, learns from the changes you make, and can tune its sleep detection to a watch or band through Apple Health (iPhone only). Off by default. See [docs/AUTOPILOT.md](docs/AUTOPILOT.md).
 - **Calibrated temperatures:** the number shown is what the firmware aims for at each level, measured on a Pod 5, beside the temperature the bed measures. Units are °F, °C, or Eight Sleep's -10 to +10.
 - **An address you can remember:** `http://eightpod.local`, with no IP address or port.
 - **Wake-up heat:** the bed warms to a temperature you choose 15 to 45 minutes before the alarm.
