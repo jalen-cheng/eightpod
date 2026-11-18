@@ -47,7 +47,7 @@ takes you back to the original.
 - **The daily reboot follows its own switch.** In the original it only ran while daily priming
   was on. If "Reboot once a day" is on and priming is off, the Pod now reboots daily, an hour
   before the priming time.
-- **Error reporting to Sentry is blocked by the internet block** unless you allow it; the original allowed it.
+- **Error reporting is off.** The original sent reports to its own Sentry project when enabled; this fork has no destination built in.
 
 ### Pod 4 taps
 

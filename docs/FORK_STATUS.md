@@ -162,6 +162,7 @@ the calibration script on one would show it.
 | [#56](https://github.com/jalen-cheng/free-sleep/pull/56) | Feature | In-bed detection from the bed's capacitive sensors (Pod 5), with two optional actions: turn the bed on when someone gets in during the evening, and an alarm after a long time in bed. Detection margins are from an empty bed only and are not yet verified with someone in it. |
 | [#57](https://github.com/jalen-cheng/free-sleep/pull/57) | Feature | The Temperature page shows the measured water temperature under the target where the Pod reports it. Second calibration run: water within 2°F of the target from level -5 to +10; 63°F against 50°F at the coldest level after 20 minutes. |
 | [#58](https://github.com/jalen-cheng/free-sleep/pull/58) | Feature | Flip left and right. In-bed detection margins set from a person on the bed. "Turn on when I get into bed" takes a temperature and can last until the person gets out. The measured temperature reads "Bed at". |
+| [#60](https://github.com/jalen-cheng/free-sleep/pull/60) | Fix, docs | Error reporting has no built-in destination (the original project's address was removed). The README no longer links the original's demo, and its screenshots are current. Version is now 3.1.0. |
 
 ## Compared with the Eight Sleep app
 

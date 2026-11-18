@@ -51,6 +51,9 @@
 - When reviewing install/update scripts, remember they run as root or through sudo on an embedded Yocto-based system.
 
 
+# Releases
+- `server/src/serverInfo.json` holds the fork's version. The app compares it with the copy on `main` to offer an update, so raise it (semver) in any PR whose change people should update for.
+
 # Code smells
 - Any complicated functions should have concise, short comments explaining what the function does
 - Do not write obscure code with abbreviated variable names <= 2 characters
