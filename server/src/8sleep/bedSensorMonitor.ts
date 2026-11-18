@@ -6,7 +6,7 @@
 // A Pod 5's firmware publishes both on its local message bus (NATS). A Pod without that bus, or
 // without those subjects, simply never produces a reading: presence stays "not available", no
 // measured temperature is shown, and nothing else is affected.
-import { recordPiezoSecond, recordPressure, recordSurroundings } from '../autopilot/autopilotMonitor.js';
+import { recordHubRoom, recordPiezoSecond, recordPressure, recordSurroundings } from '../autopilot/autopilotMonitor.js';
 import { readFileSync, writeFileSync } from 'fs';
 import { registerInBedCheck } from '../jobs/inBedCheck.js';
 import cbor from 'cbor';
@@ -25,7 +25,7 @@ import {
 } from '../jobs/presenceActions.js';
 import { executeAlarm, getOneOffAlarmSettings } from '../jobs/alarmScheduler.js';
 import { updateDeviceStatus } from '../routes/deviceStatus/updateDeviceStatus.js';
-import { recordWaterReading } from './measuredWater.js';
+import { recordWaterReading, reportedWaterToF } from './measuredWater.js';
 import { toFirmwareSide } from './sideMapping.js';
 
 const NATS_SERVER = process.env.NATS_SERVER || '127.0.0.1:4222';
@@ -176,6 +176,9 @@ export class BedSensorMonitor {
           const reportedValue = message[toFirmwareSide(side)];
           if (typeof reportedValue === 'number') recordWaterReading(side, reportedValue);
         }
+        // The same message carries the air temperature at the hub, in the same units
+        const hubAmbient = (message as { amb?: unknown }).amb;
+        if (typeof hubAmbient === 'number') recordHubRoom(reportedWaterToF(hubAmbient));
       });
       this.subscribe<PiezoMessage>(PIEZO_SUBJECT, (message) => {
         for (const side of SIDES) {

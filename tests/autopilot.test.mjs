@@ -5,18 +5,18 @@ import {
   HEART_RATE_WINDOW_SECONDS, PIEZO_SAMPLES_PER_SECOND, countMovementSeconds, estimateHeartRate, measureSwing,
 } from '../server/src/autopilot/heartRate.ts';
 import {
-  MAX_OFFSET_F, NO_LEARNED_OFFSETS, curveOffsetF, learnFromCorrection, nightPartAt, planTemperature, surroundingsOffsetF,
+  MAX_OFFSET_F, NO_LEARNED_OFFSETS, curveOffsetF, learnFromCorrection, nightPartAt, planTemperature, roomOffsetF, stepToward,
 } from '../server/src/autopilot/nightPlan.ts';
 import {
-  findScheduledTemperatureF, findUsualSleep, isNightExpected, kindOfSleep,
+  findScheduledTemperatureF, findUsualSleep, isNightExpected, isWithinScheduledNight, kindOfSleep,
 } from '../server/src/autopilot/scheduledBase.ts';
 import { countWakeUps } from '../server/src/autopilot/nightRecord.ts';
 import {
   BREATHING_SAMPLES_PER_SECOND, BREATHING_WINDOW_SECONDS, estimateBreathingRate, measureBreathingSpread,
 } from '../server/src/autopilot/breathingRate.ts';
 import {
-  DEFAULT_SLEEP_RULES, calibrateSleepRules, createSleepTracker, detectSleepTimes, findSleepPeriods, measureRules,
-  readHealthExportSleep,
+  DEFAULT_SLEEP_RULES, calibrateSleepRules, countDisagreements, createSleepTracker, detectSleepTimes, findSleepPeriods,
+  mergeSleepPeriods, readHealthExportSleep, readTrackerMinutes, replaySleep,
 } from '../server/src/autopilot/sleepTracker.ts';
 
 // A made-up piezo signal: a short 7 Hz knock at every heartbeat, over slow breathing and noise
@@ -118,32 +118,67 @@ test('the longest sleep of a stay is the one reported', () => {
   assert.equal(detectSleepTimes(stay, DEFAULT_SLEEP_RULES).asleepAtMinute, 40);
 });
 
-test('calibration picks the rules that land nearest a worn tracker, given enough nights', () => {
-  // This sleeper rolls over for a minute every half hour, 15 moving seconds each time, and the
-  // worn tracker says they slept through it. They also lie still for 9 minutes before sleep.
-  const makeNight = () => {
-    const minutes = [...new Array(20).fill({ isInBed: true, movementSeconds: 8 })];
-    for (let minute = 0; minute < 420; minute++) {
-      const isRolling = minute % 30 >= 27;
-      minutes.push({ isInBed: true, movementSeconds: isRolling ? 15 : 0 });
-    }
-    minutes.push(...new Array(10).fill({ isInBed: true, movementSeconds: 45 }));
-    return { minutes, trackerAsleepAtMinute: 20, trackerAwakeAtMinute: 440 };
-  };
-  // The default rules take three such minutes in a row for waking, and split the night
-  const withDefault = measureRules([makeNight()], DEFAULT_SLEEP_RULES);
-  assert.ok(withDefault.wakeErrorMinutes > 60, `default rules were off by ${withDefault.wakeErrorMinutes}`);
-  // Two nights are too few to change anything
-  assert.deepEqual(calibrateSleepRules([makeNight(), makeNight()]).rules, DEFAULT_SLEEP_RULES);
-  const calibrated = calibrateSleepRules([makeNight(), makeNight(), makeNight()]);
-  assert.equal(calibrated.nights, 3);
-  assert.ok(calibrated.rules.restlessSecondsToWake > 15, `restless bar ${calibrated.rules.restlessSecondsToWake}`);
-  assert.ok(calibrated.onsetErrorMinutes <= 2 && calibrated.wakeErrorMinutes <= 5, JSON.stringify(calibrated));
+// A night for calibration: the bed's minutes, and what a worn tracker said for each
+const makeTrackedNight = (minutes, isTrackerAsleep) => ({ minutes, trackerAsleep: minutes.map((_minute, index) => isTrackerAsleep(index)) });
+
+// This sleeper stirs for three minutes in every twelve, 15 moving seconds each, and the worn
+// tracker says they slept through it. The night-to-night length differs a little.
+const makeRollingNight = (asleepMinutes) => {
+  const minutes = [...new Array(20).fill({ isInBed: true, movementSeconds: 8 })];
+  for (let minute = 0; minute < asleepMinutes; minute++) minutes.push({ isInBed: true, movementSeconds: minute % 12 >= 9 ? 15 : 0 });
+  minutes.push(...new Array(10).fill({ isInBed: true, movementSeconds: 45 }));
+  return makeTrackedNight(minutes, index => index >= 20 && index < 20 + asleepMinutes);
+};
+
+test('a stay replays to which minutes were asleep, counted from when the stillness began', () => {
+  const stay = makeStay({ restlessMinutes: 25, asleepMinutes: 100 });
+  const asleep = replaySleep(stay, DEFAULT_SLEEP_RULES);
+  assert.equal(asleep.length, stay.length);
+  assert.equal(asleep[24], false);
+  assert.equal(asleep[25], true);
+  assert.equal(asleep[124], true);
+  assert.equal(asleep.slice(130).some(Boolean), false);
+});
+
+test('calibration fits the rules to a tracker minute by minute, once there are enough nights', () => {
+  const nights = [420, 400, 440, 410, 430, 415].map(makeRollingNight);
+  // The default rules want fifteen still minutes and never get them, so they see no sleep
+  const defaultDisagreements = countDisagreements(nights[0], DEFAULT_SLEEP_RULES);
+  assert.ok(defaultDisagreements > 100, `default rules disagreed on ${defaultDisagreements} minutes`);
+  // Four nights are too few to change anything, but the agreement is still reported
+  const few = calibrateSleepRules(nights.slice(0, 4));
+  assert.deepEqual(few.rules, DEFAULT_SLEEP_RULES);
+  assert.equal(few.isTuned, false);
+  assert.ok(few.agreementPercent < 80, `agreement ${few.agreementPercent}`);
+  const calibrated = calibrateSleepRules(nights);
+  assert.equal(calibrated.nights, 6);
+  assert.equal(calibrated.isTuned, true);
+  assert.ok(calibrated.rules.stillMinutesToSleep < 15, JSON.stringify(calibrated));
+  assert.ok(calibrated.agreementPercent >= 95, `agreement ${calibrated.agreementPercent}`);
 });
 
 test('when the default rules already fit, calibration leaves them alone', () => {
-  const night = { minutes: makeStay({ restlessMinutes: 25, asleepMinutes: 400 }), trackerAsleepAtMinute: 25, trackerAwakeAtMinute: 425 };
-  assert.deepEqual(calibrateSleepRules([night, night, night]).rules, DEFAULT_SLEEP_RULES);
+  const night = makeTrackedNight(makeStay({ restlessMinutes: 25, asleepMinutes: 400 }), index => index >= 25 && index < 425);
+  const calibrated = calibrateSleepRules([night, night, night, night, night]);
+  assert.deepEqual(calibrated.rules, DEFAULT_SLEEP_RULES);
+  assert.equal(calibrated.isTuned, false);
+  assert.ok(calibrated.agreementPercent >= 99);
+});
+
+test('rules that only fit the nights they were made from are not taken', () => {
+  // Five nights with nothing in common: each one's best rules are wrong for the others
+  const makeOddNight = (seed) => {
+    let state = seed;
+    const random = () => {
+      state = (state * 1103515245 + 12345) % 2147483648;
+      return state / 2147483648;
+    };
+    const minutes = Array.from({ length: 300 }, () => ({ isInBed: true, movementSeconds: Math.floor(random() * 25) }));
+    return makeTrackedNight(minutes, () => random() < 0.5);
+  };
+  const calibrated = calibrateSleepRules([1, 2, 3, 4, 5].map(makeOddNight));
+  assert.equal(calibrated.isTuned, false);
+  assert.deepEqual(calibrated.rules, DEFAULT_SLEEP_RULES);
 });
 
 test('a health app\'s samples are joined into sleeps, leaving out awake and in-bed ones', () => {
@@ -157,10 +192,34 @@ test('a health app\'s samples are joined into sleeps, leaving out awake and in-b
     { startMs: at(21), endMs: at(21, 40), value: 'Asleep' },
     { startMs: at(23, 30), endMs: at(23, 35) },
   ]);
+  // The ten minutes awake are kept as time awake within the night
   assert.deepEqual(periods, [
-    { asleepAtMs: at(6, 20), awakeAtMs: at(13, 40) },
-    { asleepAtMs: at(21), awakeAtMs: at(21, 40) },
+    { asleepAtMs: at(6, 20), awakeAtMs: at(13, 40), awakeIntervals: [{ startMs: at(8), endMs: at(8, 10) }] },
+    { asleepAtMs: at(21), awakeAtMs: at(21, 40), awakeIntervals: [] },
   ]);
+});
+
+test('a tracker\'s sleeps within one stay become one account of it, minute by minute', () => {
+  const at = (hour, minute = 0) => Date.UTC(2026, 10, 18, hour, minute);
+  const merged = mergeSleepPeriods([
+    { asleepAtMs: at(10), awakeAtMs: at(13), awakeIntervals: [] },
+    { asleepAtMs: at(6), awakeAtMs: at(8, 30), awakeIntervals: [{ startMs: at(7), endMs: at(7, 5) }] },
+  ]);
+  assert.deepEqual(merged, {
+    asleepAtMs: at(6),
+    awakeAtMs: at(13),
+    awakeIntervals: [{ startMs: at(7), endMs: at(7, 5) }, { startMs: at(8, 30), endMs: at(10) }],
+  });
+  // A stay that began at 05:50: awake for ten minutes, asleep, awake 07:00 to 07:05
+  const minutes = readTrackerMinutes(merged, at(5, 50), 90);
+  assert.equal(minutes[9], false);
+  assert.equal(minutes[10], true);
+  assert.equal(minutes[69], true);
+  assert.equal(minutes[70], false);
+  assert.equal(minutes[74], false);
+  assert.equal(minutes[75], true);
+  // With no word on time awake, everything between the two times is asleep
+  assert.equal(readTrackerMinutes({ asleepAtMs: at(6), awakeAtMs: at(7) }, at(6), 60).every(Boolean), true);
 });
 
 test('a sleep under three hours is a nap, whenever it happens', () => {
@@ -248,21 +307,34 @@ test('steady breathing is only asked for when the rules say so', () => {
   assert.equal(addMinutes(blind, 15, { isInBed: true, movementSeconds: 0 }).stage, 'asleep');
 });
 
-test('calibration turns the breathing rule on when it brings sleep onset closer to the tracker', () => {
-  // Lies awake and still for 40 minutes, breathing unevenly, then sleeps
-  const night = {
-    minutes: [
-      ...new Array(40).fill({ isInBed: true, movementSeconds: 0, breathingSpread: 6 }),
-      ...new Array(400).fill({ isInBed: true, movementSeconds: 0, breathingSpread: 1 }),
-      ...new Array(10).fill({ isInBed: true, movementSeconds: 45 }),
-    ],
-    trackerAsleepAtMinute: 40,
-    trackerAwakeAtMinute: 440,
-  };
-  assert.equal(measureRules([night], DEFAULT_SLEEP_RULES).onsetErrorMinutes, 40);
-  const calibrated = calibrateSleepRules([night, night, night]);
+test('calibration turns the breathing rule on when the tracker says the sleeper lay awake and still', () => {
+  // Lies awake and still for 40 minutes at the start and for 30 in the middle of the night,
+  // breathing unevenly both times. Only a tracker that reports time awake can show the second.
+  const makeNight = (asleepMinutes) => makeTrackedNight([
+    ...new Array(40).fill({ isInBed: true, movementSeconds: 0, breathingSpread: 6 }),
+    ...new Array(asleepMinutes).fill({ isInBed: true, movementSeconds: 0, breathingSpread: 1 }),
+    ...new Array(6).fill({ isInBed: true, movementSeconds: 30, breathingSpread: 6 }),
+    ...new Array(30).fill({ isInBed: true, movementSeconds: 0, breathingSpread: 6 }),
+    ...new Array(150).fill({ isInBed: true, movementSeconds: 0, breathingSpread: 1 }),
+    ...new Array(10).fill({ isInBed: true, movementSeconds: 45 }),
+  ], index => (index >= 40 && index < 40 + asleepMinutes) || (index >= 76 + asleepMinutes && index < 226 + asleepMinutes));
+  const nights = [200, 210, 190, 220, 205].map(makeNight);
+  assert.ok(countDisagreements(nights[0], DEFAULT_SLEEP_RULES) >= 60);
+  const calibrated = calibrateSleepRules(nights);
+  assert.equal(calibrated.isTuned, true);
   assert.ok(calibrated.rules.maxBreathingSpread !== undefined, JSON.stringify(calibrated));
-  assert.ok(calibrated.onsetErrorMinutes <= 10, JSON.stringify(calibrated));
+  assert.ok(calibrated.agreementPercent >= 95, JSON.stringify(calibrated));
+});
+
+test('a minute the sensor said too little in counts neither as still nor as restless', () => {
+  const tracker = createSleepTracker();
+  addMinutes(tracker, 10, { isInBed: true, movementSeconds: 0 });
+  // The sensor goes quiet: stillness is not assumed, so sleep does not begin
+  assert.equal(addMinutes(tracker, 20, { isInBed: true }).stage, 'awake');
+  assert.equal(addMinutes(tracker, 14, { isInBed: true, movementSeconds: 0 }).stage, 'awake');
+  assert.equal(addMinutes(tracker, 1, { isInBed: true, movementSeconds: 0 }).stage, 'asleep');
+  // And silence does not wake a sleeper either
+  assert.equal(addMinutes(tracker, 10, { isInBed: true }).stage, 'asleep');
 });
 
 test('an Apple Health export app\'s body is read, one row a night or sample by sample', () => {
@@ -293,56 +365,71 @@ test('the night curve cools early, returns by late night and ends a degree warm'
   assert.equal(curveOffsetF(-1), 0);
 });
 
-test('a correction is half-remembered for its part of the night, within a limit', () => {
+test('a correction is partly remembered for its part of the night, within a limit', () => {
   assert.equal(nightPartAt(0.2), 'early');
   assert.equal(nightPartAt(0.5), 'middle');
   assert.equal(nightPartAt(0.9), 'late');
-  let learned = learnFromCorrection(NO_LEARNED_OFFSETS, 'early', 2);
-  assert.deepEqual(learned, { early: 1, middle: 0, late: 0 });
-  for (let night = 0; night < 10; night++) learned = learnFromCorrection(learned, 'early', 2);
+  // One degree, one night: too little to show once rounded. Two nights that agree: it shows.
+  let learned = learnFromCorrection(NO_LEARNED_OFFSETS, 'early', 1);
+  assert.equal(Math.round(learned.early), 0);
+  learned = learnFromCorrection(learned, 'early', 1);
+  assert.equal(Math.round(learned.early), 1);
+  assert.deepEqual({ middle: learned.middle, late: learned.late }, { middle: 0, late: 0 });
+  for (let night = 0; night < 20; night++) learned = learnFromCorrection(learned, 'early', 2);
   assert.equal(learned.early, 3);
-  assert.equal(learnFromCorrection(learned, 'late', -1).late, -0.5);
+  assert.ok(Math.abs(learnFromCorrection(learned, 'late', -1).late + 0.3) < 1e-9);
 });
 
-test('a warmer room cools the bed, and a clear drift of the mattress adds a degree', () => {
-  assert.equal(surroundingsOffsetF({ roomF: 68 }, { roomF: 70 }), -1);
-  assert.equal(surroundingsOffsetF({ roomF: 68 }, { roomF: 66 }), 1);
-  assert.equal(surroundingsOffsetF({ roomF: 68, surfaceF: 84 }, { roomF: 68, surfaceF: 87 }), -1);
-  assert.equal(surroundingsOffsetF({ roomF: 68, surfaceF: 84 }, { roomF: 68, surfaceF: 85 }), 0);
-  // Never more than two degrees, and nothing without a reading to compare
-  assert.equal(surroundingsOffsetF({ roomF: 60 }, { roomF: 80 }), -2);
-  assert.equal(surroundingsOffsetF({}, { roomF: 80 }), 0);
+test('a warmer room cools the bed, by half as much and never more than two degrees', () => {
+  assert.equal(roomOffsetF(68, 70), -1);
+  assert.equal(roomOffsetF(68, 66), 1);
+  assert.equal(roomOffsetF(68, 68), 0);
+  assert.equal(roomOffsetF(60, 80), -2);
+  // Nothing without a reading to compare
+  assert.equal(roomOffsetF(undefined, 80), 0);
+  assert.equal(roomOffsetF(68, undefined), 0);
 });
 
-test('the plan adds the parts up, only for someone asleep, and stays within its limit', () => {
-  const base = {
-    baseTemperatureF: 80, learned: NO_LEARNED_OFFSETS, correctionTonightF: 0,
-    surroundingsAtSleepOnset: { roomF: 68 }, surroundingsNow: { roomF: 68 },
-  };
-  // Awake: the base, whatever the hour
-  assert.equal(planTemperature({ ...base, stage: 'awake', progress: 0.3 }).targetTemperatureF, 80);
-  // Asleep in the first half: the curve's two degrees
-  assert.equal(planTemperature({ ...base, stage: 'asleep', progress: 0.3 }).targetTemperatureF, 78);
+test('the plan adds the parts up by the clock and stays within its limit', () => {
+  const base = { baseTemperatureF: 80, learned: NO_LEARNED_OFFSETS, roomAtSleepOnsetF: 68, roomNowF: 68 };
+  // In the first half: the curve's two degrees
+  const early = planTemperature({ ...base, progress: 0.3 });
+  assert.equal(early.targetTemperatureF, 78);
+  assert.equal(early.isLimited, false);
   // From 20 to 90 minutes after falling asleep, where deep sleep usually falls: one more
-  const deep = planTemperature({ ...base, stage: 'asleep', progress: 0.3, minutesSinceSleepOnset: 45 });
+  const deep = planTemperature({ ...base, progress: 0.3, minutesSinceSleepOnset: 45 });
   assert.equal(deep.targetTemperatureF, 77);
-  assert.deepEqual(deep.parts, { curveF: -2, deepF: -1, learnedF: 0, correctionF: 0, surroundingsF: 0 });
+  assert.deepEqual(deep.parts, { learnedF: 0, curveF: -2, deepF: -1, roomF: 0 });
   for (const [minutes, expected] of [[19, 78], [20, 77], [89, 77], [90, 78]]) {
-    assert.equal(planTemperature({ ...base, stage: 'asleep', progress: 0.3, minutesSinceSleepOnset: minutes }).targetTemperatureF, expected);
+    assert.equal(planTemperature({ ...base, progress: 0.3, minutesSinceSleepOnset: minutes }).targetTemperatureF, expected);
   }
-  // Awake in that stretch: still the base
-  assert.equal(planTemperature({ ...base, stage: 'awake', progress: 0.3, minutesSinceSleepOnset: 45 }).targetTemperatureF, 80);
-  // A correction by hand tonight is kept in full
-  assert.equal(planTemperature({ ...base, stage: 'asleep', progress: 0.3, correctionTonightF: 3 }).targetTemperatureF, 81);
-  // Everything pulling one way stops at the limit
-  const cold = planTemperature({
-    ...base, stage: 'asleep', progress: 0.3, minutesSinceSleepOnset: 45, learned: { early: -3, middle: 0, late: 0 },
-    surroundingsNow: { roomF: 74 },
-  });
-  assert.equal(cold.offsetF, -MAX_OFFSET_F);
-  assert.equal(cold.targetTemperatureF, 76);
+  // The end of the night: a degree warm
+  assert.equal(planTemperature({ ...base, progress: 1 }).targetTemperatureF, 81);
   // The bed's own range holds too
-  assert.equal(planTemperature({ ...base, baseTemperatureF: 56, stage: 'asleep', progress: 0.3, minutesSinceSleepOnset: 45 }).targetTemperatureF, 55);
+  assert.equal(planTemperature({ ...base, baseTemperatureF: 56, progress: 0.3, minutesSinceSleepOnset: 45 }).targetTemperatureF, 55);
+});
+
+test('when the parts add up to more than the limit, what the sleeper taught it is cut last', () => {
+  const plan = planTemperature({
+    baseTemperatureF: 80, progress: 0.3, minutesSinceSleepOnset: 45, learned: { early: -3, middle: 0, late: 0 },
+    roomAtSleepOnsetF: 68, roomNowF: 74,
+  });
+  assert.equal(plan.offsetF, -MAX_OFFSET_F);
+  assert.equal(plan.targetTemperatureF, 76);
+  assert.equal(plan.isLimited, true);
+  // Learned in full, one degree of the curve, and nothing left for the rest
+  assert.deepEqual(plan.parts, { learnedF: -3, curveF: -1, deepF: 0, roomF: 0 });
+  // A learned preference for warmth and the curve's cooling pull against each other and both count
+  const mixed = planTemperature({ baseTemperatureF: 80, progress: 0.3, learned: { early: 3, middle: 0, late: 0 } });
+  assert.equal(mixed.targetTemperatureF, 81);
+  assert.equal(mixed.isLimited, false);
+});
+
+test('the autopilot moves the bed one degree at a time toward what it wants', () => {
+  assert.equal(stepToward(80, 77), 79);
+  assert.equal(stepToward(79, 77), 78);
+  assert.equal(stepToward(77, 77), 77);
+  assert.equal(stepToward(74, 78), 75);
 });
 
 test('the base is the bed-on temperature until a scheduled change comes up, across midnight', () => {
@@ -351,6 +438,11 @@ test('the base is the bed-on temperature until a scheduled change comes up, acro
   assert.equal(findScheduledTemperatureF(night, '01:00'), 70);
   assert.equal(findScheduledTemperatureF(night, '04:00'), 70);
   assert.equal(findScheduledTemperatureF(night, '06:45'), 76);
+  // An afternoon is not this night's to give a temperature for
+  assert.equal(isWithinScheduledNight(night, '23:30'), true);
+  assert.equal(isWithinScheduledNight(night, '07:29'), true);
+  assert.equal(isWithinScheduledNight(night, '07:30'), false);
+  assert.equal(isWithinScheduledNight(night, '15:00'), false);
 });
 
 test('wake-ups are the breaks in a night\'s sleep, not the time before it or after it', () => {

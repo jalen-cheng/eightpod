@@ -8,7 +8,8 @@ import type { SleepStage } from './sleepTracker.js';
 export type SleepKind = 'night' | 'nap';
 
 export type NightMinute = {
-  movementSeconds: number;
+  // Undefined when the sensor sent too little that minute to say
+  movementSeconds?: number;
   heartRate?: number;
   breathingRate?: number;
   breathingSpread?: number;
@@ -17,7 +18,11 @@ export type NightMinute = {
   stage: SleepStage;
   // How far the autopilot had the side from its set temperature, °F
   offsetF?: number;
+  // The air at the cover, the air at the hub on the floor, and the mattress surface, °F. Only
+  // the first is acted on; the other two are kept to check it against.
   roomF?: number;
+  hubRoomF?: number;
+  surfaceF?: number;
 };
 
 export type TrackerSleep = {
@@ -25,6 +30,8 @@ export type TrackerSleep = {
   source: string;
   asleepAtMs: number;
   awakeAtMs: number;
+  // Stretches the tracker counted as awake between those two times
+  awakeIntervals?: { startMs: number; endMs: number }[];
   receivedAtMs: number;
 };
 
@@ -37,6 +44,13 @@ export type NightRecord = {
   // By the bed's own reckoning; both undefined when no sleep was seen
   asleepAtMs?: number;
   awakeAtMs?: number;
+  // When the bed first knew of the sleep: later than `asleepAtMs`, which is counted back to
+  // the start of the stillness that showed it
+  asleepConfirmedAtMs?: number;
+  // True when the autopilot changed the temperature during this stay, and under which version
+  // of its rules, so nights with and without it can be told apart later
+  steered?: boolean;
+  policy?: number;
   tracker?: TrackerSleep;
 };
 

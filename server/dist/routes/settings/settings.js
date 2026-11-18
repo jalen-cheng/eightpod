@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="7d20c6e1-2bde-5f23-b07f-62e8b06dc0b4")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="6c2f2efa-abbd-5c4f-85d7-be0fdd8931c6")}catch(e){}}();
 import _ from 'lodash';
 import express from 'express';
 import logger from '../../logger.js';
@@ -31,9 +31,18 @@ router.post('/settings', async (req, res) => {
     delete body.id;
     await settingsDB.read();
     _.mergeWith(settingsDB.data, body, replaceTapConfig);
+    // The autopilot takes the bed to be one sleeper's. Switching it on links the sides, and
+    // unlinking them switches it off.
+    if (settingsDB.data.autopilot.enabled && !settingsDB.data.linkSides) {
+        const isUnlinking = body.linkSides === false && body.autopilot?.enabled !== true;
+        if (isUnlinking)
+            settingsDB.data.autopilot.enabled = false;
+        else
+            settingsDB.data.linkSides = true;
+    }
     await settingsDB.write();
     res.status(200).json(settingsDB.data);
 });
 export default router;
 //# sourceMappingURL=settings.js.map
-//# debugId=7d20c6e1-2bde-5f23-b07f-62e8b06dc0b4
+//# debugId=6c2f2efa-abbd-5c4f-85d7-be0fdd8931c6

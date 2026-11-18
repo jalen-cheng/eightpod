@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Alert, Box, Button, IconButton, Paper, Skeleton } from '@mui/material';
+import { Alert, Box, Button, Paper, Skeleton } from '@mui/material';
 import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
 import AlarmDismissal from './AlarmDismissal.tsx';
 import AlarmNotification from './AlarmNotification.tsx';
@@ -77,7 +77,7 @@ export default function ControlTempPage() {
         onLinkSidesChange={ handleLinkSidesChange }
       />
       <Paper
-        // A press anywhere in the section turns an off side on. The power button in the corner
+        // A press anywhere in the section turns an off side on. The power button under the dial
         // does the same for the keyboard and screen readers, so the section itself is not a button.
         onClick={ isTurnOnTarget ? turnOn : undefined }
         sx={ {
@@ -90,24 +90,6 @@ export default function ControlTempPage() {
             '@media (hover: hover)': { '&:hover': { borderColor: 'text.secondary' } },
           }),
         } }>
-        <Box sx={ { display: 'flex', alignItems: 'center', justifyContent: 'flex-end', mb: 0.5, minHeight: 44 } }>
-          { /* One button for both directions, so it keeps focus through a toggle: lit while the
-               side is on, dim while it is off */ }
-          { !isPending && !isError && power.canToggle && (
-            <IconButton
-              aria-label={ isOn ? 'Turn off' : 'Turn on' }
-              disabled={ power.disabled }
-              onClick={ (event) => {
-                // The section's own press handler must not also run
-                event.stopPropagation();
-                power.setPower(!isOn);
-              } }
-              sx={ { color: isOn ? 'success.main' : 'text.secondary' } }
-            >
-              <PowerSettingsNewIcon sx={ { fontSize: 22 } }/>
-            </IconButton>
-          ) }
-        </Box>
         { isPending ? (
           <Skeleton variant="circular" width={ 240 } height={ 240 } sx={ { mx: 'auto', my: 3 } }/>
         ) : isError ? (
@@ -120,6 +102,26 @@ export default function ControlTempPage() {
               refetch={ refetch }
               currentTemperatureF={ sideStatus?.currentTemperatureF ?? 55 }
             />
+          </Box>
+        ) }
+        { /* One button for both directions, under the dial where the hand already is, so it keeps
+             focus through a toggle */ }
+        { !isPending && !isError && power.canToggle && (
+          <Box sx={ { display: 'flex', justifyContent: 'center', mt: 2 } }>
+            <Button
+              variant="outlined"
+              color="inherit"
+              disabled={ power.disabled }
+              startIcon={ <PowerSettingsNewIcon sx={ { color: isOn ? 'success.main' : 'text.secondary' } }/> }
+              onClick={ (event) => {
+                // The section's own press handler must not also run
+                event.stopPropagation();
+                power.setPower(!isOn);
+              } }
+              sx={ { borderRadius: 999, px: 2.5, borderColor: 'divider', color: 'text.primary' } }
+            >
+              { isOn ? 'Turn off' : 'Turn on' }
+            </Button>
           </Box>
         ) }
         { isError && (

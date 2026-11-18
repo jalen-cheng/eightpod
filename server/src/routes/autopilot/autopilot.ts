@@ -15,6 +15,10 @@ router.get('/autopilot', (_req: Request, res: Response) => {
 
 const MAX_NIGHTS_LISTED = 60;
 const SideSchema = z.enum(['left', 'right']);
+const HOUR_MS = 60 * 60_000;
+const LONGEST_SLEEP_MS = 18 * HOUR_MS;
+const OLDEST_SLEEP_MS = 100 * 24 * HOUR_MS;
+const CLOCK_SLACK_MS = HOUR_MS;
 const DayQuerySchema = z.object({ date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), side: SideSchema });
 
 // The saved stays in bed. With `date` and `side`: that side's stays which ended on that day, in
@@ -49,9 +53,10 @@ router.get('/autopilot/nights/export', (req: Request, res: Response) => {
 const isDate = (text: string) => !Number.isNaN(Date.parse(text));
 const DateText = z.string().refine(isDate, 'Not a date and time');
 
-// A worn tracker's account of a sleep: either the two times, or the health app's raw samples
+// A worn tracker's account of a sleep: either the two times, or the health app's raw samples.
+// `side` narrows it to one side's stays; without it the stays of both sides are looked at.
 const TrackerSleepSchema = z.object({
-  side: z.enum(['left', 'right']),
+  side: SideSchema.optional(),
   source: z.string().trim().min(1).max(40).default('Sleep tracker'),
   asleepAt: DateText.optional(),
   awakeAt: DateText.optional(),
@@ -61,43 +66,42 @@ const TrackerSleepSchema = z.object({
   'Send asleepAt and awakeAt, or samples',
 );
 
-
 // Takes sleep and wake times from a watch or band (by way of a phone shortcut, an app that
 // posts Apple Health data, or a script), files them with the stays in bed they overlap, and
-// fits the bed's own sleep rules to them. An app that cannot shape its own request puts the
-// side in the address (`?side=left`) and sends what it sends.
+// fits the bed's own sleep rules to them
 router.post('/autopilot/sleepTimes', (req: Request, res: Response) => {
   const exportedSamples = readHealthExportSleep(req.body);
-  let side: z.infer<typeof SideSchema>;
+  const sideInAddress = SideSchema.optional().safeParse(req.query.side);
+  let side = sideInAddress.success ? sideInAddress.data : undefined;
   let source: string;
   let periods: SleepPeriod[];
   if (exportedSamples) {
-    const sideResult = SideSchema.safeParse(req.query.side);
-    if (!sideResult.success) {
-      res.status(400).json({ error: 'Add ?side=left or ?side=right to the address' });
-      return;
-    }
-    side = sideResult.data;
     source = typeof req.query.source === 'string' ? req.query.source.slice(0, 40) : 'Apple Health';
     periods = findSleepPeriods(exportedSamples);
   } else {
-    const validationResult = TrackerSleepSchema.safeParse({ side: req.query.side, ...req.body });
+    const validationResult = TrackerSleepSchema.safeParse(req.body);
     if (!validationResult.success) {
       res.status(400).json({ error: 'Invalid request', details: validationResult.error.format() });
       return;
     }
     const { asleepAt, awakeAt, samples } = validationResult.data;
-    ({ side, source } = validationResult.data);
+    side = validationResult.data.side ?? side;
+    ({ source } = validationResult.data);
     periods = samples
       ? findSleepPeriods(samples.map(sample => ({ startMs: Date.parse(sample.start), endMs: Date.parse(sample.end), value: sample.value })))
-      : [{ asleepAtMs: Date.parse(asleepAt ?? ''), awakeAtMs: Date.parse(awakeAt ?? '') }];
+      : [{ asleepAtMs: Date.parse(asleepAt ?? ''), awakeAtMs: Date.parse(awakeAt ?? ''), awakeIntervals: [] }];
   }
-  if (periods.length === 0 || periods.some(period => period.awakeAtMs <= period.asleepAtMs)) {
+  // Only sleeps that could be real are taken: not in the future, not older than what is kept,
+  // not longer than anyone sleeps. The request needs no password, so it is not taken on trust.
+  const nowMs = Date.now();
+  periods = periods.filter(period => period.awakeAtMs > period.asleepAtMs && period.awakeAtMs - period.asleepAtMs <= LONGEST_SLEEP_MS
+    && period.awakeAtMs <= nowMs + CLOCK_SLACK_MS && period.asleepAtMs >= nowMs - OLDEST_SLEEP_MS);
+  if (periods.length === 0) {
     res.status(400).json({ error: 'No sleep found in what was sent' });
     return;
   }
-  const matchedNights = applyTrackerSleep(side, source, periods);
-  const snapshot = getAutopilotSnapshot()[side];
+  const matchedNights = applyTrackerSleep(source, periods, side);
+  const snapshot = getAutopilotSnapshot().left;
   res.json({ sleeps: periods.length, matchedNights, rules: snapshot.rules, tracker: snapshot.tracker });
 });
 
