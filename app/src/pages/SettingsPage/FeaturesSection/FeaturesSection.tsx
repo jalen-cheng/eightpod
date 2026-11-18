@@ -25,7 +25,7 @@ export default function FeaturesSection() {
   if (isLoading || !services) return <CircularProgress />;
 
   return (
-    <Section title="Features">
+    <Section title="Sleep tracking">
       <Box sx={ { display: 'flex', flexDirection: 'column', gap: 2.5 } }>
         <SettingToggle
           control={

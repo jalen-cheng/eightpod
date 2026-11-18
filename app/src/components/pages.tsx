@@ -3,6 +3,7 @@ import BarChartOutlinedIcon from '@mui/icons-material/BarChartOutlined';
 import ThermostatOutlinedIcon from '@mui/icons-material/ThermostatOutlined';
 import ScheduleOutlinedIcon from '@mui/icons-material/ScheduleOutlined';
 import SettingsOutlinedIcon from '@mui/icons-material/SettingsOutlined';
+import { API_GUIDE_ROUTE } from './apiGuideRoute.ts';
 
 type Page = { title: string; route: string; icon: ReactElement };
 
@@ -17,5 +18,6 @@ export const PAGES: Page[] = [
 // The tab a path belongs to, or undefined for a page that has none
 export const getPageForPath = (pathname: string): Page | undefined => {
   if (['/', '/left', '/right'].includes(pathname)) return PAGES[0];
+  if (pathname === API_GUIDE_ROUTE) return PAGES.find(page => page.route === '/settings');
   return PAGES.find(page => pathname === page.route || pathname.startsWith(`${page.route}/`));
 };

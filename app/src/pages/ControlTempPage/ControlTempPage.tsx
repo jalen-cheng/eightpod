@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
-import { Alert, Box, Button, IconButton, Paper, Skeleton, Typography } from '@mui/material';
+import { Alert, Box, Button, IconButton, Paper, Skeleton } from '@mui/material';
 import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
-import ThermostatOutlinedIcon from '@mui/icons-material/ThermostatOutlined';
 import AlarmDismissal from './AlarmDismissal.tsx';
 import AlarmNotification from './AlarmNotification.tsx';
 import AwayNotification from './AwayNotification.tsx';
@@ -91,11 +90,7 @@ export default function ControlTempPage() {
             '@media (hover: hover)': { '&:hover': { borderColor: 'text.secondary' } },
           }),
         } }>
-        <Box sx={ { display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5, minHeight: 44 } }>
-          <Box sx={ { display: 'flex', alignItems: 'center', gap: 0.75 } }>
-            <ThermostatOutlinedIcon sx={ { color: 'text.secondary', fontSize: 17 } }/>
-            <Typography variant="body2" sx={ { fontWeight: 500 } }>Bed temperature</Typography>
-          </Box>
+        <Box sx={ { display: 'flex', alignItems: 'center', justifyContent: 'flex-end', mb: 0.5, minHeight: 44 } }>
           { /* One button for both directions, so it keeps focus through a toggle: lit while the
                side is on, dim while it is off */ }
           { !isPending && !isError && power.canToggle && (

@@ -1,7 +1,7 @@
-import { Badge, Box, BottomNavigation, BottomNavigationAction, Button, LinearProgress, Typography } from '@mui/material';
+import { Badge, Box, Button, ButtonBase, LinearProgress, Typography } from '@mui/material';
 import { SIDEBAR_WIDTH_PX } from './pageFrame.ts';
 import { ReactElement } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useAppStore } from '@state/appStore.tsx';
 import { useServerInfo } from '@api/serverInfo.ts';
 import { PAGES, getPageForPath } from './pages';
@@ -9,7 +9,6 @@ import StatusLink, { STATUS_ROUTE } from './StatusLink.tsx';
 
 export default function Navbar() {
   const { pathname } = useLocation();
-  const navigate = useNavigate();
   const { isUpdating } = useAppStore();
   const { data: serverInfo, isError: versionError } = useServerInfo();
   const updateAvailable = Boolean(serverInfo?.updateAvailable) && !versionError;
@@ -64,7 +63,7 @@ export default function Navbar() {
         </Box>
       </Box>
       { /* The Pod's health, and the way to the Status page: bottom right on a computer. A phone
-           has no free corner, so there it sits in the heading of each page (see PageHeader). */ }
+           has no free corner, so there it sits beside the heading of Data and Settings. */ }
       { pathname !== STATUS_ROUTE && (
         <Box sx={ { display: { xs: 'none', md: 'block' }, position: 'fixed', right: 20, bottom: 16, zIndex: 1100 } }><StatusLink/></Box>
       ) }
@@ -77,29 +76,28 @@ export default function Navbar() {
           pb: 'env(safe-area-inset-bottom)',
         } }
       >
-        <BottomNavigation
-          showLabels
-          // false lights no tab, for a page that has none (Status)
-          value={ activePage ? PAGES.indexOf(activePage) : false }
-          onChange={ (_, index) => navigate(PAGES[index].route) }
-          sx={ {
-            bgcolor: 'transparent', height: 68,
-            '& .MuiBottomNavigationAction-root': { minWidth: 0, color: 'text.secondary', px: 0.5, gap: 0.75 },
-            '& .MuiBottomNavigationAction-label, & .MuiBottomNavigationAction-label.Mui-selected': { fontSize: 10, fontWeight: 500 },
-            '& .Mui-selected': { color: 'primary.main' },
-            '& .MuiSvgIcon-root': { fontSize: 22 },
-          } }
-        >
-          { PAGES.map(({ title, route, icon }) => (
-            <BottomNavigationAction
-              key={ route }
-              label={ title }
-              icon={ navigationIcon(route, icon) }
-              aria-current={ activePage?.route === route ? 'page' : undefined }
-              aria-label={ route === '/settings' && updateAvailable ? 'Settings, update available' : title }
-            />
-          )) }
-        </BottomNavigation>
+        { /* Equal columns, each an icon over its name, so the tabs sit at even distances */ }
+        <Box sx={ { display: 'grid', gridTemplateColumns: `repeat(${PAGES.length}, 1fr)`, height: 60 } }>
+          { PAGES.map(({ title, route, icon }) => {
+            const isActive = activePage?.route === route;
+            return (
+              <ButtonBase
+                key={ route }
+                component={ Link }
+                to={ route }
+                aria-current={ isActive ? 'page' : undefined }
+                aria-label={ route === '/settings' && updateAvailable ? 'Settings, update available' : title }
+                sx={ {
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '5px',
+                  color: isActive ? 'text.primary' : 'text.secondary', '& .MuiSvgIcon-root': { fontSize: 22 },
+                } }
+              >
+                { navigationIcon(route, icon) }
+                <Typography component="span" sx={ { fontSize: 10.5, fontWeight: 500, lineHeight: 1 } }>{ title }</Typography>
+              </ButtonBase>
+            );
+          }) }
+        </Box>
       </Box>
     </>
   );

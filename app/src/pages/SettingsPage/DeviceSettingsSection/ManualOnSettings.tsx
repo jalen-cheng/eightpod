@@ -23,7 +23,7 @@ export default function ManualOnSettings({ settings, updateSettings }: ManualOnS
 
   return (
     <>
-      <SettingRow label="When turned on by hand" info={ LENGTH_INFO }>
+      <SettingRow label="Manual on lasts" info={ LENGTH_INFO }>
         <TextField
           select
           size="small"

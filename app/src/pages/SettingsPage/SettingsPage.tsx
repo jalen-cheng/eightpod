@@ -14,6 +14,7 @@ import Section from './Section.tsx';
 import TapGesturesSection from './TapGesturesSection/TapGesturesSection.tsx';
 import PresenceSection from './PresenceSection.tsx';
 import AlarmSection from './AlarmSection.tsx';
+import ApiSection from './ApiSection.tsx';
 import DeviceSettingsSection from './DeviceSettingsSection/DeviceSettingsSection.tsx';
 import DeviceInfo from './DeviceSettingsSection/DeviceInfo.tsx';
 import ErrorBoundary from '@components/ErrorBoundary.tsx';
@@ -37,7 +38,7 @@ export default function SettingsPage() {
 
   return (
     <PageContainer>
-      <PageHeader title="Settings"/>
+      <PageHeader title="Settings" showStatusOnPhone/>
       <ErrorBoundary componentName="Device settings">
         <DeviceSettingsSection updateSettings={ updateSettings }/>
       </ErrorBoundary>
@@ -61,11 +62,12 @@ export default function SettingsPage() {
       </ErrorBoundary>
       <FeaturesSection/>
       <ErrorBoundary componentName="Device info">
-        <Section title="Device">
+        <Section title="Pod">
           <DeviceInfo settings={ settings } updateSettings={ updateSettings }/>
         </Section>
       </ErrorBoundary>
       <ErrorBoundary componentName="Info section">
+        <ApiSection/>
         <DiscordLink/>
         <Donate/>
         <LicenseModal/>

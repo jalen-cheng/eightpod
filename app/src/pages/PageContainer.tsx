@@ -15,8 +15,8 @@ export default function PageContainer({ children, sx = [], containerProps }: Pro
         id="PageContainer"
         maxWidth={ false }
         sx={ [
-          { display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 2.5,
-            width: '100%', maxWidth: PAGE_MAX_WIDTH_PX, mx: 'auto', px: { xs: 2.5, sm: 4, lg: 5 }, pt: { xs: 3, md: 5 },
+          { display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: { xs: 2, sm: 2.5 },
+            width: '100%', maxWidth: PAGE_MAX_WIDTH_PX, mx: 'auto', px: { xs: 2, sm: 4, lg: 5 }, pt: { xs: 2.5, md: 5 },
             // Room at the foot on a computer for the status link fixed in the corner
             pb: { xs: 3, md: 9 } },
           ...(Array.isArray(sx) ? sx : [sx]),

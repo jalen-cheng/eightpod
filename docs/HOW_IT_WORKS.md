@@ -99,13 +99,13 @@ but would have meant a different level, so on first start with the new curve eve
 temperature was converted to keep its *level*. The originals are in
 `schedulesDB.before-measured-temperatures.json`.
 
-**Display units** (Settings > Device settings > Temperature format): °F, °C (to half a degree), or **Level** (-10 to
+**Display units** (Settings > General > Temperature format): °F, °C (to half a degree), or **Level** (-10 to
 +10, matching Eight Sleep's app). In Level, the + and - buttons move one level; in °F and °C, one
 degree.
 
 **Setting a temperature.** The server turns °F into the nearest level and sends it. Turning a side
 on by hand (app, shortcut or buttons) sets its timer to 3, 6 or 12 hours, chosen in Settings >
-Device settings; 12 is the default. The Temperature page waits 0.7 seconds after your last tap before
+Settings > General; 12 is the default. The Temperature page waits 0.7 seconds after your last tap before
 sending, so several taps become one request, and it ignores the Pod's reported value while you are
 still tapping.
 
@@ -242,7 +242,7 @@ installer. A **Pod 4** reports double, triple and quadruple taps as counters, re
 - Presses within 0.4 seconds of each other are handled together, so three quick presses move three steps.
 - A second alarm or power press within 3 seconds is ignored, so one press is never counted twice.
 - When the sides are linked, buttons on either side control both.
-- The step is set in Settings > Device settings. In Level the choices are 1, 2 or 3 levels.
+- The step is set in Settings > General. In Level the choices are 1, 2 or 3 levels.
 - Snooze was removed. Any press stops the alarm.
 
 ## 7. Linked sides and away mode
@@ -262,11 +262,11 @@ side picker is one "Both sides" button and the chain button reads "Unlink":
 Linking is applied by the app and by those server paths. A hand-written request to
 `/api/deviceStatus` or `/api/schedules` naming one side changes only that side.
 
-**Flip left and right** (Settings > Device settings) swaps which physical side the app calls left
+**Flip left and right** (Settings > General) swaps which physical side the app calls left
 and right. It is applied where EightPod meets the firmware (commands, status, buttons, sensors),
 so each side keeps its name, schedule and settings and simply drives the other half of the bed.
 
-**Away mode** (Settings > Device settings) switches both sides away together. The API can still set it per side, which is for one person being away: that side's schedule, alarm and
+**Away mode** (Settings > General) switches both sides away together. The API can still set it per side, which is for one person being away: that side's schedule, alarm and
 warm-up do not run, and its controls are hidden. While either side is away, every temperature or
 power change to the other side is **mirrored to the away side**, so the whole bed follows the
 person who is there. One-time alarms and the alarm test still vibrate an away side.
@@ -338,7 +338,7 @@ back by themselves. Anything held in memory (a vibrating alarm, a running warm-u
 
 The app refreshes the bed's state every 5 seconds.
 
-**Temperature.** Side picker and link button; the dial with the target, the current reading and
+**Temperature.** The side picker (Left, Right or Both); the dial with the target, the current reading and
 "Turns off at"; + and -; the power mark at the top right, which turns the side off (a side that is
 off turns on with a tap anywhere in the section); and a row for the next alarm. On that row the time
 opens "Change next alarm only (overrides schedule)" (a one-time alarm), and **Skip** turns off tonight's alarm (the button
@@ -363,17 +363,17 @@ offers to dismiss it.
 
 **Data.** Sleep records and logs. Sleep needs biometrics.
 
-**Status** (opened from the "Status: Healthy" link, bottom right on a computer and beside each page's heading on a phone; it has no tab). Wi-Fi strength and whether EightPod is up to date, then each internal service with
+**Status** (opened from the "Status: Healthy" link, bottom right on a computer and beside the heading of Data and Settings on a phone; it has no tab). Wi-Fi strength and whether EightPod is up to date, then each internal service with
 its state. Services that are jobs have a Run button. The biometrics and sleep-analysis rows are greyed and
 marked "Untested in this version".
 
-**Settings.** Device settings: the temperature units and a Pod 5's − and + button step; the
-time zone (set this first, the schedule runs in it); away mode for both sides, flip left and
-right, and the light on the hub; how long the bed stays on when turned on by hand and whether the
-schedule is ignored meanwhile; and the API's common requests, behind **Show**. Then Alarm (one
-setting for every night and both sides: vibration, length, strength, a test), Tap gestures
-(Pod 4), Priming, In-bed detection (its state shows beside the heading), Features (biometrics),
-and Device (the Pod, Wi-Fi, version and Update, reboot).
+**Settings.** General: the temperature units and a Pod 5's − and + button step; the time zone
+(set this first, the schedule runs in it); away mode for both sides, flip left and right, and
+the light on the hub; how long the bed stays on when turned on by hand and whether the schedule
+is ignored meanwhile. Then Alarm (one setting for every night and both sides: vibration,
+length, strength, a test), Tap gestures (Pod 4), Priming, In-bed detection (its state shows
+beside the heading), Sleep tracking (biometrics), Pod (the model, Wi-Fi, version and Update,
+reboot), and API, which opens a page of the common requests (`/api-guide`).
 
 ## 11. The API and phone shortcuts
 

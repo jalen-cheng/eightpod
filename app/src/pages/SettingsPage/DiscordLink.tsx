@@ -8,7 +8,7 @@ const ISSUES_LINK = 'https://github.com/jalen-cheng/eightpod/issues';
 
 export default function DiscordLink() {
   return (
-    <Section title="Support & Feature Requests">
+    <Section title="Help">
       <Link
         href={ ISSUES_LINK }
         target="_blank"

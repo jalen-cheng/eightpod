@@ -374,7 +374,7 @@ export FREE_SLEEP_REPO=throwaway31265/free-sleep FREE_SLEEP_BRANCH=main
 1. On a phone or computer on the same Wi-Fi network, open `http://<pod-ip>:3000`, for example
    `http://192.168.1.50:3000`.
 2. The page looks greyed out and keeps loading until the Pod is connected to the cover. That is expected.
-3. Go to **Settings > Device settings** and choose your **Time zone**. The schedule runs in this
+3. Go to **Settings > General** and choose your **Time zone**. The schedule runs in this
    time zone. It starts as UTC, so until you set it, every scheduled time and alarm fires at the wrong hour.
 
 <img src="docs/screenshots/temperature.png" width="260" alt="The Temperature page">
@@ -608,7 +608,7 @@ the hub stays closed. Settings, schedules and sleep data are kept. Read
    ```
    sh /home/dac/free-sleep/scripts/block_internet_access.sh
    ```
-5. Open `http://<pod-ip>:3000` and check **Settings > Device** shows the new version. From here
+5. Open `http://<pod-ip>:3000` and check **Settings > Pod** shows the new version. From here
    the app's own **Update** button keeps it current.
 
 The folder, the services and the `fs-` commands keep the name `free-sleep`, which is what makes

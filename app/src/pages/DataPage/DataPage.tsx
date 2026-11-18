@@ -22,7 +22,7 @@ export default function DataPage() {
 
   return (
     <PageContainer>
-      <PageHeader title="Data"/>
+      <PageHeader title="Data" showStatusOnPhone/>
       { DATA_PAGES.map(({ title, route, icon }) => {
         const isOff = route === SLEEP_ROUTE && isSleepOff;
         return (

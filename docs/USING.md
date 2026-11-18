@@ -12,12 +12,12 @@ On a phone or computer on the same Wi-Fi as the Pod, open `http://<pod-ip>:3000`
 To keep it on your phone's home screen: in Safari, tap Share, then **Add to Home Screen**. In
 Chrome on Android, open the three-dot menu, then **Add to Home screen**.
 
-The app has four tabs: **Temperature**, **Schedules**, **Data** and **Settings**. The **Status** page opens from the "Status: Healthy" link, at the bottom right on a computer and beside each page's heading on a phone.
+The app has four tabs: **Temperature**, **Schedules**, **Data** and **Settings**. The **Status** page opens from the "Status: Healthy" link, at the bottom right on a computer and beside the heading of Data and Settings on a phone.
 There is no login. Anyone on your home network can open it.
 
 ## 2. Set the time zone
 
-Do this first. Go to **Settings > Device settings** and choose your **Time zone** (shown like "PST (UTC−8)"). The schedule
+Do this first. Go to **Settings > General** and choose your **Time zone** (shown like "PST (UTC−8)"). The schedule
 and alarms run in this time zone, and it starts as UTC.
 
 ## 3. The Temperature page
@@ -25,8 +25,8 @@ and alarms run in this time zone, and it starts as UTC.
 <img src="screenshots/temperature.png" width="260" alt="The Temperature page">
 
 - **Side picker**, at the top: choose which side you are controlling.
-- **Link**, beside it: makes both sides act as one. While linked, the picker shows **Both sides**
-  and the button reads **Unlink**. Linking copies this side's state to the other side at once.
+- **Both**, in the same picker: makes both sides act as one, and copies this side's state to the
+  other side at once. Pick **Left** or **Right** again to control one side.
 - **The dial**: drag it to set the target temperature.
 - **- and +**: one step colder or warmer. The app waits a moment after your last tap, then sends one change.
 - **Power**: the power mark at the top right of the dial's section turns the side off. While the
@@ -122,7 +122,7 @@ reads **Turn on** and brings it back.
 
 ## 8. Display units
 
-**Settings > Device settings > Temperature format**: Fahrenheit, Celsius, or Level. Level is -10 to
+**Settings > General > Temperature shown as**: Fahrenheit, Celsius, or Level. Level is -10 to
 +10, the scale Eight Sleep's own app uses. The dial and the schedule follow your choice.
 
 ## 9. Pod 5 buttons
@@ -137,7 +137,7 @@ reads **Turn on** and brings it back.
 | Any button, while an alarm vibrates | Dismisses the alarm | |
 
 When the sides are linked, the buttons on either side control both. The step size is in
-**Settings > Device settings**. A Pod 4 has tap gestures in place of buttons (**Settings > Tap gestures**).
+**Settings > General**. A Pod 4 has tap gestures in place of buttons (**Settings > Tap gestures**).
 
 ## 10. Settings worth knowing
 
@@ -145,15 +145,15 @@ When the sides are linked, the buttons on either side control both. The step siz
 
 | Setting | Where | What it does |
 |---|---|---|
-| **When turned on by hand** | Device settings | 3, 6 or 12 hours. Applies when you turn the bed on from the app, a shortcut or the buttons |
-| **Ignore the schedule meanwhile** | Device settings | While a side you turned on yourself is on, its schedule is skipped. Alarms still go off |
-| **Away mode** | Device settings | For when nobody is home. The schedule and alarms stop on both sides until you switch it off |
-| **Flip left and right** | Device settings | Swaps which physical side the app calls left and right. Each side keeps its schedule and settings |
-| **Light on the hub** | Device settings | The hub's light, on or off |
+| **Manual on lasts** | General | 3, 6 or 12 hours. Applies when you turn the bed on from the app, a shortcut or the buttons |
+| **Ignore the schedule meanwhile** | General | While a side you turned on yourself is on, its schedule is skipped. Alarms still go off |
+| **Away mode** | General | For when nobody is home. The schedule and alarms stop on both sides until you switch it off |
+| **Flip left and right** | General | Swaps which physical side the app calls left and right. Each side keeps its schedule and settings |
+| **Light on the hub** | General | The hub's light, on or off |
 | **Prime daily** | Priming | Runs the water priming cycle every day at **Prime time**, 2 PM by default. It does not check whether the bed is in use |
-| **Reboot once a day** | Device | Restarts the Pod one hour before the priming time. A vibrating alarm or running warm-up is lost in a reboot, so keep the time in the afternoon |
-| **Status page** | The "Status" link (bottom right on a computer, beside each page's heading on a phone) | Shows Wi-Fi strength, whether EightPod is up to date, and each service. The biometrics and sleep-analysis rows are greyed and marked untested |
-| **API** | Device settings | Tap **Show** beside **API requests** for the common requests and two examples with your Pod's address filled in. Tap a command to select it |
+| **Reboot once a day** | Pod | Restarts the Pod one hour before the priming time. A vibrating alarm or running warm-up is lost in a reboot, so keep the time in the afternoon |
+| **Status page** | The "Status" link (bottom right on a computer, beside the heading of Data and Settings on a phone) | Shows Wi-Fi strength, whether EightPod is up to date, and each service. The biometrics and sleep-analysis rows are greyed and marked untested |
+| **API** | Settings > API > **Open** | A page with the common requests and two examples with your Pod's address filled in. Tap a command to select it. The page's own address is `/api-guide` |
 | **In-bed detection** | Its own section, Pod 5 only | Two options, both off by default: **Turn on when I get into bed** and **Alarm after a long time in bed**. Detection was checked with one person on one Pod; the first option has been seen turning the bed on, the rest has not been seen working yet |
 
 ## 11. Updating
@@ -165,7 +165,7 @@ during the update.
   ```
   fs-update
   ```
-- Or, when the app knows of a newer version, tap **Update** next to the EightPod version in **Settings > Device**.
+- Or, when the app knows of a newer version, tap **Update** next to the EightPod version in **Settings > Pod**.
   The button only shows then; `fs-update` works at any time.
 
 **An update always ends with the internet block switched on**, even if you had turned it off.
