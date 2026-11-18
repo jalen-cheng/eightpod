@@ -1,6 +1,5 @@
 import { Badge, Box, BottomNavigation, BottomNavigationAction, Button, LinearProgress, Typography } from '@mui/material';
 import { ReactElement } from 'react';
-import NightsStayOutlinedIcon from '@mui/icons-material/NightsStayOutlined';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAppStore } from '@state/appStore.tsx';
 import { useServerInfo } from '@api/serverInfo.ts';
@@ -37,14 +36,10 @@ export default function Navbar() {
           flexDirection: 'column', borderRight: '1px solid', borderColor: 'divider', bgcolor: 'background.default', zIndex: 1100,
         } }
       >
-        <Box component={ Link } to="/" sx={ { display: 'flex', alignItems: 'center', gap: 1.25, p: 1, mb: 4, textDecoration: 'none' } }>
-          <Box sx={ { display: 'grid', placeItems: 'center', width: 32, height: 32, borderRadius: 1, bgcolor: 'action.selected' } }>
-            <NightsStayOutlinedIcon sx={ { color: 'primary.main', fontSize: 20 } }/>
-          </Box>
-          <Typography sx={ { color: 'text.primary', fontSize: 17, fontWeight: 600, letterSpacing: '-0.04em' } }>free sleep</Typography>
-          <Typography variant="overline" sx={ { ml: 'auto', color: 'text.secondary', fontSize: 8 } }>LOCAL</Typography>
+        <Box component={ Link } to="/" sx={ { display: 'flex', alignItems: 'center', gap: 1.25, p: 1, mb: 3, textDecoration: 'none' } }>
+          <Box component="img" src="/free-pod-icon.svg" alt="" sx={ { width: 30, height: 30, borderRadius: '8px' } }/>
+          <Typography sx={ { color: 'text.primary', fontSize: 17, fontWeight: 600, letterSpacing: '-0.02em' } }>Free Pod</Typography>
         </Box>
-        <Typography variant="overline" sx={ { color: 'text.secondary', px: 1.5, mb: 1 } }>Workspace</Typography>
         <Box component="nav" aria-label="Main navigation" sx={ { display: 'flex', flexDirection: 'column', gap: 0.5 } }>
           { PAGES.map(({ title, route, icon }) => (
             <Button

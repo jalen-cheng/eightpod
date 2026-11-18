@@ -120,16 +120,17 @@ export function snapStep(stepF: number, format: TemperatureFormat): number {
   return _.minBy(getStepOptions(format), option => Math.abs(option - stepF)) ?? stepF;
 }
 
-export function getTemperatureColor(tempF: number | undefined) {
-  if (tempF === undefined) return '#262626';
-  if (tempF <= 70) return '#2196f3';
-  if (tempF <= 82) return '#5393ff';
-  if (tempF <= 95) return '#db5858';
-  return '#d32f2f';
-}
+// Blue and coral mean cooling and warming everywhere in the app, and nothing else
+export const COOLING_COLOR = '#45a3ff';
+export const WARMING_COLOR = '#ff8562';
 
-const COOLING_COLOR = '#2196f3';
-const WARMING_COLOR = '#db5858';
+export function getTemperatureColor(tempF: number | undefined) {
+  if (tempF === undefined) return '#212838';
+  if (tempF <= 70) return COOLING_COLOR;
+  if (tempF <= 82) return '#7ea6ff';
+  if (tempF <= 95) return WARMING_COLOR;
+  return '#f2543d';
+}
 
 // The colour for a change in progress: blue when the target is below the bed's current
 // temperature, red when above. With nothing to do, falls back to the colour for the temperature.

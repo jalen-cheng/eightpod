@@ -1,9 +1,10 @@
 import { PropsWithChildren, ReactNode, useId } from 'react';
 import { Box, Typography, Card, CardContent } from '@mui/material';
 
-type SectionProps = PropsWithChildren<{ title?: string; icon?: ReactNode }>;
+// `action` sits at the right of the title line, for a section's live state or one control
+type SectionProps = PropsWithChildren<{ title?: string; icon?: ReactNode; action?: ReactNode }>;
 
-export default function Section({ title, icon, children }: SectionProps) {
+export default function Section({ title, icon, action, children }: SectionProps) {
   const titleId = useId();
 
   return (
@@ -25,7 +26,8 @@ export default function Section({ title, icon, children }: SectionProps) {
             borderBottom: { xs: 0, sm: '1px solid' }, borderColor: 'divider',
           } }>
           { icon && <Box sx={ { display: 'flex', color: 'text.secondary', '& .MuiSvgIcon-root': { fontSize: 18 } } }>{ icon }</Box> }
-          <Typography id={ titleId } component="h2" variant="h6" sx={ { fontSize: 14 } }>{ title }</Typography>
+          <Typography id={ titleId } component="h2" variant="h6" sx={ { fontSize: 15 } }>{ title }</Typography>
+          { action && <Box sx={ { ml: 'auto', display: 'flex', alignItems: 'center', gap: 0.75 } }>{ action }</Box> }
         </Box>
       ) }
       <CardContent sx={ { p: { xs: 0, sm: 2.5 }, '&:last-child': { pb: { xs: 0, sm: 2.5 } } } }>{ children }</CardContent>

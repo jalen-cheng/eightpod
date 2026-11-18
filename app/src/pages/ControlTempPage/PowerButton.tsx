@@ -71,24 +71,20 @@ export default function PowerButton({ isOn, isStatusLoaded, refetch }: PowerButt
   if (isInAwayMode) return null;
 
   return (
-    <Box sx={ { display: 'flex', flexDirection: 'column', gap: 2 } }>
+    <Box sx={ { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 } }>
+      { /* A pill under the dial: filled with the accent to turn on, quiet to turn off */ }
       <Button
-        fullWidth
         variant={ isOn ? 'outlined' : 'contained' }
         disabled={ disabled }
         onClick={ () => handleOnClick(!isOn) }
-        startIcon={ <PowerSettingsNewIcon sx={ { fontSize: 17 } }/> }
+        startIcon={ <PowerSettingsNewIcon sx={ { fontSize: 18 } }/> }
+        sx={ { minWidth: 168, borderRadius: 999 } }
       >
         { isOn ? 'Turn off' : 'Turn on' }
       </Button>
       {
         showAnalyzeSleep && !isUpdating && services?.biometrics?.enabled && (
-          <Button
-            variant="contained"
-            disabled={ disabled }
-            onClick={ handleAnalyzeSleep }
-          >
-            <SearchIcon />
+          <Button size="small" disabled={ disabled } onClick={ handleAnalyzeSleep } startIcon={ <SearchIcon sx={ { fontSize: 18 } }/> }>
             Analyze sleep
           </Button>
         )

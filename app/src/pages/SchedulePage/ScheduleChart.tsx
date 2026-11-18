@@ -14,7 +14,8 @@ import {
   getTemperatureUnitLabel,
   toDisplayValue,
   MAX_TEMP_F,
-  MIN_TEMP_F
+  MIN_TEMP_F,
+  COOLING_COLOR, WARMING_COLOR,
 } from '@lib/temperatureConversions.ts';
 import { useTemperatureFormat } from '@lib/useTemperatureFormat.ts';
 
@@ -276,8 +277,8 @@ export default function TemperatureScheduleChart() {
           idLine={ gradLineId }
           points={ points }
           threshold={ toDisplayValue(THRESHOLD_F, temperatureFormat) }
-          colorCool="#2196f3"
-          colorHot="#d32f2f"
+          colorCool={ COOLING_COLOR }
+          colorHot={ WARMING_COLOR }
           areaAlpha={ AREA_ALPHA }
           lineAlpha={ LINE_ALPHA }
         />

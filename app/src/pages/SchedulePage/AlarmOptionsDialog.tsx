@@ -8,7 +8,7 @@ import { postAlarm } from '@api/alarm.ts';
 import { postDeviceStatus } from '@api/deviceStatus.ts';
 import { useAppStore } from '@state/appStore.tsx';
 import { buildSidesPayload, getControlledSides } from '@lib/sides.ts';
-import { AlarmSchedule } from '@api/schedulesSchema.ts';
+import { AlarmSchedule, MAX_ALARM_SECONDS } from '@api/schedulesSchema.ts';
 import InfoTip from '@components/InfoTip.tsx';
 import { useScheduleStore } from './scheduleStore.tsx';
 import { TemperatureSelect } from './ScheduleFields.tsx';
@@ -20,6 +20,9 @@ const ALARM_LENGTH_MINUTES = [10, 15, 20, 30];
 const TEST_SECONDS = 60;
 // 0 means no warm-up
 const WARM_UP_MINUTES = [0, 15, 30, 45];
+
+// Upstream's alarms ran for seconds. One saved that short has never been set up in this app.
+const SET_UP_ALARM_SECONDS = 600;
 
 const BED_OFF_ON_DISMISS_INFO = 'The bed turns off the moment you dismiss the alarm, instead of 30 minutes after the wake-up time.';
 
@@ -59,8 +62,8 @@ type AlarmOptionsDialogProps = {
   onClose: () => void;
 };
 
-// Everything about the alarm except its time: how it vibrates, how long for, and the warm-up
-// before it. Changes go into the schedule being edited and are saved with it. The test runs the
+// Everything about the alarm except its time: whether it vibrates at all, how, how long for, and
+// the warm-up before it. Changes go into the schedule being edited and are saved with it. The test runs the
 // vibration as set on screen, saved or not.
 // eslint-disable-next-line react/no-multi-comp
 export default function AlarmOptionsDialog({ open, onClose }: AlarmOptionsDialogProps) {
@@ -77,6 +80,12 @@ export default function AlarmOptionsDialog({ open, onClose }: AlarmOptionsDialog
 
   const { alarm } = selectedSchedule;
   const updateAlarm = (changes: Partial<AlarmSchedule>) => updateSelectedSchedule({ alarm: changes });
+  // Switching the alarm on gives it sensible settings if it has never been set up: a ramp-up
+  // that keeps going until dismissed
+  const setAlarmEnabled = (enabled: boolean) => {
+    const needsDefaults = enabled && alarm.duration < SET_UP_ALARM_SECONDS;
+    updateAlarm(needsDefaults ? { enabled, duration: MAX_ALARM_SECONDS, vibrationPattern: 'rise' } : { enabled });
+  };
   const preWarmMinutes = alarm.preWarmMinutes ?? 0;
   const lengthMinutes = Math.round(alarm.duration / SECONDS_PER_MINUTE);
   // An alarm saved with some other length keeps it until a new one is picked
@@ -102,8 +111,22 @@ export default function AlarmOptionsDialog({ open, onClose }: AlarmOptionsDialog
 
   return (
     <Dialog open={ open } onClose={ onClose } fullWidth maxWidth="xs">
-      <DialogTitle>Alarm options</DialogTitle>
-      <DialogContent sx={ { display: 'flex', flexDirection: 'column', gap: 1.5 } }>
+      <DialogTitle sx={ { display: 'flex', alignItems: 'center', justifyContent: 'space-between' } }>
+        Alarm
+        <Switch
+          checked={ alarm.enabled }
+          onChange={ (event) => setAlarmEnabled(event.target.checked) }
+          slotProps={ { input: { 'aria-label': 'Vibrating alarm at the wake-up time' } } }
+        />
+      </DialogTitle>
+      { /* With the alarm off its options stay in view, dimmed, so switching it on is not a surprise */ }
+      <DialogContent
+        sx={ {
+          display: 'flex', flexDirection: 'column', gap: 1.5, transition: 'opacity 150ms ease',
+          ...(alarm.enabled ? {} : { opacity: 0.35, pointerEvents: 'none' }),
+        } }
+        inert={ !alarm.enabled }
+      >
         <OptionRow label="Vibration" info="Ramp up builds to full strength over 40 seconds. Pulses start at full strength." isStacked>
           <ToggleButtonGroup
             exclusive
@@ -180,10 +203,10 @@ export default function AlarmOptionsDialog({ open, onClose }: AlarmOptionsDialog
         </OptionRow>
       </DialogContent>
       <DialogActions sx={ { px: 3, pb: 2 } }>
-        <Button onClick={ isTesting ? stopTest : startTest } sx={ { mr: 'auto' } }>
+        <Button onClick={ isTesting ? stopTest : startTest } disabled={ !alarm.enabled && !isTesting } sx={ { mr: 'auto' } }>
           { isTesting ? 'Stop test' : 'Test for a minute' }
         </Button>
-        <Button onClick={ onClose }>Done</Button>
+        <Button variant="contained" onClick={ onClose }>Done</Button>
       </DialogActions>
     </Dialog>
   );

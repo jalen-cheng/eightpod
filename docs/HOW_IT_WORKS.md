@@ -346,9 +346,9 @@ offers to dismiss it.
   because a night belongs to the day it started).
 - "Monday night" with a copy button (save this night to other days) and a switch: whether that night's schedule runs at all.
 - A chart of the night, then the night as one line per event: bed on, each temperature change,
-  and wake up (time, an options button, a switch for the vibrating alarm), joined by a line whose
-  dots take the colour of each temperature. There is no bed-off row: the bed turns off 30 minutes
-  after wake up. This mirrors Eight Sleep's own app, which has a bedtime, temperature phases and
+  and wake up (time, and one button that says whether the alarm is on and opens its options),
+  joined by a line whose dots take the colour of each temperature. The last line shows when the
+  bed turns off; it cannot be edited, because it is always 30 minutes after wake up. This mirrors Eight Sleep's own app, which has a bedtime, temperature phases and
   alarms, and no off time.
 - Editing anything brings up a bar that stays in view: **Discard**, **Other days…** (tick any days
   to save this night to) and **Save for Mon**. Other day tabs are locked until you save or discard.

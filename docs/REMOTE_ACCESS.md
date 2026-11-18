@@ -105,7 +105,7 @@ home, and `bed` only while Tailscale is connected. To use a single link everywhe
 - Leave Tailscale connected on the phone and always use `http://bed`. The iOS app's **VPN On
   Demand** setting can connect it by itself whenever the phone is off your home Wi-Fi. iOS cannot
   connect it only when one address is opened; a shortcut that connects Tailscale and then opens
-  the page is the nearest thing. Tailscale only carries traffic for your own devices, so leaving
+  the page is the nearest thing ([recipe](IOS_SHORTCUTS.md#open-the-app-one-icon-for-home-and-away)). Tailscale only carries traffic for your own devices, so leaving
   it on does not route the rest of the phone's traffic through it; or
 - Run `sh /home/dac/free-sleep/scripts/setup_tailscale.sh home-address`, approve the route it names in
   the Tailscale admin page, and always use the Pod's home address, for example `http://192.168.1.50:3000`.

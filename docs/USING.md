@@ -51,7 +51,7 @@ Each side has one schedule per night of the week. A night is named after the day
 5. To change the temperature during the night, tap **Add a change**, then set its time and
    temperature. Add as many as you like. The X at the end of a row removes it.
 6. On the **Wake up** row, set the wake-up time.
-7. Turn on the switch at the end of the Wake up row if you want the bed to vibrate at that time.
+7. Tap **Alarm off** on the Wake up row and turn the switch on if you want the bed to vibrate at that time.
    With it off, the wake-up time still decides when the bed turns off.
 8. Tap **Save for Mon** in the bar that appears at the bottom.
 
@@ -72,8 +72,8 @@ Other day tabs are locked until you save or discard.
 
 ## 5. Alarm options and testing
 
-With the alarm switch on, an options button appears on the Wake up row, left of the switch. It
-opens **Alarm options**:
+The **Alarm on** / **Alarm off** button on the Wake up row opens everything about the alarm, with
+its on/off switch at the top:
 
 <img src="screenshots/alarm_options.png" width="260" alt="Alarm options">
 

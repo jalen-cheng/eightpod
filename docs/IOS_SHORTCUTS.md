@@ -20,6 +20,30 @@ one-link route and a reserved address is in [REMOTE_ACCESS.md](REMOTE_ACCESS.md)
 
 The first run of a shortcut asks for permission to connect to devices on your local network; allow it.
 
+## Open the app: one icon for home and away
+
+A web page cannot tell which Wi-Fi the phone is on or switch a VPN on, but a shortcut can. This
+one opens the app directly at home, and away from home offers to connect Tailscale first, so
+Tailscale is only on when you ask for it. It needs Tailscale set up as in
+[REMOTE_ACCESS.md](REMOTE_ACCESS.md).
+
+1. Open **Shortcuts** and tap **+**.
+2. Add **Get Network Details**. Leave it on **Wi-Fi** and **Network Name**.
+3. Add **If**. Set it to: **Network Name** **is** the name of your home Wi-Fi.
+4. Under **If**, add **Open URLs** with `http://bed.local`.
+5. Under **Otherwise**, add **Choose from Menu** with the prompt "Not at home" and two options:
+   "Connect Tailscale" and "Cancel".
+6. Under "Connect Tailscale", add Tailscale's **Connect** action (search for "Tailscale"), then
+   **Wait** 2 seconds, then **Open URLs** with `http://bed`.
+7. Name it "Bed", tap the share button and choose **Add to Home Screen**.
+
+To switch Tailscale off again without thinking about it, add an automation: **Automation** >
+**+** > **App** > Safari > **Is Closed** > run Tailscale's **Disconnect** action. Or make a
+second shortcut with only **Disconnect**.
+
+The steps above were written from the actions Shortcuts and Tailscale provide and have not been
+run on a phone.
+
 ## 1. Set the temperature (-10 to +10)
 
 Asks for a number on the same scale as Eight Sleep's own app, turns the bed on, and sets it.
