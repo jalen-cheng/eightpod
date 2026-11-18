@@ -94,8 +94,12 @@ export const executeAlarm = async (
 // the bed. A Pod 5's firmware runs a 2-second request as given (anything shorter it drops). It
 // is not an alarm: nothing tracks it and nothing follows it.
 const CONFIRM_BUZZ = { strength: 25, seconds: 2, pattern: 'double' };
+// The firmware drops a request that arrives with the stop command, or that carries the same
+// second as the alarm it just stopped (seen on a Pod 5). Waiting gets past both.
+const CONFIRM_BUZZ_WAIT_MS = 1_200;
 export const buzzDismissalConfirmation = async (side: Side) => {
   try {
+    await new Promise(resolve => setTimeout(resolve, CONFIRM_BUZZ_WAIT_MS));
     const payload = { pl: CONFIRM_BUZZ.strength, du: CONFIRM_BUZZ.seconds, pi: CONFIRM_BUZZ.pattern, tt: moment().unix() };
     await executeFunction(side === 'left' ? 'ALARM_LEFT' : 'ALARM_RIGHT', cbor.encode(payload).toString('hex'));
   } catch (error: unknown) {
