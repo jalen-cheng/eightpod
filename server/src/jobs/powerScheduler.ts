@@ -14,6 +14,7 @@ import { findLateAlarmEnd } from './alarmScheduler.js';
 import { didOneOffAlarmFireWithin } from './oneOffAlarmState.js';
 import { OFF_AFTER_ALARM_MINUTES } from '../db/automaticOffTime.js';
 import { isManualHoldActive } from './manualHold.js';
+import { getScheduledOnSeconds } from './scheduleTiming.js';
 import { connectFranken } from '../8sleep/frankenServer.js';
 
 // How long the bed stays on after an alarm that was later than the schedule's off time
@@ -49,7 +50,7 @@ export const schedulePowerOn = (settingsData: Settings, side: Side, day: DayOfWe
           isOn: true,
           targetTemperatureF: power.onTemperature
         }
-      });
+      }, { onSeconds: getScheduledOnSeconds(power.on, power.off) });
       serverStatus.status.powerSchedule.status = 'healthy';
       serverStatus.status.powerSchedule.message = '';
     } catch (error: unknown) {

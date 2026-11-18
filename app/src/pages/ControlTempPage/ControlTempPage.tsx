@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
-import { Alert, Box, Button, Chip, Paper, Skeleton, Typography } from '@mui/material';
+import { Alert, Box, Button, IconButton, Paper, Skeleton, Typography } from '@mui/material';
+import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
 import ThermostatOutlinedIcon from '@mui/icons-material/ThermostatOutlined';
 import AlarmDismissal from './AlarmDismissal.tsx';
 import AlarmNotification from './AlarmNotification.tsx';
@@ -7,13 +8,14 @@ import AwayNotification from './AwayNotification.tsx';
 import ErrorBoundary from '@components/ErrorBoundary.tsx';
 import PageContainer from '../PageContainer.tsx';
 import PageHeader from '@components/PageHeader.tsx';
-import PowerButton from './PowerButton.tsx';
+import AnalyzeSleepPrompt from './AnalyzeSleepPrompt.tsx';
 import PrimingNotification from './PrimingNotification.tsx';
 import SideControl from '@components/SideControl.tsx';
 import Slider from './Slider.tsx';
 import WaterNotification from './WaterNotification.tsx';
 import { useAppStore } from '@state/appStore.tsx';
 import { useControlTempStore } from './controlTempStore.tsx';
+import { usePowerToggle } from './usePowerToggle.ts';
 import { postDeviceStatus, useDeviceStatus } from '@api/deviceStatus';
 import { getOtherSide } from '@lib/sides.ts';
 import { useSettings } from '@api/settings.ts';
@@ -30,7 +32,14 @@ export default function ControlTempPage() {
   const { data: settings } = useSettings();
   const { isUpdating, setIsUpdating, side } = useAppStore();
   const sideStatus = deviceStatus?.[side];
-  const isOn = sideStatus?.isOn || false;
+  // While a press is being sent, show what was asked for instead of waiting for the Pod's reply
+  const requestedIsOn = useControlTempStore(state => state.deviceStatus?.[side]?.isOn);
+  const isOn = (isUpdating ? requestedIsOn : undefined) ?? sideStatus?.isOn ?? false;
+
+  const power = usePowerToggle(sideStatus !== undefined, refetch);
+  // While the side is off the whole section is the button that turns it on
+  const isTurnOnTarget = !isOn && !isPending && !isError && power.canToggle;
+  const turnOn = () => { if (!power.disabled) power.setPower(true); };
 
   useEffect(() => { refetch(); }, [side, refetch]);
   const hasPendingEdit = useControlTempStore(state => state.hasPendingEdit);
@@ -69,17 +78,40 @@ export default function ControlTempPage() {
         onLinkSidesChange={ handleLinkSidesChange }
       />
       <Paper
+        // A press anywhere in the section turns an off side on. The power button in the corner
+        // does the same for the keyboard and screen readers, so the section itself is not a button.
+        onClick={ isTurnOnTarget ? turnOn : undefined }
         sx={ {
           px: { xs: 0, sm: 3 }, py: { xs: 1.5, sm: 3 }, overflow: 'hidden', my: { xs: 'auto', md: 0 },
           bgcolor: { xs: 'transparent', sm: 'background.paper' },
           borderWidth: { xs: 0, sm: 1 }, borderRadius: { xs: 0, sm: 3 },
+          ...(isTurnOnTarget && {
+            cursor: power.disabled ? 'default' : 'pointer',
+            transition: 'background-color 120ms, border-color 120ms',
+            '@media (hover: hover)': { '&:hover': { borderColor: 'text.secondary' } },
+          }),
         } }>
-        <Box sx={ { display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5 } }>
+        <Box sx={ { display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 0.5, minHeight: 44 } }>
           <Box sx={ { display: 'flex', alignItems: 'center', gap: 0.75 } }>
             <ThermostatOutlinedIcon sx={ { color: 'text.secondary', fontSize: 17 } }/>
             <Typography variant="body2" sx={ { fontWeight: 500 } }>Bed temperature</Typography>
           </Box>
-          <Chip label={ isPending ? 'Connecting' : isOn ? 'Active' : 'Standby' } color={ isOn ? 'success' : 'default' } size="small"/>
+          { /* One button for both directions, so it keeps focus through a toggle: lit while the
+               side is on, dim while it is off */ }
+          { !isPending && !isError && power.canToggle && (
+            <IconButton
+              aria-label={ isOn ? 'Turn off' : 'Turn on' }
+              disabled={ power.disabled }
+              onClick={ (event) => {
+                // The section's own press handler must not also run
+                event.stopPropagation();
+                power.setPower(!isOn);
+              } }
+              sx={ { color: isOn ? 'success.main' : 'text.secondary' } }
+            >
+              <PowerSettingsNewIcon sx={ { fontSize: 22 } }/>
+            </IconButton>
+          ) }
         </Box>
         { isPending ? (
           <Skeleton variant="circular" width={ 240 } height={ 240 } sx={ { mx: 'auto', my: 3 } }/>
@@ -95,12 +127,11 @@ export default function ControlTempPage() {
             />
           </Box>
         ) }
-        { isError ? (
+        { isError && (
           <Button fullWidth variant="contained" onClick={ () => refetch() } disabled={ isUpdating }>Reconnect</Button>
-        ) : (
-          <PowerButton isOn={ isOn } isStatusLoaded={ sideStatus !== undefined } refetch={ refetch }/>
         ) }
       </Paper>
+      <AnalyzeSleepPrompt isOffered={ power.isAnalyzeOffered }/>
       <Box sx={ { display: 'flex', flexDirection: 'column', gap: 1.5 } }>
         { deviceStatus?.isPriming && <PrimingNotification/> }
         <ErrorBoundary componentName="Alarm notification"><AlarmNotification/></ErrorBoundary>

@@ -36,6 +36,15 @@ export function isChangeBeforeWake(time: string, bedtime: string, wakeTime: stri
   return offset > 0 && offset < minutesBetween(bedtime, wakeTime);
 }
 
+// Why a temperature change's time cannot be saved. A time outside the night is blamed on
+// whichever end it is nearer: just past the wake time, or just short of the bed-on time.
+// Undefined when the time is fine.
+export function findChangeProblem(time: string, bedtime: string, wakeTime: string): 'notAfterBedOn' | 'notBeforeWake' | undefined {
+  if (isChangeBeforeWake(time, bedtime, wakeTime)) return undefined;
+  if (!TIME_FORMAT.test(time)) return 'notBeforeWake';
+  return minutesBetween(time, bedtime) < minutesBetween(wakeTime, time) ? 'notAfterBedOn' : 'notBeforeWake';
+}
+
 // A free time for a new temperature change: an hour after the last one if that is still before
 // the wake time, otherwise halfway between the last one and the wake time. Undefined when the
 // night has no room left.

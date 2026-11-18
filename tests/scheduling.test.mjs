@@ -3,10 +3,10 @@ import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 import { test } from 'node:test';
 import {
-  findNewChangeTime, isChangeBeforeWake, isNightLengthValid, isPowerScheduleDurationValid, isTimeDuringNight, minutesBetween,
+  findChangeProblem, findNewChangeTime, isChangeBeforeWake, isNightLengthValid, isPowerScheduleDurationValid, isTimeDuringNight, minutesBetween,
 } from '../app/src/pages/SchedulePage/scheduleValidation.ts';
 import {
-  DAYS_OF_WEEK, findAlarmReplacedByOneOff, findNightDay, findNextScheduledAlarm, getDayIndexForSchedule, minutesAlarmIsAfterOff, parseClockTime,
+  DAYS_OF_WEEK, findAlarmReplacedByOneOff, findNightDay, findNextScheduledAlarm, getDayIndexForSchedule, getScheduledOnSeconds, minutesAlarmIsAfterOff, parseClockTime,
   subtractMinutesFromTime,
 } from '../server/src/jobs/scheduleTiming.ts';
 
@@ -232,4 +232,37 @@ test('a morning alarm belongs to the night that began the day before', () => {
   assert.equal(findNightDay(moment.tz('2026-11-17T11:59:00', zone)), 'monday');
   assert.equal(findNightDay(moment.tz('2026-11-17T22:00:00', zone)), 'tuesday');
   assert.equal(findNightDay(moment.tz('2026-11-16T00:30:00', zone)), 'sunday');
+});
+
+test('a misplaced temperature change is blamed on the end of the night it is nearer', () => {
+  assert.equal(findChangeProblem('02:00', '21:15', '06:30'), undefined);
+  // On or just past the wake time: the alarm is in the way
+  assert.equal(findChangeProblem('06:30', '21:15', '06:30'), 'notBeforeWake');
+  assert.equal(findChangeProblem('07:00', '21:15', '06:30'), 'notBeforeWake');
+  // On or just short of the bed-on time
+  assert.equal(findChangeProblem('21:15', '21:15', '06:30'), 'notAfterBedOn');
+  assert.equal(findChangeProblem('20:00', '21:15', '06:30'), 'notAfterBedOn');
+  assert.equal(findChangeProblem('', '21:15', '06:30'), 'notBeforeWake');
+});
+
+test('a morning alarm belongs to the night before, unless that night began after midnight', () => {
+  const moment = createRequire(new URL('../server/package.json', import.meta.url))('moment-timezone');
+  const mondayMorning = moment.tz('2026-11-16T08:00:00', 'America/Los_Angeles');
+  assert.equal(findNightDay(mondayMorning), 'sunday');
+  const eveningStart = { monday: { power: { enabled: true, on: '22:00' } } };
+  assert.equal(findNightDay(mondayMorning, eveningStart), 'sunday');
+  const afterMidnightStart = { monday: { power: { enabled: true, on: '00:30' } } };
+  assert.equal(findNightDay(mondayMorning, afterMidnightStart), 'monday');
+  // Before that night has begun, the moment still belongs to the night before
+  assert.equal(findNightDay(moment.tz('2026-11-16T00:10:00', 'America/Los_Angeles'), afterMidnightStart), 'sunday');
+  const disabled = { monday: { power: { enabled: false, on: '00:30' } } };
+  assert.equal(findNightDay(mondayMorning, disabled), 'sunday');
+});
+
+test('the Pod is told to stay on for longer than the night', () => {
+  const HOUR = 3600;
+  assert.equal(getScheduledOnSeconds('22:00', '07:30'), 12 * HOUR);
+  // Exactly 12 hours would race the off job
+  assert.equal(getScheduledOnSeconds('19:00', '07:00'), 12.5 * HOUR);
+  assert.equal(getScheduledOnSeconds('21:00', '11:30'), 15 * HOUR);
 });

@@ -14,7 +14,7 @@ import { TemperatureSelect, TimeField } from './ScheduleFields.tsx';
 import AlarmOptionsDialog from './AlarmOptionsDialog.tsx';
 import { OFF_AFTER_ALARM_MINUTES, offTimeAfterAlarm } from '@api/automaticOffTime.ts';
 import { getTemperatureColor } from '@lib/temperatureConversions.ts';
-import { findNewChangeTime, isChangeBeforeWake, isNightLengthValid, minutesBetween } from './scheduleValidation.ts';
+import { findChangeProblem, findNewChangeTime, isNightLengthValid, minutesBetween } from './scheduleValidation.ts';
 
 const NEW_CHANGE_TEMPERATURE_F = 70;
 // Wide enough for the longest label ("Bed on") so every row's controls start at the same place
@@ -123,6 +123,18 @@ export default function NightTimeline() {
 
   const isNightValid = isNightLengthValid(power.on, alarm.time);
 
+  // What to tell the user about a change whose time cannot be saved. The usual cause is the
+  // wake time: the bed turns off soon after it, so a later change would never run.
+  const describeChangeProblem = (time: Time) => {
+    const problem = findChangeProblem(time, power.on, alarm.time);
+    if (problem === undefined) return undefined;
+    if (problem === 'notAfterBedOn') return 'Must be after Bed on';
+    const wakeMoment = moment(alarm.time, 'HH:mm', true);
+    // While the wake time is being typed, its own row carries the error
+    if (!wakeMoment.isValid()) return 'Must be earlier than the wake time';
+    return `Must be earlier than the ${wakeMoment.format('h:mm A')} wake time`;
+  };
+
   return (
     <Paper sx={ { p: { xs: 1.5, sm: 2.5 }, width: '100%', borderRadius: '16px' } }>
       <Box
@@ -148,14 +160,14 @@ export default function NightTimeline() {
             key={ changeIndex }
             label={ changeIndex === 0 ? 'Then' : undefined }
             dotColor={ getTemperatureColor(temperatureF) }
-            error={ isChangeBeforeWake(time, power.on, alarm.time) ? undefined : 'Must be after Bed on and before Wake' }
+            error={ describeChangeProblem(time) }
           >
             <TimeField
               label="Change time"
               value={ time }
               onChange={ (newTime) => replaceChange(time, newTime, temperatureF) }
               disabled={ disabled }
-              error={ !isChangeBeforeWake(time, power.on, alarm.time) }
+              error={ describeChangeProblem(time) !== undefined }
             />
             <TemperatureSelect
               label="Change temperature"

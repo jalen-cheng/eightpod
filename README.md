@@ -55,7 +55,9 @@ Read [what changes](docs/POD_MODELS.md) first.
 
 ## Quick start
 
-1. Open `http://bed.local` on a phone on the same Wi-Fi. The installer names the Pod `bed`.
+1. Open `http://bed.local` on a phone on the same Wi-Fi. The installer names the Pod `bed`. If it
+   does not load (some Android phones and Linux computers do not look up `.local` names), use
+   `http://<pod-ip>:3000`.
 2. In **Settings**, set your time zone. Until you do, every scheduled time is off by hours.
 3. In **Schedules**, set when the bed turns on, the temperatures through the night and when you wake.
 4. Block the Pod from the internet (step 16 of the install guide), then close the hub.
@@ -97,11 +99,11 @@ No Pod yet? **[freepod.vercel.app](https://freepod.vercel.app)** is the app on m
 
 **Quality of life**
 
-- **iPhone Shortcuts.** One request sets the temperature, sets an alarm by time ("6:30 AM" works), or reads the bed in a sentence.
+- **iPhone Shortcuts.** One request sets the temperature, sets an alarm by time ("6:30 AM" works), or reads the bed in a sentence. Any Android app that sends web requests can use the same [API](server/API.md).
 - **Turning on by hand** lasts 3, 6 or 12 hours, and can ignore the schedule meanwhile.
 - **Updates from the app.** It shows when a newer version exists and updates in about four minutes, putting the old version back if anything fails.
 - **Housekeeping.** Daily priming is on by default at 2 PM, the daily reboot has its own switch, left and right can be flipped, and Eight Sleep's updater can be locked out.
-- **Controls respond at once** instead of locking after every press, and the power button waits for the Pod's real state.
+- **Controls respond at once** instead of locking after every press, and power waits for the Pod's real state. A bed that is off turns on with one tap anywhere on the dial.
 
 The full comparison with Free Sleep is in [CHANGELOG.md](CHANGELOG.md#compared-with-free-sleep).
 
@@ -137,59 +139,111 @@ the test Pod 5 and were not looked into further.
 
 ## FAQ
 
-**Is it reversible?**
+Select a question to open its answer.
+
+<details>
+<summary><b>Is it reversible?</b></summary>
+
 On a Pod 3 or Pod 4, yes: a firmware reset puts the Pod back as it left the factory, and it works
 with Eight Sleep's app again. On a Pod 5, treat it as not reversible for now. Nobody has
 established how to reset one, and the software-only way back in the
 [install guide](INSTALLATION.md#going-back-to-eight-sleep) has not been tried.
 
-**Will I brick my Pod?**
+</details>
+
+<details>
+<summary><b>Will I brick my Pod?</b></summary>
+
 The install does not touch the firmware that runs the bed; it adds a program beside it and
 switches a few services off. The risk is in the steps before that: you open the hub and type
 commands as root, and a wrong command can stop the Pod booting. Follow the guide step by step and
 do not improvise. A Pod 3 with an SD card is the riskiest, because the card itself is modified.
 
-**Will it void my warranty?**
+</details>
+
+<details>
+<summary><b>Will it void my warranty?</b></summary>
+
 It may. Free Pod is not supported by Eight Sleep. Opening the hub is visible to anyone who looks,
 and a Pod 5 cannot currently be put back to stock.
 
-**Do I still need an Eight Sleep subscription or account?**
+</details>
+
+<details>
+<summary><b>Do I still need an Eight Sleep subscription or account?</b></summary>
+
 No. Nothing here talks to Eight Sleep. Their app stops working with the Pod once it is installed.
 
-**Does it work without internet?**
+</details>
+
+<details>
+<summary><b>Does it work without internet?</b></summary>
+
 Yes. The Pod is blocked from the internet on purpose and everything runs on it. You need your
 home Wi-Fi to reach the app from your phone, and the side buttons and schedule work without that.
 
-**Can I control it away from home?**
-Yes, with [Tailscale on the Pod](docs/REMOTE_ACCESS.md). It is optional, takes one script, and
-keeps the internet block on. A shortcut can open the app at home and offer Tailscale when you are
-away.
+</details>
 
-**Does sleep tracking work?**
-Not on a Pod 5: its firmware publishes sensor data where the analysis does not read. On a Pod 3 or
-4 the code is the original's, unchanged and untested here. Help is [wanted](https://github.com/jalen-cheng/free-sleep/issues).
+<details>
+<summary><b>How do I update?</b></summary>
 
-**Does the bed know when I am in it?**
-On a Pod 5, yes. It can turn on when you get in, turn off about 15 minutes after you get out, and
-vibrate if you have been in bed longer than you chose. A Pod 3 or 4 does not report the sensors
-this needs.
-
-**Do the buttons or taps on the bed work?**
-Pod 5 buttons do: + and - for temperature, hold the middle to switch a side on or off, any button
-to stop an alarm. Pod 4 taps are handled by the same code and have not been run. A Pod 3 has
-neither.
-
-**Two of us share the bed. Does each side get its own settings?**
-Yes: its own temperature, schedule and alarm. Or link the sides and control the bed as one.
-
-**How do I update?**
 The app shows when a newer version is out. **Settings > Device > Update** takes about four
 minutes, keeps your settings, and puts the old version back if anything fails. The internet block
 is lifted for the download and put back afterwards.
 
-**Can I go back to the original Free Sleep?**
+</details>
+
+**More questions**
+
+<details>
+<summary><b>Can I control it away from home?</b></summary>
+
+Yes, with [Tailscale on the Pod](docs/REMOTE_ACCESS.md). It is optional, takes one script, and
+keeps the internet block on. A shortcut can open the app at home and offer Tailscale when you are
+away.
+
+</details>
+
+<details>
+<summary><b>Does sleep tracking work?</b></summary>
+
+Not on a Pod 5: its firmware publishes sensor data where the analysis does not read. On a Pod 3 or
+4 the code is the original's, unchanged and untested here. Help is [wanted](https://github.com/jalen-cheng/free-sleep/issues).
+
+</details>
+
+<details>
+<summary><b>Does the bed know when I am in it?</b></summary>
+
+On a Pod 5, yes. It can turn on when you get in, turn off about 15 minutes after you get out, and
+vibrate if you have been in bed longer than you chose. A Pod 3 or 4 does not report the sensors
+this needs.
+
+</details>
+
+<details>
+<summary><b>Do the buttons or taps on the bed work?</b></summary>
+
+Pod 5 buttons do: + and - for temperature, hold the middle to switch a side on or off, any button
+to stop an alarm. Pod 4 taps are handled by the same code and have not been run. A Pod 3 has
+neither.
+
+</details>
+
+<details>
+<summary><b>Two of us share the bed. Does each side get its own settings?</b></summary>
+
+Yes: its own temperature, schedule and alarm. Or link the sides and control the bed as one.
+
+</details>
+
+<details>
+<summary><b>Can I go back to the original Free Sleep?</b></summary>
+
 Yes. One command over SSH reinstalls it and keeps your schedules; see
 [docs/POD_MODELS.md](docs/POD_MODELS.md).
+
+</details>
 
 ## Documentation
 

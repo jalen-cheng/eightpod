@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="3345b5fb-9ec7-59dd-85cf-7afd3faaa68b")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="38c56cfd-fff4-552a-b043-b003bb9ce006")}catch(e){}}();
 import schedule from 'node-schedule';
 import { markOneOffAlarmFired } from './oneOffAlarmState.js';
 import cbor from 'cbor';
@@ -138,7 +138,7 @@ const runPreWarm = async (side, preWarmMinutes, alarmTemperatureF) => {
 // How a one-off alarm vibrates: the settings of the weekly alarm on the day it goes off
 export const getOneOffAlarmSettings = (settingsData, side, firesAt) => {
     // The settings of the night the alarm ends, not of the calendar day it goes off on
-    const dayKey = findNightDay(firesAt.clone().tz(settingsData.timeZone));
+    const dayKey = findNightDay(firesAt.clone().tz(settingsData.timeZone), schedulesDB.data?.[side]);
     return schedulesDB.data?.[side]?.[dayKey]?.alarm ?? {
         vibrationIntensity: 100,
         duration: MAX_ALARM_SECONDS,
@@ -314,4 +314,4 @@ export const scheduleAlarmPreWarm = (settingsData, side, day, dailySchedule) => 
     });
 };
 //# sourceMappingURL=alarmScheduler.js.map
-//# debugId=3345b5fb-9ec7-59dd-85cf-7afd3faaa68b
+//# debugId=38c56cfd-fff4-552a-b043-b003bb9ce006

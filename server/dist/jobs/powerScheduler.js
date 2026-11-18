@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="38358a7d-eeca-53b9-a096-163761946bcc")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="22791ba1-d674-5b0e-98fd-ed9dd49c357b")}catch(e){}}();
 import schedule from 'node-schedule';
 import { updateDeviceStatus } from '../routes/deviceStatus/updateDeviceStatus.js';
 import { getDayIndexForSchedule, getDayOfWeekIndex, logJob } from './utils.js';
@@ -13,6 +13,7 @@ import { findLateAlarmEnd } from './alarmScheduler.js';
 import { didOneOffAlarmFireWithin } from './oneOffAlarmState.js';
 import { OFF_AFTER_ALARM_MINUTES } from '../db/automaticOffTime.js';
 import { isManualHoldActive } from './manualHold.js';
+import { getScheduledOnSeconds } from './scheduleTiming.js';
 import { connectFranken } from '../8sleep/frankenServer.js';
 // How long the bed stays on after an alarm that was later than the schedule's off time
 const SECONDS_ON_AFTER_LATE_ALARM = 120;
@@ -44,7 +45,7 @@ export const schedulePowerOn = (settingsData, side, day, power) => {
                     isOn: true,
                     targetTemperatureF: power.onTemperature
                 }
-            });
+            }, { onSeconds: getScheduledOnSeconds(power.on, power.off) });
             serverStatus.status.powerSchedule.status = 'healthy';
             serverStatus.status.powerSchedule.message = '';
         }
@@ -145,4 +146,4 @@ export const schedulePowerOffAndSleepAnalysis = (settingsData, side, day, power)
     });
 };
 //# sourceMappingURL=powerScheduler.js.map
-//# debugId=38358a7d-eeca-53b9-a096-163761946bcc
+//# debugId=22791ba1-d674-5b0e-98fd-ed9dd49c357b

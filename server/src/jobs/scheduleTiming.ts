@@ -41,8 +41,26 @@ export function findNextScheduledAlarm(sideSchedule: SideSchedule, now: moment.M
 
 // The schedule day a moment belongs to. A night is filed under the day it starts on, so a
 // morning alarm belongs to the day before: anything before noon counts as the previous day.
-export function findNightDay(at: moment.Moment): DayOfWeek {
+// The exception is a night that itself starts after midnight (bed on at 00:30): given the side's
+// schedule, a morning moment at or after that day's bed-on time belongs to its own day.
+export function findNightDay(at: moment.Moment, sideSchedule?: SideSchedule): DayOfWeek {
+  const calendarDay = at.format('dddd').toLowerCase() as DayOfWeek;
+  const bedOn = sideSchedule?.[calendarDay]?.power;
+  const clock = at.format('HH:mm');
+  if (bedOn?.enabled && bedOn.on < '12:00' && clock < '12:00' && bedOn.on <= clock) return calendarDay;
   return at.clone().subtract(12, 'hours').format('dddd').toLowerCase() as DayOfWeek;
+}
+
+const DEFAULT_ON_MINUTES = 12 * 60;
+// Kept on a little past the off time, so the Pod's own timer never beats the off job
+const ON_MARGIN_MINUTES = 30;
+
+// How long the Pod is told to stay on when the schedule turns a side on. The Pod switches itself
+// off when this runs out, so it must outlast the night: 12 hours, or longer for a longer night.
+export function getScheduledOnSeconds(onTime: string, offTime: string): number {
+  const toMinutes = (time: string) => Number(time.slice(0, 2)) * 60 + Number(time.slice(3, 5));
+  const nightMinutes = (toMinutes(offTime) - toMinutes(onTime) + MINUTES_PER_DAY) % MINUTES_PER_DAY;
+  return Math.max(DEFAULT_ON_MINUTES, nightMinutes + ON_MARGIN_MINUTES) * 60;
 }
 
 // The scheduled alarm a one-off alarm stands in for: the side's next scheduled alarm, when the

@@ -8,7 +8,9 @@ steps and photos come from the original project
 ([throwaway31265/free-sleep](https://github.com/throwaway31265/free-sleep)) and were not run with
 Free Pod. [docs/POD_MODELS.md](docs/POD_MODELS.md) lists what differs on a Pod 3 or 4.
 
-Plan for about two hours. The commands are for a Mac or Linux computer; Windows is not covered.
+Plan for about two hours. Any computer works: a Mac, Linux or Windows. Only the Mac steps were
+run; the Linux and Windows ones are the standard equivalents and are marked where they differ.
+Everything typed on the Pod itself is the same whichever computer you use.
 
 If you get stuck, open an issue at https://github.com/jalen-cheng/free-sleep/issues and include
 the output of `fs-debug` if the install got that far.
@@ -55,12 +57,20 @@ Tools:
 
 On your computer:
 
-1. Install a serial terminal. On a Mac:
-   ```
-   brew install minicom
-   ```
-   On Linux, install `minicom` with your package manager.
-2. Have an SSH public key ready. Print it with:
+1. Install a serial terminal:
+
+   | Computer | Terminal |
+   |---|---|
+   | Mac | `brew install minicom` |
+   | Linux | `sudo apt install minicom` (Fedora: `sudo dnf install minicom`, Arch: `sudo pacman -S minicom`) |
+   | Windows | [PuTTY](https://www.putty.org/). Do not use WSL for the serial steps; it does not see the USB adapter without extra setup |
+
+   - **Linux:** your user needs access to the serial port. Run `sudo usermod -aG dialout $USER`
+     (Arch: `uucp` in place of `dialout`), then log out and back in. Or run minicom with `sudo`.
+   - **Windows:** Windows 10 and 11 install the adapter's driver by themselves. If no port shows
+     up in step 3, install the VCP driver from [ftdichip.com](https://ftdichip.com/drivers/vcp-drivers/).
+2. Optional: have an SSH public key ready. Without one you log in over SSH with the `root`
+   password from step 7. Print the key with this (Mac, Linux, and PowerShell on Windows):
    ```
    cat ~/.ssh/id_ed25519.pub
    ```
@@ -68,6 +78,7 @@ On your computer:
    ```
    ssh-keygen -t ed25519
    ```
+   Windows 10 and 11 include `ssh` and `ssh-keygen`; run them in PowerShell, not Command Prompt.
 3. Choose two new passwords, one for the Pod's `root` user and one for its `rewt` user.
 4. Pod 3 and Pod 4: have your Wi-Fi name and password ready. Use your main network, not a guest
    network. Do not try to cut the Pod off from the internet at the router; step 16 does that on the Pod.
@@ -105,14 +116,27 @@ Only three wires are used: ground, transmit and receive.
 ## 3. Start the serial terminal
 
 1. Find the adapter's device name:
-   ```
-   ls /dev/tty*
-   ```
-   On a Mac it looks like `/dev/tty.usbserial-B0010NHK`.
-2. Start minicom at 921600 baud with the name you saw:
+
+   | Computer | How | It looks like |
+   |---|---|---|
+   | Mac | `ls /dev/tty.usb*` | `/dev/tty.usbserial-B0010NHK` |
+   | Linux | `ls /dev/ttyUSB*` | `/dev/ttyUSB0` |
+   | Windows | Device Manager > Ports (COM & LPT) | `USB Serial Port (COM3)` |
+
+2. Mac and Linux: start minicom at 921600 baud with the name you saw:
    ```
    minicom -b 921600 -o -D /dev/tty.usbserial-B0010NHK
    ```
+   Quit minicom with Ctrl+A, then X.
+
+   Windows: open PuTTY, choose **Serial**, enter the port (`COM3`) and speed `921600`. Under
+   **Connection > Serial** set 8 data bits, 1 stop bit, parity None and **Flow control: None**,
+   then **Open**.
+
+Only three wires are connected, so flow control must be off or nothing you type reaches the Pod.
+PuTTY is covered by the setting above. In minicom, if you can see output but typing does nothing:
+press Ctrl+A, then O, choose **Serial port setup**, press F so **Hardware Flow Control** says
+**No**, then Enter and Esc.
 
 You should see this:
 
@@ -134,7 +158,8 @@ If it did not work:
 | What you see | What to do |
 |---|---|
 | You missed the prompt | Unplug the Pod, wait ten seconds, plug it in and try again |
-| Nothing is printed at all | Transmit and receive are probably swapped. Unplug the Pod, swap those two wires, try again. If still nothing, run `ls /dev/tty*` again; the adapter may have another name |
+| Nothing is printed at all | Transmit and receive are probably swapped. Unplug the Pod, swap those two wires, try again. If still nothing, list the devices again (step 3); the adapter may have another name |
+| The log scrolls but Ctrl+C and typing do nothing | Flow control is on. Turn it off as described in step 3 |
 | Garbage characters | The speed is wrong. It must be 921600 |
 | The log scrolls to `eight-pod login:` and there never was a `Hit any key` line | This is the newer Pod 5 boot loader described above. Try once more, holding Ctrl+C from before the power goes in. If it still does not stop, **stop here** and close the Pod. Nothing has been changed |
 
@@ -314,6 +339,9 @@ is wrong.
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/jalen-cheng/free-sleep/main/scripts/install.sh)"
 ```
 
+It takes several minutes, with long stretches where nothing is printed. Do not unplug the Pod or
+close the terminal. It is finished when it prints `Installation complete!`.
+
 This installs Free Pod (`jalen-cheng/free-sleep`) and sets up a service that starts it at every
 boot. Later updates come from Free Pod too. The source is saved here:
 
@@ -348,22 +376,32 @@ the address is `http://bed.local`. No port is needed; `:3000` keeps working. For
 `sh /home/dac/free-sleep/scripts/setup_local_name.sh name <name>`. The name keeps
 working when the router gives the Pod a new address. Whether a Pod 3 or 4 has `systemd-resolved`
 is not known; if the installer printed `systemd-resolved is not running on this Pod`, use the IP address.
+An iPhone, a Mac and Windows 10 or later look up `.local` names. Android and some Linux computers
+may not: if `http://bed.local` does not load, use `http://<pod-ip>:3000` and reserve that address
+in your router ([docs/REMOTE_ACCESS.md](docs/REMOTE_ACCESS.md)).
 To switch the name off: `sh /home/dac/free-sleep/scripts/setup_local_name.sh disable`.
 
 ## 14. Set up SSH
 
 1. Run the script. It replaces the Pod's SSH configuration, removes the default authorized keys,
    and asks for your public key. Press Enter when it asks to continue, then paste the line you
-   printed in "Before you start" and press Enter.
+   printed in "Before you start" and press Enter. With no key, just press Enter.
    ```
    sh /home/dac/free-sleep/scripts/setup_ssh.sh
    ```
+   The serial line can drop a character from a pasted key. Compare what was saved with your key:
+   ```
+   cat /home/root/ssh/authorized_keys
+   ```
+   If it differs, it does no harm: SSH asks for the `root` password from step 7 instead, and you
+   can run the script again once you are in over SSH.
 2. From your computer, check it works before going on. SSH is on port 8822:
    ```
    ssh root@<pod-ip> -p 8822
    ```
 
-Type the Pod's address in place of `<pod-ip>`, without the angle brackets. From here you can type
+Type the Pod's address in place of `<pod-ip>`, without the angle brackets. The same command works
+in PowerShell on Windows; in PuTTY, use host `<pod-ip>`, port 8822 and user `root`. From here you can type
 commands over SSH, where no characters are dropped.
 
 ## 15. Reboot test
@@ -518,7 +556,8 @@ grep -i "button" /persistent/free-sleep-data/logs/*.log | tail -20
 - [docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md): what runs on the Pod and how the features interact.
 
 **Commands on the Pod.** The installer adds these shortcuts for the `root` user. Run them in an
-SSH session (`ssh root@<pod-ip> -p 8822`):
+SSH session (`ssh root@<pod-ip> -p 8822`). They exist from the next login on, so the serial
+session you installed from does not have them:
 
 | Command | What it does |
 |---|---|
@@ -562,11 +601,18 @@ place. It has not been run; it is the reverse of steps 9, 12 and 16, written fro
 
 1. Stop Free Pod and keep it from starting:
    ```
-   systemctl disable --now free-sleep free-sleep-stream free-sleep-update.timer free-sleep-firewall
+   systemctl disable --now free-sleep free-sleep-stream free-sleep-firewall
    ```
+   If you set up Tailscale on the Pod, remove it too:
+   `sh /home/dac/free-sleep/scripts/setup_tailscale.sh remove`.
 2. Lift the internet block:
    ```
    sh /home/dac/free-sleep/scripts/unblock_internet_access.sh
+   ```
+   If you ran the optional updater lock-out in step 16, undo it as well. It is what keeps Eight
+   Sleep's servers unreachable:
+   ```
+   sh /home/dac/free-sleep/scripts/updater_lockout.sh disable
    ```
 3. Give the services from step 9 back. Lines about units that do not exist are expected:
    ```
