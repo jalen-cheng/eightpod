@@ -124,7 +124,7 @@ export default function SchedulePage() {
         <TemperatureScheduleChart/>
       </ErrorBoundary>
 
-      <NightTimeline/>
+      <NightTimeline onSave={ () => handleSave([selectedDay]) }/>
 
       { /* Unsaved changes: Discard and Save directly under the night they belong to, in the flow
            of the page. Other days are reached by saving, then copying the night. */ }

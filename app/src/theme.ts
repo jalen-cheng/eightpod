@@ -1,4 +1,5 @@
 import { PaletteMode, alpha, createTheme, type Theme, type ThemeOptions } from '@mui/material/styles';
+import { SIDEBAR_WIDTH_PX } from '@components/pageFrame.ts';
 
 const FONT_FAMILY = '"Geist Variable", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
 // One size for the text inside every field, select and button, so controls on a line match
@@ -83,7 +84,14 @@ const buildComponents = (colors: typeof DARK_COLORS): ThemeOptions['components']
       root: ({ theme }) => ({ backgroundImage: 'none', border: `1px solid ${theme.palette.divider}`, boxShadow: 'none' }),
     },
   },
-  MuiDialog: { styleOverrides: { paper: { borderRadius: 20 } } },
+  MuiDialog: {
+    styleOverrides: {
+      paper: { borderRadius: 20 },
+      // On a computer the navigation column takes the left of the window, so a dialog is
+      // centred over the page beside it, where the thing that opened it is
+      container: ({ theme }) => ({ [theme.breakpoints.up('md')]: { paddingLeft: SIDEBAR_WIDTH_PX } }),
+    },
+  },
   MuiDialogTitle: { styleOverrides: { root: { fontSize: 17, fontWeight: 600, letterSpacing: '-0.01em' } } },
   MuiCardContent: { styleOverrides: { root: { padding: 20, '&:last-child': { paddingBottom: 20 } } } },
   // A small square switch: a dark slot that turns to the accent, with a square knob

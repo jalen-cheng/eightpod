@@ -38,8 +38,10 @@ each Pod. Then, on the Pod:
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/jalen-cheng/eightpod/main/scripts/install.sh)"
 ```
 
-Already running Free Sleep? Over SSH, lift its internet block, run the same installer, and block
-again. Settings and schedules are kept:
+### Already running Free Sleep
+
+No cable and no opening the hub. Over SSH, lift the internet block, run the same installer, and
+block again. Settings and schedules are kept, and going back is one command:
 
 ```bash
 sh /home/dac/free-sleep/scripts/unblock_internet_access.sh
@@ -51,7 +53,8 @@ sh /home/dac/free-sleep/scripts/unblock_internet_access.sh
 sh /home/dac/free-sleep/scripts/block_internet_access.sh
 ```
 
-Read [what changes](docs/POD_MODELS.md) first.
+Read [what changes](docs/POD_MODELS.md#things-to-know-before-updating-from-the-original) first; the
+[install guide](INSTALLATION.md#coming-from-free-sleep) has the same steps with checks.
 
 ## Quick start
 

@@ -198,6 +198,8 @@ Responses (200):
 
 - **409** `{"error": "No alarm in the next 24 hours that can be moved that far"}`: with `shiftMinutes`, when no side has an alarm within 24 hours, or the moved time would be in the past or more than 24 hours ahead.
 - A one-off alarm is stored in settings under `<side>.scheduleOverrides.alarm`.
+- A one-off alarm leaves an alarm skipped from the app skipped.
+- With `days`, a time under 1 hour or over 23 hours after that night's bed-on time is refused with `400`. `POST /api/schedules` refuses the same nights.
 - With `days`, the off-time rule in [Schedules](#schedules) is applied to each day, so the bed's off time moves with the new time.
 
 ### `POST /api/alarm/time/cancel`

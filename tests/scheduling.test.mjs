@@ -6,7 +6,7 @@ import {
   findChangeProblem, findNewChangeTime, isChangeBeforeWake, isNightLengthValid, isPowerScheduleDurationValid, isTimeDuringNight, minutesBetween,
 } from '../app/src/pages/SchedulePage/scheduleValidation.ts';
 import {
-  DAYS_OF_WEEK, findAlarmReplacedByOneOff, findNightDay, findNextScheduledAlarm, getDayIndexForSchedule, getScheduledOnSeconds, minutesAlarmIsAfterOff, parseClockTime,
+  DAYS_OF_WEEK, findAlarmReplacedByOneOff, findHoldBackUntil, findNightDay, findNextScheduledAlarm, getDayIndexForSchedule, getScheduledOnSeconds, minutesAlarmIsAfterOff, parseClockTime,
   subtractMinutesFromTime,
 } from '../server/src/jobs/scheduleTiming.ts';
 
@@ -265,4 +265,22 @@ test('the Pod is told to stay on for longer than the night', () => {
   // Exactly 12 hours would race the off job
   assert.equal(getScheduledOnSeconds('19:00', '07:00'), 12.5 * HOUR);
   assert.equal(getScheduledOnSeconds('21:00', '11:30'), 15 * HOUR);
+});
+
+test('a one-off alarm keeps a skipped alarm skipped', () => {
+  const moment = createRequire(new URL('../server/package.json', import.meta.url))('moment-timezone');
+  const zone = 'America/Los_Angeles';
+  const now = moment.tz('2026-11-16T18:00:00', zone);
+  const napAlarm = moment.tz('2026-11-16T20:00:00', zone);
+  const skipEndsAt = moment.tz('2026-11-17T07:02:00', zone);
+  // An evening one-off, with tomorrow's 7:00 skipped: scheduled alarms stay quiet until the skip ends
+  assert.equal(findHoldBackUntil(napAlarm, undefined, skipEndsAt, now).format(), skipEndsAt.format());
+  // No skip: only until the one-off, or the alarm it replaces
+  assert.equal(findHoldBackUntil(napAlarm, undefined, undefined, now).format(), napAlarm.format());
+  const earlyAlarm = moment.tz('2026-11-17T06:00:00', zone);
+  const replaced = moment.tz('2026-11-17T07:00:00', zone);
+  assert.equal(findHoldBackUntil(earlyAlarm, replaced, undefined, now).format(), replaced.format());
+  // A skip that has already run out is ignored
+  const oldSkip = moment.tz('2026-11-16T07:02:00', zone);
+  assert.equal(findHoldBackUntil(napAlarm, undefined, oldSkip, now).format(), napAlarm.format());
 });

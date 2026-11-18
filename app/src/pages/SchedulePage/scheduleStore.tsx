@@ -35,6 +35,7 @@ type ScheduleStore = {
 
   selectedSchedule: DailySchedule | undefined;
   updateSelectedSchedule: (dailySchedule: DeepPartial<DailySchedule>) => void;
+  replaceSelectedAlarm: (alarm: DailySchedule['alarm']) => void;
   updateSelectedTemperatures: (temperatures: DailySchedule['temperatures']) => void;
 
   // The schedules as last loaded from the Pod
@@ -103,6 +104,14 @@ export const useScheduleStore = create<ScheduleStore>((set, get) => ({
     _.merge(selectedScheduleCopy, newSelectedSchedule);
 
     set({ selectedSchedule: selectedScheduleCopy });
+    checkForChanges();
+  },
+  // Puts a whole alarm back, as Discard in the alarm dialog does: merging would keep optional
+  // settings that were added since
+  replaceSelectedAlarm: (alarm) => {
+    const { selectedSchedule, checkForChanges } = get();
+    if (!selectedSchedule) return;
+    set({ selectedSchedule: { ..._.cloneDeep(selectedSchedule), alarm: _.cloneDeep(alarm) } });
     checkForChanges();
   },
   // The temperature changes are replaced as a whole: merging would keep times that were removed

@@ -8,9 +8,17 @@ steps and photos come from the original project
 ([throwaway31265/free-sleep](https://github.com/throwaway31265/free-sleep)) and were not run with
 EightPod. [docs/POD_MODELS.md](docs/POD_MODELS.md) lists what differs on a Pod 3 or 4.
 
-Plan for about two hours. Any computer works: a Mac, Linux or Windows. Only the Mac steps were
-run; the Linux and Windows ones are the standard equivalents and are marked where they differ.
-Everything typed on the Pod itself is the same whichever computer you use.
+Plan for about two hours. Everything typed on the Pod itself is the same whichever computer you
+use; only reaching the serial port differs:
+
+| Computer | Status |
+|---|---|
+| Mac | The steps as written were run |
+| Linux | Not run. It uses the same program (minicom) with a different device name, so it should work as written |
+| Windows | **Not tested.** The PuTTY steps are the usual way to do this on Windows; nobody has followed them here |
+
+**Already running Free Sleep?** You do not need any of this. Skip to
+[Coming from Free Sleep](#coming-from-free-sleep).
 
 If you get stuck, open an issue at https://github.com/jalen-cheng/eightpod/issues and include
 the output of `fs-debug` if the install got that far.
@@ -578,6 +586,34 @@ FREE_SLEEP_REPO=throwaway31265/free-sleep sh /home/dac/free-sleep/scripts/update
 Two limits. The app's "update available" notice always compares with EightPod's own repository,
 so after going back it is not meaningful. The original project's installer does not keep the
 saved-source file, so after going back its own update script decides where updates come from.
+
+## Coming from Free Sleep
+
+A Pod that already runs the original Free Sleep (or a fork of it) switches over SSH. No cable, and
+the hub stays closed. Settings, schedules and sleep data are kept. Read
+[what changes](docs/POD_MODELS.md#things-to-know-before-updating-from-the-original) first.
+
+1. Connect: `ssh root@<pod-ip> -p 8822`.
+2. Lift the internet block, if you turned it on:
+   ```
+   sh /home/dac/free-sleep/scripts/unblock_internet_access.sh
+   ```
+3. Run EightPod's installer over the existing install. It takes several minutes and ends with
+   `Installation complete!`:
+   ```
+   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/jalen-cheng/eightpod/main/scripts/install.sh)"
+   ```
+4. Block the internet again:
+   ```
+   sh /home/dac/free-sleep/scripts/block_internet_access.sh
+   ```
+5. Open `http://<pod-ip>:3000` and check **Settings > Device** shows the new version. From here
+   the app's own **Update** button keeps it current.
+
+The folder, the services and the `fs-` commands keep the name `free-sleep`, which is what makes
+this a switch in place. Going back is one command; see "Going back to the original project" above.
+Every EightPod update runs this installer over an existing install, and that is tested on a Pod
+5. Starting from the original Free Sleep itself has not been tested, on any Pod.
 
 ## Going back to Eight Sleep
 

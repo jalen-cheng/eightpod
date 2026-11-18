@@ -21,6 +21,20 @@ export function addMinutesToTime(time: string, minutes: number): string {
 
 export const offTimeAfterAlarm = (alarmTime: string): string => addMinutesToTime(alarmTime, OFF_AFTER_ALARM_MINUTES);
 
+const CLOCK_TIME = /^([01]\d|2[0-3]):[0-5]\d$/;
+// A night shorter than this is a mistake, and one longer leaves no gap before the next
+const MIN_NIGHT_MINUTES = 60;
+const MAX_NIGHT_MINUTES = 23 * MINUTES_PER_HOUR;
+
+// True when the wake-up time is a sensible distance after the bed-on time: 1 to 23 hours.
+// Outside that, the off time (30 minutes after waking) lands on the wrong side of the bed-on time.
+export function isNightLengthValid(bedtime: string, wakeTime: string): boolean {
+  if (!CLOCK_TIME.test(bedtime) || !CLOCK_TIME.test(wakeTime)) return false;
+  const toMinutes = (time: string) => Number(time.slice(0, 2)) * MINUTES_PER_HOUR + Number(time.slice(3, 5));
+  const nightMinutes = (toMinutes(wakeTime) - toMinutes(bedtime) + MINUTES_PER_DAY) % MINUTES_PER_DAY;
+  return nightMinutes >= MIN_NIGHT_MINUTES && nightMinutes <= MAX_NIGHT_MINUTES;
+}
+
 type NightWithAlarm = {
   alarm: { enabled: boolean; time: string };
   power: { off: string };
