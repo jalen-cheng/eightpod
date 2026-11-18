@@ -1,6 +1,8 @@
 import express, { Request, Response } from 'express';
 import { z } from 'zod';
-import { applyTrackerSleep, getAutopilotSnapshot, getNightSummaries, getNightsExport } from '../../autopilot/autopilotMonitor.js';
+import {
+  applyTrackerSleep, getAutopilotSnapshot, getNightSummaries, getNightsExport, getNightsOn,
+} from '../../autopilot/autopilotMonitor.js';
 import { SleepPeriod, findSleepPeriods, readHealthExportSleep } from '../../autopilot/sleepTracker.js';
 
 const router = express.Router();
@@ -12,17 +14,36 @@ router.get('/autopilot', (_req: Request, res: Response) => {
 });
 
 const MAX_NIGHTS_LISTED = 60;
+const SideSchema = z.enum(['left', 'right']);
+const DayQuerySchema = z.object({ date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), side: SideSchema });
 
-// The saved stays in bed, newest first, without their minute rows
+// The saved stays in bed. With `date` and `side`: that side's stays which ended on that day, in
+// full, minute rows included. Otherwise the newest of both sides, without their minute rows.
 router.get('/autopilot/nights', (req: Request, res: Response) => {
+  if (req.query.date !== undefined) {
+    const dayQuery = DayQuerySchema.safeParse(req.query);
+    if (!dayQuery.success) {
+      res.status(400).json({ error: 'Give date as YYYY-MM-DD and side as left or right' });
+      return;
+    }
+    res.json(getNightsOn(dayQuery.data.date, dayQuery.data.side));
+    return;
+  }
   const limit = Math.min(MAX_NIGHTS_LISTED, Math.max(1, Number(req.query.limit) || 14));
   res.json(getNightSummaries(limit));
 });
 
-// Every saved night with its minute rows, and what has been learned, as a file to keep
-router.get('/autopilot/nights/export', (_req: Request, res: Response) => {
-  res.attachment(`eightpod-nights-${new Date().toISOString().slice(0, 10)}.json`);
-  res.json(getNightsExport());
+// The lengths of time an export can cover, in days
+const EXPORT_DAYS = [7, 14, 30, 60, 90];
+const DEFAULT_EXPORT_DAYS = 90;
+
+// The saved nights of the last 7, 14, 30, 60 or 90 days with their minute rows, and what has
+// been learned, as a file to keep
+router.get('/autopilot/nights/export', (req: Request, res: Response) => {
+  const requestedDays = Number(req.query.days);
+  const days = EXPORT_DAYS.includes(requestedDays) ? requestedDays : DEFAULT_EXPORT_DAYS;
+  res.attachment(`eightpod-nights-${days}-days-${new Date().toISOString().slice(0, 10)}.json`);
+  res.json(getNightsExport(days));
 });
 
 const isDate = (text: string) => !Number.isNaN(Date.parse(text));
@@ -40,7 +61,6 @@ const TrackerSleepSchema = z.object({
   'Send asleepAt and awakeAt, or samples',
 );
 
-const SideSchema = z.enum(['left', 'right']);
 
 // Takes sleep and wake times from a watch or band (by way of a phone shortcut, an app that
 // posts Apple Health data, or a script), files them with the stays in bed they overlap, and

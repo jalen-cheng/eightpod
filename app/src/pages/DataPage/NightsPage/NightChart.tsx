@@ -1,0 +1,70 @@
+/* eslint-disable react/no-multi-comp */
+import { useMemo } from 'react';
+import moment from 'moment-timezone';
+import { Box, Paper, Typography } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
+import { LineChart } from '@mui/x-charts/LineChart';
+import { useResizeDetector } from 'react-resize-detector';
+import { NightDetail } from '@api/autopilot.ts';
+import { COOLING_COLOR } from '@lib/temperatureConversions.ts';
+
+const MINUTE_MS = 60_000;
+const CHART_HEIGHT_PX = 150;
+// About one point for every few pixels: more than that only slows the page
+const PIXELS_PER_POINT = 3;
+
+type Series = { label: string; unit: string; color: string; values: (number | null)[] };
+type SeriesChartProps = { times: Date[]; series: Series; width: number };
+
+// One reading through the night as a line against the clock
+const SeriesChart = ({ times, series, width }: SeriesChartProps) => {
+  const hasReadings = series.values.some(value => value !== null);
+  return (
+    <Box>
+      <Typography sx={ { fontSize: 13, fontWeight: 500, color: 'text.secondary' } }>{ series.label }</Typography>
+      { hasReadings ? (
+        <LineChart
+          width={ width }
+          height={ CHART_HEIGHT_PX }
+          margin={ { top: 8, right: 8, bottom: 4, left: 0 } }
+          hideLegend
+          xAxis={ [{ data: times, scaleType: 'time', valueFormatter: (time: Date) => moment(time).format('h:mm A') }] }
+          yAxis={ [{ width: 44, valueFormatter: (value: number) => String(value) }] }
+          series={ [{
+            data: series.values, color: series.color, showMark: false, connectNulls: false, curve: 'linear',
+            valueFormatter: value => (value === null ? '' : `${value} ${series.unit}`),
+          }] }
+        />
+      ) : (
+        <Typography variant="body2" sx={ { color: 'text.disabled', py: 2 } }>No readings</Typography>
+      ) }
+    </Box>
+  );
+};
+
+// A night's breathing, pressure on the bed and the autopilot's temperature changes, each
+// against the same clock
+export default function NightChart({ night }: { night: NightDetail }) {
+  const { width = 300, ref } = useResizeDetector();
+  const theme = useTheme();
+
+  const { times, series } = useMemo(() => {
+    const step = Math.max(1, Math.ceil(night.minutes.length / (width / PIXELS_PER_POINT)));
+    const kept = night.minutes.map((minute, index) => ({ minute, index })).filter(({ index }) => index % step === 0);
+    const read = (pick: (minute: NightDetail['minutes'][number]) => number | undefined) => kept.map(({ minute }) => pick(minute) ?? null);
+    return {
+      times: kept.map(({ index }) => new Date(night.startedAtMs + index * MINUTE_MS)),
+      series: [
+        { label: 'Breathing rate', unit: 'breaths/min', color: theme.palette.primary.main, values: read(minute => minute.breathingRate) },
+        { label: 'Pressure', unit: '', color: theme.palette.text.secondary, values: read(minute => minute.pressure) },
+        { label: 'Temperature change', unit: '°F', color: COOLING_COLOR, values: read(minute => minute.offsetF) },
+      ] satisfies Series[],
+    };
+  }, [night, width, theme]);
+
+  return (
+    <Paper ref={ ref } sx={ { p: 2, display: 'flex', flexDirection: 'column', gap: 1.5, overflow: 'hidden' } }>
+      { series.map(one => <SeriesChart key={ one.label } times={ times } series={ one } width={ Math.max(200, width - 32) }/>) }
+    </Paper>
+  );
+}

@@ -695,11 +695,17 @@ use. 400 when the body is not valid or holds no sleep.
 
 The saved stays in bed, newest first, without their minute rows: `side`, `startedAtMs`,
 `minutesLogged`, `kind` (`nap` for a sleep under 3 hours, else `night`), the bed's `asleepAtMs`
-and `awakeAtMs`, the middle `heartRate` and `breathingRate` of the asleep minutes, and `tracker`
-when times were sent. `?limit=` takes 1 to 60 (default 14).
+and `awakeAtMs`, `wakeUps` (breaks in the sleep), the middle `heartRate` and `breathingRate` of
+the asleep minutes, and `tracker` when times were sent. `?limit=` takes 1 to 60 (default 14).
+
+With `?date=2026-11-18&side=left` it returns that side's stays which ended on that day (in the
+Pod's time zone), longest first, each with `minutes`: one row a minute from `startedAtMs` with
+`movementSeconds`, `heartRate`, `breathingRate`, `breathingSpread`, `pressure` (how far the
+side's pressure sensors read above the empty bed), `stage`, `offsetF` and `roomF`.
 
 ### `GET /api/autopilot/nights/export`
 
-Everything saved, as a JSON file to download: every night with its minute rows, the sleep rules,
-what was learned from corrections, and the tracker links. The newest 180 stays are kept on the
-Pod in `/persistent/free-sleep-data/autopilot_nights/`.
+What is saved, as a JSON file to download: the nights of the last `?days=` days (7, 14, 30, 60
+or 90; 90 when not given) with their minute rows, the sleep rules, what was learned from
+corrections, and the tracker links. The newest 180 stays are kept on the Pod in
+`/persistent/free-sleep-data/autopilot_nights/`.

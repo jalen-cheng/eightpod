@@ -1,7 +1,7 @@
 # Changelog
 
 What EightPod changed from [throwaway31265/free-sleep](https://github.com/throwaway31265/free-sleep),
-what was checked on a real Pod, and what was not. EightPod is at version 3.11.0. Everything was
+what was checked on a real Pod, and what was not. EightPod is at version 3.12.0. Everything was
 developed and tested on one Pod 5 between 13 and 18 Nov 2026.
 
 **The API.** Everything the app does goes through a documented local API, and every command the
@@ -28,7 +28,7 @@ Each of these was seen working on the test Pod 5, in its log or by the person on
 | Schedule | Power on, temperature changes and power off fire at their times; the bed turns off 30 minutes after the wake-up time |
 | Alarm | Stepped ramp felt (20, 40, 60, 80%, then full); a 10-minute alarm sent as chained stretches; dismissed by any button, by the app and by a request |
 | One-time alarm | Replaced that morning's alarm and its warm-up, got its own warm-up, went off with the bed kept on past the off time, and set the bed to turn off 30 minutes later |
-| Buttons | +, -, and the middle button held, on both sides and with sides linked |
+| Buttons | +, -, and the middle button held, on both sides and with sides linked; a press during an alarm stops it and the side that pressed feels the confirmation buzz |
 | Shortcuts | Setting the temperature by -10..+10, a one-time alarm by time, and reading the bed's state, from an iPhone |
 | Internet block | Blocks everything but the home network, time sync, DNS and address requests; restored at boot |
 | `.local` name | `http://eight-pod.local:3000` loads on the home network (the Pod has since been renamed `bed`; the address is now `http://eightpod.local`) |
@@ -41,7 +41,6 @@ Each of these was seen working on the test Pod 5, in its log or by the person on
 - **Autopilot.** Not run through a night. Sleep detection, naps, the temperature changes, the learning and the fitting to a
   sleep tracker were checked on made-up nights only, never with two people in the bed, and the Shortcut that sends a tracker's
   times has not been run on a phone.
-- **The dismissal buzz at 80%.** The firmware ran it after a press; whether it can be felt is not confirmed.
 - **Breathing rate.** Read from a real two-minute capture at a plausible 17 to 18 a minute, with nothing to check it against.
 - **Health Auto Export.** Its format is read from the app's documentation, not from the app.
 - **In-bed detection:** the bed turning off after someone gets out, the long-stay alarm, and its
@@ -248,3 +247,4 @@ acted on it).
 | [#104](https://github.com/jalen-cheng/eightpod/pull/104) | Fix | **Side buttons step by levels when the app is set to levels.** '1 level a press' moved 1°F, about a third of a level; a press now moves whole levels. Holding the middle button for 1 second (was 1.5) switches the side (3.9.2) |
 | [#105](https://github.com/jalen-cheng/eightpod/pull/105) | Feature, fix | **Autopilot: sleep from stillness, naps, saved nights, and a sleep tracker link.** Sleep is judged from lying still (heart rate is shown only); under 30 minutes out of bed is the same night; a sleep outside the scheduled night is a nap and is left alone; every stay in bed is saved on the Pod; a watch's or band's sleep and wake times can be sent each morning (`POST /api/autopilot/sleepTimes`, steps under Settings > Autopilot > Link) and the bed fits its sleep rules to them. The dismissal buzz is stronger: it could not be felt (3.10.0) |
 | [#106](https://github.com/jalen-cheng/eightpod/pull/106) | Feature | **Autopilot: breathing rate, naps by length, nights in Data with export, sync without a Shortcut.** A breathing rate is read from the piezo sensor, saved and shown, and calibration may ask for steady breathing when that fits a tracker better. A nap is a sleep under 3 hours; whether a new sleep is steered from the start goes by when you have actually been sleeping, then the schedule. **Data > Nights** lists saved nights, the tuning and an Export button (`GET /api/autopilot/nights/export`). The sleep-times request also reads what the iPhone app Health Auto Export posts. 180 stays are kept. Android is not supported for tracker sync (3.11.0) |
+| [#PRNUM](https://github.com/jalen-cheng/eightpod/pull/PRNUM) | Feature | **Data > Nights is a day view.** One day at a time with arrows and a calendar: bedtime, wake time, duration and wake-ups, then breathing rate, pressure on the bed and the autopilot's temperature changes against the clock. Export takes a length (1 week to 3 months). Pressure is saved each minute. With the sides linked and the other side empty, the autopilot steers both (3.12.0) |

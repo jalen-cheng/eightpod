@@ -10,6 +10,7 @@ import {
 import {
   findScheduledTemperatureF, findUsualSleep, isNightExpected, kindOfSleep,
 } from '../server/src/autopilot/scheduledBase.ts';
+import { countWakeUps } from '../server/src/autopilot/nightRecord.ts';
 import {
   BREATHING_SAMPLES_PER_SECOND, BREATHING_WINDOW_SECONDS, estimateBreathingRate, measureBreathingSpread,
 } from '../server/src/autopilot/breathingRate.ts';
@@ -350,4 +351,11 @@ test('the base is the bed-on temperature until a scheduled change comes up, acro
   assert.equal(findScheduledTemperatureF(night, '01:00'), 70);
   assert.equal(findScheduledTemperatureF(night, '04:00'), 70);
   assert.equal(findScheduledTemperatureF(night, '06:45'), 76);
+});
+
+test('wake-ups are the breaks in a night\'s sleep, not the time before it or after it', () => {
+  const stages = (...runs) => runs.flatMap(([stage, count]) => new Array(count).fill({ stage }));
+  assert.equal(countWakeUps(stages(['awake', 20], ['asleep', 200], ['awake', 10])), 0);
+  assert.equal(countWakeUps(stages(['awake', 20], ['asleep', 100], ['awake', 6], ['asleep', 90], ['out', 12], ['awake', 4], ['asleep', 60])), 2);
+  assert.equal(countWakeUps(stages(['awake', 40])), 0);
 });
