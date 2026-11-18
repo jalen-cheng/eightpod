@@ -367,13 +367,13 @@ offers to dismiss it.
 its state. Services that are jobs have a Run button. The biometrics and sleep-analysis rows are greyed and
 marked "Untested in this version".
 
-**Settings.** Device settings, in groups: Temperature (units, and a Pod 5's − and + button
-step), Clock (time zone; set this first, the schedule runs in it), Turning on by hand (how long
-the bed stays on, and whether the schedule is ignored meanwhile), Bed (away mode for both sides,
-flip left and right, the light on the hub) and API (the common requests, behind **Show**). Then
-Alarm (one setting for every night and both sides: vibration, length, strength, a test), Tap
-gestures (Pod 4), Priming, In-bed detection (its state shows beside the heading), Features
-(biometrics), and Device (the Pod, Wi-Fi, version and Update, reboot).
+**Settings.** Device settings: the temperature units and a Pod 5's − and + button step; the
+time zone (set this first, the schedule runs in it); away mode for both sides, flip left and
+right, and the light on the hub; how long the bed stays on when turned on by hand and whether the
+schedule is ignored meanwhile; and the API's common requests, behind **Show**. Then Alarm (one
+setting for every night and both sides: vibration, length, strength, a test), Tap gestures
+(Pod 4), Priming, In-bed detection (its state shows beside the heading), Features (biometrics),
+and Device (the Pod, Wi-Fi, version and Update, reboot).
 
 ## 11. The API and phone shortcuts
 
