@@ -65,8 +65,9 @@ export default function DeviceSettingsSection({ updateSettings }: DeviceSettings
           control={
             <Switch
               disabled={ isUpdating }
-              // Away is for the whole bed: on only when both sides are away
-              checked={ Boolean(settings?.left.awayMode && settings?.right.awayMode) }
+              // Away is for the whole bed. One side set away through the API also shows as on,
+              // so a single press here clears it.
+              checked={ Boolean(settings?.left.awayMode || settings?.right.awayMode) }
               onChange={ (event) => updateSettings({ left: { awayMode: event.target.checked }, right: { awayMode: event.target.checked } }) }
             />
           }
@@ -85,9 +86,9 @@ export default function DeviceSettingsSection({ updateSettings }: DeviceSettings
         <LedSwitch/>
       </Group>
       <Group title="API">
-        <SettingRow label="Control the bed from other things" detail="Shortcuts, Home Assistant, scripts and AI assistants">
+        <SettingRow label="Requests" info="Shortcuts, Home Assistant, scripts and AI assistants can control the bed with these.">
           <Button size="small" onClick={ () => setIsApiOpen(!isApiOpen) } aria-expanded={ isApiOpen }>
-            { isApiOpen ? 'Hide requests' : 'Show requests' }
+            { isApiOpen ? 'Hide' : 'Show' }
           </Button>
         </SettingRow>
         <Collapse in={ isApiOpen } unmountOnExit><ApiGuide/></Collapse>

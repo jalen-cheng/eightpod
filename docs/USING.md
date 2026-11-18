@@ -12,12 +12,12 @@ On a phone or computer on the same Wi-Fi as the Pod, open `http://<pod-ip>:3000`
 To keep it on your phone's home screen: in Safari, tap Share, then **Add to Home Screen**. In
 Chrome on Android, open the three-dot menu, then **Add to Home screen**.
 
-The app has five pages: **Temperature**, **Schedules**, **Data**, **Status** and **Settings**.
+The app has four tabs: **Temperature**, **Schedules**, **Data** and **Settings**. The **Status** page opens from the "Status: Healthy" link, at the bottom right on a computer and beside each page's heading on a phone.
 There is no login. Anyone on your home network can open it.
 
 ## 2. Set the time zone
 
-Do this first. Go to **Settings > Device settings** and choose your **Time Zone**. The schedule
+Do this first. Go to **Settings > Device settings** and choose your **Time zone** (shown like "PST (UTC−8)"). The schedule
 and alarms run in this time zone, and it starts as UTC.
 
 ## 3. The Temperature page
@@ -90,7 +90,7 @@ How the alarm vibrates is one choice for every night and both sides, in **Settin
 | Setting | Choices |
 |---|---|
 | **Vibration** | **Ramp up** builds to full strength over 40 seconds (Pod 5; a Pod 3 or 4 uses the firmware's own pattern). **Pulses** starts at full strength |
-| **Strength** | 1 to 100% |
+| **Strength** | Low, Medium or High |
 | **Length** | 10, 15, 20 or 30 minutes. It stops sooner if you dismiss it |
 
 **Test for a minute**, at the top of that section, vibrates both sides now with those settings,
@@ -112,7 +112,7 @@ other side's alarm from the beginning.
 To wake at a different time once, without touching the weekly schedule:
 
 1. On the **Temperature** page, find the "Alarm" row. It only shows when tonight's schedule and its alarm are on.
-2. Tap the time on that row. **Change next alarm only** opens.
+2. Tap the time on that row. **Change next alarm only (overrides schedule)** opens.
 3. Pick the time and tap **Set**.
 
 It goes off the next time the clock shows that time and replaces that morning's scheduled alarm.
@@ -145,14 +145,15 @@ When the sides are linked, the buttons on either side control both. The step siz
 
 | Setting | Where | What it does |
 |---|---|---|
-| **When turned on by hand, stay on for** | Device settings | 3, 6 or 12 hours. Applies when you turn the bed on from the app, a shortcut or the buttons |
-| **Ignore the schedule until it turns off** | Device settings | While a side you turned on yourself is on, its schedule is skipped. Alarms still go off |
-| **Away mode** | Device settings | For when nobody is home. The schedule and alarms stop on both sides until you switch it off |
-| **Flip left and right** | Device settings | Swaps which physical side the app calls left and right. Each side keeps its schedule and settings |
+| **Stay on for** | Device settings > Turning on by hand | 3, 6 or 12 hours. Applies when you turn the bed on from the app, a shortcut or the buttons |
+| **Ignore the schedule meanwhile** | Device settings > Turning on by hand | While a side you turned on yourself is on, its schedule is skipped. Alarms still go off |
+| **Away mode** | Device settings > Bed | For when nobody is home. The schedule and alarms stop on both sides until you switch it off |
+| **Flip left and right** | Device settings > Bed | Swaps which physical side the app calls left and right. Each side keeps its schedule and settings |
+| **Light on the hub** | Device settings > Bed | The hub's light, on or off |
 | **Prime daily** | Priming | Runs the water priming cycle every day at **Prime time**, 2 PM by default. It does not check whether the bed is in use |
 | **Reboot once a day** | Device | Restarts the Pod one hour before the priming time. A vibrating alarm or running warm-up is lost in a reboot, so keep the time in the afternoon |
-| **Status page** | Its own page | Shows Wi-Fi strength, whether EightPod is up to date, and each service. The biometrics and sleep-analysis rows are greyed and marked untested |
-| **API** | Its own page: in the sidebar on a computer, from **Settings > API** on a phone | The common requests, two examples with your Pod's address filled in, and a link to every request. Tap a command to select it |
+| **Status page** | The "Status" link (bottom right on a computer, beside each page's heading on a phone) | Shows Wi-Fi strength, whether EightPod is up to date, and each service. The biometrics and sleep-analysis rows are greyed and marked untested |
+| **API** | Device settings > API | Tap **Show** for the common requests and two examples with your Pod's address filled in. Tap a command to select it |
 | **In-bed detection** | Its own section, Pod 5 only | Two options, both off by default: **Turn on when I get into bed** and **Alarm after a long time in bed**. Detection was checked with one person on one Pod; the first option has been seen turning the bed on, the rest has not been seen working yet |
 
 ## 11. Updating
@@ -164,7 +165,7 @@ during the update.
   ```
   fs-update
   ```
-- Or, when the app knows of a newer version, tap **Update free sleep** in **Settings > Device**.
+- Or, when the app knows of a newer version, tap **Update** next to the EightPod version in **Settings > Device**.
   The button only shows then; `fs-update` works at any time.
 
 **An update always ends with the internet block switched on**, even if you had turned it off.

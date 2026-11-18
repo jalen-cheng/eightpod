@@ -3,7 +3,7 @@ import { DeepPartial } from 'ts-essentials';
 import { Settings } from '@api/settingsSchema.ts';
 import { useAppStore } from '@state/appStore.tsx';
 import { formatTemperatureDelta, getStepOptions, snapStep } from '@lib/temperatureConversions.ts';
-import TapSettingRow from './TapSettingRow.tsx';
+import SettingRow, { CONTROL_WIDTH_PX } from '../SettingRow.tsx';
 import { buildSideTaps, readSharedTapSettings } from './tapSettings.ts';
 
 type ButtonStepSettingProps = {
@@ -25,20 +25,20 @@ export default function ButtonStepSetting({ settings, updateSettings }: ButtonSt
   };
 
   return (
-    <TapSettingRow gesture="− and + buttons" action="Each press changes the temperature by this much">
+    <SettingRow label="− and + buttons" info="How far one press of a button on the side of the bed moves the temperature.">
       <TextField
         select
         size="small"
         value={ snapStep(tapSettings.temperatureStepF, temperatureFormat) }
         onChange={ (event) => saveStep(Number(event.target.value)) }
         disabled={ isUpdating }
-        sx={ { width: 112, flexShrink: 0 } }
+        sx={ { width: CONTROL_WIDTH_PX } }
         slotProps={ { htmlInput: { 'aria-label': 'Temperature step' } } }
       >
         { getStepOptions(temperatureFormat).map(stepF => (
-          <MenuItem key={ stepF } value={ stepF }>{ formatTemperatureDelta(stepF, temperatureFormat) }</MenuItem>
+          <MenuItem key={ stepF } value={ stepF }>{ formatTemperatureDelta(stepF, temperatureFormat) } a press</MenuItem>
         )) }
       </TextField>
-    </TapSettingRow>
+    </SettingRow>
   );
 }

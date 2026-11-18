@@ -38,11 +38,15 @@ router.post('/schedules', async (req: Request, res: Response) => {
   await schedulesDB.read();
 
   // A night that is on must have its wake-up time 1 to 23 hours after its bed-on time, as the
-  // app requires. Checked for every night in the request before anything is changed.
+  // app requires. Checked before anything is changed, for each night whose times or switch the
+  // request touches: a request that only changes how the alarm vibrates must not be refused
+  // because of a night saved long ago.
   const badNights: string[] = [];
   (Object.entries(schedules) as [Side, Partial<SideSchedule>][]).forEach(([side, sideSchedule]) => {
     (Object.entries(sideSchedule) as [DayOfWeek, Partial<DailySchedule>][]).forEach(([day, schedule]) => {
       const saved = schedulesDB.data[side][day];
+      const changesTheNight = schedule.power?.on !== undefined || schedule.power?.enabled !== undefined || schedule.alarm?.time !== undefined;
+      if (!changesTheNight) return;
       const isOn = schedule.power?.enabled ?? saved.power.enabled;
       const bedtime = schedule.power?.on ?? saved.power.on;
       const wakeTime = schedule.alarm?.time ?? saved.alarm.time;

@@ -1,12 +1,11 @@
-import { Box, InputAdornment, TextField } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
+import { Box, TextField } from '@mui/material';
 
 import { Settings } from '@api/settingsSchema.ts';
 import { DeepPartial } from 'ts-essentials';
 import { useAppStore } from '@state/appStore.tsx';
 import Switch from '@mui/material/Switch';
-import AccessTime from '@mui/icons-material/AccessTime';
 import SettingToggle from './SettingToggle.tsx';
+import SettingRow, { CONTROL_WIDTH_PX } from './SettingRow.tsx';
 
 
 type PrimePodScheduleProps = {
@@ -16,7 +15,6 @@ type PrimePodScheduleProps = {
 
 export default function DailyPriming({ settings, updateSettings }: PrimePodScheduleProps) {
   const { isUpdating } = useAppStore();
-  const theme = useTheme();
 
   return (
     <>
@@ -31,32 +29,17 @@ export default function DailyPriming({ settings, updateSettings }: PrimePodSched
           }
           label="Prime daily"
         />
-        <TextField
-          label="Prime time"
-          type="time"
-          size="small"
-          variant="outlined"
-          value={ settings?.primePodDaily?.time || '12:00' }
-          onChange={ (e) => { if (e.target.value) updateSettings({ primePodDaily: { time: e.target.value } }); } }
-          disabled={ isUpdating || settings?.primePodDaily?.enabled === false }
-          sx={ {
-            width: '100%',
-            // Hide native indicator (where it exists)
-            '& input::-webkit-calendar-picker-indicator': {
-              opacity: 0,
-              display: 'none',
-            },
-          } }
-          slotProps={ {
-            input: {
-              endAdornment: (
-                <InputAdornment position="end" sx={ { cursor: 'pointer' } } >
-                  <AccessTime sx={ { color: theme.palette.text.secondary } } fontSize='small'/>
-                </InputAdornment>
-              ),
-            }
-          } }
-        />
+        <SettingRow label="Prime time">
+          <TextField
+            type="time"
+            size="small"
+            value={ settings?.primePodDaily?.time || '12:00' }
+            onChange={ (event) => { if (event.target.value) updateSettings({ primePodDaily: { time: event.target.value } }); } }
+            disabled={ isUpdating || settings?.primePodDaily?.enabled === false }
+            sx={ { width: CONTROL_WIDTH_PX } }
+            slotProps={ { htmlInput: { 'aria-label': 'Prime time' } } }
+          />
+        </SettingRow>
       </Box>
     </>
   );

@@ -5,7 +5,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAppStore } from '@state/appStore.tsx';
 import { useServerInfo } from '@api/serverInfo.ts';
 import { PAGES, getPageForPath } from './pages';
-import StatusLink from './StatusLink.tsx';
+import StatusLink, { STATUS_ROUTE } from './StatusLink.tsx';
 
 export default function Navbar() {
   const { pathname } = useLocation();
@@ -65,7 +65,9 @@ export default function Navbar() {
       </Box>
       { /* The Pod's health, and the way to the Status page: bottom right on a computer. A phone
            has no free corner, so there it sits in the heading of each page (see PageHeader). */ }
-      <Box sx={ { display: { xs: 'none', md: 'block' }, position: 'fixed', right: 20, bottom: 16, zIndex: 1100 } }><StatusLink/></Box>
+      { pathname !== STATUS_ROUTE && (
+        <Box sx={ { display: { xs: 'none', md: 'block' }, position: 'fixed', right: 20, bottom: 16, zIndex: 1100 } }><StatusLink/></Box>
+      ) }
       <Box
         component="nav"
         aria-label="Mobile navigation"

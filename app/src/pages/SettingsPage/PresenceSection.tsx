@@ -10,6 +10,7 @@ import { useAppStore } from '@state/appStore.tsx';
 import InfoTip from '@components/InfoTip.tsx';
 import Section from './Section.tsx';
 import SettingToggle from './SettingToggle.tsx';
+import { CONTROL_WIDTH_PX } from './SettingRow.tsx';
 import { TemperatureSelect } from '../SchedulePage/ScheduleFields.tsx';
 
 type PresenceSectionProps = {
@@ -96,7 +97,7 @@ export default function PresenceSection({ settings, updateSettings }: PresenceSe
             value={ sensitivity }
             onChange={ (event) => updatePresence({ sensitivity: event.target.value as Settings['presence']['sensitivity'] }) }
             disabled={ isUpdating }
-            sx={ { width: 120, flexShrink: 0 } }
+            sx={ { width: CONTROL_WIDTH_PX, flexShrink: 0 } }
             slotProps={ { htmlInput: { 'aria-label': 'In-bed detection sensitivity' } } }
           >
             { Object.entries(SENSITIVITY_NAMES).map(([value, name]) => <MenuItem key={ value } value={ value }>{ name }</MenuItem>) }

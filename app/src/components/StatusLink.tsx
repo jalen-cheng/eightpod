@@ -6,14 +6,18 @@ import { ServerStatus } from '@api/serverStatusSchema.ts';
 import StatusTag, { StatusTone } from './StatusTag.tsx';
 
 export const STATUS_ROUTE = '/status';
-const SERVICE_CHECK_MS = 30_000;
+// The check reads the Pod's database, so it is not asked for often
+const SERVICE_CHECK_MS = 90_000;
 // Sleep analysis and its jobs are untested here and off by default, so they do not count
 const IGNORED_SERVICES = /^(biometrics|analyzeSleep)/;
 
 // The Pod's health in a word, from whether it answers and whether any of its services has failed
-const readHealth = (isReachable: boolean, isUnreachable: boolean, services?: ServerStatus): { tone: StatusTone; word: string } => {
+const readHealth = (
+  isReachable: boolean, isUnreachable: boolean, hasCheckFailed: boolean, services?: ServerStatus,
+): { tone: StatusTone; word: string } => {
   if (isUnreachable) return { tone: 'bad', word: 'Offline' };
   if (!isReachable) return { tone: 'neutral', word: 'Connecting' };
+  if (hasCheckFailed) return { tone: 'warning', word: 'Needs attention' };
   const failed = Object.entries(services ?? {}).filter(([name, info]) => !IGNORED_SERVICES.test(name) && info.status === 'failed');
   return failed.length > 0 ? { tone: 'warning', word: 'Needs attention' } : { tone: 'good', word: 'Healthy' };
 };
@@ -21,8 +25,8 @@ const readHealth = (isReachable: boolean, isUnreachable: boolean, services?: Ser
 // "Status: Healthy", and the way to the Status page: press it to see every service
 export default function StatusLink() {
   const { data: deviceStatus, isError } = useDeviceStatus();
-  const { data: services } = useServerStatus(SERVICE_CHECK_MS);
-  const { tone, word } = readHealth(Boolean(deviceStatus) && !isError, isError, services);
+  const { data: services, isError: hasCheckFailed } = useServerStatus(SERVICE_CHECK_MS);
+  const { tone, word } = readHealth(Boolean(deviceStatus) && !isError, isError, hasCheckFailed, services);
 
   return (
     <ButtonBase

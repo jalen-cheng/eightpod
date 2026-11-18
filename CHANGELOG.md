@@ -1,7 +1,7 @@
 # Changelog
 
 What EightPod changed from [throwaway31265/free-sleep](https://github.com/throwaway31265/free-sleep),
-what was checked on a real Pod, and what was not. EightPod is at version 3.7.0. Everything was
+what was checked on a real Pod, and what was not. EightPod is at version 3.7.1. Everything was
 developed and tested on one Pod 5 between 13 and 17 Nov 2026.
 
 **The API.** Everything the app does goes through a documented local API, and every command the
@@ -31,7 +31,7 @@ Each of these was seen working on the test Pod 5, in its log or by the person on
 | Buttons | +, -, and the middle button held, on both sides and with sides linked |
 | Shortcuts | Setting the temperature by -10..+10, a one-time alarm by time, and reading the bed's state, from an iPhone |
 | Internet block | Blocks everything but the home network, time sync, DNS and address requests; restored at boot |
-| `.local` name | `http://eight-pod.local:3000` loads on the home network (the Pod has since been renamed `bed`; the address is now `http://bed.local`) |
+| `.local` name | `http://eight-pod.local:3000` loads on the home network (the Pod has since been renamed `bed`; the address is now `http://eightpod.local`) |
 | Tailscale on the Pod | Installed with the block on; reaches only its sign-in servers and two relay regions; page opened from an iPhone on cellular; comes back after a reboot |
 | In-bed detection | One person detected on each side within about a minute; "Turn on when I get into bed" turned both linked sides on |
 
@@ -231,3 +231,4 @@ acted on it).
 | [#85](https://github.com/jalen-cheng/eightpod/pull/85) | Design, docs | Dialogs stand off the page: the page behind is dimmed and blurred, and the dialog has an edge and a shadow. Close sits on the left of the alarm dialog. Long menus scroll inside a short list, and the in-bed "stay on" choice is only as wide as its text. A shorter, more open contributing guide; README wording on reversibility and warranty. |
 | [#89](https://github.com/jalen-cheng/eightpod/pull/89) | Feature, docs | Settings has an **API** section: what the API is for, two requests to copy with the Pod's own address filled in, and a link to the reference. The demo video gains an API scene and is recorded at 60 frames a second. |
 | [#92](https://github.com/jalen-cheng/eightpod/pull/92) | Design | **Settings:** how the alarm vibrates (pattern, strength, length, test) is one **Alarm** section for every night and both sides; a night's dialog keeps the alarm switch, warm-up and bed off on dismiss. Side settings are gone: away mode is one switch for both sides, and it, flip left and right and the side buttons' step are in Device settings. In-bed detection's options sit in a line under their labels. The Device section reads top to bottom: the Pod, its version and update, restarting. **Navigation:** an **API** page with the common requests; on a computer the sidebar has Settings, Status and API at the foot; on a phone the tabs end Settings, Status, and the API page is reached from Settings. |
+| [#93](https://github.com/jalen-cheng/eightpod/pull/93) | Design, fix | **Status** is a link, not a tab: "Status: Healthy" (or Needs attention, Offline) at the bottom right on a computer and beside each page's heading on a phone. The API guide is folded into Device settings; the tabs are Temperature, Schedules, Data, Settings. **Settings:** rows are one line each with aligned controls, in named groups; time zones read "PST (UTC−8)"; alarm strength is Low, Medium or High, under Length; the hub's light is on or off; states are a dot and plain text in place of pills; section names sit above squarer cards. **Fixes:** the server no longer refuses a change to how the alarm vibrates because of an old night it does not touch; the away switch clears a side set away through the API in one press. |

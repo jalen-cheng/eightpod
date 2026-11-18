@@ -1,8 +1,8 @@
 import { DeepPartial } from 'ts-essentials';
-import { Box, MenuItem, Switch, TextField, Typography } from '@mui/material';
+import { MenuItem, Switch, TextField } from '@mui/material';
 import { MANUAL_ON_HOUR_CHOICES, Settings } from '@api/settingsSchema.ts';
 import { useAppStore } from '@state/appStore.tsx';
-import InfoTip from '@components/InfoTip.tsx';
+import SettingRow, { CONTROL_WIDTH_PX } from '../SettingRow.tsx';
 import SettingToggle from '../SettingToggle.tsx';
 
 type ManualOnSettingsProps = {
@@ -22,26 +22,22 @@ export default function ManualOnSettings({ settings, updateSettings }: ManualOnS
   if (!settings) return null;
 
   return (
-    <Box sx={ { display: 'flex', flexDirection: 'column', gap: 1.5 } }>
-      <Box sx={ { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2 } }>
-        <Typography sx={ { fontSize: 13, fontWeight: 500 } }>
-          When turned on by hand, stay on for{ ' ' }
-          <InfoTip text={ LENGTH_INFO }/>
-        </Typography>
+    <>
+      <SettingRow label="Stay on for" info={ LENGTH_INFO }>
         <TextField
           select
           size="small"
           value={ settings.manualOn.hours }
           onChange={ (event) => updateSettings({ manualOn: { hours: Number(event.target.value) as Settings['manualOn']['hours'] } }) }
           disabled={ isUpdating }
-          sx={ { width: 104, flexShrink: 0 } }
+          sx={ { width: CONTROL_WIDTH_PX } }
           slotProps={ { htmlInput: { 'aria-label': 'How long the bed stays on when turned on by hand' } } }
         >
           { MANUAL_ON_HOUR_CHOICES.map(hours => <MenuItem key={ hours } value={ hours }>{ hours } hours</MenuItem>) }
         </TextField>
-      </Box>
+      </SettingRow>
       <SettingToggle
-        label="Ignore the schedule until it turns off"
+        label="Ignore the schedule meanwhile"
         info={ OVERRIDE_INFO }
         control={
           <Switch
@@ -51,6 +47,6 @@ export default function ManualOnSettings({ settings, updateSettings }: ManualOnS
           />
         }
       />
-    </Box>
+    </>
   );
 }
