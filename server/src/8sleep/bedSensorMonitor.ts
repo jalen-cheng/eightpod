@@ -6,6 +6,7 @@
 // A Pod 5's firmware publishes both on its local message bus (NATS). A Pod without that bus, or
 // without those subjects, simply never produces a reading: presence stays "not available", no
 // measured temperature is shown, and nothing else is affected.
+import { recordPiezoSecond, recordSurroundings } from '../autopilot/autopilotMonitor.js';
 import { readFileSync, writeFileSync } from 'fs';
 import { registerInBedCheck } from '../jobs/inBedCheck.js';
 import cbor from 'cbor';
@@ -54,6 +55,16 @@ type SavedState = {
 };
 // Kept beside the databases, not in the watched settings folder, so saving never rebuilds the jobs
 const STATE_FILE = `${config.dbFolder}presence_state.json`;
+
+// The piezo sensor that feels heartbeats and movement, 500 samples a second, a channel per side
+const PIEZO_SUBJECT = 'rawmem.sens.piezo';
+type PiezoMessage = Partial<Record<'left1' | 'right1', Buffer>>;
+// The air at the cover (`amb`), humidity (`hu`) and the mattress surface per side, all read as
+// hundredths of a unit (2143 is 21.43 °C). That reading fits a room and a bed; it was not
+// checked against a thermometer.
+const BED_TEMPERATURE_SUBJECT = 'rawmem.sens.bedtemp';
+type BedTemperatureMessage = { amb?: number; hu?: number; left?: { cen?: number }; right?: { cen?: number } };
+const hundredthsCelsiusToF = (hundredths: number) => hundredths / 100 * 9 / 5 + 32;
 // Older than this and the bed may have changed hands; start afresh
 const STATE_MAX_AGE_MS = 30 * 60_000;
 const STATE_SAVE_INTERVAL_MS = 60_000;
@@ -165,6 +176,26 @@ export class BedSensorMonitor {
           const reportedValue = message[toFirmwareSide(side)];
           if (typeof reportedValue === 'number') recordWaterReading(side, reportedValue);
         }
+      });
+      this.subscribe<PiezoMessage>(PIEZO_SUBJECT, (message) => {
+        for (const side of SIDES) {
+          const bytes = message[`${toFirmwareSide(side)}1`];
+          if (!Buffer.isBuffer(bytes)) continue;
+          // 32-bit samples, low byte first
+          const samples: number[] = [];
+          for (let offset = 0; offset + 4 <= bytes.length; offset += 4) samples.push(bytes.readInt32LE(offset));
+          recordPiezoSecond(side, samples);
+        }
+      });
+      this.subscribe<BedTemperatureMessage>(BED_TEMPERATURE_SUBJECT, (message) => {
+        recordSurroundings({
+          roomF: typeof message.amb === 'number' ? hundredthsCelsiusToF(message.amb) : undefined,
+          humidityPercent: typeof message.hu === 'number' ? Math.round(message.hu / 100) : undefined,
+          surfaceF: Object.fromEntries(SIDES.flatMap((side) => {
+            const centre = message[toFirmwareSide(side)]?.cen;
+            return typeof centre === 'number' ? [[side, hundredthsCelsiusToF(centre)]] : [];
+          })),
+        });
       });
       logger.info('Bed sensor monitor is listening');
       // Resolves when the connection ends for good

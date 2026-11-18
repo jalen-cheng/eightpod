@@ -202,6 +202,7 @@ const createSettings = (): Settings => ({
   linkSides: false,
   swapSides: false,
   manualOn: { hours: 12, overridesSchedule: false },
+  autopilot: { enabled: true },
   presence: {
     sensitivity: 'medium',
     wakeAfterHours: { enabled: false, hours: 9 },

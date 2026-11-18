@@ -71,6 +71,8 @@ export const SettingsSchema = z.object({
     // temperature changes or warm-up. Alarms still go off.
     overridesSchedule: z.boolean(),
   }),
+  // Lets the bed adjust its own temperature around the schedule while someone sleeps (Pod 5)
+  autopilot: z.object({ enabled: z.boolean() }),
   // What being in bed sets off, using the bed's own presence sensors (Pod 5)
   presence: z.object({
     // How easily a rise in the sensors counts as someone in bed

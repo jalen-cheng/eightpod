@@ -7,6 +7,7 @@ import { connectFranken, disconnectFranken } from './8sleep/frankenServer.js';
 import { FrankenMonitor } from './8sleep/frankenMonitor.js';
 import { ButtonMonitor } from './8sleep/buttonMonitor.js';
 import { BedSensorMonitor } from './8sleep/bedSensorMonitor.js';
+import { AutopilotMonitor } from './autopilot/autopilotMonitor.js';
 import './jobs/jobScheduler.js';
 
 
@@ -29,6 +30,7 @@ let server: Server | undefined;
 let frankenMonitor: FrankenMonitor | undefined;
 let buttonMonitor: ButtonMonitor | undefined;
 let bedSensorMonitor: BedSensorMonitor | undefined;
+let autopilotMonitor: AutopilotMonitor | undefined;
 
 async function disconnectPrisma() {
   try {
@@ -82,6 +84,7 @@ async function gracefulShutdown(signal: string) {
     if (!config.remoteDevMode) {
       frankenMonitor?.stop();
       buttonMonitor?.stop();
+      autopilotMonitor?.stop();
       await bedSensorMonitor?.stop();
       await disconnectFranken();
       logger.debug('Successfully closed Franken components.');
@@ -119,6 +122,8 @@ const initFrankenMonitor = () => {
   // unavailable on Pods that do not report them
   bedSensorMonitor = new BedSensorMonitor();
   bedSensorMonitor.start();
+  autopilotMonitor = new AutopilotMonitor();
+  autopilotMonitor.start();
   logger.info('Frank monitor started!');
 };
 

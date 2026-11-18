@@ -1,5 +1,6 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="2c4bb1f9-4474-5b2c-858c-06e49a6bf92f")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="f4ceec4f-fce5-5e9b-b49e-ada76fa9b1b2")}catch(e){}}();
+import { noteManualTemperature } from '../../autopilot/manualChanges.js';
 import _ from 'lodash';
 import cbor from 'cbor';
 import { executeFunction } from '../../8sleep/deviceApi.js';
@@ -86,6 +87,8 @@ const updateSide = async (side, sideStatus, options) => {
         }
     }
     if (targetTemperatureF) {
+        if (isManual)
+            updatedSides.forEach(updatedSide => noteManualTemperature(updatedSide, targetTemperatureF));
         const level = calculateLevelFromF(targetTemperatureF);
         if (updateLeft)
             await executeFunction('TEMP_LEVEL_LEFT', level);
@@ -135,4 +138,4 @@ export const updateDeviceStatus = async (deviceStatus, options = {}) => {
     logger.info('Finished updating device status');
 };
 //# sourceMappingURL=updateDeviceStatus.js.map
-//# debugId=2c4bb1f9-4474-5b2c-858c-06e49a6bf92f
+//# debugId=f4ceec4f-fce5-5e9b-b49e-ada76fa9b1b2

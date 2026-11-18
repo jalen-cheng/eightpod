@@ -1,6 +1,6 @@
 // LowDB, stores the schedules in /persistent/free-sleep-data/lowdb/settingsDB.json
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="c55f0aa9-f51c-545e-b611-8fe041644812")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="41131f19-5322-568f-8635-8751492f6269")}catch(e){}}();
 import _ from 'lodash';
 import { Low } from 'lowdb';
 import { JSONFile } from 'lowdb/node';
@@ -55,6 +55,7 @@ const defaultData = {
     },
     // The firmware's own length for a side switched on, and the schedule carries on as usual
     manualOn: { hours: 12, overridesSchedule: false },
+    autopilot: { enabled: false },
     // Detection always runs where the sensors exist; both actions are off until switched on
     presence: {
         sensitivity: 'medium',
@@ -74,4 +75,4 @@ settingsDB.data = _.merge({}, defaultData, settingsDB.data);
 await settingsDB.write();
 export default settingsDB;
 //# sourceMappingURL=settings.js.map
-//# debugId=c55f0aa9-f51c-545e-b611-8fe041644812
+//# debugId=41131f19-5322-568f-8635-8751492f6269

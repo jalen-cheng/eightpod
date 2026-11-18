@@ -7,7 +7,8 @@
 // without those subjects, simply never produces a reading: presence stays "not available", no
 // measured temperature is shown, and nothing else is affected.
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="3c1f211f-7749-5478-8fba-237394ad1ec2")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="7eeb2bed-e512-56e7-a078-939f8a44ae1c")}catch(e){}}();
+import { recordPiezoSecond, recordSurroundings } from '../autopilot/autopilotMonitor.js';
 import { readFileSync, writeFileSync } from 'fs';
 import { registerInBedCheck } from '../jobs/inBedCheck.js';
 import cbor from 'cbor';
@@ -37,6 +38,13 @@ const SECONDS_PER_HOUR = 3_600;
 const MAX_ON_HOURS = 12;
 // Kept beside the databases, not in the watched settings folder, so saving never rebuilds the jobs
 const STATE_FILE = `${config.dbFolder}presence_state.json`;
+// The piezo sensor that feels heartbeats and movement, 500 samples a second, a channel per side
+const PIEZO_SUBJECT = 'rawmem.sens.piezo';
+// The air at the cover (`amb`), humidity (`hu`) and the mattress surface per side, all read as
+// hundredths of a unit (2143 is 21.43 °C). That reading fits a room and a bed; it was not
+// checked against a thermometer.
+const BED_TEMPERATURE_SUBJECT = 'rawmem.sens.bedtemp';
+const hundredthsCelsiusToF = (hundredths) => hundredths / 100 * 9 / 5 + 32;
 // Older than this and the bed may have changed hands; start afresh
 const STATE_MAX_AGE_MS = 30 * 60_000;
 const STATE_SAVE_INTERVAL_MS = 60_000;
@@ -144,6 +152,28 @@ export class BedSensorMonitor {
                     if (typeof reportedValue === 'number')
                         recordWaterReading(side, reportedValue);
                 }
+            });
+            this.subscribe(PIEZO_SUBJECT, (message) => {
+                for (const side of SIDES) {
+                    const bytes = message[`${toFirmwareSide(side)}1`];
+                    if (!Buffer.isBuffer(bytes))
+                        continue;
+                    // 32-bit samples, low byte first
+                    const samples = [];
+                    for (let offset = 0; offset + 4 <= bytes.length; offset += 4)
+                        samples.push(bytes.readInt32LE(offset));
+                    recordPiezoSecond(side, samples);
+                }
+            });
+            this.subscribe(BED_TEMPERATURE_SUBJECT, (message) => {
+                recordSurroundings({
+                    roomF: typeof message.amb === 'number' ? hundredthsCelsiusToF(message.amb) : undefined,
+                    humidityPercent: typeof message.hu === 'number' ? Math.round(message.hu / 100) : undefined,
+                    surfaceF: Object.fromEntries(SIDES.flatMap((side) => {
+                        const centre = message[toFirmwareSide(side)]?.cen;
+                        return typeof centre === 'number' ? [[side, hundredthsCelsiusToF(centre)]] : [];
+                    })),
+                });
             });
             logger.info('Bed sensor monitor is listening');
             // Resolves when the connection ends for good
@@ -265,4 +295,4 @@ export class BedSensorMonitor {
     }
 }
 //# sourceMappingURL=bedSensorMonitor.js.map
-//# debugId=3c1f211f-7749-5478-8fba-237394ad1ec2
+//# debugId=7eeb2bed-e512-56e7-a078-939f8a44ae1c

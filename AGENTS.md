@@ -51,6 +51,9 @@
 - Left/right flip, applied only where the server meets the firmware: `server/src/8sleep/sideMapping.ts`
 - Startup initializes Franken from `server/src/server.ts`; health is surfaced through `server/src/serverStatus.ts`.
 
+## Autopilot Hotspots
+- `server/src/autopilot/`: `heartRate.ts`, `sleepTracker.ts`, `nightPlan.ts` and `scheduledBase.ts` are pure and tested in `tests/autopilot.test.mjs`; `autopilotMonitor.ts` holds the state and is the only one that sets the bed. `docs/AUTOPILOT.md` explains the rules and the evidence.
+
 ## Review Cautions
 - Check timezone behavior with `moment-timezone`; the app sets a default timezone after settings load, and server jobs set `RecurrenceRule.tz`.
 - Prefer adding tests or small reproductions around scheduling time math before changing job timing.

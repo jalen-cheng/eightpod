@@ -1,8 +1,8 @@
 # Changelog
 
 What EightPod changed from [throwaway31265/free-sleep](https://github.com/throwaway31265/free-sleep),
-what was checked on a real Pod, and what was not. EightPod is at version 3.8.4. Everything was
-developed and tested on one Pod 5 between 13 and 17 Nov 2026.
+what was checked on a real Pod, and what was not. EightPod is at version 3.9.0. Everything was
+developed and tested on one Pod 5 between 13 and 18 Nov 2026.
 
 **The API.** Everything the app does goes through a documented local API, and every command the
 firmware accepts is reachable through it: temperature, power, alarms, priming, schedules, settings
@@ -38,6 +38,8 @@ Each of these was seen working on the test Pod 5, in its log or by the person on
 ## Not tested
 
 - **Pod 3 and Pod 4.** Nothing has been run on either. See [docs/POD_MODELS.md](docs/POD_MODELS.md).
+- **Autopilot.** Not run through a night. Its heart-rate reading was checked against two minutes of real sensor data;
+  sleep detection, the temperature changes and the learning were checked on made-up nights only, and never with two people in the bed.
 - **In-bed detection:** the bed turning off after someone gets out, the long-stay alarm, and its
   state being restored after a restart.
 - **Turning on by hand:** the 3 and 6 hour lengths, and "Ignore the schedule until it turns off".
@@ -237,3 +239,4 @@ acted on it).
 | [#96](https://github.com/jalen-cheng/eightpod/pull/96) | Fix | The Temperature page's "Turns off at" follows a one-time alarm still to come: 30 minutes after it, as the bed itself does, where it used to show the schedule's off time. |
 | [#98](https://github.com/jalen-cheng/eightpod/pull/98) | Fix | **Pod 5 buttons were not being read.** The installer looked up a system group with `getent`, which the Pod does not have, so every install left the server without permission to read the firmware's log of button presses: no temperature steps, and an alarm could not be dismissed from the bed. The installer now reads the group file directly. The Status page has a **Side buttons** row, so this shows as "Needs attention" if it ever happens again. |
 | [#100](https://github.com/jalen-cheng/eightpod/pull/100) | Feature, fix | **Dismissing from the bed:** a press stops the alarm on its own side only, unless both sides began going off together; the side that pressed gets a short double buzz to confirm (Pod 5; it is sent a moment after the stop, since 3.8.4, because the firmware dropped it otherwise). Holding the middle button for a second and a half switches the side, down from two seconds. |
+| [#PRNUM](https://github.com/jalen-cheng/eightpod/pull/PRNUM) | Feature | **Autopilot (Pod 5, experimental, off by default):** reads a heart rate and movement from the cover's piezo sensor, judges asleep and deep sleep, and moves a sleeping side up to 4°F around its set temperature: a fixed night curve, 1°F cooler in deep sleep, your own changes learned per third of the night, and the room's drift. `GET /api/autopilot`; [docs/AUTOPILOT.md](docs/AUTOPILOT.md) (3.9.0). Heart rate checked against a real capture; the rest in tests only |

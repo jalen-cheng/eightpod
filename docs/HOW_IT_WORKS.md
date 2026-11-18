@@ -324,6 +324,9 @@ sensitivity. `GET /api/metrics/presence/sensors` returns the live signal and emp
 **Seen on the Pod:** "Turn on when I get into bed" turned both linked sides on when someone got in. Not yet
 seen: it turning off after they got out, and the long-stay alarm.
 
+**Autopilot.** The same sensor bus carries the piezo signal and the room temperature. With Settings > Autopilot on, EightPod reads a heart rate from it, judges sleep, and
+moves a sleeping side a few degrees around its set temperature. It is experimental; [AUTOPILOT.md](AUTOPILOT.md) has the rules, the evidence and the limits.
+
 ## 9. Daily housekeeping: priming, reboot, calibration
 
 All three are timed from Settings > "Prime daily" (default 14:00, on by default in EightPod).
@@ -375,7 +378,7 @@ marked "Untested in this version".
 the light on the hub; how long the bed stays on when turned on by hand and whether the schedule
 is ignored meanwhile. Then Alarm (one setting for every night and both sides: vibration,
 length, strength, a test), Tap gestures (Pod 4), Priming, In-bed detection (its state shows
-beside the heading), Sleep tracking (biometrics), Pod (the model, Wi-Fi, version and Update,
+beside the heading), Autopilot (Pod 5), Sleep tracking (biometrics), Pod (the model, Wi-Fi, version and Update,
 reboot), and API, which opens a page of the common requests (`/api-guide`).
 
 ## 11. The API and phone shortcuts

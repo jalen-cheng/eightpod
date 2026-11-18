@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="e9525e47-372d-5eb5-a161-edf6054db440")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="1ee3a06d-f138-5886-9501-e7ba66153f8a")}catch(e){}}();
 import { z } from 'zod';
 import { TIME_ZONES } from './timeZones.js';
 import { TimeSchema } from './schedulesSchema.js';
@@ -65,6 +65,8 @@ export const SettingsSchema = z.object({
         // temperature changes or warm-up. Alarms still go off.
         overridesSchedule: z.boolean(),
     }),
+    // Lets the bed adjust its own temperature around the schedule while someone sleeps (Pod 5)
+    autopilot: z.object({ enabled: z.boolean() }),
     // What being in bed sets off, using the bed's own presence sensors (Pod 5)
     presence: z.object({
         // How easily a rise in the sensors counts as someone in bed
@@ -82,4 +84,4 @@ export const SettingsSchema = z.object({
 }).strict();
 export const MANUAL_ON_HOUR_CHOICES = [3, 6, 12];
 //# sourceMappingURL=settingsSchema.js.map
-//# debugId=e9525e47-372d-5eb5-a161-edf6054db440
+//# debugId=1ee3a06d-f138-5886-9501-e7ba66153f8a

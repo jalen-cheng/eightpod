@@ -5,6 +5,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import deviceStatus from '../routes/deviceStatus/deviceStatus.js';
 import alarm from '../routes/alarm/alarm.js';
+import autopilot from '../routes/autopilot/autopilot.js';
 import execute from '../routes/execute/execute.js';
 import jobs from '../routes/jobs/jobs.js';
 import settings from '../routes/settings/settings.js';
@@ -24,6 +25,7 @@ const __dirname = path.dirname(__filename);
 export default function (app: Express) {
   logger.debug('Registering routes...');
   app.use('/api/', alarm);
+  app.use('/api/', autopilot);
   app.use('/api/', deviceStatus);
   app.use('/api/', execute);
   app.use('/api/', schedules);
