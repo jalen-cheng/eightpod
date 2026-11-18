@@ -7,7 +7,34 @@ The server on the Pod serves the web app and a JSON API on port 3000 and also on
 curl http://<pod-ip>:3000/api/deviceStatus
 ```
 
-Contents: [General](#general) · [Device status](#device-status) · [Dial](#dial) · [Alarms](#alarms) · [Settings](#settings) · [Schedules](#schedules) · [Execute](#execute) · [Jobs](#jobs) · [Services](#services) · [Server status](#server-status) · [Logs](#logs) · [Metrics](#metrics) · [Presence](#presence)
+Contents: [What you can control](#what-you-can-control) · [General](#general) · [Device status](#device-status) · [Dial](#dial) · [Alarms](#alarms) · [Settings](#settings) · [Schedules](#schedules) · [Execute](#execute) · [Jobs](#jobs) · [Services](#services) · [Server status](#server-status) · [Logs](#logs) · [Metrics](#metrics) · [Presence](#presence)
+
+## What you can control
+
+Everything the app does is a request listed here, and every command the firmware accepts can be
+sent. Nothing needs an Eight Sleep account, a subscription or the internet.
+
+| To do this | Use |
+|---|---|
+| Read the bed: on or off, target and measured temperature, time left, water, priming | [`GET /api/deviceStatus`](#get-apidevicestatus) |
+| Turn a side on or off, set its temperature, stop an alarm, start priming, set LED brightness | [`POST /api/deviceStatus`](#post-apidevicestatus) |
+| Set the temperature on Eight Sleep's -10 to +10 scale, or read it as a sentence | [Dial](#dial) |
+| Vibrate now, set a one-time alarm, move or cancel the next alarm, change a weekly alarm | [Alarms](#alarms) |
+| Read or change the weekly schedule | [Schedules](#schedules) |
+| Read or change settings: time zone, away mode, buttons and taps, in-bed detection, priming, reboot | [Settings](#settings) |
+| Know whether someone is in bed (Pod 5) | [Presence](#presence) |
+| Update EightPod, reboot the Pod, run calibration | [Jobs](#jobs) |
+| Send a firmware command directly | [`POST /api/execute`](#post-apiexecute) |
+| Check health and read logs | [Server status](#server-status), [Logs](#logs) |
+
+Five firmware commands are deliberately not sent by anything here, because what they do on a Pod
+is either destructive or unknown: reset, force reset, format, solo alarm and stop priming.
+
+**Connecting other things.** The API is plain JSON over HTTP on your home network, with no login,
+so anything that can send a web request can use it: iPhone Shortcuts
+([recipes](../docs/IOS_SHORTCUTS.md)), Home Assistant's `rest_command` and `rest` sensors, a cron
+job with `curl`, or an AI assistant given this file and a way to make requests. From outside the
+home, reach the Pod over [Tailscale](../docs/REMOTE_ACCESS.md) first; never expose it to the internet.
 
 ## General
 

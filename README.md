@@ -1,4 +1,4 @@
-# EightPod — subscription-free, open-source local control for Eight Sleep Pods, in place of the cloud
+# EightPod — subscription-free, open-source local control for Eight Sleep Pods
 
 <p align="center">
   <img src="docs/screenshots/overview.png" width="900" alt="Four phone screens: the temperature dial, a night's schedule, alarm options and in-bed detection">
@@ -17,11 +17,12 @@ EightPod controls an Eight Sleep Pod from your own network. Each Pod has a small
 inside; EightPod installs a server on it that talks to the Pod's firmware and serves a web app
 you open on your phone.
 
-It started as a fork of [Free Sleep](https://github.com/throwaway31265/free-sleep) by
-throwaway31265 and its contributors, and grew into a rework: the Pod 5's side buttons, calibrated
-temperatures, in-bed detection, a redesigned app, a schedule built around one night at a time,
-alarms that run until you dismiss them, and an address you can remember (`http://eightpod.local`). It
-was developed and tested on one Pod 5.
+**No subscription.** Eight Sleep's app needs an Autopilot plan, from $199 a year. So does
+everything built on its cloud: the Home Assistant integrations, MCP servers and API clients for
+the Pod all sign in to your Eight Sleep account and stop working when the plan does. EightPod
+talks to the bed directly, so none of that applies.
+
+It started as a fork of [Free Sleep](https://github.com/throwaway31265/free-sleep) and was developed and tested on one Pod 5.
 
 **Local, with no catch.** No cloud, no account and no subscription. The Pod is blocked from the
 internet, so nothing is sent to Eight Sleep or anyone else, and the bed keeps working when your
@@ -32,7 +33,7 @@ internet does not.
     <td align="center" width="130"><a href="https://eightpod.vercel.app">Demo</a></td>
     <td align="center" width="130"><a href="INSTALLATION.md">Install</a></td>
     <td align="center" width="130"><a href="docs/USING.md">App guide</a></td>
-    <td align="center" width="130"><a href="docs/HOW_IT_WORKS.md">How it works</a></td>
+    <td align="center" width="130"><a href="docs/HOW_IT_WORKS.md">Implementation</a></td>
     <td align="center" width="130"><a href="docs/IOS_SHORTCUTS.md">Shortcuts</a></td>
     <td align="center" width="130"><a href="server/API.md">API</a></td>
     <td align="center" width="130"><a href="#faq">FAQ</a></td>
@@ -97,23 +98,23 @@ No Pod yet? **[eightpod.vercel.app](https://eightpod.vercel.app)** is the app on
 
 **The big ones**
 
-- **Wake-up heat.** The bed warms to a temperature you choose 15 to 45 minutes before the alarm, so you wake warm instead of being shaken out of a cold bed.
-- **Alarms that wake you.** They run until dismissed with a real ramp-up on a Pod 5, can be changed for one morning without touching the schedule, and go off even if the bed is off.
-- **Nights that run themselves.** Set bed-on, temperature changes and a wake time once per day of the week. The bed turns off 30 minutes after you wake, or the moment you dismiss the alarm.
-- **In-bed detection (Pod 5).** The bed knows when someone is in it, and can turn on when you get in, off after you get out, or vibrate after a long stay.
+- **Networking.** The app opens at `http://eightpod.local`, with no IP address or port to remember. Optional Tailscale on the Pod reaches it from anywhere: on cellular, at work or on hotel Wi-Fi your phone opens the same app, over an encrypted link only your own devices can use, with nothing opened on your router. The internet block stays on throughout, keeps the clock and name lookups working, and is restored at every boot.
 - **Pod 5 side buttons work.** + and - change the temperature, holding the middle button switches the side on or off, and any button stops an alarm.
+- **In-bed detection (Pod 5).** The bed knows when someone is in it, and can turn on when you get in, off after you get out, or vibrate after a long stay.
+- **Wake-up heat.** The bed warms to a temperature you choose 15 to 45 minutes before the alarm, so you wake warm instead of being shaken out of a cold bed.
+- **Alarms that keep going.** They vibrate until you dismiss them, with a real ramp-up on a Pod 5, and go off even if the bed is off.
 - **Temperatures are calibrated.** The number shown is what the firmware aims for at each level, measured on a Pod 5, beside the temperature the bed measures. Units are °F, °C, or Eight Sleep's -10 to +10.
-- **Networking.** The app opens at `http://eightpod.local`. The internet block keeps the clock and name lookups working and is restored at every boot, and optional Tailscale reaches the Pod from anywhere with the block still on.
+- **An API for everything.** Every control the firmware offers is a documented local request: temperature, power, alarms, priming, schedules, settings and who is in bed. Anything that can send a web request can drive the bed: iPhone Shortcuts, Home Assistant, a script, or an AI assistant. See [server/API.md](server/API.md).
 
-**Also**
+**Quality of life**
 
 - **A redesigned app.** Dark, phone-first and quiet: one screen per night with a chart, explanations behind an "i", and controls that respond at once.
-- **Two sleepers.** Each side has its own temperature, schedule and alarm, or link the sides and control the bed as one.
-- **Shortcuts and an API.** One request sets the temperature, sets an alarm by time ("6:30 AM" works), or reads the bed in a sentence, from iPhone Shortcuts or anything else that sends web requests.
+- **No off time to manage.** The bed turns off 30 minutes after the wake time, or the moment you dismiss the alarm.
+- **Change one morning's alarm** without touching the schedule.
+- **Linked sides.** Control the whole bed as one: temperature, power, schedules, buttons and shortcuts.
 - **Updates from the app.** It shows when a newer version exists and updates in about four minutes, putting the old version back if anything fails.
-- **Housekeeping.** Daily priming at 2 PM, a daily reboot with its own switch, left and right can be flipped, and Eight Sleep's updater can be locked out.
 
-Everything else, and the full comparison with Free Sleep, is in [CHANGELOG.md](CHANGELOG.md#compared-with-free-sleep).
+The rest, and the full comparison with Free Sleep, is in [CHANGELOG.md](CHANGELOG.md#compared-with-free-sleep).
 
 ## Security
 
@@ -151,65 +152,59 @@ Select a question to open its answer.
 
 <details>
 <summary><b>Is it reversible?</b></summary>
+<br>
 
 On a Pod 3 or Pod 4, yes: a firmware reset puts the Pod back as it left the factory, and it works
 with Eight Sleep's app again. On a Pod 5, treat it as not reversible for now. Nobody has
 established how to reset one, and the software-only way back in the
 [install guide](INSTALLATION.md#going-back-to-eight-sleep) has not been tried.
 
-<br>
-
 </details>
 
 <details>
 <summary><b>Will I brick my Pod?</b></summary>
+<br>
 
 The install does not touch the firmware that runs the bed; it adds a program beside it and
 switches a few services off. The risk is in the steps before that: you open the hub and type
 commands as root, and a wrong command can stop the Pod booting. Follow the guide step by step and
 do not improvise. A Pod 3 with an SD card is the riskiest, because the card itself is modified.
 
-<br>
-
 </details>
 
 <details>
 <summary><b>Will it void my warranty?</b></summary>
+<br>
 
 It may. EightPod is not supported by Eight Sleep. Opening the hub is visible to anyone who looks,
 and a Pod 5 cannot currently be put back to stock.
-
-<br>
 
 </details>
 
 <details>
 <summary><b>Do I still need an Eight Sleep subscription or account?</b></summary>
+<br>
 
 No. Nothing here talks to Eight Sleep. Their app stops working with the Pod once it is installed.
-
-<br>
 
 </details>
 
 <details>
 <summary><b>Does it work without internet?</b></summary>
+<br>
 
 Yes. The Pod is blocked from the internet on purpose and everything runs on it. You need your
 home Wi-Fi to reach the app from your phone, and the side buttons and schedule work without that.
-
-<br>
 
 </details>
 
 <details>
 <summary><b>How do I update?</b></summary>
+<br>
 
 The app shows when a newer version is out. **Settings > Device > Update** takes about four
 minutes, keeps your settings, and puts the old version back if anything fails. The internet block
 is lifted for the download and put back afterwards.
-
-<br>
 
 </details>
 
@@ -217,63 +212,57 @@ is lifted for the download and put back afterwards.
 
 <details>
 <summary><b>Can I control it away from home?</b></summary>
+<br>
 
 Yes, with [Tailscale on the Pod](docs/REMOTE_ACCESS.md). It is optional, takes one script, and
 keeps the internet block on. A shortcut can open the app at home and offer Tailscale when you are
 away.
 
-<br>
-
 </details>
 
 <details>
 <summary><b>Does sleep tracking work?</b></summary>
+<br>
 
 Not on a Pod 5: its firmware publishes sensor data where the analysis does not read. On a Pod 3 or
 4 the code is the original's, unchanged and untested here. Help is [wanted](https://github.com/jalen-cheng/eightpod/issues).
-
-<br>
 
 </details>
 
 <details>
 <summary><b>Does the bed know when I am in it?</b></summary>
+<br>
 
 On a Pod 5, yes. It can turn on when you get in, turn off about 15 minutes after you get out, and
 vibrate if you have been in bed longer than you chose. A Pod 3 or 4 does not report the sensors
 this needs.
 
-<br>
-
 </details>
 
 <details>
 <summary><b>Do the buttons or taps on the bed work?</b></summary>
+<br>
 
 Pod 5 buttons do: + and - for temperature, hold the middle to switch a side on or off, any button
 to stop an alarm. Pod 4 taps are handled by the same code and have not been run. A Pod 3 has
 neither.
 
-<br>
-
 </details>
 
 <details>
 <summary><b>Two of us share the bed. Does each side get its own settings?</b></summary>
+<br>
 
 Yes: its own temperature, schedule and alarm. Or link the sides and control the bed as one.
-
-<br>
 
 </details>
 
 <details>
 <summary><b>Can I go back to the original Free Sleep?</b></summary>
+<br>
 
 Yes. One command over SSH reinstalls it and keeps your schedules; see
 [docs/POD_MODELS.md](docs/POD_MODELS.md).
-
-<br>
 
 </details>
 
