@@ -17,7 +17,7 @@ import { getTemperatureColor } from '@lib/temperatureConversions.ts';
 import { isPowerScheduleDurationValid } from './scheduleValidation.ts';
 
 const NEW_CHANGE_TEMPERATURE_F = 70;
-// Wide enough for the longest label ("Wake up") so every row's controls start at the same place
+// Wide enough for the longest label ("Bed on") so every row's controls start at the same place
 const ROW_LABEL_WIDTH_PX = 52;
 // The line down the left of the night, and the dots on it
 const RAIL_GUTTER_PX = 12;
@@ -198,7 +198,7 @@ export default function NightTimeline() {
         </NightRow>
 
         <NightRow
-          label="Wake up"
+          label="Wake"
           dotColor={ alarm.enabled ? 'warning.main' : 'text.disabled' }
           isMainEvent
           error={ isNightLengthValid ? undefined : 'Must differ from bedtime' }

@@ -1,102 +1,66 @@
-# Free Pod: local control for Eight Sleep Pods
+# Free Pod — your Eight Sleep Pod, on your own network
 
-Free Pod controls an Eight Sleep Pod from your own network, with no cloud and no subscription.
-Each Pod has a small Linux computer inside. Free Pod installs a server on it that talks to the
-Pod's firmware, and serves a web app you open on your phone or computer.
+<p align="center">
+  <img src="docs/screenshots/overview.png" width="900" alt="Four phone screens: the temperature dial, a night's schedule, alarm options and in-bed detection">
+</p>
 
-It is a fork of [Free Sleep](https://github.com/throwaway31265/free-sleep) by throwaway31265 and
-contributors, **built and tested on one Pod 5**. Try it without a Pod:
-**[freepod.vercel.app](https://freepod.vercel.app)** (a demo with made-up data).
+<p align="center">
+  <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fjalen-cheng%2Ffree-sleep%2Fmain%2Fserver%2Fsrc%2FserverInfo.json&query=%24.version&label=version&style=flat-square" alt="Version"></a>
+  <a href="https://freepod.vercel.app"><img src="https://img.shields.io/badge/demo-live-brightgreen?style=flat-square" alt="Live demo"></a>
+  <a href="docs/POD_MODELS.md"><img src="https://img.shields.io/badge/tested%20on-Pod%205-blue?style=flat-square" alt="Tested on Pod 5"></a>
+  <a href="https://github.com/jalen-cheng/free-sleep/pulls"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square" alt="Pull requests welcome"></a>
+</p>
 
-<p align="center"><img src="docs/screenshots/overview.png" width="900" alt="Four phone screens: the temperature dial, a night's schedule, alarm options and in-bed detection"></p>
+Free Pod controls an Eight Sleep Pod from your own network. Each Pod has a small Linux computer
+inside; Free Pod installs a server on it that talks to the Pod's firmware and serves a web app
+you open on your phone: temperature, a schedule for each night, a vibrating alarm, the Pod 5's
+side buttons, in-bed detection and iPhone Shortcuts.
 
-## Why a fork
+**Local, with no catch.** No cloud, no account and no subscription. The Pod is blocked from the
+internet, so nothing is sent to Eight Sleep or anyone else, and the bed keeps working when your
+internet does not. Free Pod builds on [Free Sleep](https://github.com/throwaway31265/free-sleep)
+by throwaway31265 and its contributors, and was developed and tested on one Pod 5.
 
-Free Sleep is what makes any of this possible, and on the test Pod 5 it fell short in these ways:
-
-- **The Pod 5's buttons did nothing.** The original reads taps the way a Pod 4 reports them; a Pod 5 has three buttons a side and reports them differently.
-- **Temperatures were off by up to 5°F.** It spreads the firmware's levels evenly over 55 to 110°F. Measured on the Pod 5, the firmware aims for 50 to 108°F along a curve, so the number shown was not the number the bed went to.
-- **The alarm stopped by itself** after at most three minutes, and its "ramp up" was one steady strength on a Pod 5.
-- **A night took three separate settings** (power times, temperature changes, alarm) that could contradict each other, such as an alarm set after the bed's off time.
-- **Two sleepers were awkward.** Each side had to be set separately, and dismissing one alarm silently cancelled the other side's.
-- **The page was blank under any name.** It only loaded by IP address, which changes when the router says so, and there was no way to reach it away from home.
-- **The internet block also blocked DNS and time sync**, so the Pod's clock could drift and schedules fire late.
-- **The bed did not know if anyone was in it.**
-
-The table under [What is different](#what-is-different-from-the-original-project) has what Free Pod does about each.
-
-**Biometrics are disabled and untested.** Sleep tracking, heart rate and the other measurements
-on the Data page are the original's code, unchanged, and switched off unless you enable them. They
-produced nothing on the test Pod 5 and were not looked into further. Changes that make them work
-are welcome, as is any other pull request.
-
-The fork's folders, services and commands on the Pod keep the name `free-sleep`, so an existing
-install updates in place.
-
-## Demo
-
-**[freepod.vercel.app](https://freepod.vercel.app)** is the app running on made-up data, with no
-Pod behind it. Open it on a phone to see it as it is meant to be used; nothing you change there
-is kept.
+[Demo](https://freepod.vercel.app) · [Install](INSTALLATION.md) · [Using the app](docs/USING.md) · [How it works](docs/HOW_IT_WORKS.md) · [Shortcuts](docs/IOS_SHORTCUTS.md) · [API](server/API.md) · [Changelog](CHANGELOG.md)
 
 ## Install
 
-You need a Pod 3, 4 or 5, a USB serial adapter (about $10) and around an hour. In short:
+You need a Pod 3, 4 or 5, a USB serial adapter (about $10) and around an hour. The one hands-on
+step is opening the Pod's hub and attaching the adapter to get a root shell; the
+[install guide](INSTALLATION.md) has photos for each Pod. Then, on the Pod:
 
-1. **Open the hub and attach the adapter** to get a root shell on the Pod's computer. This is the
-   only hands-on step, and the guide has photos for each Pod.
-2. **Set a password, join your Wi-Fi and stop Eight Sleep's updates.**
-3. **Run the installer** on the Pod:
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/jalen-cheng/free-sleep/main/scripts/install.sh)"
+```
 
-   ```
-   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/jalen-cheng/free-sleep/main/scripts/install.sh)"
-   ```
+Already running Free Sleep? Run the same command over SSH. Settings and schedules are kept;
+[what changes](docs/POD_MODELS.md).
 
-4. **Open `http://bed.local`** on your phone, set your time zone, and block the Pod from the internet.
+## Quick start
 
-Every step, with checks and what to do when one fails, is in **[INSTALLATION.md](INSTALLATION.md)**.
-Already running the original Free Sleep? Run step 3 over SSH; settings and schedules are kept
-([what changes](docs/POD_MODELS.md)).
+1. Open `http://bed.local` on a phone on the same Wi-Fi. The installer names the Pod `bed`.
+2. In **Settings**, set your time zone. Until you do, every scheduled time is off by hours.
+3. In **Schedules**, set when the bed turns on, the temperatures through the night and when you wake.
+4. Block the Pod from the internet (step 16 of the install guide), then close the hub.
 
-## Where to go
+No Pod yet? **[freepod.vercel.app](https://freepod.vercel.app)** is the app on made-up data.
 
-| If you want to | Read |
-|---|---|
-| Install it on a Pod | [INSTALLATION.md](INSTALLATION.md) |
-| Use the app: set a night, alarms, settings | [docs/USING.md](docs/USING.md) |
-| Know what works on a Pod 3 or Pod 4 | [docs/POD_MODELS.md](docs/POD_MODELS.md) |
-| Keep the Pod's address stable, or reach it away from home | [docs/REMOTE_ACCESS.md](docs/REMOTE_ACCESS.md) |
-| Control the bed from iPhone Shortcuts | [docs/IOS_SHORTCUTS.md](docs/IOS_SHORTCUTS.md) |
-| Understand how every part works and interacts | [docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md) |
-| Use the API | [server/API.md](server/API.md) |
-| See what changed, and what was tested | [CHANGELOG.md](CHANGELOG.md) |
-| Work on the code | [DEVELOPING.md](DEVELOPING.md) |
+## How it fits together
 
-## Which Pods
+- The **firmware** is Eight Sleep's own program. It runs the pumps, heaters and vibration motors, and is left as it is.
+- The **server** (`server/`) takes the place of Eight Sleep's cloud: it tells the firmware what to do, runs the schedule and alarms, and reads the buttons and the bed's sensors.
+- The **app** (`app/`) is a web page the server serves. Add it to your phone's home screen and it behaves like an app.
+- **Shortcuts and automations** use the same [local API](server/API.md) the app does.
+- Away from home, optional **[Tailscale on the Pod](docs/REMOTE_ACCESS.md)** reaches it privately, with the internet block still on.
 
-| Pod | Status |
-|---|---|
-| Pod 5 | Tested on one unit. Some newer units cannot be opened up the way the install guide needs; the guide says how to tell. |
-| Pod 4 | Same code as the original project in the hardware paths, with the differences in [docs/POD_MODELS.md](docs/POD_MODELS.md). **Not run on a Pod 4.** |
-| Pod 3 (with or without SD card) | As Pod 4: reviewed against the original, **not run**. |
-| Pod 1, Pod 2 | Not compatible. |
+[HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md) explains every part and how they interact.
 
-## Things to know before using it
+## What it changes
 
-- **You need to open the Pod's hub and attach a serial adapter once** to get root access. It is
-  reversible on a Pod 3 and Pod 4 with a firmware reset; a reset procedure for a Pod 5 is not
-  documented here.
-- **It is not supported by Eight Sleep** and may affect your warranty.
-- **The app has no login.** Anyone on your home network can open it. Do not put it on the open internet;
-  [docs/REMOTE_ACCESS.md](docs/REMOTE_ACCESS.md) has a private way to reach it from elsewhere.
-- **Nothing is sent anywhere.** The internet block stops the Pod reaching Eight Sleep or anyone
-  else, and this fork has no error-reporting destination built in.
-- **Updating from the original project changes some behaviour**: saved temperatures are converted
-  once, and the bed's off time now follows the wake-up time. [docs/POD_MODELS.md](docs/POD_MODELS.md) lists them.
+Free Sleep is what makes any of this possible. On the test Pod 5 it fell short in ways that add
+up to most of this project:
 
-## What is different from the original project
-
-| Area | Original | This fork |
+| Area | Free Sleep | Free Pod |
 |---|---|---|
 | **Pod 5 side buttons** | Do nothing | + and - change the temperature and switch an off side on. Holding the middle button two seconds switches the side on or off. Any button stops an alarm |
 | **Temperatures** | Levels spread evenly over 55 to 110°F | What the firmware aims for at each level, measured on a Pod 5: 50 to 108°F. The page also shows the temperature the bed measures |
@@ -133,7 +97,22 @@ Fixes offered back to the original project, each small and standing on its own:
 [#73](https://github.com/throwaway31265/free-sleep/pull/73),
 [#74](https://github.com/throwaway31265/free-sleep/pull/74).
 
-## What has and has not been tested
+## Security
+
+- **The app has no login.** Anyone on your home network can open it. Never put it on the open internet; use [Tailscale](docs/REMOTE_ACCESS.md) to reach it from elsewhere.
+- **The internet block** stops the Pod reaching Eight Sleep or anything else, and is restored at every boot. Free Pod has no error-reporting destination built in.
+- **You need root on the Pod once**, through a serial adapter. It is not supported by Eight Sleep and may affect your warranty. A Pod 3 or 4 can be put back with a firmware reset; a reset procedure for a Pod 5 is not documented here.
+
+## Which Pods
+
+| Pod | Status |
+|---|---|
+| Pod 5 | Tested on one unit. Some newer units cannot be opened up the way the install guide needs; the guide says how to tell. |
+| Pod 4 | Same code as the original project in the hardware paths, with the differences in [docs/POD_MODELS.md](docs/POD_MODELS.md). **Not run on a Pod 4.** |
+| Pod 3 (with or without SD card) | As Pod 4: reviewed against the original, **not run**. |
+| Pod 1, Pod 2 | Not compatible. |
+
+## Status
 
 On the test Pod 5: install and update, temperature and power, the measured temperature curve,
 schedules, alarms with the stepped ramp, one-time alarms and the bed staying on for them, buttons,
@@ -144,24 +123,46 @@ Not yet seen working on a Pod: the bed turning off after someone gets out, the l
 "ignore the schedule" after turning on by hand, and flipping left and right. Nothing has been run
 on a Pod 3 or Pod 4. [CHANGELOG.md](CHANGELOG.md) keeps the full list.
 
-## Help and contributing
+**Biometrics are untested.** Sleep tracking, heart rate and the other measurements on the Data
+page are Free Sleep's code, unchanged, and off unless you enable them. They produced nothing on
+the test Pod 5 and were not looked into further.
 
-Open an issue or pull request on [this repository](https://github.com/jalen-cheng/free-sleep).
-Reports from a Pod 3 or Pod 4 are especially useful. [DEVELOPING.md](DEVELOPING.md) covers setup
-and checks.
+## Documentation
 
-## The original project
+| Goal | Start here |
+|---|---|
+| Install it on a Pod | [INSTALLATION.md](INSTALLATION.md) |
+| Use the app: a night, alarms, settings | [docs/USING.md](docs/USING.md) |
+| Know what works on a Pod 3 or Pod 4 | [docs/POD_MODELS.md](docs/POD_MODELS.md) |
+| Keep the address stable, or reach the Pod away from home | [docs/REMOTE_ACCESS.md](docs/REMOTE_ACCESS.md) |
+| Control the bed from iPhone Shortcuts | [docs/IOS_SHORTCUTS.md](docs/IOS_SHORTCUTS.md) |
+| Understand every part and how they interact | [docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md) |
+| Use the API | [server/API.md](server/API.md) |
+| See what changed and what was tested | [CHANGELOG.md](CHANGELOG.md) |
 
-This fork exists because of the original Free Sleep. Its community, support and donations are its
-author's, not this fork's:
+## Development
 
-- [throwaway31265/free-sleep](https://github.com/throwaway31265/free-sleep), with its Discord
-  server and support bot linked from its README. They describe the original's behaviour, which
-  differs from this fork's in the ways listed above.
-- To support the original author, use the donation links in the original's README.
-- The original's error monitoring is sponsored by Sentry. This fork does not use it.
-- Thanks to [@bobobo1618](https://github.com/bobobo1618) for the research into how the Pod is
-  controlled through `dac.sock`.
+```bash
+git clone https://github.com/jalen-cheng/free-sleep.git
+cd free-sleep/app && npm install && VITE_ENV=demo VITE_USE_MSW=true npx vite
+```
+
+That runs the app on made-up data, with no Pod. Running against a Pod, the checks and how
+releases work are in [DEVELOPING.md](DEVELOPING.md). The folders, services and commands on the Pod
+keep the name `free-sleep`, so an existing install updates in place.
+
+## Contributing
+
+Issues and pull requests are welcome on [this repository](https://github.com/jalen-cheng/free-sleep).
+Most useful: reports from a Pod 3 or Pod 4, and anything that gets biometrics working.
+
+## Credits
+
+Free Pod exists because of Free Sleep. Its community, support and donations are its author's:
+
+- **[throwaway31265/free-sleep](https://github.com/throwaway31265/free-sleep)**, the original project, with its Discord server linked from its README. To support the original author, use the donation links there.
+- [@bobobo1618](https://github.com/bobobo1618), for the research into how the Pod is controlled through `dac.sock`.
+- The original's error monitoring is sponsored by Sentry. Free Pod does not use it.
 
 ## License
 

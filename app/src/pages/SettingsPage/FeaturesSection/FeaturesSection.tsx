@@ -28,21 +28,25 @@ export default function FeaturesSection() {
   return (
     <Section title="Features" icon={ <ExtensionOutlinedIcon/> }>
       <Box sx={ { display: 'flex', flexDirection: 'column', gap: 2.5 } }>
-        { /* Greyed out: untested in this version. The switch only works to turn it off where it is already on. */ }
-        <Box sx={ { opacity: services.biometrics.enabled ? 1 : 0.45 } }>
-          <SettingToggle
-            control={
-              <Switch
-                disabled={ isUpdating || !services.biometrics.enabled }
-                checked={ services.biometrics.enabled }
-                onChange={ (event) => updateServices({ biometrics: { enabled: event.target.checked } }) }
-              />
-            }
-            label="Biometrics (sleep analysis)"
+        <SettingToggle
+          control={
+            <Switch
+              disabled={ isUpdating || services?.biometrics.jobs.installation.status !== 'healthy' }
+              checked={ services.biometrics.enabled }
+              onChange={ (event) => updateServices({ biometrics: { enabled: event.target.checked } }) }
+            />
+          }
+          label="Biometrics"
+        >
+          Calculate biometrics for the pod. Does not work on the Pod 5 this version was tested on.
+          Requires you to run this command on your pod. Once installation completes successfully, you can toggle this on/off.
+          <Box
+            component="code"
+            sx={ { display: 'block', p: 1.5, mt: 1.5, border: '1px solid', borderColor: 'divider', borderRadius: 1, fontSize: 11 } }
           >
-            Not available: untested in this version, and it does not work on a Pod 5.
-          </SettingToggle>
-        </Box>
+            sh /home/dac/free-sleep/scripts/enable_biometrics.sh
+          </Box>
+        </SettingToggle>
         { /* Only offered in a build that has somewhere to send reports */ }
         { SENTRY_DSN && (
           <Box sx={ { borderTop: '1px solid', borderColor: 'divider', pt: 2 } }>

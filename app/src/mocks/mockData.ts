@@ -377,7 +377,7 @@ const createServerStatus = (): ServerStatus => ({
   },
   frankenMonitor: {
     name: 'Franken monitor',
-    status: 'not_started',
+    status: 'healthy',
     description: 'Handles gestures and monitoring the status',
     message: '',
   },

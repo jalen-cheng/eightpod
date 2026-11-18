@@ -1,7 +1,7 @@
 # Changelog
 
 What this fork changed from [throwaway31265/free-sleep](https://github.com/throwaway31265/free-sleep),
-what was checked on a real Pod, and what was not. The fork is called Free Pod and is at version 3.3.1. Everything was
+what was checked on a real Pod, and what was not. The fork is called Free Pod and is at version 3.3.2. Everything was
 developed and tested on one Pod 5 between 13 and 17 Nov 2026.
 
 - [Tested on the Pod](#tested-on-the-pod)
@@ -180,3 +180,4 @@ minutes; whether it gets to 50°F with more time is not known from this run.
 | [#63](https://github.com/jalen-cheng/free-sleep/pull/63) | Feature, docs | The fork is named Free Pod. The installer renames a factory-named Pod to `bed` and the server also listens on port 80, so the app opens at `http://bed.local` (or `http://bed` with Tailscale). Screenshots are one size in phone frames. The README opens with why the fork exists and says biometrics are untested. A demo is at freepod.vercel.app. |
 | [#64](https://github.com/jalen-cheng/free-sleep/pull/64) | Design, docs | New look: a night-blue palette with one accent, the Geist typeface, one text size across fields, pill switches, filled fields without outlines. The dial's handle is a ring. Turn on is a pill button. The schedule's wake-up line has one "Alarm on/off" button that opens everything about the alarm, and the off time is shown as the last line. In-bed state sits beside its heading. New icon. README has Demo and Install sections; a shortcut recipe opens the app at home or offers Tailscale away. |
 | [#65](https://github.com/jalen-cheng/free-sleep/pull/65) | Design | Neutral dark greys with a white accent in place of the blue palette. Small square switches. The Temperature page has a heading and the dial's digits are spaced normally. The schedule's Bed off line is gone again. Biometrics is greyed out in Settings. |
+| [#66](https://github.com/jalen-cheng/free-sleep/pull/66) | Design, docs | The schedule's last row is labelled "Wake". The icon is the app's dial. Biometrics rows on the Status page are greyed; the Biometrics switch in Settings works again. The README is reshaped: banner, summary, install, quick start, how it fits together, security, documentation, credits. |
