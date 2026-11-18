@@ -62,6 +62,7 @@ Tools:
 - [FTDI FT232RL USB serial adapter](https://www.amazon.com/gp/product/B07TXVRQ7V/) (about $13)
 - [Dupont wires](https://www.amazon.com/Elegoo-EL-CP-004-Multicolored-Breadboard-arduino/dp/B01EV70C78) (about $7)
 - A Torx screwdriver set and a towel to work on
+- Adhesive rubber feet to replace old ones
 
 On your computer:
 
@@ -526,7 +527,7 @@ Once the checks pass, the serial cable can come off:
    ```
 2. When the session drops, unplug the Pod.
 3. Remove the cable and reassemble in reverse. The front grille's tabs must sit in the slots of
-   the top and bottom panels.
+   the top and bottom panels. Attach new adhesive rubber feet.
 
 ## 18. Connect the cover and check the controls
 
