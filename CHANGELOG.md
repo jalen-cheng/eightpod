@@ -4,6 +4,12 @@ What EightPod changed from [throwaway31265/free-sleep](https://github.com/throwa
 what was checked on a real Pod, and what was not. EightPod is at version 3.6.2. Everything was
 developed and tested on one Pod 5 between 13 and 17 Nov 2026.
 
+**The API.** Everything the app does goes through a documented local API, and every command the
+firmware accepts is reachable through it: temperature, power, alarms, priming, schedules, settings
+and in-bed readings. Anything that can send a web request can control the bed, including phone
+shortcuts, Home Assistant, scripts and AI assistants, with no Eight Sleep account or subscription.
+[server/API.md](server/API.md) lists every request.
+
 - [Tested on the Pod](#tested-on-the-pod)
 - [Not tested](#not-tested)
 - [Known gaps](#known-gaps)
