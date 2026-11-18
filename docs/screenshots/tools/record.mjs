@@ -63,20 +63,26 @@ await run(`window.SLOW = ${SLOW}`);
 // No scroll bar inside the window
 await run("(() => { const style = appDocument().createElement('style'); style.textContent = 'html{scrollbar-width:none}::-webkit-scrollbar{display:none}'; appDocument().head.append(style); return true })()");
 
+// The film opens on a bed that is off: switch the made-up Pod off and let the page catch up
+await run("appFrame.contentWindow.fetch('/api/deviceStatus', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ left: { isOn: false } }) }).then(() => true)");
+await realPause(7000);
 await run("caption('Your Eight Sleep Pod, run from your own network')");
 await pause(400);
 await send('Page.startScreencast', { format: 'jpeg', quality: 92, maxWidth: 1920, maxHeight: 1080, everyNthFrame: 1 });
 isRecording = true;
 await pause(1500);
 
-// Temperature
-await run("caption('Set the temperature')");
+// Temperature: turn the bed on with one press, then warm it two degrees
+await run("caption('One tap turns the bed on')");
 await run(`zoomTo(${cardWith('Bed temperature')}, 1.22)`);
-await pause(600);
+await pause(500);
+await run("press(findInApp('p, span', 'Tap to turn on'))");
+await pause(1500);
+await run("caption('Set the temperature')");
 await run("press(findInApp('button[aria-label=\"Increase temperature\"]'))");
 await pause(160);
 await run("press(findInApp('button[aria-label=\"Increase temperature\"]'))");
-await pause(1100);
+await pause(1000);
 
 // Schedule
 await run('zoomOut()');
@@ -115,27 +121,27 @@ const switchBeside = label => `(() => { let node = ${HEADINGS}.find(element => e
 await run(`press(${switchBeside('Alarm after a long time in bed')})`);
 await pause(1000);
 
-// The API: a request typed in a terminal changes the bed
-await run("caption('A local API for scripts, Shortcuts and assistants')");
-// The recording is made on a development address; show the one a Pod has
-await run("(() => { appDocument().querySelectorAll('code').forEach(code => { code.textContent = code.textContent.replaceAll(appFrame.contentWindow.location.origin, 'http://eightpod.local'); }); return true })()");
-await run(`scrollAppTo(${HEADINGS}.find(element => element.textContent.trim() === 'API'), 330)`);
-await pause(900);
+// The API: back on the temperature page, which still shows what was set at the start, a request
+// typed in a terminal changes it
 await run('zoomOut()');
+await run("caption('A local API for scripts, Shortcuts and assistants')");
+await run("press(findInApp('a[href=\"/temperature\"]') ?? findInApp('a[href=\"/\"]'))");
+await pause(1200);
 await run('showTerminal()');
 await run(`typeCommand("curl -X POST eightpod.local/api/deviceStatus -d '{\\"left\\": {\\"targetTemperatureF\\": 70}}'")`);
 await pause(250);
 await run("sendRequest('/api/deviceStatus', { left: { targetTemperatureF: 70 } })");
-await pause(900);
+// The page asks the Pod for its state every five seconds; wait for the dial to show the change
+await realPause(5600);
+await pause(500);
 await run('hideTerminal()');
-await run("press(findInApp('a[href=\"/temperature\"]') ?? findInApp('a[href=\"/\"]'))");
-await pause(1600);
+await pause(400);
 
 // End card
 await run('zoomOut()');
 await pause(300);
 await run('showCard()');
-await pause(2000);
+await pause(1700);
 
 isRecording = false;
 await send('Page.stopScreencast');
