@@ -9,6 +9,8 @@ import {
 } from '../routes/deviceStatus/deviceStatusSchema.js';
 import { dismissAlarm, updateDeviceStatus } from '../routes/deviceStatus/updateDeviceStatus.js';
 import { handleAlarmGesture } from '../jobs/alarmSession.js';
+import { Version } from '../routes/deviceStatus/deviceStatusSchema.js';
+import { buzzDismissalConfirmation } from '../jobs/alarmScheduler.js';
 import { TapCounts, processSideGestures } from './gestures.js';
 import { stepTemperatureF } from '../db/temperatureCurve.js';
 
@@ -77,6 +79,8 @@ export async function runSideGestures(
             setPower: isOn => setSidePower(side, isOn),
           });
           logger.debug(`Processed alarm gesture for ${side}: ${result}`);
+          // Felt on the side that pressed, so a sleepy press is known to have worked
+          if (result === 'dismissed' && deviceStatus.coverVersion === Version.Pod5) await buzzDismissalConfirmation(side);
         },
       },
     });

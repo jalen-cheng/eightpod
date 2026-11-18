@@ -104,8 +104,10 @@ A scheduled alarm only vibrates if that side is on at the alarm time.
 - **Pod 4:** tap the bed four times. Not tested in EightPod.
 - **Any Pod:** open the app. The Temperature page shows a **Dismiss Alarm** button while the bed vibrates.
 
-The firmware stops both sides at once. If the sides are not linked, EightPod restarts the
-other side's alarm from the beginning.
+A press stops the alarm on the side it was made on, and that side gives a short double buzz to
+say so. If both sides began going off together it is one alarm, and one press stops both. If
+the other side's alarm began at a different time, it carries on (it starts over from the
+beginning, because the firmware can only stop both sides at once).
 
 ## 7. A one-time alarm
 
@@ -133,7 +135,7 @@ reads **Turn on** and brings it back.
 | Button | Bed on | Bed off |
 |---|---|---|
 | **-** or **+** | One step cooler or warmer per press | Turns that side on |
-| **Middle**, held two seconds | Turns that side off | Turns that side on |
+| **Middle**, held a second and a half | Turns that side off | Turns that side on |
 | Any button, while an alarm vibrates | Dismisses the alarm | |
 
 When the sides are linked, the buttons on either side control both. The step size is in

@@ -1,7 +1,7 @@
 # Changelog
 
 What EightPod changed from [throwaway31265/free-sleep](https://github.com/throwaway31265/free-sleep),
-what was checked on a real Pod, and what was not. EightPod is at version 3.8.2. Everything was
+what was checked on a real Pod, and what was not. EightPod is at version 3.8.3. Everything was
 developed and tested on one Pod 5 between 13 and 17 Nov 2026.
 
 **The API.** Everything the app does goes through a documented local API, and every command the
@@ -236,3 +236,4 @@ acted on it).
 | [#95](https://github.com/jalen-cheng/eightpod/pull/95) | Design | **Phone layout:** the side picker is L, R or Both (Both links the sides; the link button is gone); the tab bar is four equal columns; settings sections are cards with every row on one line; the status link shows beside the heading of Data and Settings only. **Settings:** sections renamed General, Sleep tracking, Pod and Help; the API guide is a page of its own (`/api-guide`), opened from an API section above Help. The Temperature page drops the "Bed temperature" label. |
 | [#96](https://github.com/jalen-cheng/eightpod/pull/96) | Fix | The Temperature page's "Turns off at" follows a one-time alarm still to come: 30 minutes after it, as the bed itself does, where it used to show the schedule's off time. |
 | [#98](https://github.com/jalen-cheng/eightpod/pull/98) | Fix | **Pod 5 buttons were not being read.** The installer looked up a system group with `getent`, which the Pod does not have, so every install left the server without permission to read the firmware's log of button presses: no temperature steps, and an alarm could not be dismissed from the bed. The installer now reads the group file directly. The Status page has a **Side buttons** row, so this shows as "Needs attention" if it ever happens again. |
+| [#100](https://github.com/jalen-cheng/eightpod/pull/100) | Feature, fix | **Dismissing from the bed:** a press stops the alarm on its own side only, unless both sides began going off together; the side that pressed gets a short double buzz to confirm (Pod 5). Holding the middle button for a second and a half switches the side, down from two seconds. |

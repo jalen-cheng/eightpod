@@ -90,6 +90,19 @@ export const executeAlarm = async (
 };
 
 
+// A short, gentle double buzz on one side, to say "your press was taken" after a dismissal from
+// the bed. A Pod 5's firmware runs a 2-second request as given (anything shorter it drops). It
+// is not an alarm: nothing tracks it and nothing follows it.
+const CONFIRM_BUZZ = { strength: 25, seconds: 2, pattern: 'double' };
+export const buzzDismissalConfirmation = async (side: Side) => {
+  try {
+    const payload = { pl: CONFIRM_BUZZ.strength, du: CONFIRM_BUZZ.seconds, pi: CONFIRM_BUZZ.pattern, tt: moment().unix() };
+    await executeFunction(side === 'left' ? 'ALARM_LEFT' : 'ALARM_RIGHT', cbor.encode(payload).toString('hex'));
+  } catch (error: unknown) {
+    logger.error(error);
+  }
+};
+
 // Owns the per-side alarm timers. An alarm stopped by the other side's dismissal re-runs executeAlarm.
 export const alarmSession = createAlarmSession({
   startAlarm: executeAlarm,

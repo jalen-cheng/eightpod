@@ -116,7 +116,7 @@ Changes the Pod. Send only what should change. Returns **204** with no body.
 | `left.isOn` / `right.isOn` | `true` switches the side on for `manualOn.hours` (settings); `false` switches it off. |
 | `left.targetTemperatureF` / `right.targetTemperatureF` | Number from 50 to 110. The Pod's range is 50 to 108; values above 108 are treated as the hottest setting. |
 | `left.secondsRemaining` / `right.secondsRemaining` | Sets how long the side stays on, in seconds. Applied after `isOn`. |
-| `left.isAlarmVibrating` / `right.isAlarmVibrating` | `false` dismisses the alarm. The firmware stops both sides; the server restarts the other side's alarm if it was still going, unless `linkSides` is on. `true` does not start an alarm. |
+| `left.isAlarmVibrating` / `right.isAlarmVibrating` | `false` dismisses the alarm. The firmware stops both sides; the server restarts the other side's alarm if it was still going, unless both sides began going off within a minute of each other. `true` does not start an alarm. |
 | `isPriming` | `true` starts priming. |
 | `settings` | Any of `v`, `gainLeft`, `gainRight`, `ledBrightness`; sent to the firmware. |
 

@@ -1,12 +1,12 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="35a1ba2b-9064-512b-bc3a-9ddc4e6b5b45")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="c4c14de7-5133-5051-b4b3-0cac8391be3c")}catch(e){}}();
 const PRESS_PATTERN = /\[TTC\] processing \[button\] side (left|right) \{ button: (top|bottom|middle)\b(?:.*?\bcount: (\d+))?/;
 // Reported on its own line, without a side, once per press, before the line for the whole run
 const MIDDLE_HELD_PATTERN = /\[buttons\] middle button held for (\d+)ms/;
 // A hold duration older than this belongs to some earlier press
 const HELD_LINE_MAX_AGE_MS = 4_000;
 // Holding the middle button at least this long switches the side on or off
-export const POWER_HOLD_MS = 2_000;
+export const POWER_HOLD_MS = 1_500;
 // Each button uses the settings of the tap gesture that does the same job on a Pod 4:
 // "-" cools like a double tap, "+" warms like a triple tap, the middle button is the quadruple tap.
 export const BUTTON_GESTURES = {
@@ -77,4 +77,4 @@ export function countPressesAsGestures(presses, isAlarmVibrating) {
     return gestureCounts;
 }
 //# sourceMappingURL=buttonEvents.js.map
-//# debugId=35a1ba2b-9064-512b-bc3a-9ddc4e6b5b45
+//# debugId=c4c14de7-5133-5051-b4b3-0cac8391be3c

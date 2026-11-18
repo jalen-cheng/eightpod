@@ -1,10 +1,12 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="cf0c550e-14b7-5be5-bcab-b153d6e90682")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="aa761f25-b037-597f-8b05-220db8ee12c6")}catch(e){}}();
 import logger from '../logger.js';
 import settingsDB from '../db/settings.js';
 import { MAX_TARGET_TEMPERATURE_F, MIN_TARGET_TEMPERATURE_F, } from '../routes/deviceStatus/deviceStatusSchema.js';
 import { dismissAlarm, updateDeviceStatus } from '../routes/deviceStatus/updateDeviceStatus.js';
 import { handleAlarmGesture } from '../jobs/alarmSession.js';
+import { Version } from '../routes/deviceStatus/deviceStatusSchema.js';
+import { buzzDismissalConfirmation } from '../jobs/alarmScheduler.js';
 import { processSideGestures } from './gestures.js';
 import { stepTemperatureF } from '../db/temperatureCurve.js';
 // One press can reach us twice: through the tap counters and through the Pod 5 button log, or as
@@ -61,6 +63,9 @@ export async function runSideGestures(side, deviceStatus, previousTaps, nextTaps
                         setPower: isOn => setSidePower(side, isOn),
                     });
                     logger.debug(`Processed alarm gesture for ${side}: ${result}`);
+                    // Felt on the side that pressed, so a sleepy press is known to have worked
+                    if (result === 'dismissed' && deviceStatus.coverVersion === Version.Pod5)
+                        await buzzDismissalConfirmation(side);
                 },
             },
         });
@@ -71,4 +76,4 @@ export async function runSideGestures(side, deviceStatus, previousTaps, nextTaps
     }
 }
 //# sourceMappingURL=gestureActions.js.map
-//# debugId=cf0c550e-14b7-5be5-bcab-b153d6e90682
+//# debugId=aa761f25-b037-597f-8b05-220db8ee12c6

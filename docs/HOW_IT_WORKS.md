@@ -184,10 +184,13 @@ There is a gap of about a second between stretches.
 
 The firmware's stop command stops both sides. So:
 
-- **Sides linked:** dismissing either side dismisses both, and each side's "turn off when
-  dismissed" applies.
-- **Sides not linked:** the other side's alarm is started again straight away. It starts over
-  from the beginning, ramp included.
+- **Both sides began going off within a minute of each other:** it is one alarm. Dismissing
+  either side dismisses both, and each side's "turn off when dismissed" applies. Linked sides
+  always fall here.
+- **The other side's alarm began at another time:** it is started again straight away. It starts
+  over from the beginning, ramp included.
+- A dismissal from a Pod 5's buttons is answered with a 2-second double buzz at quarter strength
+  on the side that pressed.
 
 "Turn off when dismissed" applies only to a dismissal. An alarm that runs to its full length
 leaves the bed on until the off time.
@@ -236,7 +239,7 @@ installer. A **Pod 4** reports double, triple and quadruple taps as counters, re
 | Bed on, - or + | Cooler or warmer by the step set in Settings, per press | Double tap cooler, triple tap warmer |
 | Bed off, - or + | Turns the side on. No temperature change | Changes the temperature setting |
 | Middle button, short press | Nothing | (Four taps) turns the side on or off |
-| Middle button, held 2 seconds | Turns the side on or off | Not available |
+| Middle button, held 1.5 seconds | Turns the side on or off | Not available |
 | Alarm vibrating | **Any** short press of any button dismisses it | Four taps dismiss it |
 
 - Presses within 0.4 seconds of each other are handled together, so three quick presses move three steps.
