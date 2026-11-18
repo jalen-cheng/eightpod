@@ -29,7 +29,8 @@ const codeSx = { fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', f
 // the rest. The address is the one this page was opened at (http://eightpod.local on a Pod), so
 // the examples work as shown from the same network.
 export default function ApiGuide() {
-  const podAddress = window.location.origin;
+  // The public demo has no Pod behind it, so it shows the address a Pod answers at
+  const podAddress = import.meta.env.VITE_ENV === 'demo' ? 'http://eightpod.local' : window.location.origin;
 
   return (
     <Box sx={ { display: 'flex', flexDirection: 'column', gap: 2 } }>

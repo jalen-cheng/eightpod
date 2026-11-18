@@ -8,7 +8,7 @@ const rules = { podHostname: 'eight-pod' };
 test('every name and address the Pod is opened under is allowed', () => {
   const allowedOrigins = [
     undefined,
-    'http://10.0.0.177:3000',
+    'http://192.168.1.50:3000',
     'http://10.1.2.3:3000',
     'http://192.168.1.20:3000',
     'http://172.20.0.4:3000',
@@ -25,7 +25,7 @@ test('every name and address the Pod is opened under is allowed', () => {
 test('pages elsewhere are refused', () => {
   const refusedOrigins = [
     'https://example.com',
-    'http://10.0.0.177.example.com:3000',
+    'http://192.168.1.50.example.com:3000',
     'http://eight-pod.example.com:3000',
     'http://other-device.local:3000',
     'http://other-device.tail1234.ts.net',
