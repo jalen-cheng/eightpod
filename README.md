@@ -17,10 +17,17 @@ EightPod controls an Eight Sleep Pod from your own network. Each Pod has a small
 inside; EightPod installs a server on it that talks to the Pod's firmware and serves a web app
 you open on your phone.
 
-**No subscription.** Eight Sleep's app needs an Autopilot plan, from $199 a year. So does
-everything built on its cloud: the Home Assistant integrations, MCP servers and API clients for
-the Pod all sign in to your Eight Sleep account and stop working when the plan does. EightPod
-talks to the bed directly, so none of that applies.
+**No cloud, no subscription.** Other tools for the Pod, such as
+[eightctl](https://github.com/steipete/eightctl) and the Home Assistant integrations, are remote
+controls for Eight Sleep's cloud: they sign in with your Eight Sleep account, need the internet,
+and can break when Eight Sleep changes or rate-limits an API it does not publish. EightPod takes
+the cloud's place instead of calling it. The server runs on the Pod itself, so there is no
+account, nothing leaves your home network, and the bed keeps working with the internet down.
+
+**If sleep metrics matter to you, the real thing may suit you better.** EightPod controls the
+bed. Sleep stages, heart rate and Autopilot are Eight Sleep's, and EightPod's own sleep tracking
+does not work on a Pod 5. If you want those, Eight Sleep's app and plan (from $199 a year) are
+the way to get them.
 
 It started as a fork of [Free Sleep](https://github.com/throwaway31265/free-sleep) and was developed and tested on one Pod 5.
 
@@ -44,7 +51,8 @@ internet does not.
 ## Install
 
 You need a Pod 3, 4 or 5, about two hours, and $20 to $70 of parts: a USB serial adapter, plus
-either a tag-connect cable or three soldered wires. The one hands-on step is opening the Pod's hub
+either a tag-connect cable or three soldered wires. Adhesive strips are optional, for sticking the
+hub's rubber feet back on afterwards. The one hands-on step is opening the Pod's hub
 and attaching the adapter to get a root shell; the [install guide](INSTALLATION.md) has photos for
 each Pod. Then, on the Pod:
 

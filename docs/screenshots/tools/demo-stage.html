@@ -1,0 +1,88 @@
+<!doctype html>
+<!-- Temporary: the stage a demo video is recorded on. The app runs in the phone on the right. -->
+<meta charset="utf-8">
+<style>
+  html, body { margin: 0; height: 100%; background: #0c0c0c; color: #ececec; overflow: hidden;
+    font-family: 'Geist Variable', -apple-system, 'SF Pro Display', 'Helvetica Neue', sans-serif; }
+  body { display: flex; align-items: center; justify-content: space-between; padding: 0 90px 0 96px; box-sizing: border-box; }
+  .words { max-width: 560px; }
+  .brand { display: flex; align-items: center; gap: 12px; font-size: 22px; font-weight: 600; color: #9b9b9b; margin-bottom: 34px; }
+  .brand img { width: 34px; height: 34px; border-radius: 9px; }
+  h1 { font-size: 58px; line-height: 1.06; letter-spacing: -0.03em; font-weight: 600; margin: 0 0 20px; }
+  p { font-size: 25px; line-height: 1.4; color: #9b9b9b; margin: 0; }
+  .words > * { transition: opacity 320ms ease, transform 320ms ease; }
+  .words.hidden h1, .words.hidden p { opacity: 0; transform: translateY(10px); }
+  .phone-wrap { width: 322px; height: 676px; flex-shrink: 0; position: relative; }
+  .phone { transform: scale(0.78); transform-origin: top left; width: 412px; padding: 11px; box-sizing: border-box; border-radius: 58px;
+    background: #1b1b1d; box-shadow: 0 0 0 2px #3a3a3f, 0 40px 90px rgba(0, 0, 0, 0.7); }
+  .screen { width: 390px; height: 844px; border-radius: 47px; overflow: hidden; background: #141414; position: relative; }
+  .status { height: 44px; display: flex; align-items: center; justify-content: space-between; padding: 0 30px; box-sizing: border-box; font-size: 15px; font-weight: 600; }
+  .island { position: absolute; top: 10px; left: 50%; width: 112px; height: 30px; margin-left: -56px; border-radius: 16px; background: #000; }
+  iframe { display: block; width: 390px; height: 800px; border: 0; }
+  #touch { position: fixed; width: 34px; height: 34px; margin: -17px 0 0 -17px; border-radius: 50%; background: rgba(255, 255, 255, 0.35);
+    border: 2px solid rgba(255, 255, 255, 0.8); box-sizing: border-box; pointer-events: none; opacity: 0;
+    transition: left 420ms ease, top 420ms ease, opacity 200ms ease, transform 160ms ease; z-index: 10; }
+</style>
+<body>
+  <div class="words" id="words">
+    <div class="brand"><img src="/eightpod-icon.svg" alt="">EightPod</div>
+    <h1 id="title"></h1>
+    <p id="sub"></p>
+  </div>
+  <div class="phone-wrap">
+    <div class="phone"><div class="screen">
+      <div class="status"><span>9:41</span><span></span></div>
+      <div class="island"></div>
+      <iframe id="app" src="/"></iframe>
+    </div></div>
+  </div>
+  <div id="touch"></div>
+<script>
+  const appFrame = document.getElementById('app');
+  const touch = document.getElementById('touch');
+  const wait = (milliseconds) => new Promise(resolve => setTimeout(resolve, milliseconds));
+  const appDocument = () => appFrame.contentDocument;
+
+  // Swaps the words on the left with a short fade
+  window.say = async (title, sub) => {
+    const words = document.getElementById('words');
+    words.classList.add('hidden');
+    await wait(330);
+    document.getElementById('title').textContent = title;
+    document.getElementById('sub').textContent = sub;
+    words.classList.remove('hidden');
+  };
+
+  // The first element in the app matching the selector, optionally with this exact text
+  window.findInApp = (selector, text) => [...appDocument().querySelectorAll(selector)]
+    .find(element => text === undefined || element.textContent.trim() === text);
+
+  // Shows a finger on an element in the app, then presses it
+  window.tap = async (element, pressWith = 'click') => {
+    if (!element) return false;
+    const frameBox = appFrame.getBoundingClientRect();
+    const scale = frameBox.width / appFrame.offsetWidth;
+    const box = element.getBoundingClientRect();
+    touch.style.left = `${frameBox.left + (box.left + box.width / 2) * scale}px`;
+    touch.style.top = `${frameBox.top + (box.top + box.height / 2) * scale}px`;
+    touch.style.opacity = 1;
+    await wait(520);
+    touch.style.transform = 'scale(0.7)';
+    await wait(150);
+    if (pressWith === 'mousedown') element.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, button: 0 }));
+    else element.click();
+    touch.style.transform = 'scale(1)';
+    await wait(260);
+    touch.style.opacity = 0;
+    return true;
+  };
+
+  // Scrolls the app smoothly so an element sits a little below the top
+  window.scrollAppTo = (element, offset = 90) => {
+    if (!element) return false;
+    const top = element.getBoundingClientRect().top + appFrame.contentWindow.scrollY - offset;
+    appFrame.contentWindow.scrollTo({ top, behavior: 'smooth' });
+    return true;
+  };
+</script>
+</body>
