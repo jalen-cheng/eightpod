@@ -354,8 +354,9 @@ offers to dismiss it.
   joined by a line whose dots take the colour of each temperature. There is no bed-off row: the
   bed turns off 30 minutes after wake up. This mirrors Eight Sleep's own app, which has a bedtime, temperature phases and
   alarms, and no off time.
-- Editing anything brings up a bar that stays in view: **Discard**, **Other days…** (tick any days
-  to save this night to) and **Save for Mon**. Other day tabs are locked until you save or discard.
+- Editing anything brings up a bar that stays in view: **Discard** and **Save**. Other day tabs
+  and the side picker are locked until you save or discard. The copy button beside the night's
+  name copies a saved night to any other days.
 - Saving always writes the whole night shown, to each chosen day, on both sides when linked.
 
 **Data.** Sleep records and logs. Sleep needs biometrics.

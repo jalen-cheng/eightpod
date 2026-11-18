@@ -57,7 +57,7 @@ export default function ControlTempPage() {
   return (
     <PageContainer
       sx={ {
-        maxWidth: 600, gap: 2, pt: { xs: 2.5, md: 5 },
+        gap: 2,
         // On a phone the page fills the screen above the navigation bar, so the dial can sit in
         // the middle of it and the notices (the next alarm among them) at the bottom
         minHeight: { xs: `calc(100dvh - ${MOBILE_NAV_SPACE_PX}px - env(safe-area-inset-bottom))`, md: 0 },

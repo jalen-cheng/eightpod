@@ -4,6 +4,9 @@ import ErrorBoundary from '@components/ErrorBoundary.tsx';
 
 type PageContainerProps = { containerProps?: ContainerProps; sx?: SxProps<Theme> };
 
+// Every page shares this width and padding, so a heading is in the same place on every tab
+export const PAGE_MAX_WIDTH_PX = 760;
+
 export default function PageContainer({ children, sx = [], containerProps }: PropsWithChildren<PageContainerProps>) {
   return (
     <ErrorBoundary componentName="Page container">
@@ -13,7 +16,7 @@ export default function PageContainer({ children, sx = [], containerProps }: Pro
         maxWidth={ false }
         sx={ [
           { display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 2.5,
-            width: '100%', maxWidth: 1000, mx: 'auto', px: { xs: 2.5, sm: 4, lg: 5 }, py: { xs: 3, md: 5 } },
+            width: '100%', maxWidth: PAGE_MAX_WIDTH_PX, mx: 'auto', px: { xs: 2.5, sm: 4, lg: 5 }, py: { xs: 3, md: 5 } },
           ...(Array.isArray(sx) ? sx : [sx]),
         ] }
       >

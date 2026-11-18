@@ -15,7 +15,7 @@ import { useAppStore } from '@state/appStore.tsx';
 import { useSchedules } from '@api/schedules';
 import { useScheduleStore } from './scheduleStore.tsx';
 import { LOWERCASE_DAYS } from './days.ts';
-import { DAY_NAMES, SHORT_DAY_NAMES } from './scheduleDays.ts';
+import { DAY_NAMES } from './scheduleDays.ts';
 import TemperatureScheduleChart from './ScheduleChart.tsx';
 import ErrorBoundary from '@components/ErrorBoundary.tsx';
 import PageHeader from '@components/PageHeader.tsx';
@@ -93,7 +93,7 @@ export default function SchedulePage() {
   };
 
   return (
-    <PageContainer sx={ { width: '100%', mx: 'auto', maxWidth: 800 } }>
+    <PageContainer>
       <PageHeader title="Schedules"/>
       { /* Like the day tabs, the side waits for Save or Discard: switching would drop the edits */ }
       <SideControl disabled={ hasEdits }/>
@@ -129,7 +129,8 @@ export default function SchedulePage() {
       <NightTimeline/>
 
       { /* Unsaved changes: a bar that stays in view, so saving never needs a scroll to the bottom.
-           Discard sits apart on the left; the two ways to save sit together on the right. */ }
+           Discard sits apart on the left, Save on the right. Other days are reached by saving,
+           then copying the night with the button beside its name. */ }
       { changesPresent && (
         <Paper
           elevation={ 6 }
@@ -144,20 +145,12 @@ export default function SchedulePage() {
           { hasEdits && <Button color="inherit" onClick={ reloadScheduleData } disabled={ isUpdating }>Discard</Button> }
           <Box sx={ { flex: 1 } }/>
           <Button
-            variant="outlined"
-            onClick={ () => setIsChoosingDays(true) }
-            disabled={ isUpdating || !isValid() }
-            sx={ { whiteSpace: 'nowrap' } }
-          >
-            Other days…
-          </Button>
-          <Button
             variant="contained"
             onClick={ () => handleSave([selectedDay]) }
             disabled={ isUpdating || !isValid() }
-            sx={ { whiteSpace: 'nowrap' } }
+            sx={ { minWidth: 96 } }
           >
-            Save for { SHORT_DAY_NAMES[selectedDay] }
+            Save
           </Button>
         </Paper>
       ) }

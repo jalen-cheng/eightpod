@@ -1,7 +1,7 @@
 # Changelog
 
 What Free Pod changed from [throwaway31265/free-sleep](https://github.com/throwaway31265/free-sleep),
-what was checked on a real Pod, and what was not. Free Pod is at version 3.4.0. Everything was
+what was checked on a real Pod, and what was not. Free Pod is at version 3.4.1. Everything was
 developed and tested on one Pod 5 between 13 and 17 Nov 2026.
 
 - [Tested on the Pod](#tested-on-the-pod)
@@ -213,3 +213,4 @@ acted on it).
 | [#65](https://github.com/jalen-cheng/free-sleep/pull/65) | Design | Neutral dark greys with a white accent in place of the blue palette. Small square switches. The Temperature page has a heading and the dial's digits are spaced normally. The schedule's Bed off line is gone again. Biometrics is greyed out in Settings. |
 | [#66](https://github.com/jalen-cheng/free-sleep/pull/66) | Design, docs | The schedule's last row is labelled "Wake". The icon is the app's dial. Biometrics rows on the Status page are greyed; the Biometrics switch in Settings works again. The README is reshaped: banner, summary, install, quick start, how it fits together, security, documentation, credits. |
 | [#67](https://github.com/jalen-cheng/free-sleep/pull/67) | Fix, feature, docs | A review pass with fixes. **Alarms:** a shortcut or dial press on a bed that is already on no longer shortens its night; a one-time alarm moved up to 30 minutes later keeps the bed on; a one-time alarm only replaces a scheduled alarm within 6 hours of it; a dismissal between two stretches of an alarm counts; "Bed off on dismiss" ends a hold by hand; a date written with dots is not read as a time. **In-bed detection:** turning on when you get in holds the schedule for the stay, not for the manual length; a "Bed is empty now" button relearns the empty bed. **App:** Prime now no longer locks the app; saving keeps the open day; the side cannot be switched with unsaved edits; a night must be 1 to 23 hours and its changes inside it; Skip applies to both linked sides; filled buttons are grey. **Updates:** however an update ends, the server is started and the internet block is put back; downloads time out; DNS replies over TCP can no longer open a connection. **Docs:** CONTRIBUTING.md, a test-report template, notices where a Pod 3 or 4 differs, and what going back to Eight Sleep involves. |
+| [#76](https://github.com/jalen-cheng/free-sleep/pull/76) | Design | Every tab has the same width and its heading in the same place. The schedule's save bar has one Save button; copying a night to other days is the copy button's job, with a tidier day picker. Sliders are drawn like the dial. |

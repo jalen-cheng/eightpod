@@ -16,7 +16,7 @@ export default function DataPage() {
   if (pathname.startsWith('/data/')) return <Outlet/>;
 
   return (
-    <PageContainer sx={ { maxWidth: 760 } }>
+    <PageContainer>
       <PageHeader title="Data"/>
       { DATA_PAGES.map(({ title, route, icon }) => (
         <Paper

@@ -44,7 +44,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <PageContainer sx={ { maxWidth: 760, gap: 2.5 } }>
+    <PageContainer>
       <PageHeader title="Settings">
         <Box sx={ { display: { xs: 'flex', md: 'none' } } }><ConnectionBadge/></Box>
       </PageHeader>

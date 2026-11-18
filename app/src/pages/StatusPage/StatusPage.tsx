@@ -18,9 +18,9 @@ export default function StatusPage() {
   const updatedAt = moment(dataUpdatedAt);
   const formatted = updatedAt.format('YYYY-MM-DD HH:mm:ss z');
   return (
-    <PageContainer sx={ { width: '100%', maxWidth: 760, mx: 'auto' } }>
+    <PageContainer>
       <Box>
-        <PageHeader title="Server Status">
+        <PageHeader title="Status">
           <Box sx={ { display: 'flex', flexWrap: 'wrap', gap: 0.75 } }>
             <WifiStrength/>
             <VersionStatus variant="chip"/>
