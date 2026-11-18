@@ -2,14 +2,14 @@
 // Copy demo-stage.html into app/public while recording (it must be served from the same address
 // as the app), and remove it afterwards.
 // Usage: node record.mjs <port> <frames folder>
-// Then: ffmpeg -f concat -safe 0 -i <frames folder>/frames.txt -vf "fps=60,scale=1920:1080,format=yuv420p" -c:v libx264 -crf 18 demo.mp4
+// Then: ffmpeg -f concat -safe 0 -i <frames folder>/frames.txt -vf "setpts=PTS/1.06,fps=60,scale=1920:1080,format=yuv420p" -c:v libx264 -crf 18 demo.mp4
 import { mkdirSync, writeFileSync } from 'node:fs';
 
 const [debugPort, framesFolder] = process.argv.slice(2);
 mkdirSync(framesFolder, { recursive: true });
 // Everything is recorded this many times slower and sped back up when encoding, so the finished
 // video has that many times more frames per second than Chrome delivers
-const SLOW = 2;
+const SLOW = 3;
 const realPause = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
 const pause = milliseconds => realPause(milliseconds * SLOW);
 
@@ -69,19 +69,14 @@ await send('Page.startScreencast', { format: 'jpeg', quality: 92, maxWidth: 1920
 isRecording = true;
 await pause(1500);
 
-// Temperature and power, on the one card
+// Temperature
 await run("caption('Set the temperature')");
 await run(`zoomTo(${cardWith('Bed temperature')}, 1.22)`);
 await pause(600);
 await run("press(findInApp('button[aria-label=\"Increase temperature\"]'))");
 await pause(160);
 await run("press(findInApp('button[aria-label=\"Increase temperature\"]'))");
-await pause(900);
-await run("caption('One tap for off, one for on')");
-await run("press(findInApp('button[aria-label=\"Turn off\"]'))");
-await pause(1500);
-await run("press(findInApp('p, span', 'Tap to turn on'))");
-await pause(1400);
+await pause(1100);
 
 // Schedule
 await run('zoomOut()');
@@ -89,9 +84,9 @@ await run("caption('A schedule for every night')");
 await run("press(findInApp('a[href=\"/schedules\"]'))");
 await pause(1300);
 await run("scrollAppTo(findInApp('p, span', 'Bed on'), 250)");
-await pause(500);
+await pause(400);
 await run(`zoomTo(${cardWith('Bed on')}, 1.2)`);
-await pause(1300);
+await pause(1100);
 
 // Alarm: warm the bed before it goes off
 await run("caption('Wake up warm: the bed heats before the alarm')");
@@ -102,7 +97,7 @@ await pause(700);
 await run("press(findInApp('li', '30 min'))");
 await pause(1000);
 await run("press(findInApp('.MuiDialog-paper button', 'Save'))");
-await pause(1200);
+await pause(900);
 
 // In-bed detection
 await run('zoomOut()');
@@ -118,7 +113,7 @@ const switchBeside = label => `(() => { let node = ${HEADINGS}.find(element => e
   + "while (node && !node.querySelector('input[type=\"checkbox\"]')) node = node.parentElement; "
   + "return node?.querySelector('input[type=\"checkbox\"]'); })()";
 await run(`press(${switchBeside('Alarm after a long time in bed')})`);
-await pause(1300);
+await pause(1000);
 
 // The API: a request typed in a terminal changes the bed
 await run("caption('A local API for scripts, Shortcuts and assistants')");
@@ -134,13 +129,13 @@ await run("sendRequest('/api/deviceStatus', { left: { targetTemperatureF: 70 } }
 await pause(900);
 await run('hideTerminal()');
 await run("press(findInApp('a[href=\"/temperature\"]') ?? findInApp('a[href=\"/\"]'))");
-await pause(1900);
+await pause(1600);
 
 // End card
 await run('zoomOut()');
 await pause(300);
 await run('showCard()');
-await pause(2400);
+await pause(2000);
 
 isRecording = false;
 await send('Page.stopScreencast');

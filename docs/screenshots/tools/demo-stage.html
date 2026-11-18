@@ -23,7 +23,7 @@
   #bar span { margin: 0 auto; transform: translateX(-28px); padding: 4px 80px; border-radius: 7px; background: #262626; color: #9b9b9b; font-size: 12px; }
   iframe { display: block; width: 1120px; height: 596px; border: 0; }
   #cursor { position: absolute; left: 0; top: 0; width: 22px; height: 22px; z-index: 5; pointer-events: none;
-    transform: translate(640px, 420px); transition: transform 520ms cubic-bezier(0.45, 0, 0.2, 1); filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5)); }
+    transform: translate(640px, 420px); transition: transform 700ms cubic-bezier(0.4, 0, 0.2, 1); will-change: transform; filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5)); }
   /* The arrow dips as it presses, like a finger on a trackpad */
   #cursor svg { transform-origin: 3px 2px; transition: transform 120ms ease; }
   #cursor.down svg { transform: scale(0.8); }
@@ -117,12 +117,19 @@
   };
   window.zoomOut = () => { camera.style.transform = 'translate(0px, 0px) scale(1)'; return true; };
 
+  let cursorAt = { x: 640, y: 420 };
+
   // Glides the cursor to an element
   window.moveTo = async (element) => {
     if (!element) return false;
     const point = stagePoint(element);
+    // A short hop is quick and a trip across the window takes longer, so the speed looks even
+    const distance = Math.hypot(point.x - cursorAt.x, point.y - cursorAt.y);
+    const duration = Math.round(Math.min(950, Math.max(420, 320 + distance * 0.9)));
+    cursor.style.transitionDuration = `${duration}ms`;
     cursor.style.transform = `translate(${point.x}px, ${point.y}px)`;
-    await wait(540);
+    cursorAt = point;
+    await wait(duration + 40);
     return true;
   };
 
@@ -148,12 +155,9 @@
     return true;
   };
 
-  // Swaps the words under the window; an empty text hides them
+  // Sets the words under the window. The line stays up; only the words change.
   window.caption = async (text) => {
     const line = document.getElementById('caption');
-    line.classList.remove('show');
-    if (!text) return true;
-    await wait(200);
     line.textContent = text;
     line.classList.add('show');
     return true;
