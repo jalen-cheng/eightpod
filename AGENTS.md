@@ -1,7 +1,7 @@
-# Free Pod Agent Notes
+# EightPod Agent Notes
 
 ## What This Repo Is
-- Free Pod is a local controller for 8 Sleep Pods. The server runs on the Pod's embedded Linux system and exposes a local REST API. The app is a React/MUI web UI served by the server.
+- EightPod is a local controller for 8 Sleep Pods. The server runs on the Pod's embedded Linux system and exposes a local REST API. The app is a React/MUI web UI served by the server.
 - The Pod hardware is controlled through a Unix socket called `dac.sock`; this repo calls that integration "Franken" or "Franken sock".
 - Persistent user data lives under `/persistent/free-sleep-data/` on the Pod. Local development mirrors parts of that under `server/free-sleep-data/`.
 
@@ -58,7 +58,7 @@
 
 
 # Releases
-- `server/src/serverInfo.json` holds Free Pod's version. The app compares it with the copy on `main` to offer an update, so raise it (semver) in any PR whose change people should update for.
+- `server/src/serverInfo.json` holds EightPod's version. The app compares it with the copy on `main` to offer an update, so raise it (semver) in any PR whose change people should update for.
 
 # Code smells
 - Any complicated functions should have concise, short comments explaining what the function does

@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <mask id="crescent">
+      <rect width="512" height="512" fill="#fff"/>
+      <circle cx="306" cy="186" r="112" fill="#000"/>
+    </mask>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="#141414"/>
+  <!-- A crescent moon over the bed's surface -->
+  <circle cx="246" cy="222" r="128" fill="#ffffff" mask="url(#crescent)"/>
+  <rect x="116" y="388" width="280" height="28" rx="14" fill="#ffffff" opacity="0.45"/>
+</svg>

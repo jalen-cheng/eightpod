@@ -1,6 +1,6 @@
-# Contributing to Free Pod
+# Contributing to EightPod
 
-Free Pod was built and tested on one Pod 5. The most useful thing you can contribute is a report
+EightPod was built and tested on one Pod 5. The most useful thing you can contribute is a report
 of what happens on hardware it has not seen. Code is welcome too.
 
 - [Test it and say what happened](#test-it-and-say-what-happened)
@@ -12,7 +12,7 @@ of what happens on hardware it has not seen. Code is welcome too.
 
 ## Test it and say what happened
 
-Open issues labelled [needs testing](https://github.com/jalen-cheng/free-sleep/issues?q=is%3Aissue+is%3Aopen+label%3A%22needs+testing%22)
+Open issues labelled [needs testing](https://github.com/jalen-cheng/eightpod/issues?q=is%3Aissue+is%3Aopen+label%3A%22needs+testing%22)
 list what nobody has checked yet: installing on a Pod 3 or Pod 4, taps on a Pod 4, features that
 have not fired on a real bed, and so on. Pick one, try it, and comment with:
 
@@ -56,7 +56,7 @@ what you are trying to do before how you would build it.
   never loaded from a CDN.
 - **Weakening the internet block or opening the app to the internet.** The app has no login, so
   nothing may make it reachable from outside the home network except through the user's own VPN.
-- **Changes to Eight Sleep's firmware**, or code taken from it. Free Pod talks to the firmware and
+- **Changes to Eight Sleep's firmware**, or code taken from it. EightPod talks to the firmware and
   leaves it as it is.
 - **Code under a licence that does not fit.** Do not paste from GPL projects (opensleep is GPL-3.0);
   ideas are fine, code is not. Say where borrowed code comes from.
@@ -107,5 +107,5 @@ Node 24 is needed: the tests import the TypeScript sources directly.
 
 ## Credit
 
-Free Pod builds on [Free Sleep](https://github.com/throwaway31265/free-sleep). Fixes that also
+EightPod builds on [Free Sleep](https://github.com/throwaway31265/free-sleep). Fixes that also
 apply there are worth offering to that project as well.

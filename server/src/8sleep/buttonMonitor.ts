@@ -95,7 +95,7 @@ export class ButtonMonitor {
       // Logged once per run of failures: a server that may not read the journal fails every time
       if (!this.hasWarnedAboutLog) {
         logger.warn(`Button monitor cannot follow the firmware log (journalctl exited with ${exitCode}). `
-          + 'The server user needs the systemd-journal group; reinstalling Free Sleep sets it. Retrying quietly...');
+          + 'The server user needs the systemd-journal group; reinstalling EightPod sets it. Retrying quietly...');
         this.hasWarnedAboutLog = true;
       }
       setTimeout(() => {
@@ -104,7 +104,7 @@ export class ButtonMonitor {
     });
   }
 
-  // `firmwarePress` names the side as the firmware does; it is turned into Free Sleep's side here
+  // `firmwarePress` names the side as the firmware does; it is turned into EightPod's side here
   private addPress(firmwarePress: ButtonPress) {
     const press = { ...firmwarePress, side: toFirmwareSide(firmwarePress.side) };
     logger.debug(`Button press: ${press.side} ${press.button} x${press.count}${press.heldMs === undefined ? '' : ` held ${press.heldMs}ms`}`);

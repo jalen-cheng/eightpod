@@ -6,7 +6,7 @@ set -eu
 echo "Creating systemd service file at /etc/systemd/system/free-sleep-stream.service..."
 cat > "/etc/systemd/system/free-sleep-stream.service" <<EOF
 [Unit]
-Description=Free Sleep Streamer
+Description=EightPod Streamer
 After=network.target
 
 [Service]

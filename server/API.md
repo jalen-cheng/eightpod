@@ -62,7 +62,7 @@ The current state of the Pod, read from the firmware.
   },
   "coverVersion": "Pod 5",
   "hubVersion": "Pod 5",
-  "freeSleep": { "version": "3.4.0", "branch": "main" },
+  "eightPod": { "version": "3.4.0", "branch": "main" },
   "waterLevel": "true",
   "isPriming": false,
   "settings": { "v": 1, "gainLeft": 400, "gainRight": 400, "ledBrightness": 0 },
@@ -256,7 +256,7 @@ Stored in `settingsDB.json`. The values below are the defaults, except `id` (a r
 | `temperatureFormat` | `fahrenheit`, `celsius` or `level` (the -10 to +10 scale). Display only. |
 | `rebootDaily` | boolean |
 | `linkSides` | When true, a temperature or power change made for one side applies to both. |
-| `swapSides` | When true, Free Pod's left is the firmware's right and the other way round. |
+| `swapSides` | When true, EightPod's left is the firmware's right and the other way round. |
 | `<side>.name` | 1-20 characters |
 | `<side>.awayMode` | boolean |
 | `<side>.scheduleOverrides.temperatureSchedules` | `disabled`, `expiresAt` (string) |
@@ -379,7 +379,7 @@ Starts jobs now. The body is a JSON array of job names. Returns **204** without 
 | `analyzeSleepLeft`, `analyzeSleepRight` | Sleep analysis over the last 12 hours for that side. |
 | `biometricsCalibrationLeft`, `biometricsCalibrationRight` | Sensor calibration over the last 2 hours for that side. |
 | `reboot` | Reboots the Pod. |
-| `update` | Starts `free-sleep-update.service`, which updates Free Pod. |
+| `update` | Starts `free-sleep-update.service`, which updates EightPod. |
 
 ```json
 ["analyzeSleepLeft"]
@@ -421,7 +421,7 @@ Merges the body into the stored services and returns the result (200).
 { "biometrics": { "enabled": true } }
 ```
 
-`sentryLogging.enabled` switches error reporting on or off. Free Pod has no built-in destination: nothing is sent unless `SENTRY_DSN` is set in the server's environment (`server/src/instrument.ts`).
+`sentryLogging.enabled` switches error reporting on or off. EightPod has no built-in destination: nothing is sent unless `SENTRY_DSN` is set in the server's environment (`server/src/instrument.ts`).
 
 ---
 

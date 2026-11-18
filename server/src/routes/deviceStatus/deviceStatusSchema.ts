@@ -41,7 +41,7 @@ export const DeviceStatusSchema = z.object({
   }),
   coverVersion: z.string(),
   hubVersion: z.string(),
-  freeSleep: z.object({
+  eightPod: z.object({
     version: z.string(),
     branch: z.string(),
   }),

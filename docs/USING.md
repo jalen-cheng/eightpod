@@ -1,7 +1,7 @@
-# Using Free Pod
+# Using EightPod
 
 A first-use guide for the app, once it is installed ([INSTALLATION.md](../INSTALLATION.md)).
-It was written against a Pod 5, the only model Free Pod was tested on. Where a Pod 3 or 4
+It was written against a Pod 5, the only model EightPod was tested on. Where a Pod 3 or 4
 differs, it says so; [POD_MODELS.md](POD_MODELS.md) has the detail.
 
 ## 1. Open the app
@@ -93,10 +93,10 @@ A scheduled alarm only vibrates if that side is on at the alarm time.
 ## 6. Dismiss an alarm
 
 - **Pod 5:** press any button on the side of the bed.
-- **Pod 4:** tap the bed four times. Not tested in Free Pod.
+- **Pod 4:** tap the bed four times. Not tested in EightPod.
 - **Any Pod:** open the app. The Temperature page shows a **Dismiss Alarm** button while the bed vibrates.
 
-The firmware stops both sides at once. If the sides are not linked, Free Pod restarts the
+The firmware stops both sides at once. If the sides are not linked, EightPod restarts the
 other side's alarm from the beginning.
 
 ## 7. A one-time alarm
@@ -143,7 +143,7 @@ When the sides are linked, the buttons on either side control both. The step siz
 | **Flip left and right** | Side settings | Swaps which physical side the app calls left and right. Each side keeps its name, schedule and settings |
 | **Prime daily** | Priming | Runs the water priming cycle every day at **Prime time**, 2 PM by default. It does not check whether the bed is in use |
 | **Reboot once a day** | Device | Restarts the Pod one hour before the priming time. A vibrating alarm or running warm-up is lost in a reboot, so keep the time in the afternoon |
-| **Status page** | Its own page | Shows Wi-Fi strength, whether Free Pod is up to date, and each service. The biometrics and sleep-analysis rows are greyed and marked untested |
+| **Status page** | Its own page | Shows Wi-Fi strength, whether EightPod is up to date, and each service. The biometrics and sleep-analysis rows are greyed and marked untested |
 | **In-bed detection** | Its own section, Pod 5 only | Two options, both off by default: **Turn on when I get into bed** and **Alarm after a long time in bed**. Detection was checked with one person on one Pod; the first option has been seen turning the bed on, the rest has not been seen working yet |
 
 ## 11. Updating

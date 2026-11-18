@@ -1,56 +1,56 @@
 {
-  "name": "Free Pod",
-  "short_name": "Free Pod",
+  "name": "EightPod",
+  "short_name": "EightPod",
   "start_url": "/temperature",
   "display": "standalone",
   "background_color": "#141414",
   "theme_color": "#141414",
-  "description": "Free Pod",
+  "description": "EightPod",
   "icons": [
     {
-      "src": "/free-pod-icon_96.png",
+      "src": "/eightpod-icon_96.png",
       "sizes": "96x96",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/free-pod-icon_120.png",
+      "src": "/eightpod-icon_120.png",
       "sizes": "120x120",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/free-pod-icon_128.png",
+      "src": "/eightpod-icon_128.png",
       "sizes": "128x128",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/free-pod-icon_144.png",
+      "src": "/eightpod-icon_144.png",
       "sizes": "144x144",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/free-pod-icon_180.png",
+      "src": "/eightpod-icon_180.png",
       "sizes": "180x180",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/free-pod-icon_192.png",
+      "src": "/eightpod-icon_192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/free-pod-icon_256.png",
+      "src": "/eightpod-icon_256.png",
       "sizes": "256x256",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/free-pod-icon_512.png",
+      "src": "/eightpod-icon_512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"

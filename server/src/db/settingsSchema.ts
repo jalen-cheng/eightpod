@@ -61,7 +61,7 @@ export const SettingsSchema = z.object({
   rebootDaily: z.boolean(),
   // When true, temperature and power changes made for one side (in the app or at the bed) apply to both
   linkSides: z.boolean(),
-  // When true, Free Sleep's left is the firmware's right and the other way round (see 8sleep/sideMapping.ts)
+  // When true, EightPod's left is the firmware's right and the other way round (see 8sleep/sideMapping.ts)
   swapSides: z.boolean(),
   // What happens when a side is switched on by hand (app, shortcut, or the buttons on the bed)
   manualOn: z.object({

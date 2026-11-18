@@ -1,12 +1,12 @@
 ---
 name: Test report
-about: Say what happened when you tried Free Pod on your Pod, working or not
+about: Say what happened when you tried EightPod on your Pod, working or not
 labels: needs testing
 ---
 
 **Pod model** (Pod 3 with SD card / Pod 3 without / Pod 4 / Pod 5):
 
-**Free Pod version** (Settings > Device):
+**EightPod version** (Settings > Device):
 
 **What you tried:**
 

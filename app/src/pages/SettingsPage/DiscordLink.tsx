@@ -5,7 +5,7 @@ import Section from './Section.tsx';
 
 // Where problems with this fork are reported. (The original project's Discord supports the
 // original, whose behaviour differs from this fork's.)
-const ISSUES_LINK = 'https://github.com/jalen-cheng/free-sleep/issues';
+const ISSUES_LINK = 'https://github.com/jalen-cheng/eightpod/issues';
 
 export default function DiscordLink() {
   return (

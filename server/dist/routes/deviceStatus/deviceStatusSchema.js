@@ -1,6 +1,6 @@
 // WARNING! - Any changes here MUST be the same between app/src/api & server/src/db/
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="b3a34cde-fbe7-52fc-a23f-85a08c52775b")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="8dfec2c0-5276-5fb3-a212-0e6060c1abc9")}catch(e){}}();
 import { z } from 'zod';
 import { MAX_TEMPERATURE_F, MIN_TEMPERATURE_F } from '../../db/temperatureCurve.js';
 // The range the Pod can be set to, from the measured curve: 50°F to 108°F
@@ -38,7 +38,7 @@ export const DeviceStatusSchema = z.object({
     }),
     coverVersion: z.string(),
     hubVersion: z.string(),
-    freeSleep: z.object({
+    eightPod: z.object({
         version: z.string(),
         branch: z.string(),
     }),
@@ -52,4 +52,4 @@ export var Version;
     Version["Pod5"] = "Pod 5";
 })(Version || (Version = {}));
 //# sourceMappingURL=deviceStatusSchema.js.map
-//# debugId=b3a34cde-fbe7-52fc-a23f-85a08c52775b
+//# debugId=8dfec2c0-5276-5fb3-a212-0e6060c1abc9
