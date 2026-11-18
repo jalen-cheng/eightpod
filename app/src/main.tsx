@@ -3,6 +3,8 @@ initSentry();
 import * as Sentry from '@sentry/react';
 
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import ApiPage from './pages/ApiPage/ApiPage.tsx';
+import { API_GUIDE_ROUTE } from './components/apiGuideRoute.ts';
 import { createRoot } from 'react-dom/client';
 import '@fontsource-variable/geist';
 import { CssBaseline } from '@mui/material';
@@ -69,6 +71,7 @@ const App = () => {
                   </Route>
 
                   <Route path="settings" element={ <SettingsPage/> }/>
+                  <Route path={ API_GUIDE_ROUTE.slice(1) } element={ <ApiPage/> }/>
                   <Route path="schedules" element={ <SchedulePage/> }/>
                 </Route>
               </SentryRoutes>

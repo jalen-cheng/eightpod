@@ -1,16 +1,14 @@
 /* eslint-disable react/no-multi-comp */
-import { PropsWithChildren, useState } from 'react';
+import { PropsWithChildren } from 'react';
 import { DeepPartial } from 'ts-essentials';
-import { Box, Button, Collapse, Switch } from '@mui/material';
+import { Box, Switch } from '@mui/material';
 import { useDeviceStatus } from '@api/deviceStatus.ts';
 import { Version } from '@api/deviceStatusSchema.ts';
 import { Settings } from '@api/settingsSchema.ts';
 import { useAppStore } from '@state/appStore.tsx';
 import Section from '../Section.tsx';
-import SettingRow from '../SettingRow.tsx';
 import SettingToggle from '../SettingToggle.tsx';
 import ButtonStepSetting from '../TapGesturesSection/ButtonStepSetting.tsx';
-import ApiGuide from './ApiGuide.tsx';
 import LedSwitch from './LedSwitch.tsx';
 import ManualOnSettings from './ManualOnSettings.tsx';
 import TemperatureFormatSelector from './TemperatureFormatSelector.tsx';
@@ -36,17 +34,16 @@ const Group = ({ children }: PropsWithChildren) => (
 type UpdateSettingsFn = (settings: DeepPartial<Settings>) => void;
 type DeviceSettingsSectionProps = { updateSettings: UpdateSettingsFn };
 
-// Settings for the bed as a whole, in groups: temperature, the clock, the bed itself, turning on
-// by hand, and the API
+// Settings for the bed as a whole, in groups: temperature, the clock, the bed itself, and
+// turning on by hand
 export default function DeviceSettingsSection({ updateSettings }: DeviceSettingsSectionProps) {
   const { data: settings } = useSettings();
   const { data: deviceStatus } = useDeviceStatus();
   const { isUpdating } = useAppStore();
-  const [isApiOpen, setIsApiOpen] = useState(false);
   const hasButtons = deviceStatus?.coverVersion === Version.Pod5;
 
   return (
-    <Section title="Device settings">
+    <Section title="General">
       <Group>
         <TemperatureFormatSelector settings={ settings } updateSettings={ updateSettings }/>
         { hasButtons && settings && <ButtonStepSetting settings={ settings } updateSettings={ updateSettings }/> }
@@ -83,14 +80,6 @@ export default function DeviceSettingsSection({ updateSettings }: DeviceSettings
       </Group>
       <Group>
         <ManualOnSettings settings={ settings } updateSettings={ updateSettings }/>
-      </Group>
-      <Group>
-        <SettingRow label="API requests" info="Shortcuts, Home Assistant, scripts and AI assistants can control the bed with these.">
-          <Button size="small" onClick={ () => setIsApiOpen(!isApiOpen) } aria-expanded={ isApiOpen }>
-            { isApiOpen ? 'Hide' : 'Show' }
-          </Button>
-        </SettingRow>
-        <Collapse in={ isApiOpen } unmountOnExit><ApiGuide/></Collapse>
       </Group>
     </Section>
   );

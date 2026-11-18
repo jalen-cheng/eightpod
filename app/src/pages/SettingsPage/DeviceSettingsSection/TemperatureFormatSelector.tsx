@@ -41,7 +41,7 @@ export default function TemperatureFormatSelector({
         exclusive
         onChange={ handleChange }
         aria-label="Temperature format"
-        sx={ { width: '100%', '& .MuiToggleButton-root': { flex: 1, textTransform: 'capitalize' } } }
+        sx={ { width: '100%', '& .MuiToggleButton-root': { flex: 1, px: 1, textTransform: 'capitalize', whiteSpace: 'nowrap' } } }
       >
         { TEMPERATURES.map((format) => (
           <ToggleButton value={ format } key={ format }>

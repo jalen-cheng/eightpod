@@ -1,8 +1,5 @@
-import { Box, ToggleButtonGroup, ToggleButton, Typography } from '@mui/material';
-import LinkIcon from '@mui/icons-material/Link';
-import LinkOffIcon from '@mui/icons-material/LinkOff';
+import { ToggleButtonGroup, ToggleButton, Typography } from '@mui/material';
 import { useAppStore } from '@state/appStore.tsx';
-import { useSettings } from '@api/settings.ts';
 import { useTemperatureFormat } from '@lib/useTemperatureFormat.ts';
 import { useDeviceStatus } from '@api/deviceStatus.ts';
 import { formatTemperature } from '@lib/temperatureConversions.ts';
@@ -15,75 +12,56 @@ type SideControlProps = {
   disabled?: boolean;
 };
 
-// The side picker's value while the sides are linked and controlled as one
+// The picker's value while the sides are linked and controlled as one
 const BOTH_SIDES = 'both';
+const CHOICES = [
+  { value: 'left', name: 'Left', letter: 'L', label: 'Left side' },
+  { value: 'right', name: 'Right', letter: 'R', label: 'Right side' },
+  { value: BOTH_SIDES, name: 'Both', letter: 'Both', label: 'Both sides, controlled as one' },
+] as const;
+// eslint-disable-next-line @typescript-eslint/no-type-alias
+type Choice = typeof CHOICES[number]['value'];
 
-// Picks the side being viewed, with a button to link both sides so changes apply to the whole bed
+// Picks what is being controlled: the left side, the right side, or both as one. "Both" links
+// the sides, so every change applies to the whole bed until a single side is picked again.
 export default function SideControl({ showTemp, onLinkSidesChange, disabled }: SideControlProps) {
   const { side, setSide, linkSides, setLinkSides, isUpdating } = useAppStore();
-  const { data: settings } = useSettings();
   const { data: deviceStatus } = useDeviceStatus();
   const temperatureFormat = useTemperatureFormat();
 
-  const handleLinkToggle = () => {
-    const nextLinkSides = !linkSides;
-    setLinkSides(nextLinkSides);
-    onLinkSidesChange?.(nextLinkSides);
+  const choose = (choice: Choice | null) => {
+    if (choice === null) return;
+    const shouldLink = choice === BOTH_SIDES;
+    if (!shouldLink) setSide(choice);
+    if (shouldLink !== linkSides) {
+      setLinkSides(shouldLink);
+      onLinkSidesChange?.(shouldLink);
+    }
   };
 
-  const sideName = (bedSide: 'left' | 'right') => settings?.[bedSide]?.name || `${bedSide === 'left' ? 'Left' : 'Right'} side`;
-
   return (
-    <Box sx={ { display: 'flex', flexDirection: 'column', gap: 0.75 } }>
-      <Box sx={ { display: 'flex', gap: 1 } }>
-        { /* Linked: there is no side to pick, so the two buttons become one */ }
-        <ToggleButtonGroup
-          exclusive
-          value={ linkSides ? BOTH_SIDES : side }
-          onChange={ (_, selectedSide: unknown) => {
-            if (selectedSide === 'left' || selectedSide === 'right') setSide(selectedSide);
-          } }
-          size="small"
-          disabled={ disabled }
-          aria-label="Bed side"
-          sx={ { flex: 1, minWidth: 0, '& .MuiToggleButton-root': { flex: 1, minWidth: 0 } } }
-        >
-          { linkSides && (
-            <ToggleButton value={ BOTH_SIDES } aria-label={ `Both sides: ${sideName('left')} and ${sideName('right')}` }>
-              <Typography component="span" variant="body2">Both sides</Typography>
-            </ToggleButton>
+    <ToggleButtonGroup
+      exclusive
+      fullWidth
+      value={ linkSides ? BOTH_SIDES : side }
+      onChange={ (_, choice: Choice | null) => choose(choice) }
+      size="small"
+      disabled={ disabled || isUpdating }
+      aria-label="Bed side"
+    >
+      { CHOICES.map(({ value, name, letter, label }) => (
+        <ToggleButton key={ value } value={ value } aria-label={ label } sx={ { gap: 1 } }>
+          { /* A phone shows the letter; anything wider has room for the word */ }
+          <Typography component="span" variant="body2" sx={ { display: { xs: 'none', sm: 'inline' } } }>{ name }</Typography>
+          <Typography component="span" variant="body2" sx={ { display: { xs: 'inline', sm: 'none' } } }>{ letter }</Typography>
+          { /* What the side not on screen is set to */ }
+          { showTemp && value !== BOTH_SIDES && !linkSides && side !== value && (
+            <Typography component="span" variant="caption" sx={ { color: 'text.secondary' } }>
+              { deviceStatus?.[value]?.isOn ? formatTemperature(deviceStatus[value].targetTemperatureF, temperatureFormat) : 'Off' }
+            </Typography>
           ) }
-          { !linkSides && (['left', 'right'] as const).map(bedSide => (
-            <ToggleButton key={ bedSide } value={ bedSide } aria-label={ `${bedSide} side` }>
-              <Box component="span" sx={ { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, minWidth: 0 } }>
-                <Typography component="span" variant="body2" sx={ { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }>
-                  { sideName(bedSide) }
-                </Typography>
-                { showTemp && side !== bedSide && (
-                  <Typography component="span" variant="caption" sx={ { color: 'text.secondary', flexShrink: 0 } }>
-                    { deviceStatus?.[bedSide]?.isOn ? formatTemperature(deviceStatus[bedSide].targetTemperatureF, temperatureFormat) : 'Off' }
-                  </Typography>
-                ) }
-              </Box>
-            </ToggleButton>
-          )) }
-        </ToggleButtonGroup>
-        { /* Says what pressing it will do, so the way back out of linking is never a guess */ }
-        <ToggleButton
-          value="linkSides"
-          size="small"
-          disabled={ isUpdating || disabled }
-          onChange={ handleLinkToggle }
-          aria-label={ linkSides ? 'Unlink sides' : 'Link both sides' }
-          sx={ { gap: 0.75, px: 1.5, flexShrink: 0 } }
-        >
-          { linkSides ? <LinkOffIcon fontSize="small"/> : <LinkIcon fontSize="small"/> }
-          { /* "Unlink" always shows. Unlinked on a phone, the two side names need the room, so "Link" is icon only */ }
-          <Typography component="span" variant="body2" sx={ { display: { xs: linkSides ? 'inline' : 'none', sm: 'inline' } } }>
-            { linkSides ? 'Unlink' : 'Link' }
-          </Typography>
         </ToggleButton>
-      </Box>
-    </Box>
+      )) }
+    </ToggleButtonGroup>
   );
 }

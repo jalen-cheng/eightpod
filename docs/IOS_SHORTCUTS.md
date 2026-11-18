@@ -57,8 +57,7 @@ Asks for a number on the same scale as Eight Sleep's own app, turns the bed on, 
 6. Name it "Bed temperature".
 
 -10 is coldest, 0 is neutral, +10 is hottest. Halves such as 2.5 work. Anything outside -10 to 10
-is refused. The bed stays on for the time set in Settings > Device settings ("When turned on by
-hand"): 3, 6 or 12 hours.
+is refused. The bed stays on for the time set in **Settings > General > Manual on lasts**: 3, 6 or 12 hours.
 
 ## 2. Set an alarm
 
