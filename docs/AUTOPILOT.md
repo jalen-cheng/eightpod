@@ -15,7 +15,7 @@ learning are covered by tests on made-up nights only.
 | Part | What happens | Size |
 |---|---|---|
 | Night curve | Cooler from falling asleep through the first half of the night, back to the set temperature by about 85% of the way to the wake time, then a little warm | -2°F, then 0, then +1°F |
-| Deep sleep | A little cooler while deep sleep lasts | -1°F |
+| First sleep cycle | A little cooler from 20 to 90 minutes after falling asleep, where most deep sleep usually falls. Deep sleep itself is not detected | -1°F |
 | Your changes | A change you make with the app or the side buttons is kept in full for that third of the night, and half of it is remembered for the same third of later nights | up to ±3°F learned |
 | The room | The air at the cover is compared with what it was when you fell asleep: a room that warms cools the bed, and the other way round. A clear drift of the mattress surface adds a degree | ±2°F at most |
 
@@ -34,13 +34,12 @@ rules decide the state (`server/src/autopilot/sleepTracker.ts`):
 
 - **Asleep:** in bed more than 10 minutes, still for 10, and the heart at least 3 beats a minute
   slower than while settling. With no heart rate, still for 20 minutes.
-- **Deep sleep:** asleep at least 15 minutes, motionless for 10, the heart a tenth slower than
-  while settling and steady to within 4 beats.
 - **Awake again:** 3 restless minutes in 5.
 
-These are cues, not a sleep lab. Heart-rate-only staging agrees moderately with lab scoring
-(Radha et al. 2019, Sci Rep 9:14149, kappa 0.61 with a trained model, which this is not), and
-deep sleep is the hardest stage to tell.
+These are cues, not a sleep lab. Deep sleep is not detected at all: heart-rate-only staging
+agrees only moderately with lab scoring even with a trained model (Radha et al. 2019, Sci Rep
+9:14149, kappa 0.61), and deep sleep is the hardest stage to tell. The extra degree of cooling
+goes by the clock instead, over the first sleep cycle.
 
 **Two people in the bed.** An empty side picks up the other person's pulse faintly. A side is
 only followed while its in-bed sensor says someone is there, and weak readings are dropped, but

@@ -4,6 +4,7 @@ import type { SleepStage } from './sleepTracker.js';
 
 export type AutopilotSideSnapshot = {
   stage: SleepStage;
+  // Sleep is judged from this and from stillness; there is no deep-sleep stage
   heartRate?: number;
   minutesAsleep?: number;
   // How far the autopilot has the side from its set temperature right now, °F

@@ -639,11 +639,11 @@ temperature is only changed when it is.
   "enabled": true,
   "room": { "temperatureF": 68, "humidityPercent": 46 },
   "left": {
-    "stage": "deep",
+    "stage": "asleep",
     "heartRate": 54,
-    "minutesAsleep": 96,
+    "minutesAsleep": 62,
     "offsetF": -3,
-    "lastChange": "1:40 AM: 3°F cooler (time of night, deep sleep)",
+    "lastChange": "12:40 AM: 3°F cooler (time of night, first sleep cycle)",
     "learned": { "early": -0.5, "middle": 0, "late": 0 }
   },
   "right": { "stage": "out", "learned": { "early": 0, "middle": 0, "late": 0 } }
@@ -654,7 +654,7 @@ temperature is only changed when it is.
 |---|---|
 | `available` | `false` when the piezo sensor has sent nothing in the last 2 minutes (other Pods) |
 | `room` | The air at the cover. Read as hundredths of a degree; not checked against a thermometer |
-| `stage` | `out`, `awake`, `asleep` or `deep` |
+| `stage` | `out`, `awake` or `asleep` |
 | `heartRate` | Beats a minute over the last 5 minutes; missing when no reading could be trusted |
 | `offsetF` | How far the side is from its set temperature because of the autopilot |
 | `learned` | What your changes have taught it for each third of the night, in °F |

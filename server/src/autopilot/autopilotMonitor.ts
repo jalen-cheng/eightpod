@@ -145,7 +145,7 @@ export function getAutopilotSnapshot(nowMs: number = Date.now()): AutopilotSnaps
 const describePlan = (plan: Plan, stage: SleepState['stage']): string => {
   const reasons = [
     plan.parts.curveF !== 0 && 'time of night',
-    plan.parts.deepF !== 0 && 'deep sleep',
+    plan.parts.deepF !== 0 && 'first sleep cycle',
     plan.parts.learnedF !== 0 && 'your past changes',
     plan.parts.correctionF !== 0 && 'your change tonight',
     plan.parts.surroundingsF !== 0 && 'the room',
@@ -206,7 +206,7 @@ export class AutopilotMonitor {
       await settingsDB.read();
       for (const side of SIDES) {
         const state = sides[side];
-        const wasAsleep = state.sleep.stage === 'asleep' || state.sleep.stage === 'deep';
+        const wasAsleep = state.sleep.stage === 'asleep';
         state.sleep = state.tracker.addMinute({
           isInBed: isSomeoneInBed(side),
           heartRate: median(state.minuteHeartRates),
@@ -220,7 +220,7 @@ export class AutopilotMonitor {
           continue;
         }
         if (!settingsDB.data.autopilot.enabled) continue;
-        const isAsleep = state.sleep.stage === 'asleep' || state.sleep.stage === 'deep';
+        const isAsleep = state.sleep.stage === 'asleep';
         if (isAsleep && !wasAsleep && !state.night) await this.beginNight(side, nowMs);
         if (state.night) await this.steer(side, nowMs);
       }
@@ -280,6 +280,7 @@ export class AutopilotMonitor {
       baseTemperatureF,
       stage: state.sleep.stage,
       progress,
+      minutesSinceSleepOnset: (nowMs - night.asleepSinceMs) / MINUTE_MS,
       learned: learned[side],
       correctionTonightF: night.correctionF,
       surroundingsAtSleepOnset: night.surroundingsAtOnset,

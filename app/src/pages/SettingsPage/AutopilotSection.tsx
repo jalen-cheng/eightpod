@@ -16,12 +16,12 @@ const REFRESH_MS = 30_000;
 const SIDES = ['left', 'right'] as const;
 
 const AUTOPILOT_INFO = 'While you sleep, moves the bed a few degrees around the temperature you set: cooler early in the '
-  + 'night and in deep sleep, back up toward morning, and against a room that warms or cools. Change the temperature '
+  + 'night, back up toward morning, and against a room that warms or cools. Change the temperature '
   + 'yourself at any time and it keeps your change and learns from it. Experimental: sleep is judged from heart rate and '
   + 'stillness, and works best with one person in the bed.';
 
-const STAGE_NAMES: Record<AutopilotSnapshot['left']['stage'], string> = { out: 'empty', awake: 'awake', asleep: 'asleep', deep: 'deep sleep' };
-const STAGE_TONES: Record<AutopilotSnapshot['left']['stage'], StatusTone> = { out: 'neutral', awake: 'info', asleep: 'good', deep: 'good' };
+const STAGE_NAMES: Record<AutopilotSnapshot['left']['stage'], string> = { out: 'empty', awake: 'awake', asleep: 'asleep' };
+const STAGE_TONES: Record<AutopilotSnapshot['left']['stage'], StatusTone> = { out: 'neutral', awake: 'info', asleep: 'good' };
 
 // One side in a line: heart rate while there is one, and what the autopilot last did
 const describeSide = (side: AutopilotSnapshot['left']): string => {

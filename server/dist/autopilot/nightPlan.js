@@ -1,6 +1,6 @@
 // The offset never goes further than this from the base temperature, whatever adds up
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="c81b3e56-e5cf-54b3-96d9-1fcedd65902f")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="1b79803b-a011-5ca9-aa50-879549094803")}catch(e){}}();
 export const MAX_OFFSET_F = 4;
 const MIN_TEMPERATURE_F = 55;
 const MAX_TEMPERATURE_F = 110;
@@ -40,8 +40,14 @@ export function curveOffsetF(progress) {
     }
     return CURVE_POINTS[CURVE_POINTS.length - 1][1];
 }
-// 2. Deep sleep: one degree cooler while it lasts
+// 2. Deep sleep is not detected. Most of a night's deep sleep falls in the first sleep cycle,
+//    which starts some minutes after falling asleep and runs to about an hour and a half, so the
+//    bed is one degree cooler for that fixed stretch.
 export const DEEP_SLEEP_OFFSET_F = -1;
+export const DEEP_SLEEP_STARTS_AFTER_MINUTES = 20;
+export const DEEP_SLEEP_ENDS_AFTER_MINUTES = 90;
+export const isDeepSleepStretch = (minutesSinceSleepOnset) => minutesSinceSleepOnset !== undefined
+    && minutesSinceSleepOnset >= DEEP_SLEEP_STARTS_AFTER_MINUTES && minutesSinceSleepOnset < DEEP_SLEEP_ENDS_AFTER_MINUTES;
 // ---------------------------------------------------------------------------------------------
 // 3. Learning from corrections. The night is cut into three parts; a correction made by hand
 //    (app or side button) moves that part's learned offset part of the way toward it.
@@ -77,12 +83,12 @@ export function surroundingsOffsetF(atSleepOnset, now) {
 // The temperature the autopilot wants now. Awake or out of bed, it wants the base: it only
 // acts on someone who is asleep.
 export function planTemperature(input) {
-    const isAsleep = input.stage === 'asleep' || input.stage === 'deep';
+    const isAsleep = input.stage === 'asleep';
     const progress = input.progress ?? 0;
     const parts = isAsleep
         ? {
             curveF: curveOffsetF(progress),
-            deepF: input.stage === 'deep' ? DEEP_SLEEP_OFFSET_F : 0,
+            deepF: isDeepSleepStretch(input.minutesSinceSleepOnset) ? DEEP_SLEEP_OFFSET_F : 0,
             learnedF: input.learned[nightPartAt(progress)],
             correctionF: input.correctionTonightF,
             surroundingsF: surroundingsOffsetF(input.surroundingsAtSleepOnset, input.surroundingsNow),
@@ -94,4 +100,4 @@ export function planTemperature(input) {
     return { targetTemperatureF, offsetF: targetTemperatureF - Math.round(input.baseTemperatureF), parts };
 }
 //# sourceMappingURL=nightPlan.js.map
-//# debugId=c81b3e56-e5cf-54b3-96d9-1fcedd65902f
+//# debugId=1b79803b-a011-5ca9-aa50-879549094803
