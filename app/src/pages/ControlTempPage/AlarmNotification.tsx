@@ -1,11 +1,7 @@
 import moment from 'moment-timezone';
 import AlarmIcon from '@mui/icons-material/Alarm';
 import AlarmOffIcon from '@mui/icons-material/AlarmOff';
-import {
-  Alert,
-  Box,
-  Button,
-} from '@mui/material';
+import { Box, Button, Paper, Typography } from '@mui/material';
 
 import { useAppStore } from '@state/appStore.tsx';
 import { useSchedules } from '@api/schedules.ts';
@@ -63,18 +59,9 @@ export default function AlarmNotification() {
   const oneTimeAlarm = settings[side].scheduleOverrides.alarm;
   const hasOneTimeAlarm = !oneTimeAlarm.disabled && !!oneTimeAlarm.timeOverride && moment(oneTimeAlarm.expiresAt).isAfter(moment());
 
+  // One quiet line: what the next alarm is, with its time as the thing to tap to change it
   return (
-    <Alert
-      icon={ alarmDisabled ? <AlarmOffIcon /> : <AlarmIcon/> }
-      severity="warning"
-      sx={ {
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        width: '100%',
-        '& .MuiAlert-message': { flexGrow: 1, width: '100%' }
-      } }
-    >
+    <Paper sx={ { display: 'flex', alignItems: 'center', gap: 1.25, width: '100%', pl: 2, pr: 1, py: 0.75, borderRadius: '14px' } }>
       <AlarmOverride
         open={ overrideOpen }
         setOverrideOpen={ setOverrideOpen }
@@ -89,55 +76,28 @@ export default function AlarmNotification() {
         scheduledAlarmTimeHhMm={ scheduledAlarmTimeHhMm }
         alarmDisabled={ alarmDisabled }
       />
-      <Box sx={ { display: 'flex', justifyContent: 'space-between' } }>
-        {
-          alarmDisabled ?
-            (
-              <Box sx={ { display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' } }>
-                <div>
-
-                Alarm is disabled
-                &nbsp;
-                </div>
-                <Button
-                  variant="outlined"
-                  size="small"
-                  color="warning"
-                  onClick={ () => setDisabledOpen(true) }
-                >
-                  Enable
-                </Button>
-              </Box>
-
-            )
-            :
-            (
-              <>
-                <div>
-                  Alarm at &nbsp;
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    color="warning"
-                    onClick={ () => setOverrideOpen(!overrideOpen) }
-                  >
-                    { scheduledAlarmTimeAmPm }
-                  </Button>
-
-                </div>
-                &nbsp;
-                <Button
-                  variant="outlined"
-                  size="small"
-                  color="warning"
-                  onClick={ () => setDisabledOpen(true) }
-                >
-                  Disable
-                </Button>
-              </>
-            )
-        }
+      <Box sx={ { display: 'flex', color: alarmDisabled ? 'text.secondary' : 'warning.main' } }>
+        { alarmDisabled ? <AlarmOffIcon sx={ { fontSize: 20 } }/> : <AlarmIcon sx={ { fontSize: 20 } }/> }
       </Box>
-    </Alert>
+      { alarmDisabled ? (
+        <Typography variant="body2" sx={ { color: 'text.secondary', mr: 'auto' } }>Next alarm is off</Typography>
+      ) : (
+        <>
+          <Typography variant="body2" sx={ { color: 'text.secondary' } }>Alarm</Typography>
+          <Button
+            size="small"
+            variant="outlined"
+            onClick={ () => setOverrideOpen(!overrideOpen) }
+            aria-label={ `Alarm at ${scheduledAlarmTimeAmPm}. Change the next alarm` }
+            sx={ { mr: 'auto', fontWeight: 600 } }
+          >
+            { scheduledAlarmTimeAmPm }
+          </Button>
+        </>
+      ) }
+      <Button size="small" color="inherit" onClick={ () => setDisabledOpen(true) } sx={ { color: 'text.secondary' } }>
+        { alarmDisabled ? 'Turn on' : 'Skip' }
+      </Button>
+    </Paper>
   );
 }

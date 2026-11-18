@@ -1,4 +1,5 @@
 /* eslint-disable react/no-multi-comp */
+import { MouseEvent } from 'react';
 import { MenuItem, TextField } from '@mui/material';
 import _ from 'lodash';
 import { Time } from '@api/schedulesSchema.ts';
@@ -13,7 +14,8 @@ type TimeFieldProps = {
   error?: boolean;
 };
 
-// A time of day. Uses the browser's own time picker and nothing else, so there is one clock icon.
+// A time of day. Uses the browser's own time picker; a click anywhere on the field opens it, so
+// the field needs no clock icon.
 export function TimeField({ label, value, onChange, disabled, error }: TimeFieldProps) {
   return (
     <TextField
@@ -24,11 +26,19 @@ export function TimeField({ label, value, onChange, disabled, error }: TimeField
       disabled={ disabled }
       error={ error }
       sx={ {
-        width: { xs: 108, sm: 148 }, flexShrink: 0,
-        // On a phone the field itself opens the picker, and the clock icon would crowd out AM/PM
-        '& input::-webkit-calendar-picker-indicator': { display: { xs: 'none', sm: 'block' } },
+        width: 104, flexShrink: 0,
+        '& input': { fontWeight: 500, textAlign: 'center', px: 1 },
+        '& input::-webkit-calendar-picker-indicator': { display: 'none' },
       } }
-      slotProps={ { htmlInput: { 'aria-label': label } } }
+      slotProps={ {
+        htmlInput: {
+          'aria-label': label,
+          onClick: (event: MouseEvent<HTMLInputElement>) => {
+            // Not every browser has showPicker, and it throws when the field is disabled
+            try { event.currentTarget.showPicker?.(); } catch { /* typing still works */ }
+          },
+        },
+      } }
     />
   );
 }
@@ -54,7 +64,7 @@ export function TemperatureSelect({ label, value, onChange, disabled }: Temperat
       value={ value }
       onChange={ (event) => onChange(Number(event.target.value)) }
       disabled={ disabled }
-      sx={ { width: { xs: 96, sm: 108 }, flexShrink: 0 } }
+      sx={ { width: 92, flexShrink: 0, '& .MuiSelect-select': { fontWeight: 500 } } }
       slotProps={ { htmlInput: { 'aria-label': label } } }
     >
       { temperatureOptions.map(temperatureF => (

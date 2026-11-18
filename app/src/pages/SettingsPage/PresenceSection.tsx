@@ -74,24 +74,23 @@ export default function PresenceSection({ settings, updateSettings }: PresenceSe
   const updatePresence = (changes: DeepPartial<Settings['presence']>) => updateSettings({ presence: changes });
 
   return (
-    <Section title="In-bed detection" icon={ <SensorsOutlinedIcon/> }>
+    <Section
+      title="In-bed detection"
+      icon={ <SensorsOutlinedIcon/> }
+      // What the sensors say right now, beside the title
+      action={ (['left', 'right'] as const).map(side => (
+        <Chip
+          key={ side }
+          size="small"
+          color={ sensors[side]?.present ? 'success' : 'default' }
+          label={ [side === 'left' ? 'L' : 'R', sensors[side]?.present ? 'in bed' : 'empty'].join(' · ') }
+          aria-label={ `${settings[side].name}: ${sensors[side]?.present ? 'in bed' : 'empty'}` }
+        />
+      )) }
+    >
       <Box sx={ { display: 'flex', flexDirection: 'column', gap: 2 } }>
-        <Box sx={ { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, flexWrap: 'wrap' } }>
-          <Typography variant="body2" sx={ { color: 'text.secondary' } }>Right now</Typography>
-          <Box sx={ { display: 'flex', gap: 0.75 } }>
-            { (['left', 'right'] as const).map(side => (
-              <Chip
-                key={ side }
-                size="small"
-                color={ sensors[side]?.present ? 'success' : 'default' }
-                label={ [settings[side].name, sensors[side]?.present ? 'in bed' : 'empty'].join(': ') }
-              />
-            )) }
-          </Box>
-        </Box>
-
         <Box sx={ { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2 } }>
-          <Typography sx={ { fontSize: 13, fontWeight: 500 } }>Sensitivity <InfoTip text={ SENSITIVITY_INFO }/></Typography>
+          <Typography sx={ { fontSize: 14, fontWeight: 500 } }>Sensitivity <InfoTip text={ SENSITIVITY_INFO }/></Typography>
           <TextField
             select
             size="small"
@@ -120,7 +119,7 @@ export default function PresenceSection({ settings, updateSettings }: PresenceSe
         >
           { turnOnWhenInBed.enabled && (
             <SettingDetail>
-              <Typography variant="body2">at</Typography>
+              <Typography variant="body2" sx={ { color: 'text.secondary' } }>at</Typography>
               <TemperatureSelect
                 label="Temperature the bed turns on at"
                 value={ turnOnWhenInBed.temperatureF }
@@ -133,7 +132,7 @@ export default function PresenceSection({ settings, updateSettings }: PresenceSe
                 value={ turnOnWhenInBed.stayOn }
                 onChange={ (event) => updatePresence({ turnOnWhenInBed: { stayOn: readStayOn(event.target.value) } }) }
                 disabled={ isUpdating }
-                sx={ { minWidth: 96, flexShrink: 1 } }
+                sx={ { minWidth: 96, flex: 1, maxWidth: 220 } }
                 slotProps={ { htmlInput: { 'aria-label': 'How long the bed stays on' } } }
               >
                 <MenuItem value={ UNTIL_OUT_OF_BED }>until I get out of bed</MenuItem>
@@ -156,7 +155,7 @@ export default function PresenceSection({ settings, updateSettings }: PresenceSe
         >
           { wakeAfterHours.enabled && (
             <SettingDetail>
-              <Typography variant="body2">after</Typography>
+              <Typography variant="body2" sx={ { color: 'text.secondary' } }>after</Typography>
               <HoursSelect
                 label="Hours in bed before the alarm"
                 value={ wakeAfterHours.hours }

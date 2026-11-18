@@ -1,9 +1,16 @@
+// The dial. The library draws two handles, one at each end of the arc; only the one on the
+// target temperature is shown. It is a ring in the arc's colour (--dial-color, set by Slider.tsx)
+// with the page showing through, instead of a solid dot.
 .Slider {
   svg {
-    &:hover {
-      cursor: pointer;
-    }
-    color: #87868b;
+    cursor: pointer;
+  }
+
+  circle {
+    fill: var(--dial-knob-fill);
+    stroke: var(--dial-color);
+    stroke-width: 4px;
+    filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.45));
   }
 
   &.Disabled {

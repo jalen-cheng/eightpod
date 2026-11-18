@@ -53,7 +53,11 @@ export default function Slider({ isOn, currentTargetTemp, refetch, currentTemper
   return (
     <div
       ref={ ref }
-      style={ { position: 'relative', display: 'inline-block', width: '100%', maxWidth: '320px' } }
+      style={ {
+        position: 'relative', display: 'inline-block', width: '100%', maxWidth: '320px',
+        // Read by the stylesheet to draw the handle as a ring in the arc's colour
+        ['--dial-color' as string]: sliderColor, ['--dial-knob-fill' as string]: theme.palette.background.default,
+      } }
     >
       { /* The dial is square, and its labels and buttons are placed over the open bottom of the arc */ }
       <div style={ { position: 'relative' } }>
@@ -63,7 +67,7 @@ export default function Slider({ isOn, currentTargetTemp, refetch, currentTemper
             disabled={ disabled }
             onControlFinished={ () => void commitTargetTemperature() }
             size={ width ?? 280 }
-            trackWidth={ 7 }
+            trackWidth={ 10 }
             minValue={ MIN_TEMP_F }
             maxValue={ MAX_TEMP_F }
             startAngle={ 60 }
@@ -76,7 +80,7 @@ export default function Slider({ isOn, currentTargetTemp, refetch, currentTemper
             arcColor={ isOn ? sliderColor : arcBackgroundColor }
             arcBackgroundColor={ arcBackgroundColor }
             handle2={ { value: maxTemp, onChange: handleDrag } }
-            handleSize={ 11 }
+            handleSize={ 10 }
           >
             <TemperatureLabel
               isOn={ isOn }

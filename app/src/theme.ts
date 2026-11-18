@@ -1,35 +1,52 @@
 import { PaletteMode, alpha, createTheme, type Theme, type ThemeOptions } from '@mui/material/styles';
 
+const FONT_FAMILY = '"Geist Variable", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
+// One size for the text inside every field, select and button, so controls on a line match
+const CONTROL_FONT_SIZE = 14;
+
+// The night palette: blue-black surfaces, one periwinkle accent. Blue and coral are kept for
+// cooling and warming (see lib/temperatureConversions.ts) and are not used for anything else.
+const DARK_COLORS = {
+  background: '#0a0d14', surface: '#11151f', raised: '#181d2a', line: '#212838', track: '#2b3345',
+  text: '#e9ecf3', mutedText: '#8b94a8', accent: '#8ea2ff', onAccent: '#0b0e17',
+  success: '#6fd3a8', info: '#7fb4ff', warning: '#e3bd7c', error: '#f08a8f',
+};
+const LIGHT_COLORS: typeof DARK_COLORS = {
+  background: '#f4f5f9', surface: '#ffffff', raised: '#eef0f6', line: '#e1e4ec', track: '#cdd2df',
+  text: '#1a1e2b', mutedText: '#636b7e', accent: '#4a59d9', onAccent: '#ffffff',
+  success: '#23805b', info: '#3a6fc4', warning: '#946c1c', error: '#c9505a',
+};
+
 const typography: ThemeOptions['typography'] = {
-  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
+  fontFamily: FONT_FAMILY,
   fontSize: 14,
-  h1: { fontSize: '2.25rem', fontWeight: 600, letterSpacing: '-0.045em' },
-  h2: { fontSize: '1.875rem', fontWeight: 600, letterSpacing: '-0.04em' },
-  h3: { fontSize: '1.5rem', fontWeight: 600, letterSpacing: '-0.035em' },
-  h4: { fontSize: '1.25rem', fontWeight: 600, letterSpacing: '-0.025em' },
-  h5: { fontSize: '1.125rem', fontWeight: 600, letterSpacing: '-0.02em' },
-  h6: { fontSize: '0.9375rem', fontWeight: 600, letterSpacing: '-0.015em' },
-  body1: { fontSize: '0.875rem', lineHeight: 1.65 },
-  body2: { fontSize: '0.8125rem', lineHeight: 1.6 },
-  button: { fontSize: '0.8125rem', fontWeight: 500, textTransform: 'none' },
+  h1: { fontSize: '2.25rem', fontWeight: 600, letterSpacing: '-0.035em' },
+  h2: { fontSize: '1.875rem', fontWeight: 600, letterSpacing: '-0.03em' },
+  h3: { fontSize: '1.5rem', fontWeight: 600, letterSpacing: '-0.025em' },
+  h4: { fontSize: '1.25rem', fontWeight: 600, letterSpacing: '-0.02em' },
+  h5: { fontSize: '1.125rem', fontWeight: 600, letterSpacing: '-0.015em' },
+  h6: { fontSize: '0.9375rem', fontWeight: 600, letterSpacing: '-0.01em' },
+  body1: { fontSize: '0.875rem', lineHeight: 1.6 },
+  body2: { fontSize: '0.875rem', lineHeight: 1.55 },
+  button: { fontSize: '0.875rem', fontWeight: 500, textTransform: 'none' },
   caption: { fontSize: '0.75rem', lineHeight: 1.5 },
   overline: { fontSize: '0.625rem', fontWeight: 600, letterSpacing: '0.12em', lineHeight: 2 },
 };
 
 const getChipStyles = (theme: Theme, paletteKey: 'success' | 'info' | 'warning' | 'secondary') => ({
-  backgroundColor: alpha(theme.palette[paletteKey].main, 0.1),
+  backgroundColor: alpha(theme.palette[paletteKey].main, 0.12),
   color: theme.palette[paletteKey].main,
-  border: `1px solid ${alpha(theme.palette[paletteKey].main, 0.16)}`,
+  border: 0,
 });
 
 // Shared styles give controls and surfaces a consistent appearance across every screen.
-const buildComponents = (): ThemeOptions['components'] => ({
+const buildComponents = (colors: typeof DARK_COLORS): ThemeOptions['components'] => ({
   MuiCssBaseline: {
     styleOverrides: (theme) => ({
-      body: { WebkitFontSmoothing: 'antialiased', MozOsxFontSmoothing: 'grayscale' },
+      body: { WebkitFontSmoothing: 'antialiased', MozOsxFontSmoothing: 'grayscale', fontFeatureSettings: '"tnum"' },
       '#root': { minHeight: '100dvh' },
-      '::selection': { background: alpha(theme.palette.primary.main, 0.25) },
-      ':focus-visible': { outline: `2px solid ${theme.palette.primary.main}`, outlineOffset: 4 },
+      '::selection': { background: alpha(theme.palette.primary.main, 0.3) },
+      ':focus-visible': { outline: `2px solid ${theme.palette.primary.main}`, outlineOffset: 3 },
       '*': { scrollbarWidth: 'thin', scrollbarColor: `${theme.palette.divider} transparent` },
       '@media (prefers-reduced-motion: reduce)': {
         '*, *::before, *::after': { animation: 'none !important', transition: 'none !important' },
@@ -39,57 +56,110 @@ const buildComponents = (): ThemeOptions['components'] => ({
   MuiButton: {
     defaultProps: { disableElevation: true },
     styleOverrides: {
-      root: { borderRadius: 8, padding: '10px 16px', minHeight: 44, transition: 'all 150ms ease' },
+      root: { borderRadius: 12, padding: '10px 18px', minHeight: 44, transition: 'background-color 150ms ease, border-color 150ms ease' },
+      sizeSmall: { minHeight: 36, padding: '6px 12px', borderRadius: 10 },
       outlined: ({ theme }) => ({
         borderColor: theme.palette.divider,
+        backgroundColor: colors.raised,
         color: theme.palette.text.primary,
-        '&:hover': { borderColor: theme.palette.text.secondary, background: theme.palette.action.hover },
+        '&:hover': { borderColor: colors.track, backgroundColor: colors.line },
       }),
       contained: ({ theme }) => ({
         '&.MuiButton-colorPrimary': {
-          backgroundColor: theme.palette.mode === 'dark' ? '#ededed' : '#202020',
-          color: theme.palette.mode === 'dark' ? '#202020' : '#ffffff',
-          '&:hover': { backgroundColor: theme.palette.mode === 'dark' ? '#ffffff' : '#383838' },
+          backgroundColor: theme.palette.primary.main,
+          color: theme.palette.primary.contrastText,
+          '&:hover': { backgroundColor: theme.palette.primary.light },
         },
       }),
     },
   },
-  MuiIconButton: { styleOverrides: { root: { borderRadius: 8, minWidth: 44, minHeight: 44 } } },
+  MuiIconButton: { styleOverrides: { root: { borderRadius: 10, minWidth: 44, minHeight: 44 } } },
   MuiPaper: {
     styleOverrides: {
       root: ({ theme }) => ({ backgroundImage: 'none', border: `1px solid ${theme.palette.divider}`, boxShadow: 'none' }),
     },
   },
+  MuiDialog: { styleOverrides: { paper: { borderRadius: 20 } } },
+  MuiDialogTitle: { styleOverrides: { root: { fontSize: 17, fontWeight: 600, letterSpacing: '-0.01em' } } },
   MuiCardContent: { styleOverrides: { root: { padding: 20, '&:last-child': { paddingBottom: 20 } } } },
+  // An iOS-style switch: a pill that fills with the accent, and a white knob
+  MuiSwitch: {
+    styleOverrides: {
+      root: {
+        width: 44, height: 26, padding: 0, overflow: 'visible', flexShrink: 0,
+        '&.MuiSwitch-sizeSmall': {
+          width: 36, height: 22,
+          '& .MuiSwitch-thumb': { width: 18, height: 18 },
+          '& .MuiSwitch-switchBase': { padding: 2, '&.Mui-checked': { transform: 'translateX(14px)' } },
+        },
+      },
+      switchBase: ({ theme }) => ({
+        padding: 2,
+        '&:hover': { backgroundColor: 'transparent' },
+        '&.Mui-checked': {
+          transform: 'translateX(18px)', color: '#ffffff',
+          '&:hover': { backgroundColor: 'transparent' },
+          '& + .MuiSwitch-track': { backgroundColor: theme.palette.primary.main, opacity: 1 },
+        },
+        '&.Mui-disabled': { color: '#ffffff', '& + .MuiSwitch-track': { opacity: 0.45 } },
+        '&.Mui-disabled .MuiSwitch-thumb': { opacity: 0.7 },
+      }),
+      thumb: { width: 22, height: 22, backgroundColor: '#ffffff', boxShadow: '0 1px 3px rgba(0, 0, 0, 0.35)' },
+      track: { borderRadius: 13, backgroundColor: colors.track, opacity: 1, transition: 'background-color 200ms ease' },
+    },
+  },
+  MuiSlider: {
+    styleOverrides: {
+      root: { height: 6 },
+      rail: { backgroundColor: colors.track, opacity: 1 },
+      track: { border: 0 },
+      thumb: {
+        width: 22, height: 22, backgroundColor: '#ffffff', boxShadow: '0 1px 4px rgba(0, 0, 0, 0.4)',
+        '&:hover, &.Mui-focusVisible, &.Mui-active': { boxShadow: '0 1px 4px rgba(0, 0, 0, 0.4)' },
+        '&::before': { display: 'none' },
+      },
+    },
+  },
   MuiToggleButtonGroup: {
     styleOverrides: {
-      root: ({ theme }) => ({ padding: 4, gap: 4, border: `1px solid ${theme.palette.divider}`, borderRadius: 10 }),
-      grouped: { border: '0 !important', borderRadius: '7px !important', margin: '0 !important' },
+      root: { padding: 4, gap: 4, border: 0, borderRadius: 14, backgroundColor: colors.surface },
+      grouped: { border: '0 !important', borderRadius: '10px !important', margin: '0 !important' },
     },
   },
   MuiToggleButton: {
     styleOverrides: {
       root: ({ theme }) => ({
-        textTransform: 'none', color: theme.palette.text.secondary, padding: '9px 16px', minHeight: 44, lineHeight: 1.5,
+        textTransform: 'none', color: theme.palette.text.secondary, padding: '8px 16px', minHeight: 40, lineHeight: 1.5,
+        fontSize: CONTROL_FONT_SIZE, border: 0, borderRadius: 14, backgroundColor: colors.surface,
         '&.Mui-selected': {
-          backgroundColor: alpha(theme.palette.primary.main, 0.12), color: theme.palette.text.primary,
-          '&:hover': { backgroundColor: alpha(theme.palette.primary.main, 0.18) },
+          backgroundColor: colors.line, color: theme.palette.text.primary,
+          '&:hover': { backgroundColor: colors.track },
         },
       }),
     },
   },
-  MuiTab: { styleOverrides: { root: { textTransform: 'none', fontSize: 12, minHeight: 48 } } },
+  MuiTab: { styleOverrides: { root: { textTransform: 'none', fontSize: 13, minHeight: 44 } } },
   MuiTabs: { styleOverrides: { indicator: { height: 2, borderRadius: 2 } } },
   MuiTextField: { defaultProps: { variant: 'outlined', size: 'small' } },
+  // Fields are filled blocks without an outline; the outline appears on hover and focus
   MuiOutlinedInput: {
     styleOverrides: {
-      root: { borderRadius: 8, fontSize: 16 },
-      notchedOutline: ({ theme }) => ({ borderColor: theme.palette.divider }),
+      root: ({ theme }) => ({
+        borderRadius: 10, fontSize: CONTROL_FONT_SIZE, backgroundColor: colors.raised,
+        '& .MuiOutlinedInput-notchedOutline': { borderColor: 'transparent', transition: 'border-color 150ms ease' },
+        '&:hover:not(.Mui-disabled) .MuiOutlinedInput-notchedOutline': { borderColor: colors.track },
+        '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: theme.palette.primary.main, borderWidth: 1 },
+        '&.Mui-error .MuiOutlinedInput-notchedOutline': { borderColor: theme.palette.error.main },
+        '&.Mui-disabled': { opacity: 0.55 },
+        '& .MuiInputBase-inputSizeSmall': { paddingTop: 9, paddingBottom: 9 },
+      }),
     },
   },
+  MuiSelect: { styleOverrides: { icon: ({ theme }) => ({ color: theme.palette.text.secondary, fontSize: 20 }) } },
+  MuiMenuItem: { styleOverrides: { root: { fontSize: CONTROL_FONT_SIZE, minHeight: 40 } } },
   MuiInput: {
     styleOverrides: {
-      root: { fontSize: 16 },
+      root: { fontSize: CONTROL_FONT_SIZE },
       underline: ({ theme }) => ({ '&:before': { borderBottomColor: theme.palette.divider } }),
     },
   },
@@ -98,55 +168,53 @@ const buildComponents = (): ThemeOptions['components'] => ({
   MuiAccordion: {
     defaultProps: { disableGutters: true, elevation: 0 },
     styleOverrides: {
-      root: { borderRadius: '12px !important', '&:before': { display: 'none' }, '&.Mui-expanded': { margin: 0 } },
+      root: { borderRadius: '16px !important', '&:before': { display: 'none' }, '&.Mui-expanded': { margin: 0 } },
     },
   },
   MuiAccordionSummary: { styleOverrides: { root: { minHeight: 56, padding: '0 20px' } } },
   MuiAccordionDetails: { styleOverrides: { root: { padding: '8px 20px 20px' } } },
   MuiAlert: {
     styleOverrides: {
-      root: { borderRadius: 10, fontSize: 13, alignItems: 'center' },
+      root: { borderRadius: 14, fontSize: 14, alignItems: 'center' },
       standard: ({ theme }) => ({
-        '&.MuiAlert-colorWarning': {
-          backgroundColor: alpha(theme.palette.warning.main, 0.06),
-          border: `1px solid ${alpha(theme.palette.warning.main, 0.18)}`,
-        },
-        '&.MuiAlert-colorInfo': {
-          backgroundColor: alpha(theme.palette.info.main, 0.06),
-          border: `1px solid ${alpha(theme.palette.info.main, 0.18)}`,
-        },
+        '&.MuiAlert-colorWarning': { backgroundColor: alpha(theme.palette.warning.main, 0.08), color: theme.palette.text.primary },
+        '&.MuiAlert-colorInfo': { backgroundColor: alpha(theme.palette.info.main, 0.08), color: theme.palette.text.primary },
       }),
     },
   },
   MuiChip: {
     styleOverrides: {
-      root: { height: 26, borderRadius: 6, fontSize: 11, fontWeight: 500 },
+      root: { height: 26, borderRadius: 13, fontSize: 12, fontWeight: 500 },
+      colorDefault: ({ theme }) => ({ backgroundColor: colors.raised, color: theme.palette.text.secondary }),
       colorSuccess: ({ theme }) => getChipStyles(theme, 'success'),
       colorInfo: ({ theme }) => getChipStyles(theme, 'info'),
       colorWarning: ({ theme }) => getChipStyles(theme, 'warning'),
       colorSecondary: ({ theme }) => getChipStyles(theme, 'secondary'),
     },
   },
-  MuiTooltip: { styleOverrides: { tooltip: { fontSize: 12, borderRadius: 6 } } },
+  MuiTooltip: { styleOverrides: { tooltip: { fontSize: 12, borderRadius: 8 } } },
 });
 
-export const buildTheme = (mode: PaletteMode = 'dark') => createTheme({
-  typography,
-  palette: {
-    mode,
-    primary: { main: mode === 'dark' ? '#ededed' : '#262626', contrastText: '#111111' },
-    secondary: { main: '#aaaaaa' },
-    success: { main: mode === 'dark' ? '#77cba5' : '#27835e' },
-    info: { main: mode === 'dark' ? '#8baef4' : '#446dc2' },
-    warning: { main: mode === 'dark' ? '#d8b477' : '#997021' },
-    error: { main: '#dc7b85' },
-    divider: mode === 'dark' ? '#222222' : '#e3e3e3',
-    background: { default: mode === 'dark' ? '#000000' : '#fafafa', paper: mode === 'dark' ? '#0a0a0a' : '#ffffff' },
-    text: { primary: mode === 'dark' ? '#ededed' : '#202020', secondary: mode === 'dark' ? '#929292' : '#6d6d6d' },
-    action: { hover: mode === 'dark' ? '#ffffff06' : '#00000005', selected: mode === 'dark' ? '#ffffff0d' : '#00000008' },
-  },
-  shape: { borderRadius: 12 },
-  components: buildComponents(),
-});
+export const buildTheme = (mode: PaletteMode = 'dark') => {
+  const colors = mode === 'dark' ? DARK_COLORS : LIGHT_COLORS;
+  return createTheme({
+    typography,
+    palette: {
+      mode,
+      primary: { main: colors.accent, contrastText: colors.onAccent },
+      secondary: { main: colors.mutedText },
+      success: { main: colors.success },
+      info: { main: colors.info },
+      warning: { main: colors.warning },
+      error: { main: colors.error },
+      divider: colors.line,
+      background: { default: colors.background, paper: colors.surface },
+      text: { primary: colors.text, secondary: colors.mutedText },
+      action: { hover: alpha(colors.text, 0.04), selected: alpha(colors.text, 0.08) },
+    },
+    shape: { borderRadius: 12 },
+    components: buildComponents(colors),
+  });
+};
 
 export const theme = buildTheme('dark');

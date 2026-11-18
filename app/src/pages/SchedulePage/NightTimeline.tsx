@@ -1,11 +1,12 @@
 /* eslint-disable react/no-multi-comp */
-import { Box, Button, IconButton, Paper, Switch, Typography } from '@mui/material';
+import { Box, Button, IconButton, Paper, Typography } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
-import TuneIcon from '@mui/icons-material/Tune';
+import AlarmIcon from '@mui/icons-material/Alarm';
+import AlarmOffIcon from '@mui/icons-material/AlarmOff';
 import moment from 'moment-timezone';
 import { PropsWithChildren, useState } from 'react';
-import { DailySchedule, MAX_ALARM_SECONDS, Time } from '@api/schedulesSchema.ts';
+import { DailySchedule, Time } from '@api/schedulesSchema.ts';
 import { useAppStore } from '@state/appStore.tsx';
 import InfoTip from '@components/InfoTip.tsx';
 import { useScheduleStore } from './scheduleStore.tsx';
@@ -24,7 +25,6 @@ const RAIL_GUTTER_PX = 12;
 const ROW_BUTTON_PX = 32;
 const MAIN_DOT_PX = 14;
 const CHANGE_DOT_PX = 9;
-const ALARM_COLOR = '#db5858';
 
 const rowButtonSx = { p: 0.25, minWidth: ROW_BUTTON_PX, minHeight: ROW_BUTTON_PX };
 
@@ -76,9 +76,6 @@ const NightRow = ({ label, info, error, dotColor, isMainEvent, children }: Night
   );
 };
 
-// Upstream's alarms ran for seconds. One saved that short has never been set up in this app.
-const SET_UP_ALARM_SECONDS = 600;
-
 
 // Minutes from bedtime to a time later that night (past midnight counts as later)
 const minutesAfterBedtime = (time: Time, bedtime: Time) => {
@@ -93,8 +90,9 @@ const isDuringNight = (time: Time, { power }: DailySchedule) => {
 
 // One night, top to bottom in the order it happens: bedtime, temperature changes and wake-up.
 // One line each, joined by a line down the left whose dots take the colour of each temperature.
-// There is no off time to choose: the bed turns off OFF_AFTER_ALARM_MINUTES after wake-up. The
-// wake-up time is the alarm's time, and the switch beside it decides whether the alarm vibrates.
+// There is no off time to choose: the bed turns off OFF_AFTER_ALARM_MINUTES after wake-up, shown
+// as the last line. The wake-up time is the alarm's time; the button beside it says whether the
+// alarm vibrates and opens everything else about it.
 export default function NightTimeline() {
   const { isUpdating } = useAppStore();
   const { selectedSchedule, updateSelectedSchedule, updateSelectedTemperatures } = useScheduleStore();
@@ -133,19 +131,10 @@ export default function NightTimeline() {
     updateSelectedSchedule({ alarm: alarmChanges, power: { off: offTimeAfterAlarm(nextAlarm.time) } });
   };
 
-  // Switching the alarm on gives it sensible settings if it has never been set up: a ramp-up
-  // that keeps going until dismissed
-  const setAlarmEnabled = (enabled: boolean) => {
-    const needsDefaults = enabled && alarm.duration < SET_UP_ALARM_SECONDS;
-    updateWakeUp(needsDefaults ? { enabled, duration: MAX_ALARM_SECONDS, vibrationPattern: 'rise' } : { enabled });
-  };
-
   const isNightLengthValid = isPowerScheduleDurationValid(power.on, power.off);
-  const wakeUpInfo = `The bed turns off at ${formatClockTime(power.off)}, ${OFF_AFTER_ALARM_MINUTES} minutes after this. `
-    + `The switch is the vibrating alarm: ${alarm.enabled ? 'on' : 'off'}. A one-time alarm moves both for one morning.`;
 
   return (
-    <Paper sx={ { p: { xs: 1, sm: 2.5 }, width: '100%' } }>
+    <Paper sx={ { p: { xs: 1.5, sm: 2.5 }, width: '100%', borderRadius: '16px' } }>
       <Box
         sx={ {
           display: 'flex', flexDirection: 'column', gap: 0.75,
@@ -188,22 +177,29 @@ export default function NightTimeline() {
               onClick={ () => removeChange(time) }
               disabled={ disabled }
               aria-label="Remove this change"
-              sx={ rowButtonSx }
+              sx={ { ...rowButtonSx, color: 'text.secondary' } }
             >
-              <CloseIcon fontSize="small"/>
+              <CloseIcon sx={ { fontSize: 18 } }/>
             </IconButton>
           </NightRow>
         )) }
 
         <NightRow>
-          <Button size="small" startIcon={ <AddIcon/> } onClick={ addChange } disabled={ disabled } sx={ { ml: -0.5 } }>
+          <Button
+            size="small"
+            color="inherit"
+            startIcon={ <AddIcon/> }
+            onClick={ addChange }
+            disabled={ disabled }
+            sx={ { ml: -0.5, color: 'text.secondary' } }
+          >
             Add a change
           </Button>
         </NightRow>
 
         <NightRow
           label="Wake up"
-          dotColor={ alarm.enabled ? ALARM_COLOR : 'text.disabled' }
+          dotColor={ alarm.enabled ? 'warning.main' : 'text.disabled' }
           isMainEvent
           error={ isNightLengthValid ? undefined : 'Must differ from bedtime' }
         >
@@ -214,21 +210,22 @@ export default function NightTimeline() {
             disabled={ disabled }
             error={ !isNightLengthValid }
           />
-          { alarm.enabled && (
-            <IconButton onClick={ () => setAreAlarmOptionsOpen(true) } disabled={ disabled } aria-label="Alarm options" sx={ rowButtonSx }>
-              <TuneIcon fontSize="small"/>
-            </IconButton>
-          ) }
-          { /* Before the switch, which stays at the row's right edge */ }
-          <InfoTip text={ wakeUpInfo }/>
-          <Switch
+          <Button
             size="small"
-            checked={ alarm.enabled }
-            onChange={ (event) => setAlarmEnabled(event.target.checked) }
+            variant="outlined"
+            onClick={ () => setAreAlarmOptionsOpen(true) }
             disabled={ disabled }
-            sx={ { ml: 'auto' } }
-            slotProps={ { input: { 'aria-label': 'Vibrating alarm at the wake-up time' } } }
-          />
+            aria-label="Alarm options"
+            startIcon={ alarm.enabled ? <AlarmIcon sx={ { color: 'warning.main' } }/> : <AlarmOffIcon/> }
+            sx={ { whiteSpace: 'nowrap', color: alarm.enabled ? 'text.primary' : 'text.secondary' } }
+          >
+            { alarm.enabled ? 'Alarm on' : 'Alarm off' }
+          </Button>
+        </NightRow>
+
+        <NightRow label="Bed off" dotColor="text.disabled" isMainEvent>
+          <Typography variant="body2" sx={ { color: 'text.secondary', pl: 1 } }>{ formatClockTime(power.off) }</Typography>
+          <InfoTip text={ `Always ${OFF_AFTER_ALARM_MINUTES} minutes after the wake-up time. A one-time alarm moves both for one morning.` }/>
         </NightRow>
       </Box>
       <AlarmOptionsDialog open={ areAlarmOptionsOpen } onClose={ () => setAreAlarmOptionsOpen(false) }/>

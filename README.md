@@ -25,13 +25,38 @@ Free Sleep is what makes any of this possible, and on the test Pod 5 it fell sho
 
 The table under [What is different](#what-is-different-from-the-original-project) has what Free Pod does about each.
 
-**Biometrics are untested.** Sleep tracking, heart rate and the other measurements on the Data
-page are the original's code, unchanged. They produced nothing on the test Pod 5 and were not
-looked into further, so treat that page as not working on a Pod 5 and unverified by this fork
-everywhere else.
+**Biometrics are disabled and untested.** Sleep tracking, heart rate and the other measurements
+on the Data page are the original's code, unchanged, and switched off unless you enable them. They
+produced nothing on the test Pod 5 and were not looked into further. Changes that make them work
+are welcome, as is any other pull request.
 
 The fork's folders, services and commands on the Pod keep the name `free-sleep`, so an existing
 install updates in place.
+
+## Demo
+
+**[freepod.vercel.app](https://freepod.vercel.app)** is the app running on made-up data, with no
+Pod behind it. Open it on a phone to see it as it is meant to be used; nothing you change there
+is kept.
+
+## Install
+
+You need a Pod 3, 4 or 5, a USB serial adapter (about $10) and around an hour. In short:
+
+1. **Open the hub and attach the adapter** to get a root shell on the Pod's computer. This is the
+   only hands-on step, and the guide has photos for each Pod.
+2. **Set a password, join your Wi-Fi and stop Eight Sleep's updates.**
+3. **Run the installer** on the Pod:
+
+   ```
+   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/jalen-cheng/free-sleep/main/scripts/install.sh)"
+   ```
+
+4. **Open `http://bed.local`** on your phone, set your time zone, and block the Pod from the internet.
+
+Every step, with checks and what to do when one fails, is in **[INSTALLATION.md](INSTALLATION.md)**.
+Already running the original Free Sleep? Run step 3 over SSH; settings and schedules are kept
+([what changes](docs/POD_MODELS.md)).
 
 ## Where to go
 
