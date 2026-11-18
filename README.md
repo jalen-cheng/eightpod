@@ -102,16 +102,16 @@ No Pod yet? **[eightpod.vercel.app](https://eightpod.vercel.app)** is the app on
 
 [HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md) explains every part and how they interact.
 
-## What it changes
+## What it does
 
-**The big ones**
-
-- **Networking:** the app opens at `http://eightpod.local`, with no IP address or port to remember. Optional Tailscale on the Pod reaches it from anywhere, with the internet block still on and nothing opened on your router.
+- **The Eight Sleep app's controls, on your own network:** temperature for each side, a schedule for every night, vibration alarms, wake-up heat, priming and away mode. Sleep tracking and Autopilot are not part of it.
+- **A local API:** every control is a documented request to the Pod itself, so it keeps working when your internet or Eight Sleep's servers are down, which tools built on the cloud cannot do. Anything that sends a web request can drive the bed: iPhone Shortcuts, Home Assistant, a script, or an AI assistant. See [server/API.md](server/API.md).
+- **A private tunnel for access away from home:** optional Tailscale on the Pod opens the same app from anywhere, with the Pod still blocked from the internet.
 - **Pod 5 side buttons enabled:** + and - change the temperature, holding the middle button switches the side on or off, and any button stops an alarm.
 - **In-bed detection (Pod 5):** the bed knows when someone is in it, and can turn on when you get in, off after you get out, or vibrate after a long stay.
-- **Wake-up heat:** the bed warms to a temperature you choose 15 to 45 minutes before the alarm, so you wake warm instead of being shaken out of a cold bed.
-- **Temperatures are calibrated:** the number shown is what the firmware aims for at each level, measured on a Pod 5, beside the temperature the bed measures. Units are °F, °C, or Eight Sleep's -10 to +10.
-- **An API for everything:** every control the firmware offers is a documented local request: temperature, power, alarms, priming, schedules, settings and who is in bed. Anything that can send a web request can drive the bed: iPhone Shortcuts, Home Assistant, a script, or an AI assistant. See [server/API.md](server/API.md).
+- **Wake-up heat:** the bed warms to a temperature you choose 15 to 45 minutes before the alarm.
+- **Calibrated temperatures:** the number shown is what the firmware aims for at each level, measured on a Pod 5, beside the temperature the bed measures. Units are °F, °C, or Eight Sleep's -10 to +10.
+- **An address you can remember:** `http://eightpod.local`, with no IP address or port.
 
 **Quality of life**
 
