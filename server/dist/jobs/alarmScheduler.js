@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="38c56cfd-fff4-552a-b043-b003bb9ce006")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="de7a79ee-7cc0-5230-b909-474386ef232f")}catch(e){}}();
 import schedule from 'node-schedule';
 import { markOneOffAlarmFired } from './oneOffAlarmState.js';
 import cbor from 'cbor';
@@ -90,10 +90,10 @@ export const alarmSession = createAlarmSession({
  * Next occurrence of HH:mm in tz (today or tomorrow depending on 'now').
  * If the HH:mm is already passed for 'now', schedule for tomorrow.
  */
-export function nextOccurrenceHhMm(tz, hhmm) {
-    const now = moment.tz(tz);
-    const [h, m] = hhmm.split(':').map(Number);
-    const candidate = now.clone().hour(h).minute(m).second(0).millisecond(0);
+export function nextOccurrenceOfTime(timeZone, time) {
+    const now = moment.tz(timeZone);
+    const [hour, minute] = time.split(':').map(Number);
+    const candidate = now.clone().hour(hour).minute(minute).second(0).millisecond(0);
     if (candidate.isSameOrBefore(now)) {
         candidate.add(1, 'day');
     }
@@ -109,7 +109,7 @@ export function getPendingOneOffAlarm(settingsData, side, now) {
     const expiresAt = moment.tz(alarmOverride.expiresAt, settingsData.timeZone);
     if (!expiresAt.isAfter(now))
         return undefined;
-    const next = nextOccurrenceHhMm(settingsData.timeZone, alarmOverride.timeOverride);
+    const next = nextOccurrenceOfTime(settingsData.timeZone, alarmOverride.timeOverride);
     // Already gone off: the override is only still in force to hold back a scheduled alarm
     return next.isAfter(expiresAt) ? undefined : next;
 }
@@ -164,7 +164,7 @@ export async function findLateAlarmEnd(side, day) {
     }
     const { alarm, power } = schedulesDB.data[side][day];
     if (alarm.enabled && minutesAlarmIsAfterOff(alarm.time, power) > 0) {
-        const firesAt = nextOccurrenceHhMm(settingsData.timeZone, alarm.time);
+        const firesAt = nextOccurrenceOfTime(settingsData.timeZone, alarm.time);
         if (firesAt.isBefore(windowEnd))
             alarmEnds.push(firesAt.clone().add(alarm.duration, 'seconds'));
     }
@@ -314,4 +314,4 @@ export const scheduleAlarmPreWarm = (settingsData, side, day, dailySchedule) => 
     });
 };
 //# sourceMappingURL=alarmScheduler.js.map
-//# debugId=38c56cfd-fff4-552a-b043-b003bb9ce006
+//# debugId=de7a79ee-7cc0-5230-b909-474386ef232f

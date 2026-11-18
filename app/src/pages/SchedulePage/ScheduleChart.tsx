@@ -27,19 +27,19 @@ const AREA_ALPHA = 0.35;
 const LINE_ALPHA = 1.0;
 
 // ---------------- buildSeriesData (same as before) ----------------
-const todayAt = (hhmm: Time, dayOffset = 0) => {
-  const [h, m] = hhmm.split(':').map(Number);
-  const d = new Date();
-  d.setHours(h, m, 0, 0);
-  if (dayOffset) d.setDate(d.getDate() + dayOffset);
-  return d;
+const todayAt = (time: Time, dayOffset = 0) => {
+  const [hour, minute] = time.split(':').map(Number);
+  const date = new Date();
+  date.setHours(hour, minute, 0, 0);
+  if (dayOffset) date.setDate(date.getDate() + dayOffset);
+  return date;
 };
 
 
-const compareTime = (a: Time, b: Time) => {
-  const [ah, am] = a.split(':').map(Number);
-  const [bh, bm] = b.split(':').map(Number);
-  return ah - bh || am - bm;
+const compareTime = (firstTime: Time, secondTime: Time) => {
+  const [firstHour, firstMinute] = firstTime.split(':').map(Number);
+  const [secondHour, secondMinute] = secondTime.split(':').map(Number);
+  return firstHour - secondHour || firstMinute - secondMinute;
 };
 
 function buildSeriesData(selectedSchedule: DailySchedule, yMin: number, yMax: number, temperatureFormat: TemperatureFormat): Point[] {

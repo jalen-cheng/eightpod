@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fjalen-cheng%2Ffree-sleep%2Fmain%2Fserver%2Fsrc%2FserverInfo.json&query=%24.version&label=version&style=flat-square" alt="Version"></a>
+  <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fjalen-cheng%2Feightpod%2Fmain%2Fserver%2Fsrc%2FserverInfo.json&query=%24.version&label=version&style=flat-square" alt="Version"></a>
   <a href="https://eightpod.vercel.app"><img src="https://img.shields.io/badge/demo-live-brightgreen?style=flat-square" alt="Live demo"></a>
   <a href="docs/POD_MODELS.md"><img src="https://img.shields.io/badge/tested%20on-Pod%205-blue?style=flat-square" alt="Tested on Pod 5"></a>
   <a href="https://github.com/jalen-cheng/eightpod/pulls"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen?style=flat-square" alt="Pull requests welcome"></a>
@@ -18,14 +18,24 @@ you open on your phone.
 It started as a fork of [Free Sleep](https://github.com/throwaway31265/free-sleep) by
 throwaway31265 and its contributors, and grew into a rework: the Pod 5's side buttons, calibrated
 temperatures, in-bed detection, a redesigned app, a schedule built around one night at a time,
-alarms that run until you dismiss them, and an address you can remember (`http://bed.local`). It
+alarms that run until you dismiss them, and an address you can remember (`http://eightpod.local`). It
 was developed and tested on one Pod 5.
 
 **Local, with no catch.** No cloud, no account and no subscription. The Pod is blocked from the
 internet, so nothing is sent to Eight Sleep or anyone else, and the bed keeps working when your
 internet does not.
 
-[Demo](https://eightpod.vercel.app) · [Install](INSTALLATION.md) · [Using the app](docs/USING.md) · [How it works](docs/HOW_IT_WORKS.md) · [Shortcuts](docs/IOS_SHORTCUTS.md) · [API](server/API.md) · [Changelog](CHANGELOG.md)
+<table>
+  <tr>
+    <td align="center" width="150"><a href="https://eightpod.vercel.app">Demo</a></td>
+    <td align="center" width="150"><a href="INSTALLATION.md">Install</a></td>
+    <td align="center" width="150"><a href="docs/USING.md">Using the app</a></td>
+    <td align="center" width="150"><a href="docs/HOW_IT_WORKS.md">How it works</a></td>
+    <td align="center" width="150"><a href="docs/IOS_SHORTCUTS.md">Shortcuts</a></td>
+    <td align="center" width="150"><a href="server/API.md">API</a></td>
+    <td align="center" width="150"><a href="CHANGELOG.md">Changelog</a></td>
+  </tr>
+</table>
 
 ## Install
 
@@ -37,6 +47,9 @@ each Pod. Then, on the Pod:
 ```bash
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/jalen-cheng/eightpod/main/scripts/install.sh)"
 ```
+
+P.S. If you are in San Francisco and want to borrow the cable and adapter I used for my install,
+I am happy to lend them out :) Open an [issue](https://github.com/jalen-cheng/eightpod/issues) to ask.
 
 ### Already running Free Sleep
 
@@ -58,7 +71,7 @@ Read [what changes](docs/POD_MODELS.md#things-to-know-before-updating-from-the-o
 
 ## Quick start
 
-1. Open `http://bed.local` on a phone on the same Wi-Fi. The installer names the Pod `bed`. If it
+1. Open `http://eightpod.local` on a phone on the same Wi-Fi. The installer names the Pod `eightpod`. If it
    does not load (some Android phones and Linux computers do not look up `.local` names), use
    `http://<pod-ip>:3000`.
 2. In **Settings**, set your time zone. Until you do, every scheduled time is off by hours.
@@ -84,7 +97,7 @@ No Pod yet? **[eightpod.vercel.app](https://eightpod.vercel.app)** is the app on
 - **Pod 5 side buttons work.** + and - change the temperature, holding the middle button switches the side on or off, and any button stops an alarm.
 - **Temperatures are calibrated.** The number shown is what the firmware aims for at each level, measured on a Pod 5, and the page also shows the temperature the bed measures. Units are °F, °C, or the -10 to +10 scale of Eight Sleep's app.
 - **In-bed detection (Pod 5).** The bed knows when someone is in it, and can turn itself on when you get in and off after you get out, or vibrate after a long stay.
-- **Networking.** The app opens at `http://bed.local`, with no IP address or port to remember. The internet block keeps the clock and name lookups working and is restored at every boot. Optional Tailscale reaches the Pod from anywhere with the block still on.
+- **Networking.** The app opens at `http://eightpod.local`, with no IP address or port to remember. The internet block keeps the clock and name lookups working and is restored at every boot. Optional Tailscale reaches the Pod from anywhere with the block still on.
 
 **The app**
 

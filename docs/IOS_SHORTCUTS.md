@@ -11,11 +11,11 @@ Every shortcut below uses `<pod>`. Replace it with one of these, most stable fir
 
 | Use | Works | Keeps working when |
 |---|---|---|
-| `bed` | Anywhere, while Tailscale is connected on the phone | The Pod's address, your router or your network changes |
-| `bed.local` | At home | The Pod's address or your router changes. Shortcuts run by a Home automation have been reported to fail on `.local` names; if yours does, use one of the others |
+| `eightpod` | Anywhere, while Tailscale is connected on the phone | The Pod's address, your router or your network changes |
+| `eightpod.local` | At home | The Pod's address or your router changes. Shortcuts run by a Home automation have been reported to fail on `.local` names; if yours does, use one of the others |
 | The Pod's home address, for example `192.168.1.50` | At home; anywhere with Tailscale if you set up the one-link route | Only while that address stays the same, so reserve it in the router |
 
-`bed` is the name the installer gives the Pod; run `hostname` on the Pod to check yours. Setting up Tailscale, the
+`eightpod` is the name the installer gives the Pod; run `hostname` on the Pod to check yours. Setting up Tailscale, the
 one-link route and a reserved address is in [REMOTE_ACCESS.md](REMOTE_ACCESS.md).
 
 The first run of a shortcut asks for permission to connect to devices on your local network; allow it.
@@ -30,11 +30,11 @@ Tailscale is only on when you ask for it. It needs Tailscale set up as in
 1. Open **Shortcuts** and tap **+**.
 2. Add **Get Network Details**. Leave it on **Wi-Fi** and **Network Name**.
 3. Add **If**. Set it to: **Network Name** **is** the name of your home Wi-Fi.
-4. Under **If**, add **Open URLs** with `http://bed.local`.
+4. Under **If**, add **Open URLs** with `http://eightpod.local`.
 5. Under **Otherwise**, add **Choose from Menu** with the prompt "Not at home" and two options:
    "Connect Tailscale" and "Cancel".
 6. Under "Connect Tailscale", add Tailscale's **Connect** action (search for "Tailscale"), then
-   **Wait** 2 seconds, then **Open URLs** with `http://bed`.
+   **Wait** 2 seconds, then **Open URLs** with `http://eightpod`.
 7. Name it "Bed", tap the share button and choose **Add to Home Screen**.
 
 To switch Tailscale off again without thinking about it, add an automation: **Automation** >
@@ -108,8 +108,15 @@ built the same way as shortcut 1 but with fixed values instead of a question.
 | Turn the bed off | `http://<pod>/api/deviceStatus` | Dictionary `left` with Boolean `isOn` = false, and the same for `right` |
 | Stop a vibrating alarm | `http://<pod>/api/deviceStatus` | Dictionary `left` with Boolean `isAlarmVibrating` = false |
 | Next alarm 30 minutes later | `http://<pod>/api/alarm/time` | Number `shiftMinutes` = 30 (negative for earlier) |
-| Cancel the one-time alarm | `http://<pod>/api/alarm/time/cancel` | None |
+| Cancel the one-time alarm | `http://<pod>/api/alarm/time/cancel` | None. The app has no button for this; it also brings back an alarm skipped from the app |
 | Change the weekly wake-up time | `http://<pod>/api/alarm/time` | Text `time`, and Array `days` of Text such as `monday`. The bed's off time moves with it |
+
+**A refused request is silent.** These shortcuts do not show the Pod's answer, so when the Pod
+refuses a request the shortcut ends without a message and nothing changes. The usual case is
+"Change the weekly wake-up time" with a time less than 1 hour or more than 23 hours after that
+night's Bed on. To see the reason, add **Get Dictionary Value** for `details` after the request,
+then **Show Result**: it reads, for example, "The wake-up time must be 1 to 23 hours after the
+bed-on time (left monday)". When the request is accepted there is no `details`, and nothing is shown.
 
 Stopping an alarm on one side stops both when the sides are linked. Everything the app can do is
 in [server/API.md](../server/API.md), including whether someone is in bed
@@ -123,8 +130,11 @@ linked in the app, both sides change anyway.
 ## Troubleshooting
 
 - **The shortcut times out**: check that `http://<pod>` opens in Safari on the same phone. A Pod installed before version 3.2.0 needs `:3000` after the name until it is updated. If
-  you used `bed`, check Tailscale is connected.
-- **"Invalid request data" (HTTP 400)**: a field has the wrong type or value. `dial` must be a Number
+  you used `eightpod`, check Tailscale is connected.
+- **The shortcut runs but nothing changes**: the Pod refused the request. Show `details` as
+  described under "A refused request is silent" to read why.
+- **"Invalid request data" (HTTP 400)**: a field has the wrong type or value, or a weekly wake-up
+  time is under 1 hour or over 23 hours after Bed on. `dial` must be a Number
   field from -10 to 10; `side` and `time` must be Text fields, and `time` must contain a time of day.
 - **It stopped working after a while**: if the shortcut uses a number, the Pod's address changed.
   Switch to a name from the table above, or reserve the address in your router.

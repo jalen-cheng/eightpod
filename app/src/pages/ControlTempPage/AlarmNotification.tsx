@@ -25,8 +25,8 @@ export default function AlarmNotification() {
   const power = schedules?.[side][currentDay].power;
 
 
-  const [scheduledAlarmTimeAmPm, setScheduledAlarmTimeAmPm] = useState('');
-  const [scheduledAlarmTimeHhMm, setScheduledAlarmTimeHhMm] = useState('');
+  const [scheduledAlarmLabel, setScheduledAlarmLabel] = useState('');
+  const [scheduledAlarmTime, setScheduledAlarmTime] = useState('');
 
   useEffect(() => {
     if (!settings || !schedules) return;
@@ -34,8 +34,8 @@ export default function AlarmNotification() {
 
     const hhMm = alarm.time;
     const amPm = moment(alarm.time, 'HH:mm').format('h:mm A');
-    setScheduledAlarmTimeHhMm(hhMm);
-    setScheduledAlarmTimeAmPm(amPm);
+    setScheduledAlarmTime(hhMm);
+    setScheduledAlarmLabel(amPm);
     setAlarmDisabled(false);
     const alarmScheduleOverrides = settings[side].scheduleOverrides.alarm;
     if (alarmScheduleOverrides.expiresAt) {
@@ -44,12 +44,12 @@ export default function AlarmNotification() {
       if (expiresAt.isAfter(moment())) {
         if (alarmScheduleOverrides.disabled) {
           setAlarmDisabled(true);
-          setScheduledAlarmTimeHhMm(hhMm);
-          setScheduledAlarmTimeAmPm(amPm);
+          setScheduledAlarmTime(hhMm);
+          setScheduledAlarmLabel(amPm);
         } else {
           setAlarmDisabled(false);
-          setScheduledAlarmTimeAmPm(moment(alarmScheduleOverrides.timeOverride, 'HH:mm').format('h:mm A'));
-          setScheduledAlarmTimeHhMm(alarmScheduleOverrides.timeOverride);
+          setScheduledAlarmLabel(moment(alarmScheduleOverrides.timeOverride, 'HH:mm').format('h:mm A'));
+          setScheduledAlarmTime(alarmScheduleOverrides.timeOverride);
         }
       }
     }
@@ -60,10 +60,8 @@ export default function AlarmNotification() {
   if (settings[side].awayMode) return null;
   // In the morning, after the alarm has gone off, there is nothing left to change until tonight
   const now = moment.tz(settings.timeZone);
-  const alarmToday = moment.tz(`${now.format('YYYY-MM-DD')} ${scheduledAlarmTimeHhMm}`, 'YYYY-MM-DD HH:mm', settings.timeZone);
-  if (now.hour() < 12 && scheduledAlarmTimeHhMm && now.isAfter(alarmToday.add(2, 'minutes'))) return null;
-  const oneTimeAlarm = settings[side].scheduleOverrides.alarm;
-  const hasOneTimeAlarm = !oneTimeAlarm.disabled && !!oneTimeAlarm.timeOverride && moment(oneTimeAlarm.expiresAt).isAfter(moment());
+  const alarmToday = moment.tz(`${now.format('YYYY-MM-DD')} ${scheduledAlarmTime}`, 'YYYY-MM-DD HH:mm', settings.timeZone);
+  if (now.hour() < 12 && scheduledAlarmTime && now.isAfter(alarmToday.add(2, 'minutes'))) return null;
 
   // One quiet line: what the next alarm is, with its time as the thing to tap to change it
   return (
@@ -72,14 +70,13 @@ export default function AlarmNotification() {
         open={ overrideOpen }
         setOverrideOpen={ setOverrideOpen }
         alarmTimeLocalOverride={ alarmTimeLocalOverride }
-        scheduledAlarmTimeHhMm={ scheduledAlarmTimeHhMm }
-        hasOneTimeAlarm={ hasOneTimeAlarm }
+        scheduledAlarmTime={ scheduledAlarmTime }
         setAlarmTimeLocalOverride={ setAlarmTimeLocalOverride }
       />
       <AlarmDisabledDialog
         open={ disabledOpen }
         setOpen={ setDisabledOpen }
-        scheduledAlarmTimeHhMm={ scheduledAlarmTimeHhMm }
+        scheduledAlarmTime={ scheduledAlarmTime }
         alarmDisabled={ alarmDisabled }
       />
       <Box sx={ { display: 'flex', color: alarmDisabled ? 'text.secondary' : 'warning.main' } }>
@@ -94,10 +91,10 @@ export default function AlarmNotification() {
             size="small"
             variant="outlined"
             onClick={ () => setOverrideOpen(!overrideOpen) }
-            aria-label={ `Alarm at ${scheduledAlarmTimeAmPm}. Change the next alarm` }
+            aria-label={ `Alarm at ${scheduledAlarmLabel}. Change the next alarm` }
             sx={ { mr: 'auto', fontWeight: 600 } }
           >
-            { scheduledAlarmTimeAmPm }
+            { scheduledAlarmLabel }
           </Button>
         </>
       ) }

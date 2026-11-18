@@ -78,7 +78,7 @@ async function setupJobs() {
   }
 }
 
-let RETRY_COUNT = 0;
+let retryCount = 0;
 
 function waitForValidDateAndSetupJobs() {
   serverStatus.status.systemDate.status = 'started';
@@ -88,11 +88,11 @@ function waitForValidDateAndSetupJobs() {
     serverStatus.status.systemDate.message = '';
     logger.info('System date is valid. Setting up jobs...');
     void setupJobs();
-  } else if(RETRY_COUNT < 20) {
+  } else if(retryCount < 20) {
     serverStatus.status.systemDate.status = 'retrying';
-    const message = `System date is invalid (year 2010). Retrying in 5 seconds... (Attempt #${RETRY_COUNT}})`;
+    const message = `System date is invalid (year 2010). Retrying in 5 seconds... (Attempt #${retryCount}})`;
     serverStatus.status.systemDate.message = message;
-    RETRY_COUNT++;
+    retryCount++;
     logger.debug(message);
     setTimeout(waitForValidDateAndSetupJobs, 5_000);
   } else {

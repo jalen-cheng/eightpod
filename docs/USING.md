@@ -7,7 +7,7 @@ differs, it says so; [POD_MODELS.md](POD_MODELS.md) has the detail.
 ## 1. Open the app
 
 On a phone or computer on the same Wi-Fi as the Pod, open `http://<pod-ip>:3000`, for example
-`http://192.168.1.50:3000`. `http://bed.local` also works where the installer could set the name up.
+`http://192.168.1.50:3000`. `http://eightpod.local` also works where the installer could set the name up.
 
 To keep it on your phone's home screen: in Safari, tap Share, then **Add to Home Screen**. In
 Chrome on Android, open the three-dot menu, then **Add to Home screen**.
@@ -105,11 +105,11 @@ other side's alarm from the beginning.
 To wake at a different time once, without touching the weekly schedule:
 
 1. On the **Temperature** page, find the "Alarm" row. It only shows when tonight's schedule and its alarm are on.
-2. Tap the time on that row. **Change the next alarm** opens.
+2. Tap the time on that row. **Change next alarm only** opens.
 3. Pick the time and tap **Set**.
 
 It goes off the next time the clock shows that time and replaces that morning's scheduled alarm.
-The bed turns off 30 minutes after it. To undo it, open the same dialog and tap **Back to schedule**.
+The bed turns off 30 minutes after it. To undo it, set the time back to the schedule's own in the same dialog.
 **Skip** at the end of the same row skips tonight's alarm after you confirm. Once skipped, the button
 reads **Turn on** and brings it back.
 

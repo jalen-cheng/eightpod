@@ -13,7 +13,7 @@ import logger from '../../logger.js';
 import { applyAutomaticOffTime, isNightLengthValid } from '../../db/automaticOffTime.js';
 import schedulesDB from '../../db/schedules.js';
 import settingsDB from '../../db/settings.js';
-import { executeAlarm, getPendingOneOffAlarm, nextOccurrenceHhMm } from '../../jobs/alarmScheduler.js';
+import { executeAlarm, getPendingOneOffAlarm, nextOccurrenceOfTime } from '../../jobs/alarmScheduler.js';
 
 const router = express.Router();
 
@@ -150,7 +150,7 @@ router.post('/alarm/time', async (req: Request, res: Response) => {
     .map(alarmSide => {
       if (shiftMinutes !== undefined) return shiftNextAlarm(alarmSide, shiftMinutes, now);
       // (time is set here: the schema requires it whenever shiftMinutes is missing)
-      const firesAt = nextOccurrenceHhMm(settingsDB.data.timeZone, time as string);
+      const firesAt = nextOccurrenceOfTime(settingsDB.data.timeZone, time as string);
       // Without this, a one-off earlier than the scheduled alarm would leave both to go off
       const replacedAlarm = findAlarmReplacedByOneOff(schedulesDB.data[alarmSide], now, firesAt, LATE_ALARM_WINDOW_HOURS);
       // An alarm skipped from the app stays skipped, whatever time the one-off is for

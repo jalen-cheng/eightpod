@@ -28,7 +28,7 @@ Status codes worth knowing:
 | Code | When |
 | --- | --- |
 | 204 | `POST /api/deviceStatus`, `POST /api/jobs`, `DELETE /api/metrics/sleep/:id` succeeded. No body. |
-| 400 | Invalid body. Most endpoints answer `{"error": "Invalid request data", "details": [...]}`, where `details` is the list of zod issues. Unparseable JSON gives `{"error": {"message": "Invalid JSON"}}`. |
+| 400 | Invalid body. Most endpoints answer `{"error": "Invalid request data", "details": [...]}`, where `details` is the list of zod issues, or one sentence when a rule other than the body's shape was broken (for example a wake-up time too close to the bed-on time). Unparseable JSON gives `{"error": {"message": "Invalid JSON"}}`. |
 | 404 | Unknown `/api/*` path: `{"error": {"message": "Not Found"}}`. |
 | 409 | `POST /api/alarm/time` with `shiftMinutes` when there is no alarm to move. |
 | 500 | Anything else that fails: `{"error": {"message": "..."}}`. |
@@ -199,7 +199,10 @@ Responses (200):
 - **409** `{"error": "No alarm in the next 24 hours that can be moved that far"}`: with `shiftMinutes`, when no side has an alarm within 24 hours, or the moved time would be in the past or more than 24 hours ahead.
 - A one-off alarm is stored in settings under `<side>.scheduleOverrides.alarm`.
 - A one-off alarm leaves an alarm skipped from the app skipped.
-- With `days`, a time under 1 hour or over 23 hours after that night's bed-on time is refused with `400`. `POST /api/schedules` refuses the same nights.
+- With `days`, a time under 1 hour or over 23 hours after that night's bed-on time is refused, and nothing is changed on any day or side in the request: `400` with
+  `{"error": "Invalid request data", "details": "The wake-up time must be 1 to 23 hours after the bed-on time (left monday)"}`.
+  Only nights whose schedule is on are checked. `POST /api/schedules` refuses the same nights with the same body.
+- A phone shortcut that does not read the response shows nothing when a request is refused; see [docs/IOS_SHORTCUTS.md](../docs/IOS_SHORTCUTS.md).
 - With `days`, the off-time rule in [Schedules](#schedules) is applied to each day, so the bed's off time moves with the new time.
 
 ### `POST /api/alarm/time/cancel`
