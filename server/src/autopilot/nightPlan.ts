@@ -1,7 +1,7 @@
 // Works out the temperature the autopilot wants for one side, a minute at a time, as an offset
 // from the temperature the schedule (or the sleeper) set. Four things add up to the offset:
 //   1. a fixed curve over the night, from falling asleep to the wake time
-//   2. a little cooler while in deep sleep
+//   2. a little cooler through the stretch after falling asleep where deep sleep usually falls
 //   3. what the sleeper's own corrections have taught it, for this part of the night
 //   4. the room and the mattress getting warmer or cooler than they were at sleep onset
 // Keep this file free of runtime imports so tests can load it without a Pod environment.
@@ -50,8 +50,15 @@ export function curveOffsetF(progress: number): number {
   return CURVE_POINTS[CURVE_POINTS.length - 1][1];
 }
 
-// 2. Deep sleep: one degree cooler while it lasts
+// 2. Deep sleep is not detected. Most of a night's deep sleep falls in the first sleep cycle,
+//    which starts some minutes after falling asleep and runs to about an hour and a half, so the
+//    bed is one degree cooler for that fixed stretch.
 export const DEEP_SLEEP_OFFSET_F = -1;
+export const DEEP_SLEEP_STARTS_AFTER_MINUTES = 20;
+export const DEEP_SLEEP_ENDS_AFTER_MINUTES = 90;
+
+export const isDeepSleepStretch = (minutesSinceSleepOnset: number | undefined): boolean => minutesSinceSleepOnset !== undefined
+  && minutesSinceSleepOnset >= DEEP_SLEEP_STARTS_AFTER_MINUTES && minutesSinceSleepOnset < DEEP_SLEEP_ENDS_AFTER_MINUTES;
 
 // ---------------------------------------------------------------------------------------------
 // 3. Learning from corrections. The night is cut into three parts; a correction made by hand
@@ -110,6 +117,8 @@ export type PlanInput = {
   stage: SleepStage;
   // 0 at sleep onset, 1 at the wake time; undefined before falling asleep
   progress?: number;
+  // Minutes since first falling asleep tonight
+  minutesSinceSleepOnset?: number;
   learned: LearnedOffsets;
   // A correction made by hand earlier in this part of this night, kept in full until the part ends
   correctionTonightF: number;
@@ -127,12 +136,12 @@ export type Plan = {
 // The temperature the autopilot wants now. Awake or out of bed, it wants the base: it only
 // acts on someone who is asleep.
 export function planTemperature(input: PlanInput): Plan {
-  const isAsleep = input.stage === 'asleep' || input.stage === 'deep';
+  const isAsleep = input.stage === 'asleep';
   const progress = input.progress ?? 0;
   const parts = isAsleep
     ? {
       curveF: curveOffsetF(progress),
-      deepF: input.stage === 'deep' ? DEEP_SLEEP_OFFSET_F : 0,
+      deepF: isDeepSleepStretch(input.minutesSinceSleepOnset) ? DEEP_SLEEP_OFFSET_F : 0,
       learnedF: input.learned[nightPartAt(progress)],
       correctionF: input.correctionTonightF,
       surroundingsF: surroundingsOffsetF(input.surroundingsAtSleepOnset, input.surroundingsNow),

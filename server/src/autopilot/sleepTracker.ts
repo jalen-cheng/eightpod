@@ -1,11 +1,10 @@
 // Follows one sleeper through a stay in bed, a minute at a time, and says whether they are
-// awake, asleep or in deep sleep. It is a set of plain rules over heart rate and stillness, not
-// a sleep-stage classifier: studies put heart-rate-only staging at moderate agreement with a
-// sleep lab, and deep sleep is the hardest stage to tell. So "deep" here means "the heart is at
-// its slowest and steadiest of the night and the body is still", which is a cue, not a diagnosis.
+// awake or asleep. It is a set of plain rules over heart rate and stillness, not a sleep-stage
+// classifier, so it does not try to tell deep sleep from the rest: the night plan assumes deep
+// sleep by the clock instead.
 // Keep this file free of runtime imports so tests can load it without a Pod environment.
 
-export type SleepStage = 'out' | 'awake' | 'asleep' | 'deep';
+export type SleepStage = 'out' | 'awake' | 'asleep';
 
 export type MinuteSummary = {
   isInBed: boolean;
@@ -39,13 +38,6 @@ const ASLEEP_STILL_MINUTES_WITHOUT_HEART_RATE = 20;
 // Awake again: this many restless minutes among the last five
 const AWAKE_RESTLESS_MINUTES = 3;
 const RECENT_MINUTES = 5;
-// Deep: asleep this long, nearly motionless, the heart a tenth slower than while settling, and
-// steady to within a few beats over the last five minutes
-const DEEP_MIN_MINUTES_ASLEEP = 15;
-const DEEP_STILL_MINUTES = 10;
-const DEEP_MAX_MOVEMENT_SECONDS = 1;
-const DEEP_HEART_RATE_FRACTION = 0.9;
-const DEEP_HEART_RATE_SPREAD = 4;
 
 const median = (values: number[]): number | undefined => {
   if (values.length === 0) return undefined;
@@ -96,13 +88,7 @@ export function createSleepTracker() {
       return { stage: 'awake', minutesInBed, settlingHeartRate, heartRate: recentHeartRate };
     }
     const minutesAsleep = minutesInBed - asleepSinceMinute;
-    const recentRates = heartRatesOf(lastMinutes(RECENT_MINUTES));
-    const isHeartSlowAndSteady = settlingHeartRate !== undefined && recentHeartRate !== undefined
-      && recentRates.length >= RECENT_MINUTES - 1
-      && recentHeartRate <= settlingHeartRate * DEEP_HEART_RATE_FRACTION
-      && Math.max(...recentRates) - Math.min(...recentRates) <= DEEP_HEART_RATE_SPREAD;
-    const isDeep = minutesAsleep >= DEEP_MIN_MINUTES_ASLEEP && isHeartSlowAndSteady && isStillFor(DEEP_STILL_MINUTES, DEEP_MAX_MOVEMENT_SECONDS);
-    return { stage: isDeep ? 'deep' : 'asleep', minutesInBed, minutesAsleep, settlingHeartRate, heartRate: recentHeartRate };
+    return { stage: 'asleep', minutesInBed, minutesAsleep, settlingHeartRate, heartRate: recentHeartRate };
   };
 
   return { addMinute, reset };

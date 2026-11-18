@@ -55,7 +55,7 @@ export const handlers = [
     await delay(120);
     return new HttpResponse(null, { status: 204 });
   }),
-  // The autopilot mid-night: the left sleeper in deep sleep, the right side empty
+  // The autopilot early in the night: the left sleeper asleep, the right side empty
   http.get('/api/autopilot', async () => {
     await delay(60);
     return HttpResponse.json({
@@ -63,8 +63,8 @@ export const handlers = [
       enabled: true,
       room: { temperatureF: 68, humidityPercent: 46 },
       left: {
-        stage: 'deep', heartRate: 54, minutesAsleep: 96, offsetF: -3,
-        lastChange: '3°F cooler (time of night, deep sleep)', learned: { early: -0.5, middle: 0, late: 0 },
+        stage: 'asleep', heartRate: 54, minutesAsleep: 62, offsetF: -3,
+        lastChange: '3°F cooler (time of night, first sleep cycle)', learned: { early: -0.5, middle: 0, late: 0 },
       },
       right: { stage: 'out', learned: { early: 0, middle: 0, late: 0 } },
     });

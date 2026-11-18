@@ -57,27 +57,26 @@ const addMinutes = (tracker, count, minute) => {
   return state;
 };
 
-test('a sleeper goes from awake to asleep to deep, and back to awake when restless', () => {
+test('a sleeper goes from awake to asleep, and back to awake when restless', () => {
   const tracker = createSleepTracker();
   // Settling: a normal heart rate and some movement
   assert.equal(addMinutes(tracker, 12, { isInBed: true, heartRate: 66, movementSeconds: 6 }).stage, 'awake');
   // Still, and the heart a little slower: asleep after ten such minutes
   assert.equal(addMinutes(tracker, 9, { isInBed: true, heartRate: 62, movementSeconds: 1 }).stage, 'awake');
   assert.equal(addMinutes(tracker, 1, { isInBed: true, heartRate: 62, movementSeconds: 1 }).stage, 'asleep');
-  // Motionless with the heart a tenth slower and steady: deep, but not before 15 minutes asleep
-  assert.equal(addMinutes(tracker, 10, { isInBed: true, heartRate: 58, movementSeconds: 0 }).stage, 'asleep');
-  const deep = addMinutes(tracker, 6, { isInBed: true, heartRate: 58, movementSeconds: 0 });
-  assert.equal(deep.stage, 'deep');
-  assert.equal(deep.settlingHeartRate, 66);
-  // One turn in bed ends deep sleep but not sleep
+  // However slow and steady the heart, the stage stays "asleep": deep sleep is not detected
+  const later = addMinutes(tracker, 30, { isInBed: true, heartRate: 56, movementSeconds: 0 });
+  assert.equal(later.stage, 'asleep');
+  assert.equal(later.settlingHeartRate, 66);
+  assert.equal(later.minutesAsleep, 30);
+  // One turn in bed does not end sleep; three restless minutes do
   assert.equal(addMinutes(tracker, 1, { isInBed: true, heartRate: 60, movementSeconds: 8 }).stage, 'asleep');
-  // Three restless minutes: awake
   assert.equal(addMinutes(tracker, 3, { isInBed: true, heartRate: 70, movementSeconds: 20 }).stage, 'awake');
   // Getting out starts over
   assert.deepEqual(tracker.addMinute({ isInBed: false, movementSeconds: 0 }), { stage: 'out', minutesInBed: 0 });
 });
 
-test('with no heart rate, long stillness alone counts as asleep, never as deep', () => {
+test('with no heart rate, long stillness alone counts as asleep', () => {
   const tracker = createSleepTracker();
   assert.equal(addMinutes(tracker, 19, { isInBed: true, movementSeconds: 0 }).stage, 'awake');
   assert.equal(addMinutes(tracker, 1, { isInBed: true, movementSeconds: 0 }).stage, 'asleep');
@@ -124,20 +123,26 @@ test('the plan adds the parts up, only for someone asleep, and stays within its 
   assert.equal(planTemperature({ ...base, stage: 'awake', progress: 0.3 }).targetTemperatureF, 80);
   // Asleep in the first half: the curve's two degrees
   assert.equal(planTemperature({ ...base, stage: 'asleep', progress: 0.3 }).targetTemperatureF, 78);
-  // Deep sleep: one more
-  const deep = planTemperature({ ...base, stage: 'deep', progress: 0.3 });
+  // From 20 to 90 minutes after falling asleep, where deep sleep usually falls: one more
+  const deep = planTemperature({ ...base, stage: 'asleep', progress: 0.3, minutesSinceSleepOnset: 45 });
   assert.equal(deep.targetTemperatureF, 77);
   assert.deepEqual(deep.parts, { curveF: -2, deepF: -1, learnedF: 0, correctionF: 0, surroundingsF: 0 });
+  for (const [minutes, expected] of [[19, 78], [20, 77], [89, 77], [90, 78]]) {
+    assert.equal(planTemperature({ ...base, stage: 'asleep', progress: 0.3, minutesSinceSleepOnset: minutes }).targetTemperatureF, expected);
+  }
+  // Awake in that stretch: still the base
+  assert.equal(planTemperature({ ...base, stage: 'awake', progress: 0.3, minutesSinceSleepOnset: 45 }).targetTemperatureF, 80);
   // A correction by hand tonight is kept in full
   assert.equal(planTemperature({ ...base, stage: 'asleep', progress: 0.3, correctionTonightF: 3 }).targetTemperatureF, 81);
   // Everything pulling one way stops at the limit
   const cold = planTemperature({
-    ...base, stage: 'deep', progress: 0.3, learned: { early: -3, middle: 0, late: 0 }, surroundingsNow: { roomF: 74 },
+    ...base, stage: 'asleep', progress: 0.3, minutesSinceSleepOnset: 45, learned: { early: -3, middle: 0, late: 0 },
+    surroundingsNow: { roomF: 74 },
   });
   assert.equal(cold.offsetF, -MAX_OFFSET_F);
   assert.equal(cold.targetTemperatureF, 76);
   // The bed's own range holds too
-  assert.equal(planTemperature({ ...base, baseTemperatureF: 56, stage: 'deep', progress: 0.3 }).targetTemperatureF, 55);
+  assert.equal(planTemperature({ ...base, baseTemperatureF: 56, stage: 'asleep', progress: 0.3, minutesSinceSleepOnset: 45 }).targetTemperatureF, 55);
 });
 
 test('the base is the bed-on temperature until a scheduled change comes up, across midnight', () => {
