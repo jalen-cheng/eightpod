@@ -90,8 +90,8 @@ const isDuringNight = (time: Time, { power }: DailySchedule) => {
 
 // One night, top to bottom in the order it happens: bedtime, temperature changes and wake-up.
 // One line each, joined by a line down the left whose dots take the colour of each temperature.
-// There is no off time to choose: the bed turns off OFF_AFTER_ALARM_MINUTES after wake-up, shown
-// as the last line. The wake-up time is the alarm's time; the button beside it says whether the
+// There is no off time to choose: the bed turns off OFF_AFTER_ALARM_MINUTES after wake-up. The
+// wake-up time is the alarm's time; the button beside it says whether the
 // alarm vibrates and opens everything else about it.
 export default function NightTimeline() {
   const { isUpdating } = useAppStore();
@@ -221,11 +221,7 @@ export default function NightTimeline() {
           >
             { alarm.enabled ? 'Alarm on' : 'Alarm off' }
           </Button>
-        </NightRow>
-
-        <NightRow label="Bed off" dotColor="text.disabled" isMainEvent>
-          <Typography variant="body2" sx={ { color: 'text.secondary', pl: 1 } }>{ formatClockTime(power.off) }</Typography>
-          <InfoTip text={ `Always ${OFF_AFTER_ALARM_MINUTES} minutes after the wake-up time. A one-time alarm moves both for one morning.` }/>
+          <InfoTip text={ `The bed turns off at ${formatClockTime(power.off)}, ${OFF_AFTER_ALARM_MINUTES} minutes after this.` }/>
         </NightRow>
       </Box>
       <AlarmOptionsDialog open={ areAlarmOptionsOpen } onClose={ () => setAreAlarmOptionsOpen(false) }/>

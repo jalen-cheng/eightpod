@@ -267,7 +267,7 @@ const createServices = (): Services => ({
     enabled: true,
   },
   biometrics: {
-    enabled: true,
+    enabled: false,
     jobs: {
       installation: {
         name: 'Biometrics installation',

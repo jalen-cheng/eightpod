@@ -26,7 +26,7 @@ export default function VersionStatus({ variant }: VersionStatusProps) {
   return (
     <Alert severity="info">
       <AlertTitle>
-        Free-sleep update available!
+        Free Pod update available
       </AlertTitle>
       <Typography variant="body2">
         Latest version: { serverInfo?.version }

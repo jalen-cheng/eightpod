@@ -41,7 +41,7 @@ export default function TemperatureLabel({
         component="p"
         sx={ {
           fontSize: isOn ? 'clamp(44px, 14vw, 64px)' : 'clamp(40px, 12vw, 52px)',
-          fontWeight: 500, letterSpacing: '-0.065em', lineHeight: 1.2, my: 0.5,
+          fontWeight: 500, letterSpacing: '-0.01em', lineHeight: 1.2, my: 0.5,
         } }
       >
         { isOn ? (
