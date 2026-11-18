@@ -74,8 +74,29 @@ A sleep that begins up to 3 hours before your usual time, or any time until your
 is steered from the start. Any other is left alone, and if it is still going after 3 hours it
 was not a nap after all and the autopilot takes over from there. Naps are saved like nights.
 
-**Two people in the bed.** A side is only followed while its in-bed sensor says someone is
-there. Whether one sleeper's turning or breathing reads on the other side has not been checked.
+**Each side on its own.** A side is followed, saved, tuned and steered by its own sleeper, and
+only while its in-bed sensor says someone is there. Whether one sleeper's turning or breathing
+reads on the other side has not been checked. One exception: with the sides linked in Settings
+and the other side empty, the bed is one sleeper's, and both sides follow them.
+
+**What breathing can and cannot tell.** From sleep-lab studies, not from this bed:
+
+- The rate barely moves. In 38 adults it averaged 16.8 breaths a minute awake and 15.2 to 15.9
+  in every sleep stage, with people differing from each other by 2 to 3 (Gutierrez et al. 2016,
+  Physiol Rep 4:e12949). So no range of rates marks sleep: a rate in your usual sleeping range
+  fits being asleep and does not show it.
+- Its steadiness does move: variability is highest awake and in REM and falls step by step into
+  deep sleep. That is why the bed measures the spread, not the rate.
+- No published rule turns either into "asleep" or "deep sleep". Every contactless system with
+  figures uses a trained model on breathing and movement together: the best radar result is
+  93% for asleep against awake (quiet wakefulness is still its main error) and about 71% of
+  deep sleep found (Diao et al. 2026, arXiv 2604.16442); breathing-only models agree with a
+  sleep lab at kappa 0.41 to 0.49 over four stages (Long et al. 2014). Movement alone gets
+  about 86% for asleep against awake but misses most quiet wakefulness.
+
+So: asleep against awake from movement plus steady breathing is reasonable and is what
+calibration tries. Deep sleep from breathing with a simple rule is not supported by anything
+found, which is why it still goes by the clock.
 
 ## Linking a sleep tracker
 
@@ -122,15 +143,19 @@ tests, the app's format from its documentation.
 
 Every stay in bed of 20 minutes or more is saved on the Pod, whether or not the autopilot is
 switched on, as one file in `/persistent/free-sleep-data/autopilot_nights/`: a row per minute
-(moving seconds, heart rate, breathing rate and spread, state, the autopilot's offset, room
-temperature), the bed's sleep and wake times, and the tracker's if any were sent. A night is
+(moving seconds, heart rate, breathing rate and spread, pressure on the bed, state, the
+autopilot's offset, room temperature), the bed's sleep and wake times, and the tracker's if any were sent. A night is
 about 40 KB. The newest 180 files are kept (three months for two sleepers), about 7 MB of the
 Pod's 14 GB free. An open stay is written every 10 minutes, so a restart loses at most that,
 and starts a new file.
 
-**Data > Nights** lists them with the tuning for each side, and **Export** downloads everything
-(every night with its minute rows, the sleep rules, what was learned) as one JSON file.
-`GET /api/autopilot/nights` and `GET /api/autopilot/nights/export` return the same. The
+**Data > Nights** shows one day at a time, last night first, with arrows and a calendar to move:
+bedtime, wake time, duration and wake-ups, then breathing rate, pressure on the bed and the
+autopilot's temperature changes against the clock, and the tuning for that side. A night
+belongs to the morning it ended on. **Export** downloads the nights of the last week, two
+weeks, one, two or three months with their minute rows, the sleep rules and what was learned,
+as one JSON file. `GET /api/autopilot/nights` and `GET /api/autopilot/nights/export` return the
+same. The
 biometrics service keeps its own sleep records in its database; these files are separate and do
 not need it.
 

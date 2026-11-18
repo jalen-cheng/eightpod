@@ -6,7 +6,7 @@
 // A Pod 5's firmware publishes both on its local message bus (NATS). A Pod without that bus, or
 // without those subjects, simply never produces a reading: presence stays "not available", no
 // measured temperature is shown, and nothing else is affected.
-import { recordPiezoSecond, recordSurroundings } from '../autopilot/autopilotMonitor.js';
+import { recordPiezoSecond, recordPressure, recordSurroundings } from '../autopilot/autopilotMonitor.js';
 import { readFileSync, writeFileSync } from 'fs';
 import { registerInBedCheck } from '../jobs/inBedCheck.js';
 import cbor from 'cbor';
@@ -231,6 +231,7 @@ export class BedSensorMonitor {
       const reading = message[toFirmwareSide(side)];
       if (!reading) continue;
       const estimate = this.detectors[side].update(reading, nowMs, presenceDelta);
+      recordPressure(side, estimate.signal - estimate.baseline);
       const previous = latest[side];
       if (previous?.present === estimate.present) {
         latest[side] = { ...estimate, changedAt: previous.changedAt };

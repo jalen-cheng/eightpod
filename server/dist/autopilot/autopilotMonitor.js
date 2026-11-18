@@ -4,7 +4,7 @@
 // modules beside this file; this one holds the state and talks to the Pod. Pod 5 only: it needs
 // the sensor bus.
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="0a7f8c9a-a120-5527-b440-e17784bfbcde")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="84aec3e9-59b3-5c58-91f0-98d6a5fb2acd")}catch(e){}}();
 import { readFileSync, writeFileSync } from 'fs';
 import moment from 'moment-timezone';
 import config from '../config.js';
@@ -22,6 +22,7 @@ import { HEART_RATE_WINDOW_SECONDS, countMovementSeconds, estimateHeartRate, mea
 import { registerManualChangeListener } from './manualChanges.js';
 import { deleteNight, listNights, pruneNights, saveNight } from './nightLog.js';
 import { NO_LEARNED_OFFSETS, learnFromCorrection, nightPartAt, planTemperature, } from './nightPlan.js';
+import { countWakeUps } from './nightRecord.js';
 import { NAP_UNDER_MINUTES, findScheduledTemperatureF, findUsualSleep, isNightExpected, kindOfSleep, } from './scheduledBase.js';
 import { DEFAULT_SLEEP_RULES, calibrateSleepRules, createSleepTracker, } from './sleepTracker.js';
 const SIDES = ['left', 'right'];
@@ -76,6 +77,7 @@ const newSideState = (side) => ({
 const sides = { left: newSideState('left'), right: newSideState('right') };
 let room;
 const surfaces = {};
+const pressures = {};
 let lastPiezoAtMs = 0;
 const median = (values) => {
     if (values.length === 0)
@@ -129,6 +131,10 @@ export function recordPiezoSecond(side, samples) {
     estimateHeartRateNow(state);
     estimateBreathingRateNow(state);
 }
+// How far a side's pressure sensors read above the empty bed, as the presence detector has it
+export function recordPressure(side, value) {
+    pressures[side] = { value, atMs: Date.now() };
+}
 // The air at the cover and the mattress surface under each side, in °F
 export function recordSurroundings(reading) {
     const atMs = Date.now();
@@ -178,20 +184,38 @@ const summarise = ({ minutes, ...rest }) => {
         minutesLogged: minutes.length,
         heartRate: middle(asleep.map(minute => minute.heartRate)),
         breathingRate: middle(asleep.map(minute => minute.breathingRate)),
+        wakeUps: countWakeUps(minutes),
     };
 };
-// Everything saved, for keeping a copy off the Pod: every night with its minute rows, and what
-// has been learned
-export function getNightsExport() {
-    const open = SIDES.flatMap(side => (sides[side].stay ? [sides[side].stay] : []));
+const DAY_MS = 24 * 60 * MINUTE_MS;
+// Every saved stay with any still under way, newest first
+const readAllNights = (side) => {
+    const open = SIDES.flatMap(openSide => (sides[openSide].stay && (!side || openSide === side) ? [sides[openSide].stay] : []));
     const isOpen = (night) => open.some(stay => stay.side === night.side && stay.startedAtMs === night.startedAtMs);
+    return [...open, ...listNights(side).filter(night => !isOpen(night))].sort((first, second) => second.startedAtMs - first.startedAtMs);
+};
+// A side's stays that ended on a calendar day (YYYY-MM-DD, in the Pod's time zone), in full,
+// longest first. A night belongs to the morning it ended on, so today's date shows last night.
+export function getNightsOn(date, side) {
+    const endDate = (night) => moment
+        .tz(night.startedAtMs + night.minutes.length * MINUTE_MS, settingsDB.data.timeZone)
+        .format('YYYY-MM-DD');
+    return readAllNights(side)
+        .filter(night => endDate(night) === date)
+        .sort((first, second) => second.minutes.length - first.minutes.length)
+        .map(night => ({ ...summarise(night), minutes: night.minutes }));
+}
+// What is saved, for keeping a copy off the Pod: the nights of the last `days` days with their
+// minute rows, and what has been learned
+export function getNightsExport(days, nowMs = Date.now()) {
     return {
-        exportedAt: new Date().toISOString(),
+        exportedAt: new Date(nowMs).toISOString(),
+        days,
         timeZone: settingsDB.data.timeZone,
         learned,
         rules,
         trackerLinks,
-        nights: [...open, ...listNights().filter(night => !isOpen(night))],
+        nights: readAllNights().filter(night => night.startedAtMs >= nowMs - days * DAY_MS),
     };
 }
 // When this side's sleeper has been falling asleep and waking, from their saved nights
@@ -390,6 +414,7 @@ export class AutopilotMonitor {
             heartRate: minute.heartRate === undefined ? undefined : Math.round(minute.heartRate),
             breathingRate: minute.breathingRate === undefined ? undefined : Math.round(minute.breathingRate * 10) / 10,
             breathingSpread: minute.breathingSpread === undefined ? undefined : Math.round(minute.breathingSpread * 10) / 10,
+            pressure: pressures[side] && nowMs - pressures[side].atMs < SURROUNDINGS_STALE_MS ? Math.round(pressures[side].value) : undefined,
             stage: state.sleep.stage,
             offsetF: state.night ? state.lastPlan?.offsetF : undefined,
             roomF: room && nowMs - room.atMs < SURROUNDINGS_STALE_MS ? Math.round(room.temperatureF * 10) / 10 : undefined,
@@ -493,8 +518,12 @@ export class AutopilotMonitor {
         state.lastChangeAtMs = nowMs;
         state.lastChangeReason = `${now.format('h:mm A')}: ${describePlan(plan, state.sleep.stage)}`;
         logger.debug(`Autopilot: ${side} side to ${plan.targetTemperatureF}°F, ${describePlan(plan, state.sleep.stage)}`);
-        await updateDeviceStatus({ [side]: { targetTemperatureF: plan.targetTemperatureF } });
+        // Each side is steered by its own sleeper. With the sides linked and the other one empty,
+        // the bed is one sleeper's, so it follows them as it would follow their hand on the dial.
+        const otherSide = side === 'left' ? 'right' : 'left';
+        const steeredSides = settingsDB.data.linkSides && sides[otherSide].sleep.stage === 'out' ? [side, otherSide] : [side];
+        await updateDeviceStatus(Object.fromEntries(steeredSides.map(steered => [steered, { targetTemperatureF: plan.targetTemperatureF }])));
     }
 }
 //# sourceMappingURL=autopilotMonitor.js.map
-//# debugId=0a7f8c9a-a120-5527-b440-e17784bfbcde
+//# debugId=84aec3e9-59b3-5c58-91f0-98d6a5fb2acd

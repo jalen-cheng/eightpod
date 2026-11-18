@@ -1,145 +1,149 @@
 /* eslint-disable react/no-multi-comp */
-import moment from 'moment-timezone';
-import { Box, Button, Divider, Paper, Typography } from '@mui/material';
+import { ReactNode, useState } from 'react';
+import moment, { Moment } from 'moment-timezone';
+import { Box, IconButton, Paper, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import NightsStayOutlinedIcon from '@mui/icons-material/NightsStayOutlined';
-import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
-import { baseURL } from '@api/api';
-import { AutopilotSnapshot, NightSummary, useAutopilot, useAutopilotNights } from '@api/autopilot.ts';
+import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore';
+import NavigateNextIcon from '@mui/icons-material/NavigateNext';
+import BedtimeOutlinedIcon from '@mui/icons-material/BedtimeOutlined';
+import AlarmOutlinedIcon from '@mui/icons-material/AlarmOutlined';
+import HourglassEmptyOutlinedIcon from '@mui/icons-material/HourglassEmptyOutlined';
+import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
+import WatchOutlinedIcon from '@mui/icons-material/WatchOutlined';
+import { NightDetail, useAutopilot, useNightsOn } from '@api/autopilot.ts';
 import StatusTag from '@components/StatusTag.tsx';
+import { useAppStore } from '@state/appStore.tsx';
 import PageContainer from '../../PageContainer.tsx';
 import Header from '../Header.tsx';
+import ExportMenu from './ExportMenu.tsx';
+import NightChart from './NightChart.tsx';
+import TuningCard from './TuningCard.tsx';
 
+const DATE_FORMAT = 'YYYY-MM-DD';
 const SIDES = ['left', 'right'] as const;
-const NIGHTS_SHOWN = 30;
-const EXPORT_ADDRESS = `${baseURL}/api/autopilot/nights/export`;
 
 const formatClock = (timeMs: number) => moment(timeMs).format('h:mm A');
-const formatSpan = (fromMs: number, untilMs: number) => `${formatClock(fromMs)} to ${formatClock(untilMs)}`;
-const formatLength = (minutes: number) => `${Math.floor(minutes / 60)} h ${String(Math.round(minutes % 60)).padStart(2, '0')} min`;
-const formatDegrees = (offsetF: number) => `${offsetF > 0 ? '+' : ''}${offsetF}°F`;
+const formatLength = (minutes: number) => `${Math.floor(minutes / 60)}h ${String(Math.round(minutes % 60)).padStart(2, '0')}m`;
 
-// "12 min later" or "3 min earlier": how the bed's time compares with the worn tracker's
-const formatDifference = (bedMs: number, trackerMs: number) => {
-  const minutes = Math.round((bedMs - trackerMs) / 60_000);
-  return minutes === 0 ? 'same' : `${Math.abs(minutes)} min ${minutes > 0 ? 'later' : 'earlier'}`;
-};
+type SummaryRowProps = { icon: ReactNode; label: string; value: string };
 
-type FactProps = { label: string; value: string };
-
-// One labelled figure on a line
-const Fact = ({ label, value }: FactProps) => (
-  <Box sx={ { display: 'flex', justifyContent: 'space-between', gap: 2 } }>
-    <Typography variant="body2" sx={ { color: 'text.secondary' } }>{ label }</Typography>
-    <Typography variant="body2" sx={ { textAlign: 'right' } }>{ value }</Typography>
+// One figure of the night: an icon, its name, and the figure on the right
+const SummaryRow = ({ icon, label, value }: SummaryRowProps) => (
+  <Box sx={ { display: 'flex', alignItems: 'center', gap: 1.5 } }>
+    <Box sx={ { display: 'grid', placeItems: 'center', color: 'text.secondary', '& svg': { fontSize: 20 } } }>{ icon }</Box>
+    <Typography sx={ { fontSize: 14, fontWeight: 500, flex: 1 } }>{ label }</Typography>
+    <Typography sx={ { fontSize: 14 } }>{ value }</Typography>
   </Box>
 );
 
-// One stay in bed: when the bed thought sleep began and ended, and what a worn tracker said
-const NightCard = ({ night }: { night: NightSummary }) => {
-  const hasSleep = night.asleepAtMs !== undefined && night.awakeAtMs !== undefined;
-  const readings = [
-    night.heartRate !== undefined && `${Math.round(night.heartRate)} bpm`,
-    night.breathingRate !== undefined && `${Math.round(night.breathingRate)} breaths a minute`,
-  ].filter(Boolean).join(' · ');
+// When the sleeper went to sleep and woke, for how long, and how often sleep was broken
+const NightSummary = ({ night }: { night: NightDetail }) => {
+  const { asleepAtMs, awakeAtMs, tracker } = night;
+  const hasSleep = asleepAtMs !== undefined && awakeAtMs !== undefined;
   return (
-    <Paper sx={ { p: 2, display: 'flex', flexDirection: 'column', gap: 0.75 } }>
-      <Box sx={ { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 1 } }>
-        <Typography sx={ { fontWeight: 600 } }>
-          { moment(night.startedAtMs).format('ddd D MMM') } · { night.side === 'left' ? 'Left' : 'Right' }
-        </Typography>
+    <Paper sx={ { p: 2, display: 'flex', flexDirection: 'column', gap: 1.25 } }>
+      <Box sx={ { display: 'flex', justifyContent: 'space-between', alignItems: 'center' } }>
+        <Typography sx={ { fontWeight: 600 } }>Summary</Typography>
         <StatusTag
           tone={ !hasSleep ? 'neutral' : night.kind === 'nap' ? 'info' : 'good' }
           label={ !hasSleep ? 'No sleep seen' : night.kind === 'nap' ? 'Nap' : 'Night' }
         />
       </Box>
-      <Fact label="In bed" value={ `${formatClock(night.startedAtMs)}, ${formatLength(night.minutesLogged)}` }/>
-      { night.asleepAtMs !== undefined && night.awakeAtMs !== undefined && (
-        <Fact
-          label="Asleep (bed)"
-          value={ `${formatSpan(night.asleepAtMs, night.awakeAtMs)}, ${formatLength((night.awakeAtMs - night.asleepAtMs) / 60_000)}` }
+      <SummaryRow icon={ <BedtimeOutlinedIcon/> } label="Bedtime" value={ hasSleep ? formatClock(asleepAtMs) : '-' }/>
+      <SummaryRow icon={ <AlarmOutlinedIcon/> } label="Wake time" value={ hasSleep ? formatClock(awakeAtMs) : '-' }/>
+      <SummaryRow
+        icon={ <HourglassEmptyOutlinedIcon/> }
+        label="Duration"
+        value={ hasSleep ? formatLength((awakeAtMs - asleepAtMs) / 60_000) : '-' }
+      />
+      <SummaryRow icon={ <VisibilityOutlinedIcon/> } label="Wake-ups" value={ hasSleep ? String(night.wakeUps) : '-' }/>
+      { tracker && (
+        <SummaryRow
+          icon={ <WatchOutlinedIcon/> }
+          label={ tracker.source }
+          value={ `${formatClock(tracker.asleepAtMs)} to ${formatClock(tracker.awakeAtMs)}` }
         />
       ) }
-      { night.tracker && (
-        <Fact
-          label={ `Asleep (${night.tracker.source})` }
-          value={ formatSpan(night.tracker.asleepAtMs, night.tracker.awakeAtMs) }
-        />
-      ) }
-      { night.tracker && night.asleepAtMs !== undefined && night.awakeAtMs !== undefined && (
-        <Fact
-          label="Bed against tracker"
-          value={
-            `asleep ${formatDifference(night.asleepAtMs, night.tracker.asleepAtMs)}, `
-            + `awake ${formatDifference(night.awakeAtMs, night.tracker.awakeAtMs)}`
-          }
-        />
-      ) }
-      { readings && <Fact label="While asleep" value={ readings }/> }
     </Paper>
   );
 };
 
-// What the bed has tuned for one side: how it judges sleep, and what your changes taught it
-const TuningCard = ({ side, tuning }: { side: typeof SIDES[number]; tuning: AutopilotSnapshot['left'] }) => {
-  const { rules, tracker, learned } = tuning;
-  const breathing = rules.maxBreathingSpread === undefined ? '' : `, breathing steady to ${rules.maxBreathingSpread} a minute`;
-  return (
-    <Paper sx={ { p: 2, display: 'flex', flexDirection: 'column', gap: 0.75 } }>
-      <Typography sx={ { fontWeight: 600 } }>{ side === 'left' ? 'Left' : 'Right' }</Typography>
-      <Fact label="Asleep after" value={ `${rules.stillMinutesToSleep} still minutes${breathing}` }/>
-      <Fact label="Awake after" value={ `3 minutes in 5 with ${rules.restlessSecondsToWake}+ moving seconds` }/>
-      <Fact
-        label="Sleep tracker"
-        value={ tracker
-          ? `${tracker.source}, ${tracker.nights} ${tracker.nights === 1 ? 'night' : 'nights'}: off by ${tracker.onsetErrorMinutes} min asleep, `
-            + `${tracker.wakeErrorMinutes} min awake`
-          : 'Not linked' }
-      />
-      <Fact
-        label="Learned from your changes"
-        value={ `early ${formatDegrees(learned.early)}, middle ${formatDegrees(learned.middle)}, late ${formatDegrees(learned.late)}` }
-      />
-    </Paper>
-  );
-};
-
-// The stays in bed the Pod has saved, what it has tuned from them, and a way to keep a copy.
-// These come from the autopilot's own log, so they are here whether or not biometrics is on.
+// One day at a time: last night by default, with arrows and a calendar to move to another.
+// A night belongs to the morning it ended on. These come from the autopilot's own log, so
+// they are here whether or not biometrics is on.
 export default function NightsPage() {
-  const { data: nights } = useAutopilotNights(NIGHTS_SHOWN);
+  const { side, setSide } = useAppStore();
+  const [day, setDay] = useState<Moment>(moment().startOf('day'));
+  const [stayIndex, setStayIndex] = useState(0);
+  const { data: nights } = useNightsOn(day.format(DATE_FORMAT), side);
   const { data: autopilot } = useAutopilot();
+  const isToday = day.isSameOrAfter(moment(), 'day');
+  const night = nights?.[Math.min(stayIndex, nights.length - 1)];
+
+  const showDay = (nextDay: Moment) => {
+    setDay(nextDay.clone().startOf('day'));
+    setStayIndex(0);
+  };
 
   return (
     <PageContainer sx={ { mb: 15, mt: 2 } }>
-      <Header title="Nights" icon={ <NightsStayOutlinedIcon/> }/>
+      <Box sx={ { display: 'flex', alignItems: 'flex-start', gap: 1, width: '100%' } }>
+        <Header title="Nights" icon={ <NightsStayOutlinedIcon/> }/>
+        <ExportMenu/>
+      </Box>
       <Box sx={ { display: 'flex', flexDirection: 'column', gap: 2, width: '100%' } }>
-        <Box sx={ { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 2 } }>
-          <Typography variant="body2" sx={ { color: 'text.secondary' } }>
-            Every stay in bed of 20 minutes or more, saved on the Pod. The newest 180 are kept.
-          </Typography>
-          <Button
-            size="small"
-            variant="outlined"
-            component="a"
-            href={ EXPORT_ADDRESS }
-            download
-            startIcon={ <FileDownloadOutlinedIcon/> }
-            sx={ { flexShrink: 0 } }
-          >
-            Export
-          </Button>
+        <Box sx={ { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1 } }>
+          <IconButton aria-label="Previous day" onClick={ () => showDay(day.clone().subtract(1, 'day')) }>
+            <NavigateBeforeIcon/>
+          </IconButton>
+          <DatePicker
+            value={ day }
+            onChange={ (picked) => picked?.isValid() && showDay(picked) }
+            disableFuture
+            format="ddd D MMM YYYY"
+            slotProps={ { textField: { size: 'small', sx: { width: 190 }, 'aria-label': 'Day shown' } } }
+          />
+          <IconButton aria-label="Next day" disabled={ isToday } onClick={ () => showDay(day.clone().add(1, 'day')) }>
+            <NavigateNextIcon/>
+          </IconButton>
         </Box>
-        { autopilot?.available && (
+        <Box sx={ { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 1, flexWrap: 'wrap' } }>
+          <ToggleButtonGroup
+            exclusive
+            size="small"
+            value={ side }
+            onChange={ (_event, picked: typeof side | null) => picked && setSide(picked) }
+          >
+            { SIDES.map(option => (
+              <ToggleButton key={ option } value={ option } sx={ { px: 2 } }>{ option === 'left' ? 'Left' : 'Right' }</ToggleButton>
+            )) }
+          </ToggleButtonGroup>
+          { nights && nights.length > 1 && (
+            <ToggleButtonGroup
+              exclusive
+              size="small"
+              value={ stayIndex }
+              onChange={ (_event, picked: number | null) => picked !== null && setStayIndex(picked) }
+            >
+              { nights.map((stay, index) => (
+                <ToggleButton key={ stay.startedAtMs } value={ index } sx={ { px: 1.5 } }>
+                  { stay.kind === 'nap' ? 'Nap' : 'Night' } { formatClock(stay.asleepAtMs ?? stay.startedAtMs) }
+                </ToggleButton>
+              )) }
+            </ToggleButtonGroup>
+          ) }
+        </Box>
+        { nights?.length === 0 && (
+          <Typography sx={ { color: 'text.secondary', textAlign: 'center', py: 3 } }>Nothing saved for this day.</Typography>
+        ) }
+        { night && (
           <>
-            <Typography variant="h6">Tuning</Typography>
-            { SIDES.map(side => <TuningCard key={ side } side={ side } tuning={ autopilot[side] }/>) }
-            <Divider/>
+            <NightSummary night={ night }/>
+            <NightChart night={ night }/>
           </>
         ) }
-        { nights?.length === 0 && (
-          <Typography sx={ { color: 'text.secondary' } }>Nothing saved yet. The first night appears here in the morning.</Typography>
-        ) }
-        { nights?.map(night => <NightCard key={ `${night.side}-${night.startedAtMs}` } night={ night }/>) }
+        { autopilot?.available && <TuningCard tuning={ autopilot[side] }/> }
       </Box>
     </PageContainer>
   );

@@ -7,8 +7,8 @@
 // without those subjects, simply never produces a reading: presence stays "not available", no
 // measured temperature is shown, and nothing else is affected.
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="7eeb2bed-e512-56e7-a078-939f8a44ae1c")}catch(e){}}();
-import { recordPiezoSecond, recordSurroundings } from '../autopilot/autopilotMonitor.js';
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="a330650c-62b3-5818-a8c5-e2b3a6e36a10")}catch(e){}}();
+import { recordPiezoSecond, recordPressure, recordSurroundings } from '../autopilot/autopilotMonitor.js';
 import { readFileSync, writeFileSync } from 'fs';
 import { registerInBedCheck } from '../jobs/inBedCheck.js';
 import cbor from 'cbor';
@@ -212,6 +212,7 @@ export class BedSensorMonitor {
             if (!reading)
                 continue;
             const estimate = this.detectors[side].update(reading, nowMs, presenceDelta);
+            recordPressure(side, estimate.signal - estimate.baseline);
             const previous = latest[side];
             if (previous?.present === estimate.present) {
                 latest[side] = { ...estimate, changedAt: previous.changedAt };
@@ -295,4 +296,4 @@ export class BedSensorMonitor {
     }
 }
 //# sourceMappingURL=bedSensorMonitor.js.map
-//# debugId=7eeb2bed-e512-56e7-a078-939f8a44ae1c
+//# debugId=a330650c-62b3-5818-a8c5-e2b3a6e36a10

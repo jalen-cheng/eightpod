@@ -50,35 +50,64 @@ const notFound = (message: string) => HttpResponse.json({ message }, { status: 4
 // As on a Pod, there is no sleep data unless biometrics is switched on in Settings
 const isBiometricsOn = () => getServices().biometrics.enabled;
 
+const MINUTE_MS = 60_000;
+const DAY_MS = 24 * 60 * MINUTE_MS;
+
+// A made-up stay in bed, minute by minute: a while awake, sleep with a wake-up or two, then up
+const buildDemoNight = (startedAtMs: number, asleepMinutes: number, variant: number) => {
+  const settlingMinutes = 14 + variant * 2;
+  const isNap = asleepMinutes < 180;
+  const wakeUpAt = isNap ? [] : [Math.round(asleepMinutes * 0.42), Math.round(asleepMinutes * 0.78)].slice(0, 1 + (variant % 2));
+  const totalMinutes = settlingMinutes + asleepMinutes + 8;
+  const minutes = Array.from({ length: totalMinutes }, (_unused, index) => {
+    const sinceAsleep = index - settlingMinutes;
+    const isAwakeBreak = wakeUpAt.some(at => sinceAsleep >= at && sinceAsleep < at + 5);
+    const isAsleep = sinceAsleep >= 0 && sinceAsleep < asleepMinutes && !isAwakeBreak;
+    const progress = Math.min(1, Math.max(0, sinceAsleep / asleepMinutes));
+    const wobble = Math.sin(index / 7 + variant) + Math.sin(index / 23);
+    // The night curve: two degrees cool early, back by late night, a degree warm at the end
+    const offsetF = isNap || sinceAsleep < 0 ? undefined
+      : Math.round(progress < 0.1 ? -20 * progress : progress < 0.5 ? -2 : progress < 0.85 ? (progress - 0.85) * 5.7 : (progress - 0.85) * 6.7);
+    return {
+      movementSeconds: isAsleep ? (index % 37 === 0 ? 6 : 0) : 18,
+      heartRate: isAsleep ? Math.round(55 + wobble) : 66,
+      breathingRate: Math.round((isAsleep ? 14.5 + wobble * 0.5 : 17 + wobble) * 10) / 10,
+      breathingSpread: isAsleep ? 1 : 4,
+      pressure: Math.round(2400 + wobble * 60 + (isAsleep ? 0 : 250)),
+      stage: isAsleep ? 'asleep' : 'awake',
+      offsetF,
+    };
+  });
+  const asleepAtMs = startedAtMs + settlingMinutes * MINUTE_MS;
+  const awakeAtMs = asleepAtMs + asleepMinutes * MINUTE_MS;
+  return {
+    side: 'left', startedAtMs, minutes, minutesLogged: totalMinutes, kind: isNap ? 'nap' : 'night', asleepAtMs, awakeAtMs,
+    heartRate: 55, breathingRate: 14.5, wakeUps: wakeUpAt.length,
+    tracker: isNap ? undefined : {
+      source: 'Apple Health', asleepAtMs: asleepAtMs - (9 - variant % 6) * MINUTE_MS, awakeAtMs: awakeAtMs + (variant % 5 - 2) * MINUTE_MS,
+      receivedAtMs: awakeAtMs + 40 * MINUTE_MS,
+    },
+  };
+};
+
 export const handlers = [
   http.post('/api/metrics/presence/sensors/empty', async () => {
     await delay(120);
     return new HttpResponse(null, { status: 204 });
   }),
-  // A week of saved nights on the left, each with a watch's times a few minutes off the bed's, and a nap
-  http.get('/api/autopilot/nights', async () => {
+  // Saved nights: one for each of the last two weeks on the left side, each with a watch's times
+  // a few minutes off the bed's, and a nap yesterday afternoon
+  http.get('/api/autopilot/nights', async ({ request }) => {
     await delay(80);
-    const MINUTE_MS = 60_000;
-    const lastMidnight = new Date().setHours(0, 0, 0, 0);
-    const nights = Array.from({ length: 7 }, (_unused, index) => {
-      const startedAtMs = lastMidnight - index * 24 * 60 * MINUTE_MS - (70 - index * 4) * MINUTE_MS;
-      const asleepAtMs = startedAtMs + (18 + index * 2) * MINUTE_MS;
-      const awakeAtMs = asleepAtMs + (430 + index * 6) * MINUTE_MS;
-      return {
-        side: 'left', startedAtMs, minutesLogged: Math.round((awakeAtMs - startedAtMs) / MINUTE_MS) + 9, kind: 'night',
-        asleepAtMs, awakeAtMs, heartRate: 54 + (index % 3), breathingRate: 14 - (index % 2),
-        tracker: {
-          source: 'Apple Health', asleepAtMs: asleepAtMs - (9 - index) * MINUTE_MS, awakeAtMs: awakeAtMs + (index - 3) * MINUTE_MS,
-          receivedAtMs: awakeAtMs + 40 * MINUTE_MS,
-        },
-      };
-    });
-    const napStartedAtMs = lastMidnight - 9 * 60 * MINUTE_MS;
-    nights.splice(1, 0, {
-      side: 'left', startedAtMs: napStartedAtMs, minutesLogged: 58, kind: 'nap',
-      asleepAtMs: napStartedAtMs + 12 * MINUTE_MS, awakeAtMs: napStartedAtMs + 52 * MINUTE_MS, heartRate: 58, breathingRate: 15,
-    } as typeof nights[number]);
-    return HttpResponse.json(nights);
+    const query = new URL(request.url).searchParams;
+    const date = query.get('date');
+    if (!date || query.get('side') !== 'left') return HttpResponse.json([]);
+    const dayStartMs = new Date(`${date}T00:00:00`).getTime();
+    const daysAgo = Math.round((new Date().setHours(0, 0, 0, 0) - dayStartMs) / DAY_MS);
+    if (daysAgo < 0 || daysAgo > 13) return HttpResponse.json([]);
+    const night = buildDemoNight(dayStartMs - (70 - daysAgo * 3) * MINUTE_MS, 450 + daysAgo * 5, daysAgo);
+    const nap = daysAgo === 1 ? [buildDemoNight(dayStartMs + 15 * 60 * MINUTE_MS, 45, 3)] : [];
+    return HttpResponse.json([night, ...nap]);
   }),
   http.get('/api/autopilot/nights/export', async () => {
     await delay(80);

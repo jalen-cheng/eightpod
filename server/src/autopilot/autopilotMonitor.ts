@@ -26,7 +26,7 @@ import { deleteNight, listNights, pruneNights, saveNight } from './nightLog.js';
 import {
   LearnedOffsets, NO_LEARNED_OFFSETS, NightPart, Plan, Surroundings, learnFromCorrection, nightPartAt, planTemperature,
 } from './nightPlan.js';
-import type { NightRecord, NightSummary } from './nightRecord.js';
+import { NightDetail, NightRecord, NightSummary, countWakeUps } from './nightRecord.js';
 import {
   NAP_UNDER_MINUTES, UsualSleep, findScheduledTemperatureF, findUsualSleep, isNightExpected, kindOfSleep,
 } from './scheduledBase.js';
@@ -129,6 +129,7 @@ const newSideState = (side: Side): SideState => ({
 const sides: Record<Side, SideState> = { left: newSideState('left'), right: newSideState('right') };
 let room: { temperatureF: number; humidityPercent?: number; atMs: number } | undefined;
 const surfaces: Partial<Record<Side, { temperatureF: number; atMs: number }>> = {};
+const pressures: Partial<Record<Side, { value: number; atMs: number }>> = {};
 let lastPiezoAtMs = 0;
 
 const median = (values: number[]): number | undefined => {
@@ -177,6 +178,11 @@ export function recordPiezoSecond(side: Side, samples: number[]) {
   state.minuteSwings.push(measureSwing(samples));
   estimateHeartRateNow(state);
   estimateBreathingRateNow(state);
+}
+
+// How far a side's pressure sensors read above the empty bed, as the presence detector has it
+export function recordPressure(side: Side, value: number) {
+  pressures[side] = { value, atMs: Date.now() };
 }
 
 // The air at the cover and the mattress surface under each side, in °F
@@ -230,21 +236,42 @@ const summarise = ({ minutes, ...rest }: NightRecord): NightSummary => {
     minutesLogged: minutes.length,
     heartRate: middle(asleep.map(minute => minute.heartRate)),
     breathingRate: middle(asleep.map(minute => minute.breathingRate)),
+    wakeUps: countWakeUps(minutes),
   };
 };
 
-// Everything saved, for keeping a copy off the Pod: every night with its minute rows, and what
-// has been learned
-export function getNightsExport() {
-  const open = SIDES.flatMap(side => (sides[side].stay ? [sides[side].stay] : []));
+const DAY_MS = 24 * 60 * MINUTE_MS;
+
+// Every saved stay with any still under way, newest first
+const readAllNights = (side?: Side): NightRecord[] => {
+  const open = SIDES.flatMap(openSide => (sides[openSide].stay && (!side || openSide === side) ? [sides[openSide].stay] : []));
   const isOpen = (night: NightRecord) => open.some(stay => stay.side === night.side && stay.startedAtMs === night.startedAtMs);
+  return [...open, ...listNights(side).filter(night => !isOpen(night))].sort((first, second) => second.startedAtMs - first.startedAtMs);
+};
+
+// A side's stays that ended on a calendar day (YYYY-MM-DD, in the Pod's time zone), in full,
+// longest first. A night belongs to the morning it ended on, so today's date shows last night.
+export function getNightsOn(date: string, side: Side): NightDetail[] {
+  const endDate = (night: NightRecord) => moment
+    .tz(night.startedAtMs + night.minutes.length * MINUTE_MS, settingsDB.data.timeZone)
+    .format('YYYY-MM-DD');
+  return readAllNights(side)
+    .filter(night => endDate(night) === date)
+    .sort((first, second) => second.minutes.length - first.minutes.length)
+    .map(night => ({ ...summarise(night), minutes: night.minutes }));
+}
+
+// What is saved, for keeping a copy off the Pod: the nights of the last `days` days with their
+// minute rows, and what has been learned
+export function getNightsExport(days: number, nowMs: number = Date.now()) {
   return {
-    exportedAt: new Date().toISOString(),
+    exportedAt: new Date(nowMs).toISOString(),
+    days,
     timeZone: settingsDB.data.timeZone,
     learned,
     rules,
     trackerLinks,
-    nights: [...open, ...listNights().filter(night => !isOpen(night))],
+    nights: readAllNights().filter(night => night.startedAtMs >= nowMs - days * DAY_MS),
   };
 }
 
@@ -445,6 +472,7 @@ export class AutopilotMonitor {
       heartRate: minute.heartRate === undefined ? undefined : Math.round(minute.heartRate),
       breathingRate: minute.breathingRate === undefined ? undefined : Math.round(minute.breathingRate * 10) / 10,
       breathingSpread: minute.breathingSpread === undefined ? undefined : Math.round(minute.breathingSpread * 10) / 10,
+      pressure: pressures[side] && nowMs - pressures[side].atMs < SURROUNDINGS_STALE_MS ? Math.round(pressures[side].value) : undefined,
       stage: state.sleep.stage,
       offsetF: state.night ? state.lastPlan?.offsetF : undefined,
       roomF: room && nowMs - room.atMs < SURROUNDINGS_STALE_MS ? Math.round(room.temperatureF * 10) / 10 : undefined,
@@ -541,6 +569,10 @@ export class AutopilotMonitor {
     state.lastChangeAtMs = nowMs;
     state.lastChangeReason = `${now.format('h:mm A')}: ${describePlan(plan, state.sleep.stage)}`;
     logger.debug(`Autopilot: ${side} side to ${plan.targetTemperatureF}°F, ${describePlan(plan, state.sleep.stage)}`);
-    await updateDeviceStatus({ [side]: { targetTemperatureF: plan.targetTemperatureF } });
+    // Each side is steered by its own sleeper. With the sides linked and the other one empty,
+    // the bed is one sleeper's, so it follows them as it would follow their hand on the dial.
+    const otherSide: Side = side === 'left' ? 'right' : 'left';
+    const steeredSides = settingsDB.data.linkSides && sides[otherSide].sleep.stage === 'out' ? [side, otherSide] : [side];
+    await updateDeviceStatus(Object.fromEntries(steeredSides.map(steered => [steered, { targetTemperatureF: plan.targetTemperatureF }])));
   }
 }
