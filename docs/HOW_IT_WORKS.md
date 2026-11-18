@@ -1,10 +1,10 @@
 # How this fork works
 
-Everything that runs on the Pod, what each part does, how the features affect each other, and what
-changed from the original project ([throwaway31265/free-sleep](https://github.com/throwaway31265/free-sleep)).
+Everything that runs on the Pod, what each part does, and how the features affect each other.
+What changed from the original project is in the [README](../README.md); this fork builds on ([throwaway31265/free-sleep](https://github.com/throwaway31265/free-sleep)).
 Written from the code on `main` on 17 Nov 2026. File references are for anyone who wants to check.
 
-For the list of changes by pull request and what was tested on a Pod, see [FORK_STATUS.md](FORK_STATUS.md).
+For how to use the app, see [USING.md](USING.md). For the list of changes and what was tested on a Pod, see [CHANGELOG.md](../CHANGELOG.md).
 
 - [1. The parts](#1-the-parts)
 - [2. Where things are stored](#2-where-things-are-stored)
@@ -13,14 +13,13 @@ For the list of changes by pull request and what was tested on a Pod, see [FORK_
 - [5. Alarms](#5-alarms)
 - [6. Pod 5 buttons and Pod 4 taps](#6-pod-5-buttons-and-pod-4-taps)
 - [7. Linked sides and away mode](#7-linked-sides-and-away-mode)
-- [In-bed detection (Pod 5)](#in-bed-detection-pod-5)
-- [8. Daily housekeeping: priming, reboot, calibration](#8-daily-housekeeping-priming-reboot-calibration)
-- [9. The app, page by page](#9-the-app-page-by-page)
-- [10. The API and phone shortcuts](#10-the-api-and-phone-shortcuts)
-- [11. Network: the internet block, the name, Tailscale](#11-network-the-internet-block-the-name-tailscale)
-- [12. Installing and updating](#12-installing-and-updating)
-- [13. How features interact](#13-how-features-interact)
-- [14. What changed from the original project](#14-what-changed-from-the-original-project)
+- [8. In-bed detection (Pod 5)](#8-in-bed-detection-pod-5)
+- [9. Daily housekeeping: priming, reboot, calibration](#9-daily-housekeeping-priming-reboot-calibration)
+- [10. The app, page by page](#10-the-app-page-by-page)
+- [11. The API and phone shortcuts](#11-the-api-and-phone-shortcuts)
+- [12. Network: the internet block, the name, Tailscale](#12-network-the-internet-block-the-name-tailscale)
+- [13. Installing and updating](#13-installing-and-updating)
+- [14. How features interact](#14-how-features-interact)
 - [15. Known rough edges](#15-known-rough-edges)
 
 ## 1. The parts
@@ -212,12 +211,13 @@ expiry, and the weekly schedule is not touched.
 - `{"shiftMinutes": 30}` moves the next alarm later (or earlier with a negative number) the same way.
 - "Back to schedule" in the app, or `POST /api/alarm/time/cancel`, removes it.
 
-### An alarm later than the off time
+### A one-time alarm later than the off time
 
-If an alarm (the night's own, or a one-time one) is due within 6 hours after the off time, the
-power-off job does not switch the side off. It sets the side's timer to run out two minutes after
-that alarm would finish, so the firmware switches it off then. The app allows a scheduled alarm up
-to 6 hours after the off time and says "Bed stays on until it has gone off".
+A night's own alarm is never later than its off time, because the off time is 30 minutes after it.
+A one-time alarm can be. If one is due within 6 hours after the off time, the power-off job does
+not switch the side off: it sets the side's timer to run out two minutes after that alarm would
+finish. When the alarm then goes off, the timer is set again, to 30 minutes. So the bed turns off
+30 minutes after a one-time alarm, and the two-minute figure only matters if the alarm never fires.
 
 ### Testing an alarm
 
@@ -271,12 +271,13 @@ warm-up do not run, and its controls are hidden. While either side is away, ever
 power change to the other side is **mirrored to the away side**, so the whole bed follows the
 person who is there. One-time alarms and the alarm test still vibrate an away side.
 
-## In-bed detection (Pod 5)
+## 8. In-bed detection (Pod 5)
 
 The bed has capacitive sensors under each side, three zones per side, and a Pod 5's firmware
 publishes their readings twice a second on its local message bus. Free Sleep listens to them
-(`server/src/8sleep/presenceMonitor.ts`) and works out whether someone is in bed
-(`server/src/8sleep/presenceDetector.ts`):
+(`server/src/8sleep/bedSensorMonitor.ts`), works out whether someone is in bed
+(`server/src/8sleep/presenceDetector.ts`), and decides what that sets off
+(`server/src/jobs/presenceActions.ts`):
 
 - The three zones are added up and smoothed over 5 seconds.
 - The **empty level is learned**, not fixed: it drops at once to any lower reading and creeps up
@@ -318,7 +319,7 @@ sensitivity. `GET /api/metrics/presence/sensors` returns the live signal and emp
 **Seen on the Pod:** "Turn on when I get into bed" turned both linked sides on when someone got in. Not yet
 seen: it turning off after they got out, and the long-stay alarm.
 
-## 8. Daily housekeeping: priming, reboot, calibration
+## 9. Daily housekeeping: priming, reboot, calibration
 
 All three are timed from Settings > "Prime daily" (default 14:00, on by default in this fork).
 
@@ -331,7 +332,7 @@ All three are timed from Settings > "Prime daily" (default 14:00, on by default 
 A reboot takes under a minute. After it, the internet block, the `.local` name and Tailscale come
 back by themselves. Anything held in memory (a vibrating alarm, a running warm-up) is lost.
 
-## 9. The app, page by page
+## 10. The app, page by page
 
 The app refreshes the bed's state every 5 seconds.
 
@@ -360,10 +361,10 @@ its state. Services that are jobs have a Run button.
 
 **Settings.** Time zone (set this first: the schedule runs in it), temperature format, how long
 the bed stays on when turned on by hand and whether the schedule is ignored meanwhile, LED
-brightness, side names and away mode, side buttons, priming, biometrics and error reporting, and
+brightness, side names and away mode, side buttons, in-bed detection, priming, biometrics, and
 the device: Wi-Fi, versions, update, reboot.
 
-## 10. The API and phone shortcuts
+## 11. The API and phone shortcuts
 
 Everything the app does goes through `http://<pod>:3000/api/...`, with no login. The full list is
 in [server/API.md](../server/API.md). The ones made for shortcuts:
@@ -386,7 +387,7 @@ server accepts the Pod's own addresses and names (home network addresses, `eight
 internet cannot drive the bed through your browser. Requests with no page behind them, such as
 shortcuts, are accepted.
 
-## 11. Network: the internet block, the name, Tailscale
+## 12. Network: the internet block, the name, Tailscale
 
 **The internet block** (`scripts/block_internet_access.sh`) is a firewall on the Pod that drops
 everything except: your home network, time sync, DNS lookups, address requests to the router, and
@@ -405,12 +406,12 @@ anywhere:
 - The block is opened for Tailscale's sign-in servers and the relays of two regions only, replies only.
 - A daily timer re-reads Tailscale's relay list and updates the allowed addresses.
 - Updating Free Sleep also installs a newer Tailscale when one is out.
-- **Home access never depends on it.** If Tailscale is down, `http://10.0.0.x:3000` and
+- **Home access never depends on it.** If Tailscale is down, `http://<pod-ip>:3000` and
   `eight-pod.local` work as before on your home network.
 
 Details, limits and alternatives: [REMOTE_ACCESS.md](REMOTE_ACCESS.md).
 
-## 12. Installing and updating
+## 13. Installing and updating
 
 **Install** (`scripts/install.sh`, as root) downloads this fork, installs Node, finds the
 firmware's socket path, sets up the database, creates the `free-sleep` service (and gives it
@@ -433,7 +434,7 @@ the same thing.
 **The repository contains the built app and server** (`server/public`, `server/dist`), because the
 Pod runs them as downloaded and does not build anything.
 
-## 13. How features interact
+## 14. How features interact
 
 The cases where one feature changes what another does:
 
@@ -442,7 +443,7 @@ The cases where one feature changes what another does:
 | You save any setting or schedule | Every job is rebuilt. A vibrating alarm and a running warm-up carry on |
 | A one-time alarm is set | The same morning's scheduled alarm and its warm-up are skipped. The one-time alarm uses that weekday's saved pattern, strength, length and warm-up |
 | A one-time alarm is set and the bed is off | It still vibrates; the bed stays off |
-| An alarm is due after the off time | The bed stays on until two minutes after the alarm would end |
+| A one-time alarm is due after the off time | The bed stays on for it, and turns off 30 minutes after it goes off |
 | Any night | The bed turns off 30 minutes after the wake-up time, with or without a vibrating alarm; "Bed off on dismiss" turns it off sooner |
 | A warm-up is running | Scheduled temperature changes are skipped until the alarm. Changes you make by hand are not |
 | The night's schedule is switched off | Nothing runs that night: no power on or off, no temperature changes, no alarm, no warm-up |
@@ -457,37 +458,9 @@ The cases where one feature changes what another does:
 | An update is running | Nothing scheduled fires for about four minutes |
 | Tailscale is down | Only remote access is affected |
 
-## 14. What changed from the original project
-
-| Area | Original | This fork |
-|---|---|---|
-| **Pod 5 buttons** | Not read; nothing happens | -, + and middle work, and any press stops an alarm |
-| **Temperatures** | Even spread, 55 to 110°F | Measured curve, 50 to 108°F; saved schedules converted once |
-| **Display** | °F or °C | Also Level (-10 to +10) |
-| **Alarm length** | Up to 3 minutes | Until dismissed, up to 30 minutes |
-| **Ramp up** | The firmware's flat "rise" | Real steps: 20, 40, 60, 80%, then full |
-| **Snooze** | Offered | Removed |
-| **Warm-up before the alarm** | None | 15 to 45 minutes, to a chosen temperature |
-| **Bed off after the alarm** | At the off time only | Optionally the moment it is dismissed |
-| **Alarm after the off time** | Does not go off, the bed is already off | The bed stays on for it |
-| **One-time alarm** | "Override tonight's alarm" on the Temperature page | Works when the bed is off, replaces that morning's alarm, can be shifted or cancelled, set by one request |
-| **Dismissing with two sides** | One side's dismissal silently stops the other | Linked: both stop. Not linked: the other restarts |
-| **Linked sides** | None | One switch; app, buttons, shortcuts and dismissal all follow it |
-| **Schedule page** | A form per day with day checkboxes | Day tabs, the night as a timeline, save for this day or any days |
-| **Partial schedule saves** | Sending part of an alarm wiped the rest | Merged |
-| **Shortcuts** | Whole-object requests only | Dial, alarm time, shift, cancel, status sentence |
-| **Opening by name** | Blank page under any name | Works as `eight-pod`, `eight-pod.local`, Tailscale name |
-| **Internet block** | Also blocks DNS, which can stop the clock syncing | DNS, address requests and time sync keep working; re-applied by its own service at every boot; updates come from this fork |
-| **Eight Sleep's updater** | Left running | Can be locked out |
-| **Remote access** | None | Optional Tailscale on the Pod |
-| **Daily priming** | Off by default | On by default at 14:00 |
-
-Fixes offered back to the original project are linked in the [README](../README.md); none has been
-answered yet. That has no effect on this fork.
-
 ## 15. Known rough edges
 
-Found while writing this guide. None is new; they are listed so nothing here is a surprise.
+Listed so nothing here is a surprise. [CHANGELOG.md](../CHANGELOG.md) keeps the full list.
 
 - **A restarted alarm starts over**, ramp included (the unlinked two-sides case).
 - **A time just before bedtime is treated as the next day.** With bedtime at 22:00, a change at
@@ -497,7 +470,3 @@ Found while writing this guide. None is new; they are listed so nothing here is 
 - **Not run on a Pod 3 or Pod 4.** [POD_MODELS.md](POD_MODELS.md) has the per-model detail.
 - **Holding the middle button during an alarm** turns the bed off or on but does not dismiss the
   alarm; a short press does.
-- **`server/API.md` is missing some endpoints** (starting an alarm now, raw status, jobs, logs) and
-  has a few outdated examples.
-- **The version number does not change between fork updates**, so the app always says "Up to date".
-  Use `fs-update` to get the newest.

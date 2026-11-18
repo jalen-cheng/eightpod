@@ -10,7 +10,9 @@
 - `server/`: Express TypeScript backend, LowDB JSON settings/schedules, Prisma SQLite metrics, node-schedule jobs, and Franken socket control.
 - `biometrics/`: Python stream processing, sleep detection, vitals calculation, and SQLite writes for biometrics.
 - `scripts/`: Pod install/update/reset/service helper scripts.
-- `docs/`: user-facing screenshots and hardware teardown/install docs.
+- `docs/`: user guides, screenshots and hardware teardown photos. `DEVELOPING.md` covers setup, checks and releases.
+- `tests/`: Node tests (`node --test tests/*.test.mjs`) that import the TypeScript sources directly, so the modules they load must have no runtime imports.
+- `server/dist` and `server/public` are committed build output: the Pod runs them as downloaded, so every source change ships with a rebuild.
 
 ## Common Commands
 - App typecheck: `cd app && npx tsc -b`
@@ -18,7 +20,7 @@
 - App dev server: `cd app && VITE_POD_IP=<pod-ip> npm run dev`
 - Server typecheck without writing `dist`: `cd server && npx tsc --noEmit`
 - Server lint: `cd server && npm run lint`
-- Server hot reload on Pod: `fs-dev-server` per `server/README_SERVER.md`
+- Server hot reload on Pod: `fs-dev-server` (see `DEVELOPING.md`)
 - Server local dev: `cd server && npm run dev:local`
 
 ## Runtime Notes
@@ -36,6 +38,7 @@
   - `server/src/jobs/temperatureScheduler.ts`
   - `server/src/jobs/alarmScheduler.ts`
   - `server/src/jobs/primeScheduler.ts`
+- Pure helpers the jobs rely on, each with tests in `tests/`: `server/src/jobs/scheduleTiming.ts` (which day a time belongs to), `alarmSession.ts` (alarm stretches and dismissal), `presenceActions.ts` (what being in bed sets off), `manualHold.ts`, `preWarmState.ts`, and `server/src/db/automaticOffTime.ts` (the bed's off time follows the wake-up time).
 
 ## Franken Hotspots
 - Socket lifecycle: `server/src/8sleep/frankenServer.ts`
@@ -43,6 +46,9 @@
 - Message parsing: `server/src/8sleep/messageStream.ts`
 - Hardware command map: `server/src/8sleep/deviceApi.ts`
 - Device status parsing: `server/src/8sleep/loadDeviceStatus.ts`
+- Pod 5 buttons, read from the firmware journal: `server/src/8sleep/buttonMonitor.ts`, `buttonEvents.ts`
+- Bed sensors over the firmware's NATS bus (in-bed detection, measured water temperature): `server/src/8sleep/bedSensorMonitor.ts`, `presenceDetector.ts`, `measuredWater.ts`
+- Left/right flip, applied only where the server meets the firmware: `server/src/8sleep/sideMapping.ts`
 - Startup initializes Franken from `server/src/server.ts`; health is surfaced through `server/src/serverStatus.ts`.
 
 ## Review Cautions

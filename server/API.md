@@ -1,79 +1,120 @@
-# API Endpoints
+# API reference
 
-The server exposes RESTful endpoints for interaction. All responses are JSON unless noted otherwise.
+The server on the Pod serves the web app and a JSON API on port 3000. API paths start with `/api`.
+
+```bash
+curl http://<pod-ip>:3000/api/deviceStatus
+```
+
+Contents: [General](#general) · [Device status](#device-status) · [Dial](#dial) · [Alarms](#alarms) · [Settings](#settings) · [Schedules](#schedules) · [Execute](#execute) · [Jobs](#jobs) · [Services](#services) · [Server status](#server-status) · [Logs](#logs) · [Metrics](#metrics) · [Presence](#presence)
+
+## General
+
+- **No login.** Anything that can reach port 3000 can control the bed.
+- **Origins.** Requests without an `Origin` header (curl, phone shortcuts) are accepted. A browser page may call the API only when its origin's host is one of:
+  - `localhost`, or an address in `127.x.x.x`, `10.x.x.x`, `192.168.x.x`, `172.16-31.x.x`, or `100.64.0.0/10` (the range Tailscale uses);
+  - the Pod's own hostname, `<hostname>.local`, or `<hostname>.<anything>.ts.net`;
+  - an origin starting with the `ALLOWED_ORIGIN` environment variable, if set (`*` allows every origin).
+
+  Other origins get a 500 with `{"error": {"message": "Not allowed by CORS"}}`.
+- **Bodies** are JSON (`Content-Type: application/json`).
+- **Partial updates.** `POST /api/deviceStatus`, `/api/settings`, `/api/schedules` and `/api/services` accept any subset of the fields. Unknown fields are rejected where the schema is strict (device status, schedules, the top level and each side of settings, the top level of services).
+- **Sides.** `left` and `right` are the sides as named in the app. If `swapSides` is on in settings, the server swaps them when talking to the firmware.
+- **Temperatures** are in °F whatever `temperatureFormat` is set to.
+
+Status codes worth knowing:
+
+| Code | When |
+| --- | --- |
+| 204 | `POST /api/deviceStatus`, `POST /api/jobs`, `DELETE /api/metrics/sleep/:id` succeeded. No body. |
+| 400 | Invalid body. Most endpoints answer `{"error": "Invalid request data", "details": [...]}`, where `details` is the list of zod issues. Unparseable JSON gives `{"error": {"message": "Invalid JSON"}}`. |
+| 404 | Unknown `/api/*` path: `{"error": {"message": "Not Found"}}`. |
+| 409 | `POST /api/alarm/time` with `shiftMinutes` when there is no alarm to move. |
+| 500 | Anything else that fails: `{"error": {"message": "..."}}`. |
 
 ---
 
-## `/api/deviceStatus`
+## Device status
 
-### GET
+### `GET /api/deviceStatus`
 
-- Retrieves the current status of the device.
-
-#### Response
+The current state of the Pod, read from the firmware.
 
 ```json
 {
   "left": {
-    "currentTemperatureLevel": -43,
-    "currentTemperatureF": 71,
-    "targetTemperatureF": 64,
-    "secondsRemaining": 0,
-    "isOn": false,
+    "currentTemperatureLevel": -12,
+    "currentTemperatureF": 78,
+    "measuredTemperatureF": 78.3,
+    "targetTemperatureF": 75,
+    "secondsRemaining": 21600,
+    "isOn": true,
     "isAlarmVibrating": false
   },
   "right": {
-    "currentTemperatureLevel": -47,
-    "currentTemperatureF": 70,
-    "targetTemperatureF": 64,
+    "currentTemperatureLevel": 0,
+    "currentTemperatureF": 81,
+    "targetTemperatureF": 81,
     "secondsRemaining": 0,
     "isOn": false,
     "isAlarmVibrating": false
   },
-  "coverVersion": "Pod 3",
-  "hubVersion": "Pod 3",
-  "freeSleep": {
-    "version": "1.0.0",
-    "branch": "main"
-  },
+  "coverVersion": "Pod 5",
+  "hubVersion": "Pod 5",
+  "freeSleep": { "version": "3.1.0", "branch": "main" },
   "waterLevel": "true",
   "isPriming": false,
-  "settings": {
-    "v": 1,
-    "gainLeft": 400,
-    "gainRight": 400,
-    "ledBrightness": 0
-  },
+  "settings": { "v": 1, "gainLeft": 400, "gainRight": 400, "ledBrightness": 0 },
   "wifiStrength": 52
 }
 ```
 
-### POST
+- `currentTemperatureLevel` is the firmware's level, -100 to 100. `currentTemperatureF` and `targetTemperatureF` are that level converted with the curve in `server/src/db/temperatureCurve.ts`.
+- `measuredTemperatureF` is optional: the water temperature the bed measures on that side, to one decimal. It is present only where the Pod reports it and a recent reading exists.
+- `isOn` is true when `secondsRemaining` is above 0.
+- `taps` (`{"doubleTap": n, "tripleTap": n, "quadTap": n}` per side, the firmware's tap counters) is an optional field of the schema. This endpoint does not ask the firmware for it, so it is not in the response.
+- `coverVersion` and `hubVersion` are `Pod 3`, `Pod 4`, `Pod 5` or `Version not found`.
 
-- Updates the device; send only the fields you want to change.
+### `GET /api/deviceStatus/raw`
 
-#### Request Body
+The firmware's status reply as plain text (`text/plain`), unparsed. For debugging.
+
+### `POST /api/deviceStatus`
+
+Changes the Pod. Send only what should change. Returns **204** with no body.
+
+| Field | Effect |
+| --- | --- |
+| `left.isOn` / `right.isOn` | `true` switches the side on for `manualOn.hours` (settings); `false` switches it off. |
+| `left.targetTemperatureF` / `right.targetTemperatureF` | Number from 50 to 110. The Pod's range is 50 to 108; values above 108 are treated as the hottest setting. |
+| `left.secondsRemaining` / `right.secondsRemaining` | Sets how long the side stays on, in seconds. Applied after `isOn`. |
+| `left.isAlarmVibrating` / `right.isAlarmVibrating` | `false` dismisses the alarm. The firmware stops both sides; the server restarts the other side's alarm if it was still going, unless `linkSides` is on. `true` does not start an alarm. |
+| `isPriming` | `true` starts priming. |
+| `settings` | Any of `v`, `gainLeft`, `gainRight`, `ledBrightness`; sent to the firmware. |
+
+Other fields of the status are accepted and ignored. If either side is in away mode, a change sent for one side is applied to both.
+
+```bash
+curl -X POST http://<pod-ip>:3000/api/deviceStatus \
+  -H 'Content-Type: application/json' \
+  -d '{"left": {"isOn": true, "targetTemperatureF": 75}}'
+```
 
 ```json
-{
-  "left": {
-    "targetTemperatureF": 88,
-    "isOn": true
-  },
-  "right": {
-    "targetTemperatureF": 90,
-    "isOn": false
-  },
-  "isPriming": true
-}
+{ "right": { "isAlarmVibrating": false } }
 ```
 
 ---
 
-## `/api/deviceStatus/dial`
+## Dial
 
-### GET
-What each side is set to and has reached on the -10..+10 scale, plus a sentence to show as it is.
+Short requests for phone shortcuts, on the stock app's scale from -10 (coldest) to +10 (hottest). One dial step is 10 firmware levels.
+
+`side` in the bodies below is `left`, `right` or `both`. Left out, it means both. With `linkSides` on, one side means both.
+
+### `GET /api/deviceStatus/dial`
+
+What each side is set to and has reached, rounded to half steps, with a sentence to show or speak.
 
 ```json
 {
@@ -83,327 +124,277 @@ What each side is set to and has reached on the -10..+10 scale, plus a sentence 
 }
 ```
 
-### POST
-Turns a side on at a setting on the stock app's scale, -10 (coldest) to +10 (hottest).
+When both sides have the same summary, the top-level sentence is `Both sides ...`.
+
+### `POST /api/deviceStatus/dial`
+
+Turns a side on at a dial setting. Body: `side` (optional) and `dial` (number, -10 to 10). No other fields.
 
 ```json
 { "side": "left", "dial": -3 }
 ```
-`side` is `left`, `right` or `both`. Left out, it means both. With the sides linked in Settings, one side means both.
+
+Response (200):
+
+```json
+{ "sides": ["left"], "dial": -3, "targetTemperatureF": 74.12 }
+```
+
+`targetTemperatureF` is the temperature for that level, not rounded, so it can carry floating-point noise.
 
 ---
 
-## `/api/alarm/time`
+## Alarms
 
-### POST
-Sets an alarm with one short request. `side` works as for `/api/deviceStatus/dial`. `time` can be
-24-hour (`06:30`), 12-hour (`6:30 AM`), or a longer text containing either.
+### `POST /api/alarm`
+
+Starts an alarm now. It does not change the schedule.
+
+| Field | Type |
+| --- | --- |
+| `side` | `left` or `right` (required) |
+| `vibrationIntensity` | integer 1-100 |
+| `vibrationPattern` | `rise` or `double` |
+| `duration` | seconds, integer 1-1800 |
+| `force` | optional boolean. Without it, nothing happens if the side is off or in away mode. |
+| `turnOffAfterDismiss` | optional boolean. Switch the side off when the alarm is dismissed. |
+
+`rampStep` is also accepted; the server uses it internally for the later stretches of a ramp-up alarm.
+
+```json
+{ "side": "left", "vibrationIntensity": 50, "vibrationPattern": "rise", "duration": 30, "force": true }
+```
+
+The response is 200 with the full schedules object (the same as `GET /api/schedules`). It is sent before the alarm has started, so it does not say whether the alarm ran.
+
+To stop an alarm, post `isAlarmVibrating: false` to [`/api/deviceStatus`](#post-apidevicestatus).
+
+### `POST /api/alarm/time`
+
+Sets or moves an alarm with one short request. Send `side` (optional, as for the dial) and exactly one of `time` or `shiftMinutes`.
+
+- `time`: a time of day, 24-hour (`06:30`) or 12-hour (`6:30 AM`), alone or inside a longer text.
+- `shiftMinutes`: integer from -720 to 720.
+- `days`: optional list of weekday names (`monday` ... `sunday`). Only with `time`.
+- `enabled`: optional boolean, used only with `days`. Defaults to `true`.
 
 | Body | Effect |
 | --- | --- |
-| `{"side": "left", "time": "06:30"}` | One-off alarm the next time the clock shows 06:30. The weekly schedule is unchanged. |
-| `{"side": "left", "shiftMinutes": 60}` | Moves the next alarm (within 24 hours) later, as a one-off. Negative moves it earlier. |
-| `{"side": "left", "time": "08:00", "days": ["saturday", "sunday"]}` | Changes the weekly alarm time on those days. |
-| `{"side": "left", "time": "06:30", "days": ["monday"], "enabled": false}` | Switches the weekly alarm off on those days. |
+| `{"side": "left", "time": "06:30"}` | One-off alarm the next time the clock shows 06:30. The weekly schedule is unchanged. The scheduled alarm of that same morning is skipped if it falls before the one-off or up to 6 hours after it. |
+| `{"side": "left", "shiftMinutes": 60}` | Moves the side's next alarm (a waiting one-off, else the next scheduled one) later, as a one-off. Negative moves it earlier. |
+| `{"side": "left", "time": "08:00", "days": ["saturday", "sunday"]}` | Sets the weekly alarm time on those days and switches the alarm on. The rest of each alarm is kept. |
+| `{"time": "08:00", "days": ["monday"], "enabled": false}` | Switches the weekly alarm off on those days. See the note below about `time`. |
 
-## `/api/alarm/time/cancel`
+Responses (200):
 
-### POST
-Drops a waiting one-off alarm: `{"side": "left"}`.
+```json
+{ "kind": "oneOff", "alarms": [{ "side": "left", "time": "06:30", "firesAt": "2026-11-18T06:30:00-08:00" }] }
+```
+
+```json
+{ "kind": "weekly", "sides": ["left"], "days": ["saturday", "sunday"], "time": "08:00", "enabled": true }
+```
+
+- **409** `{"error": "No alarm in the next 24 hours that can be moved that far"}`: with `shiftMinutes`, when no side has an alarm within 24 hours, or the moved time would be in the past or more than 24 hours ahead.
+- A one-off alarm is stored in settings under `<side>.scheduleOverrides.alarm`.
+- With `days`, the off-time rule in [Schedules](#schedules) is applied to each day, so the bed's off time moves with the new time.
+
+### `POST /api/alarm/time/cancel`
+
+Drops a waiting one-off alarm, so the weekly schedule applies again. Body: `{"side": "left"}` (`side` optional).
+
+```json
+{ "kind": "cancelled", "sides": ["left"] }
+```
 
 ---
 
-## `/api/settings`
+## Settings
 
-### GET
+### `GET /api/settings`
 
-- Retrieves the current settings of the system.
-
-#### Response
+Stored in `settingsDB.json`. The values below are the defaults, except `id` (a random UUID) and the names.
 
 ```json
 {
   "id": "d07caf20-4f6a-4a9b-be8e-012989b0a65f",
-  "timeZone": "America/Los_Angeles",
+  "timeZone": "UTC",
   "temperatureFormat": "fahrenheit",
   "rebootDaily": true,
+  "linkSides": false,
+  "swapSides": false,
   "left": {
     "name": "Left",
-    "awayMode": false
+    "awayMode": false,
+    "scheduleOverrides": {
+      "temperatureSchedules": { "disabled": false, "expiresAt": "" },
+      "alarm": { "disabled": false, "timeOverride": "", "expiresAt": "" }
+    },
+    "taps": {
+      "doubleTap": { "type": "temperature", "change": "decrement", "amount": 1 },
+      "tripleTap": { "type": "temperature", "change": "increment", "amount": 1 },
+      "quadTap": { "type": "alarm", "behavior": "dismiss", "snoozeDuration": 60, "inactiveAlarmBehavior": "power" }
+    }
   },
-  "right": {
-    "name": "Right",
-    "awayMode": true
+  "right": { "name": "Right", "awayMode": false, "scheduleOverrides": {}, "taps": {} },
+  "manualOn": { "hours": 12, "overridesSchedule": false },
+  "presence": {
+    "sensitivity": "medium",
+    "wakeAfterHours": { "enabled": false, "hours": 9 },
+    "turnOnWhenInBed": { "enabled": false, "temperatureF": 81, "stayOn": "untilOutOfBed" }
   },
-  "primePodDaily": {
-    "enabled": true,
-    "time": "14:00"
-  }
+  "primePodDaily": { "enabled": true, "time": "14:00" }
 }
 ```
 
-### POST
+`right` has the same shape as `left`; it is shortened here.
 
-- Updates system settings; send only the fields you want to change.
+| Field | Values |
+| --- | --- |
+| `timeZone` | A name from `server/src/db/timeZones.ts`, for example `America/Los_Angeles`. |
+| `temperatureFormat` | `fahrenheit`, `celsius` or `level` (the -10 to +10 scale). Display only. |
+| `rebootDaily` | boolean |
+| `linkSides` | When true, a temperature or power change made for one side applies to both. |
+| `swapSides` | When true, Free Sleep's left is the firmware's right and the other way round. |
+| `<side>.name` | 1-20 characters |
+| `<side>.awayMode` | boolean |
+| `<side>.scheduleOverrides.temperatureSchedules` | `disabled`, `expiresAt` (string) |
+| `<side>.scheduleOverrides.alarm` | `disabled`, `timeOverride` (`HH:mm` of a one-off alarm, or empty), `expiresAt` |
+| `<side>.taps.doubleTap` / `tripleTap` / `quadTap` | One of two shapes, picked by `type`: `{"type": "temperature", "change": "increment" \| "decrement", "amount": 0-10}` or `{"type": "alarm", "behavior": "snooze" \| "dismiss", "snoozeDuration": 60-600, "inactiveAlarmBehavior": "power" \| "none"}` |
+| `manualOn.hours` | `3`, `6` or `12`: how long a side switched on by hand stays on. |
+| `manualOn.overridesSchedule` | When true, the schedule leaves a side switched on by hand alone until it turns off. Alarms still go off. |
+| `presence.sensitivity` | `low`, `medium` or `high` |
+| `presence.wakeAfterHours` | `enabled`, `hours` (integer 1-14): vibrate the alarm after this long in bed in one stay. |
+| `presence.turnOnWhenInBed` | `enabled`, `temperatureF` (50-110), `stayOn` (integer hours 1-12, or `"untilOutOfBed"`) |
+| `primePodDaily` | `enabled`, `time` (`HH:mm`) |
 
-#### Request Body
+### `POST /api/settings`
+
+Merges the body into the stored settings and returns the full settings (200). `id` in the body is ignored. A complete tap config replaces the stored one as a whole; send all fields for its `type`.
 
 ```json
-{
-  "timeZone": "America/Los_Angeles",
-  "temperatureFormat": "fahrenheit",
-  "rebootDaily": true,
-  "left": {
-    "name": "Left",
-    "awayMode": false
-  },
-  "right": {
-    "name": "Right",
-    "awayMode": true
-  },
-  "primePodDaily": {
-    "enabled": true,
-    "time": "14:00"
-  }
-}
+{ "linkSides": true, "left": { "awayMode": true } }
 ```
+
+Writing settings makes the server cancel and recreate its scheduled jobs.
 
 ---
 
-## `/api/schedules`
+## Schedules
 
-### GET
+### `GET /api/schedules`
 
-- Retrieves the current schedules for the system.
-
-#### Response
+Stored in `schedulesDB.json`: `left` and `right`, each with `sunday` to `saturday`. One day:
 
 ```json
 {
   "left": {
     "monday": {
-      "temperatures": {
-        "07:00": 72,
-        "22:00": 68
-      },
-      "power": {
-        "on": "20:00",
-        "off": "08:00",
-        "onTemperature": 82,
-        "enabled": true
-      },
+      "temperatures": { "23:00": 70, "03:00": 74 },
+      "power": { "on": "21:00", "off": "07:30", "onTemperature": 82, "enabled": true },
       "alarm": {
-        "time": "08:00",
-        "vibrationIntensity": 1,
+        "time": "07:00",
+        "enabled": true,
+        "vibrationIntensity": 100,
         "vibrationPattern": "rise",
         "duration": 10,
-        "enabled": true,
-        "alarmTemperature": 78
+        "alarmTemperature": 82,
+        "preWarmMinutes": 15,
+        "turnOffAfterDismiss": false
       }
     }
   }
 }
 ```
 
-### POST
+| Field | Values |
+| --- | --- |
+| `temperatures` | Map of `HH:mm` to °F (integer 50-110). |
+| `power.on`, `power.off` | `HH:mm` |
+| `power.onTemperature` | °F, integer 50-110 |
+| `power.enabled` | boolean |
+| `alarm.time` | `HH:mm`. The wake-up time, whether or not the alarm is enabled. |
+| `alarm.enabled` | boolean |
+| `alarm.vibrationIntensity` | integer 1-100 |
+| `alarm.vibrationPattern` | `rise` or `double` |
+| `alarm.duration` | seconds, integer 1-1800 |
+| `alarm.alarmTemperature` | °F, integer 50-110 |
+| `alarm.preWarmMinutes` | optional, integer 0-60. Minutes before the alarm to start warming to `alarmTemperature`. 0 or missing: no warm-up. |
+| `alarm.turnOffAfterDismiss` | optional boolean |
 
-- Updates the schedules for the system.
+### `POST /api/schedules`
 
-#### Request Body
+Send any subset of sides, days and fields. Returns the full schedules (200). For each day in the body:
+
+- `power` and `alarm` are merged into the stored values, so fields left out are kept.
+- `temperatures` replaces the stored map as a whole.
+- Then the off-time rule runs on that day (`server/src/db/automaticOffTime.ts`):
+  `power.off` is set to `alarm.time` plus 30 minutes, whether the alarm is enabled or not. `alarm.time` is the
+  night's wake-up time; `alarm.enabled` only decides whether it vibrates. A posted `off` is overwritten.
+
+In short, do not set `power.off`; set `alarm.time`. Times wrap past midnight.
 
 ```json
-{
-  "left": {
-    "monday": {
-      "power": {
-        "on": "19:00",
-        "off": "07:00",
-        "enabled": true
-      }
-    }
-  }
-}
+{ "left": { "monday": { "alarm": { "time": "06:45", "enabled": true } } } }
 ```
 
-#### Response
+After this request, Monday's `power.off` is `07:15`.
+
+Writing schedules makes the server cancel and recreate its scheduled jobs.
+
+---
+
+## Execute
+
+### `POST /api/execute`
+
+Sends one command straight to the firmware. Body: `command` and an optional string `arg`.
 
 ```json
-{
-  "left": {
-    "monday": {
-      "temperatures": {},
-      "power": {
-        "on": "19:00",
-        "off": "07:00",
-        "onTemperature": 82,
-        "enabled": true
-      },
-      "alarm": {
-        "time": "08:00",
-        "vibrationIntensityStart": 1,
-        "vibrationIntensityEnd": 1,
-        "duration": 10,
-        "enabled": false,
-        "alarmTemperature": 78
-      }
-    }
-  }
-}
+{ "command": "TEMP_LEVEL_LEFT", "arg": "-20" }
+```
+
+```json
+{ "success": true, "message": "Command 'TEMP_LEVEL_LEFT' executed successfully." }
+```
+
+Allowed commands (`server/src/8sleep/deviceApi.ts`): `HELLO`, `SET_TEMP`, `SET_ALARM`, `ALARM_LEFT`, `ALARM_RIGHT`, `SET_SETTINGS`, `LEFT_TEMP_DURATION`, `RIGHT_TEMP_DURATION`, `TEMP_LEVEL_LEFT`, `TEMP_LEVEL_RIGHT`, `PRIME`, `DEVICE_STATUS`, `ALARM_CLEAR`.
+
+- Any other command gets 400 with the text `Invalid command`.
+- `arg` is not validated. The server itself sends a firmware level (-100 to 100) to `TEMP_LEVEL_*`, seconds to `*_TEMP_DURATION`, and hex-encoded CBOR to `ALARM_*` and `SET_SETTINGS`.
+- With `swapSides` on, the side-specific commands are swapped before sending: `TEMP_LEVEL_LEFT` goes out as `TEMP_LEVEL_RIGHT`, and the same for `*_TEMP_DURATION` and `ALARM_*`. The response message names the command as posted.
+- The firmware's reply is not returned.
+
+---
+
+## Jobs
+
+### `POST /api/jobs`
+
+Starts jobs now. The body is a JSON array of job names. Returns **204** without waiting for them to finish.
+
+| Name | What it runs |
+| --- | --- |
+| `analyzeSleepLeft`, `analyzeSleepRight` | Sleep analysis over the last 12 hours for that side. |
+| `biometricsCalibrationLeft`, `biometricsCalibrationRight` | Sensor calibration over the last 2 hours for that side. |
+| `reboot` | Reboots the Pod. |
+| `update` | Starts `free-sleep-update.service`, which updates Free Sleep. |
+
+```json
+["analyzeSleepLeft"]
 ```
 
 ---
 
-## `/api/execute`
+## Services
 
-### POST
+### `GET /api/services`
 
-- Executes a specific command on the device.
-
-#### Request Body
+Reads which optional services are enabled, and the health of the biometrics jobs. Stored in `servicesDB.json`.
 
 ```json
 {
-  "command": "SET_TEMP",
-  "arg": "90"
-}
-```
-
-#### Response
-
-```json
-{
-  "success": true,
-  "message": "Command 'SET_TEMP' executed successfully."
-}
-```
-
----
-
-## `/api/metrics/sleep`
-
-### GET
-
-- Retrieves sleep records based on optional query parameters.
-- Query parameters:
-  - `side` (optional): Filter by the side of the bed (e.g., "left" or "right").
-  - `startTime` (optional): Filter by the start time of sleep records, in ISO 8601 format.
-  - `endTime` (optional): Filter by the end time of sleep records, in ISO 8601 format.
-
-#### Response
-
-```json
-[
-  {
-    "id": 1,
-    "side": "left",
-    "entered_bed_at": "2025-02-15T22:00:00Z",
-    "left_bed_at": "2025-02-16T06:00:00Z",
-    "sleep_period_seconds": 28800,
-    "times_exited_bed": 2
-  },
-  {
-    "id": 2,
-    "side": "right",
-    "entered_bed_at": "2025-02-15T23:00:00Z",
-    "left_bed_at": "2025-02-16T07:00:00Z",
-    "sleep_period_seconds": 28800,
-    "times_exited_bed": 1
-  }
-]
-```
-
----
-
-## `/api/metrics/vitals`
-
-### GET
-
-- Retrieves vital records based on optional query parameters.
-- Query parameters:
-  - `side` (optional): Filter by the side of the bed (e.g., "left" or "right").
-  - `startTime` (optional): Filter by the start time of vital records, in ISO 8601 format.
-  - `endTime` (optional): Filter by the end time of vital records, in ISO 8601 format.
-
-#### Response
-
-```json
-[
-  {
-    "id": 1,
-    "side": "left",
-    "timestamp": "2025-02-15T22:00:00Z",
-    "heart_rate": 72,
-    "breathing_rate": 16,
-    "hrv": 42
-  },
-  {
-    "id": 2,
-    "side": "right",
-    "timestamp": "2025-02-15T23:00:00Z",
-    "heart_rate": 74,
-    "breathing_rate": 15,
-    "hrv": 45
-  }
-]
-```
-
----
-
-## `/api/metrics/vitals/summary`
-
-### GET
-
-- Retrieves summary statistics for vitals, including heart rate, breathing rate, and HRV (heart rate variability) within an optional time range.
-- Query parameters:
-  - `side` (optional): Filter by the side of the bed (e.g., "left" or "right").
-  - `startTime` (optional): Filter by the start time of records, in ISO 8601 format.
-  - `endTime` (optional): Filter by the end time of records, in ISO 8601 format.
-
-#### Response
-
-```json
-{
-  "avgHeartRate": 72,
-  "minHeartRate": 65,
-  "maxHeartRate": 80,
-  "avgHRV": 52,
-  "avgBreathingRate": 17
-}
-```
-
----
-
-## Partial Updates for POST Requests
-
-The POST endpoints (`/api/deviceStatus`, `/api/settings`, `/api/schedules`) support partial updates. You can send only the fields you wish to modify, and the system merges your input with the existing data.
-
-### Example for `/api/deviceStatus`
-
-#### Request Body
-
-```json
-{
-  "left": {
-    "targetTemperatureF": 88
-  }
-}
-```
-
----
-
-## `/api/services`
-
-### GET
-
-- Enables or disables certain services and retrieves their health information.
-
-#### Response
-
-```json
-{
-  "sentryLogging": {
-    "enabled": true,
-  },
+  "sentryLogging": { "enabled": false },
   "biometrics": {
     "enabled": true,
     "jobs": {
@@ -413,199 +404,149 @@ The POST endpoints (`/api/deviceStatus`, `/api/settings`, `/api/schedules`) supp
         "status": "healthy",
         "description": "Whether or not biometrics was installed successfully",
         "timestamp": ""
-      },
-      "stream": {
-        "name": "Biometrics stream",
-        "message": "",
-        "status": "healthy",
-        "description": "Consumes the sensor data as a stream and calculates biometrics",
-        "timestamp": "2025-11-01T17:14:50.003582+00:00"
-      },
-      "analyzeSleepLeft": {
-        "name": "Analyze sleep - left",
-        "message": "IntegrityError('UNIQUE constraint failed: movement.side, movement.timestamp')",
-        "status": "failed",
-        "description": "Analyzes sleep period",
-        "timestamp": "2025-11-01T17:01:27.317609+00:00"
-      },
-      "analyzeSleepRight": {
-        "name": "Analyze sleep - right",
-        "message": "",
-        "status": "healthy",
-        "description": "Analyzes sleep period",
-        "timestamp": "2025-10-26T08:04:10.404431+00:00"
-      },
-      "calibrateLeft": {
-        "name": "Calibration job - Left",
-        "message": "",
-        "status": "healthy",
-        "description": "Calculates presence thresholds for cap sensor data",
-        "timestamp": "2025-10-30T21:01:18.225128+00:00"
-      },
-      "calibrateRight": {
-        "name": "Calibration job - Right",
-        "message": "",
-        "status": "healthy",
-        "description": "Calculates presence thresholds for cap sensor data",
-        "timestamp": "2025-10-30T21:30:44.018862+00:00"
       }
     }
   }
 }
-
 ```
 
---- 
+`jobs` has six entries of the same shape: `installation`, `stream`, `analyzeSleepLeft`, `analyzeSleepRight`, `calibrateLeft`, `calibrateRight`. `status` is one of `failed`, `healthy`, `not_started`, `restarting`, `retrying`, `started`.
 
-## /api/metrics/presence
-### GET
+### `POST /api/services`
 
-- Tracks whether someone is present on the left and/or right side.
-Stored in-memory (resets on server restart). 
-Timestamps are server-generated.
+Merges the body into the stored services and returns the result (200).
 
-#### Response
+```json
+{ "biometrics": { "enabled": true } }
+```
+
+`sentryLogging.enabled` switches error reporting on or off. This fork has no built-in destination: nothing is sent unless `SENTRY_DSN` is set in the server's environment (`server/src/instrument.ts`).
+
+---
+
+## Server status
+
+### `GET /api/serverStatus`
+
+Health of the server's parts. Every entry has `name`, `status`, `description`, `message`, and optionally `timestamp`. `status` takes the same values as in [Services](#services).
 
 ```json
 {
-  "left": {
-    "present": false,
-    "lastUpdatedAt": "2025-12-18T00:12:34-08:00"
-  },
-  "right": {
-    "present": true,
-    "lastUpdatedAt": "2025-12-18T00:12:34-08:00"
-  }
+  "alarmSchedule": { "name": "Alarm schedule", "status": "healthy", "description": "", "message": "" },
+  "database": { "name": "Database", "status": "healthy", "description": "Connection to SQLite DB", "message": "" },
+  "franken": { "name": "Franken sock", "status": "healthy", "description": "Socket service for controlling the hardware", "message": "" }
 }
+```
+
+Keys always present: `alarmSchedule`, `database`, `express`, `franken`, `frankenMonitor`, `jobs`, `logger`, `powerSchedule`, `primeSchedule`, `rebootSchedule`, `systemDate`, `temperatureSchedule`.
+
+Keys taken from the services data: `biometricsInstallation` always; `analyzeSleepLeft`, `analyzeSleepRight`, `biometricsCalibrationLeft`, `biometricsCalibrationRight` and `biometricsStream` only while biometrics is enabled. `biometricsStream` is reported as `failed` when its last timestamp is 5 minutes old or more.
+
+---
+
+## Logs
+
+### `GET /api/logs`
+
+Names of the files ending in `log` in `/persistent/free-sleep-data/logs` and `/var/log`, newest first.
+
+```json
+{ "logs": ["free-sleep.log"] }
+```
+
+### `GET /api/logs/:filename`
+
+A server-sent event stream (`text/event-stream`), not JSON. The first event carries the last 1000 lines of the file. While the connection is open, another event with the last 1000 lines is sent when the file grows.
+
+```
+data: {"message": "line 1\nline 2"}
+```
+
+If the file is in neither folder, the stream sends one event, `{"message": "Log file not found"}`, and ends. The status is still 200.
+
+---
+
+## Metrics
+
+Biometrics data from the SQLite database. The three list endpoints and the summary take the same optional query parameters:
+
+- `side`: `left` or `right`
+- `startTime`, `endTime`: date-times, ISO 8601
+
+Timestamps in responses are ISO 8601 strings in the settings time zone. Results are ordered oldest first.
+
+```bash
+curl 'http://<pod-ip>:3000/api/metrics/vitals?side=left&startTime=2026-11-16T20:00:00Z'
+```
+
+### `GET /api/metrics/sleep`
+
+Sleep records that overlap the range: `left_bed_at` at or after `startTime` and `entered_bed_at` at or before `endTime`.
+
+```json
+[
+  {
+    "id": 1,
+    "side": "left",
+    "entered_bed_at": "2026-11-16T22:00:00-08:00",
+    "left_bed_at": "2026-11-17T06:00:00-08:00",
+    "sleep_period_seconds": 28800,
+    "times_exited_bed": 1,
+    "present_intervals": [["2026-11-16T22:00:00-08:00", "2026-11-17T03:10:00-08:00"]],
+    "not_present_intervals": [["2026-11-17T03:10:00-08:00", "2026-11-17T03:14:00-08:00"]]
+  }
+]
+```
+
+### `PUT /api/metrics/sleep/:id`
+
+Edits a sleep record. The body is any subset of the record's fields; `entered_bed_at` and `left_bed_at` must be ISO 8601 date-times in UTC (ending in `Z`). When both are sent, `sleep_period_seconds` and `times_exited_bed` are recalculated. Returns the updated record (200).
+
+```json
+{ "entered_bed_at": "2026-11-17T06:30:00Z", "left_bed_at": "2026-11-17T14:00:00Z" }
+```
+
+Errors: 400 `{"error": "Invalid ID"}`, 404 `{"error": "Sleep record not found"}`, 400 `{"error": "Invalid request body", "details": {...}}`.
+
+### `DELETE /api/metrics/sleep/:id`
+
+Deletes a sleep record. Returns **204**.
+
+### `GET /api/metrics/vitals`
+
+```json
+[
+  { "id": 1, "side": "left", "timestamp": "2026-11-16T22:00:00-08:00", "heart_rate": 58, "hrv": 42, "breathing_rate": 14 }
+]
+```
+
+Each row covers a 5-minute interval. `heart_rate`, `hrv` and `breathing_rate` can be `null`.
+
+### `GET /api/metrics/vitals/summary`
+
+```json
+{ "avgHeartRate": 58, "minHeartRate": 49, "maxHeartRate": 71, "avgHRV": 52, "avgBreathingRate": 14 }
+```
+
+Values are rounded, and 0 when there is no data. The HRV average uses only rows with HRV from 30 to 120; the breathing average only rows from 5 to 20.
+
+### `GET /api/metrics/movement`
+
+```json
+[
+  { "id": 1, "side": "left", "timestamp": "2026-11-16T22:00:00-08:00", "total_movement": 37 }
+]
 ```
 
 ---
 
-## `/api/serverStatus`
+## Presence
 
-### GET
+There are two unrelated things under `/api/metrics/presence`.
 
-- Retrieves the status of the services that make up free sleep.
+### `GET /api/metrics/presence/sensors`
 
-#### Response
-
-```json
-  {
-  "alarmSchedule": {
-    "name": "Alarm schedule",
-    "status": "healthy",
-    "description": "",
-    "message": ""
-  },
-  "database": {
-    "name": "Database",
-    "status": "healthy",
-    "description": "Connection to SQLite DB",
-    "message": ""
-  },
-  "express": {
-    "name": "Express",
-    "status": "healthy",
-    "description": "The back-end server",
-    "message": ""
-  },
-  "franken": {
-    "name": "Franken sock",
-    "status": "started",
-    "description": "Socket service for controlling the hardware",
-    "message": ""
-  },
-  "jobs": {
-    "name": "Job scheduler",
-    "status": "healthy",
-    "description": "Scheduling service for temperature changes, alarms, and maintenance",
-    "message": ""
-  },
-  "logger": {
-    "name": "Logger",
-    "status": "healthy",
-    "description": "Logging service",
-    "message": ""
-  },
-  "powerSchedule": {
-    "name": "Power schedule",
-    "status": "healthy",
-    "description": "Power on/off schedule",
-    "message": ""
-  },
-  "primeSchedule": {
-    "name": "Prime schedule",
-    "status": "healthy",
-    "description": "Daily prime job",
-    "message": ""
-  },
-  "rebootSchedule": {
-    "name": "Reboot schedule",
-    "status": "healthy",
-    "description": "Daily system reboots",
-    "message": ""
-  },
-  "systemDate": {
-    "name": "System date",
-    "status": "healthy",
-    "description": "Whether or not the system date is correct. Scheduling jobs depend on this.",
-    "message": ""
-  },
-  "temperatureSchedule": {
-    "name": "Temperature schedule",
-    "status": "healthy",
-    "description": "Temperature adjustment schedule",
-    "message": ""
-  },
-  "biometricsInstallation": {
-    "name": "Biometrics installation",
-    "message": "",
-    "status": "healthy",
-    "description": "Whether or not biometrics was installed successfully",
-    "timestamp": ""
-  },
-  "analyzeSleepLeft": {
-    "name": "Analyze sleep - left",
-    "message": "IntegrityError('UNIQUE constraint failed: movement.side, movement.timestamp')",
-    "status": "failed",
-    "description": "Analyzes sleep period",
-    "timestamp": "2025-11-01T17:01:27.317609+00:00"
-  },
-  "analyzeSleepRight": {
-    "name": "Analyze sleep - right",
-    "message": "",
-    "status": "healthy",
-    "description": "Analyzes sleep period",
-    "timestamp": "2025-10-26T08:04:10.404431+00:00"
-  },
-  "biometricsCalibrationLeft": {
-    "name": "Calibration job - Left",
-    "message": "",
-    "status": "healthy",
-    "description": "Calculates presence thresholds for cap sensor data",
-    "timestamp": "2025-10-30T21:01:18.225128+00:00"
-  },
-  "biometricsCalibrationRight": {
-    "name": "Calibration job - Right",
-    "message": "",
-    "status": "healthy",
-    "description": "Calculates presence thresholds for cap sensor data",
-    "timestamp": "2025-10-30T21:30:44.018862+00:00"
-  },
-  "biometricsStream": {
-    "name": "Biometrics stream",
-    "message": "",
-    "status": "healthy",
-    "description": "Consumes the sensor data as a stream and calculates biometrics",
-    "timestamp": "2025-11-01T17:11:50.430377+00:00"
-  }
-}
-```
-
-
-## In-bed detection
-
-`GET /api/metrics/presence/sensors` reports what the bed's own presence sensors say (Pod 5):
+What the bed's own presence sensors say now (Pod 5). The settings that act on this are under `presence` in [Settings](#settings).
 
 ```json
 {
@@ -615,6 +556,28 @@ Timestamps are server-generated.
 }
 ```
 
-`signal` is the smoothed sum of a side's three zones and `baseline` the level taken as an empty
-bed. `available` is false on a Pod that does not report the sensors. The settings that act on
-presence are under `presence` in `/api/settings`.
+- `available` is false until the sensors have reported, and again when no reading has arrived for 30 seconds. On a Pod that does not report the sensors it stays false.
+- `left` and `right` are missing until that side has a reading.
+- `signal` is the smoothed sum of the side's three zones; `baseline` is the level taken as an empty bed.
+- A side that only picks up the person on the other side is reported with `present: false`.
+
+### `GET /api/metrics/presence`
+
+A value held in memory that an external process sets with the POST below. It is not derived from the bed's sensors and has nothing to do with `/api/metrics/presence/sensors`. It resets to `present: false` when the server restarts.
+
+```json
+{
+  "left": { "present": false, "lastUpdatedAt": "2026-11-17T00:12:34-08:00" },
+  "right": { "present": true, "lastUpdatedAt": "2026-11-17T00:12:34-08:00" }
+}
+```
+
+### `POST /api/metrics/presence`
+
+Sets that value for one or both sides. `lastUpdatedAt` is set by the server; a value in the body is ignored. Returns the full value (200).
+
+```json
+{ "left": { "present": true } }
+```
+
+A body with neither `left` nor `right` gets 400 `{"error": "At least one side (left or right) must be specified", "message": "..."}`.

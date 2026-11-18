@@ -1,30 +1,40 @@
 # Control your Pod from iPhone with Apple Shortcuts
 
-Free Sleep exposes a local REST API, so the Shortcuts app can control your Pod without opening a browser.
-You do not need an Apple developer account. Shortcuts also work from the Home Screen, the Lock Screen,
-Control Center, the Action button, Siri, and Automations (for example "when my Sleep Focus turns on").
+Free Sleep has a local API, so the Shortcuts app can control the bed without opening a browser.
+You do not need an Apple developer account. Shortcuts also run from the Home Screen, the Lock
+Screen, Control Center, the Action button, Siri, and Automations (for example "when my Sleep Focus
+turns on").
 
-Requirements:
-- Your iPhone is on the same network as the Pod (or can otherwise reach its local IP).
-- You know the Pod's IP address (step 14 of [INSTALLATION.md](../INSTALLATION.md)). Give it a fixed IP in your router so shortcuts keep working.
+## Which address to put in a shortcut
 
-The first two shortcuts below ask you for a value each time you run them; the third reads the bed back. Replace `<pod-ip>` with your Pod's address.
-The first two apply to both sides unless you add a side (see [One side only](#one-side-only)). The first run asks for permission to connect to
-devices on your local network; allow it.
+Every shortcut below uses `<pod>`. Replace it with one of these, most stable first:
+
+| Use | Works | Keeps working when |
+|---|---|---|
+| `eight-pod` | Anywhere, while Tailscale is connected on the phone | The Pod's address, your router or your network changes |
+| `eight-pod.local` | At home | The Pod's address or your router changes. Shortcuts run by a Home automation have been reported to fail on `.local` names; if yours does, use one of the others |
+| The Pod's home address, for example `192.168.1.50` | At home; anywhere with Tailscale if you set up the one-link route | Only while that address stays the same, so reserve it in the router |
+
+`eight-pod` is a Pod 5's name; run `hostname` on the Pod to check yours. Setting up Tailscale, the
+one-link route and a reserved address is in [REMOTE_ACCESS.md](REMOTE_ACCESS.md).
+
+The first run of a shortcut asks for permission to connect to devices on your local network; allow it.
 
 ## 1. Set the temperature (-10 to +10)
 
-Asks for a number on the same scale as the Pod's own app, turns your side on, and sets it.
+Asks for a number on the same scale as Eight Sleep's own app, turns the bed on, and sets it.
 
 1. Open **Shortcuts** and tap **+**.
 2. Add **Ask for Input**. Set the type to **Number**, the prompt to "Bed temperature, -10 to 10", and
    switch on **Allow Negative Numbers**.
-3. Add **Get Contents of URL** and set the URL to `http://<pod-ip>:3000/api/deviceStatus/dial`.
+3. Add **Get Contents of URL** and set the URL to `http://<pod>:3000/api/deviceStatus/dial`.
 4. Expand it and set **Method** to `POST` and **Request Body** to `JSON`.
 5. Add a **Number** field `dial` and pick **Provided Input** (the answer from step 2) as its value.
 6. Name it "Bed temperature".
 
--10 is coldest, 0 is neutral, +10 is hottest. Halves such as 2.5 work. Anything outside -10 to 10 is refused.
+-10 is coldest, 0 is neutral, +10 is hottest. Halves such as 2.5 work. Anything outside -10 to 10
+is refused. The bed stays on for the time set in Settings > Device settings ("When turned on by
+hand"): 3, 6 or 12 hours.
 
 ## 2. Set an alarm
 
@@ -32,35 +42,54 @@ Asks for a time and sets a one-time alarm. Your weekly schedule is not changed.
 
 1. Open **Shortcuts** and tap **+**.
 2. Add **Ask for Input**. Set the type to **Time** and the prompt to "Alarm time".
-3. Add **Get Contents of URL** and set the URL to `http://<pod-ip>:3000/api/alarm/time`.
+3. Add **Get Contents of URL** and set the URL to `http://<pod>:3000/api/alarm/time`.
 4. Expand it and set **Method** to `POST` and **Request Body** to `JSON`.
 5. Add a **Text** field `time` and pick **Provided Input** (the answer from step 2) as its value.
 6. Name it "Bed alarm".
 
 How the time is understood:
+
 - **AM and PM** come from the time picker (or from what you tell Siri, such as "ten AM"). The Pod
   reads the time however the phone writes it: `22:00`, `10:00 PM`, or a full date containing either.
 - **The day is worked out for you**: the alarm goes off the next time the clock shows that time. Ask
   for 10 AM at 1 AM and it goes off that same morning. Ask for 6:30 AM at 11 PM and it goes off tomorrow.
 - Running it again replaces the alarm you set before.
-- A scheduled alarm that would have gone off before it is skipped.
-- If it is later than your schedule's off time (by up to 6 hours), the bed stays on until it has
-  gone off. It goes off even if the side is off.
-- The app shows the waiting alarm on the **Temperature** page. Tap its time there to change it or go
-  back to the schedule.
+- The scheduled alarm of that same morning is skipped, whether it is earlier or up to 6 hours
+  later, and its warm-up moves to the new time.
+- It goes off even if the bed is off. If the bed is on, it stays on for the alarm and turns off 30
+  minutes after it.
+- The app shows the waiting alarm on the **Temperature** page. Tap its time there to change it or
+  go back to the schedule.
 
-## 3. Check the temperature
+## 3. Check the bed
 
-Shows what the bed is set to and what it has reached, on the same -10 to +10 scale.
+Says what the bed is set to and what it has reached, on the -10 to +10 scale.
 
 1. Open **Shortcuts** and tap **+**.
-2. Add **Get Contents of URL** and set the URL to `http://<pod-ip>:3000/api/deviceStatus/dial`.
+2. Add **Get Contents of URL** and set the URL to `http://<pod>:3000/api/deviceStatus/dial`.
    Leave the method as `GET`.
 3. Add **Get Dictionary Value** and set it to get the value for `summary`.
 4. Add **Show Result** (or **Speak Text** for Siri).
 5. Name it "Bed status".
 
-It answers with a sentence such as "Left set to +5, now at +4. Right off."
+It answers with a sentence such as "Both sides set to -2, now at -3" or "Left set to +5, now at +4. Right off."
+
+## More one-step shortcuts
+
+Each is one **Get Contents of URL** action with **Method** `POST` and **Request Body** `JSON`,
+built the same way as shortcut 1 but with fixed values instead of a question.
+
+| Shortcut | URL | JSON fields |
+|---|---|---|
+| Turn the bed off | `http://<pod>:3000/api/deviceStatus` | Dictionary `left` with Boolean `isOn` = false, and the same for `right` |
+| Stop a vibrating alarm | `http://<pod>:3000/api/deviceStatus` | Dictionary `left` with Boolean `isAlarmVibrating` = false |
+| Next alarm 30 minutes later | `http://<pod>:3000/api/alarm/time` | Number `shiftMinutes` = 30 (negative for earlier) |
+| Cancel the one-time alarm | `http://<pod>:3000/api/alarm/time/cancel` | None |
+| Change the weekly wake-up time | `http://<pod>:3000/api/alarm/time` | Text `time`, and Array `days` of Text such as `monday`. The bed's off time moves with it |
+
+Stopping an alarm on one side stops both when the sides are linked. Everything the app can do is
+in [server/API.md](../server/API.md), including whether someone is in bed
+(`GET /api/metrics/presence/sensors`, Pod 5).
 
 ## One side only
 
@@ -69,10 +98,9 @@ linked in the app, both sides change anyway.
 
 ## Troubleshooting
 
-- **The shortcut times out**: check that the phone is on the same network and that `http://<pod-ip>:3000` opens in Safari.
+- **The shortcut times out**: check that `http://<pod>:3000` opens in Safari on the same phone. If
+  you used `eight-pod`, check Tailscale is connected.
 - **"Invalid request data" (HTTP 400)**: a field has the wrong type or value. `dial` must be a Number
   field from -10 to 10; `side` and `time` must be Text fields, and `time` must contain a time of day.
-- **It stopped working after a while**: the Pod's IP address changed. Reserve an IP for it in your router.
-
-Other requests (turning a side off, dismissing an alarm, moving an alarm by minutes, changing the
-weekly alarm) are in [server/API.md](../server/API.md).
+- **It stopped working after a while**: if the shortcut uses a number, the Pod's address changed.
+  Switch to a name from the table above, or reserve the address in your router.

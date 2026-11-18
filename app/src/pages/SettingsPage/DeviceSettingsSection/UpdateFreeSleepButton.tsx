@@ -53,7 +53,7 @@ export default function UpdateFreeSleepButton() {
       try {
         const deviceStatus = await getDeviceStatus();
         if (deviceStatus.data.freeSleep.version !== latestVersion) {
-          setUpdateTitle('Update failed- Reach out on Discord for help!');
+          setUpdateTitle('Update failed. The previous version was put back; see the update log under Data > Logs.');
           setUpdateMessage(`Latest version: ${latestVersion} -- Current version: ${deviceStatus.data.freeSleep.version}`);
         } else {
           setUpdateTitle('Update completed!');
@@ -122,7 +122,7 @@ export default function UpdateFreeSleepButton() {
                 (
                   <DialogContentText>
                     Update from { currentServerInfo.version } to { serverInfo?.version }?
-                    This should take about 3 minutes.
+                    This takes about four minutes, and ends with the internet block switched on.
                     This website will be unavailable during the update.
                   </DialogContentText>
                 )

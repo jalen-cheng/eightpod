@@ -29,10 +29,10 @@ export default function Donate() {
   };
 
   return (
-    <Section title="Support the Project" icon={ <AttachMoneyIcon/> }>
+    <Section title="Support the original author" icon={ <AttachMoneyIcon/> }>
       <Box sx={ { display: 'flex', flexDirection: 'column', gap: 2 } }>
         <Typography variant="body2" sx={ { color: 'text.secondary', fontSize: 12 } }>
-          Like the app? Don't like paying $200/year elsewhere? Buy me a drink instead!
+          Free Sleep was created by the author of the original project, which this version builds on. These donations go to them.
         </Typography>
         <Box
           sx={ {

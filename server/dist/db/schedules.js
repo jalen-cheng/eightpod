@@ -1,8 +1,8 @@
 // LowDB, stores the schedules in /persistent/free-sleep-data/lowdb/schedulesDB.json
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="15755f23-da67-5b3d-af20-591cd19274f7")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="befa96af-78e4-5579-ac36-c0c9828bbe4e")}catch(e){}}();
 import _ from 'lodash';
-import { applyAutomaticOffTime } from './automaticOffTime.js';
+import { adoptSavedOffTime } from './automaticOffTime.js';
 import { Low } from 'lowdb';
 import { JSONFile } from 'lowdb/node';
 import config from '../config.js';
@@ -47,9 +47,9 @@ schedulesDB.data = _.merge({}, defaultData, schedulesDB.data);
 schedulesDB.data = migrateTemperatureScaleOnce(schedulesDB.data, { schedulesFile, dataFolder: config.dbFolder });
 // Nights saved before the off time followed the alarm are brought in line with that rule
 for (const sideSchedule of Object.values(schedulesDB.data)) {
-    Object.values(sideSchedule).forEach(applyAutomaticOffTime);
+    Object.values(sideSchedule).forEach(adoptSavedOffTime);
 }
 await schedulesDB.write();
 export default schedulesDB;
 //# sourceMappingURL=schedules.js.map
-//# debugId=15755f23-da67-5b3d-af20-591cd19274f7
+//# debugId=befa96af-78e4-5579-ac36-c0c9828bbe4e

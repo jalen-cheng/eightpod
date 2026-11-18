@@ -38,7 +38,7 @@ export default function FeaturesSection() {
           }
           label="Biometrics"
         >
-          Calculate biometrics for the pod.
+          Calculate biometrics for the pod. Does not work on the Pod 5 this version was tested on.
           Requires you to run this command on your pod. Once installation completes successfully, you can toggle this on/off.
           <Box
             component="code"

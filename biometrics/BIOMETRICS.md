@@ -1,3 +1,7 @@
+> **Pod 5:** biometrics does not work on the Pod 5 this fork was tested on. Its firmware publishes
+> sensor data on `rawmem.*` subjects, where this code does not read. This document is the original
+> project's and describes earlier Pods; it has not been re-verified in this fork.
+
 # Biometrics
 
 ## Python dependencies and updates
