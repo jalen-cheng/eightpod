@@ -6,14 +6,18 @@
 // A Pod 5's firmware publishes both on its local message bus (NATS). A Pod without that bus, or
 // without those subjects, simply never produces a reading: presence stays "not available", no
 // measured temperature is shown, and nothing else is affected.
+import { readFileSync, writeFileSync } from 'fs';
 import cbor from 'cbor';
 import moment from 'moment-timezone';
 import { Msg, NatsConnection, NatsError, connect } from 'nats';
 import logger from '../logger.js';
+import config from '../config.js';
 import settingsDB from '../db/settings.js';
 import { Side } from '../db/schedulesSchema.js';
 import { connectFranken } from './frankenServer.js';
-import { CapacitiveReading, PRESENCE_DELTAS, PresenceSnapshot, SidePresence, createPresenceDetector } from './presenceDetector.js';
+import {
+  CapacitiveReading, PRESENCE_DELTAS, PresenceSnapshot, SidePresence, createPresenceDetector, isNeighbourSpillOver,
+} from './presenceDetector.js';
 import {
   BedSession, PresenceAction, UNTIL_OUT_OF_BED, createBedSession, takeDueActions, trackBedSession,
 } from '../jobs/presenceActions.js';
@@ -39,12 +43,42 @@ type CapacitiveMessage = Partial<Record<Side, CapacitiveReading>>;
 // Each side's water temperature, in hundredths of a degree Celsius
 type WaterMessage = Partial<Record<Side, number>>;
 
+// What is kept across a restart of the server (an update, the daily reboot): what each side's
+// detector has learned, and each stay in bed. Without it a restart with someone in bed would
+// learn their weight as "empty" and forget that it turned the bed on for them.
+type SavedState = {
+  savedAtMs: number;
+  sides: Partial<Record<Side, SidePresence>>;
+  sessions: Record<Side | 'both', BedSession>;
+};
+// Kept beside the databases, not in the watched settings folder, so saving never rebuilds the jobs
+const STATE_FILE = `${config.dbFolder}presence_state.json`;
+// Older than this and the bed may have changed hands; start afresh
+const STATE_MAX_AGE_MS = 30 * 60_000;
+const STATE_SAVE_INTERVAL_MS = 60_000;
+
+// Reads the saved state if there is one and it is recent enough to trust
+function loadSavedState(nowMs: number): SavedState | undefined {
+  try {
+    const savedState = JSON.parse(readFileSync(STATE_FILE, 'utf8')) as SavedState;
+    return nowMs - savedState.savedAtMs <= STATE_MAX_AGE_MS ? savedState : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 const latest: Partial<Record<Side, SidePresence>> = {};
 let lastReadingAtMs = 0;
 
 // What the sensors say right now, for the API and the app
 export function getPresenceSnapshot(nowMs: number = Date.now()): PresenceSnapshot {
-  return { available: nowMs - lastReadingAtMs < STALE_READING_MS, left: latest.left, right: latest.right };
+  // Spill-over from the other side is reported as empty, as the actions treat it
+  const withoutSpillOver = (side: Side) => {
+    const estimate = latest[side];
+    if (!estimate) return undefined;
+    return isNeighbourSpillOver(estimate, latest[side === 'left' ? 'right' : 'left']) ? { ...estimate, present: false } : estimate;
+  };
+  return { available: nowMs - lastReadingAtMs < STALE_READING_MS, left: withoutSpillOver('left'), right: withoutSpillOver('right') };
 }
 
 export class BedSensorMonitor {
@@ -53,22 +87,47 @@ export class BedSensorMonitor {
   private actionTimer: ReturnType<typeof setInterval> | undefined;
   private isStopped = false;
   private hasWarned = false;
-  private readonly detectors = { left: createPresenceDetector(), right: createPresenceDetector() };
+  private saveTimer: ReturnType<typeof setInterval> | undefined;
+  private readonly detectors: Record<Side, ReturnType<typeof createPresenceDetector>>;
   // One stay per side, or one for the whole bed ("both") while the sides are linked
-  private readonly sessions: Record<Side | 'both', BedSession> = {
-    left: createBedSession(), right: createBedSession(), both: createBedSession(),
-  };
+  private readonly sessions: Record<Side | 'both', BedSession>;
+
+  constructor() {
+    const savedState = loadSavedState(Date.now());
+    if (savedState) logger.info('Bed sensor monitor is carrying on from its saved state');
+    this.detectors = {
+      left: createPresenceDetector(savedState?.sides.left),
+      right: createPresenceDetector(savedState?.sides.right),
+    };
+    this.sessions = savedState?.sessions ?? { left: createBedSession(), right: createBedSession(), both: createBedSession() };
+    Object.assign(latest, savedState?.sides);
+  }
 
   start() {
     void this.listen();
     this.actionTimer = setInterval(() => void this.runActions(), ACTION_CHECK_INTERVAL_MS);
+    this.saveTimer = setInterval(() => this.saveState(), STATE_SAVE_INTERVAL_MS);
   }
 
   async stop() {
     this.isStopped = true;
     clearTimeout(this.reconnectTimer);
     clearInterval(this.actionTimer);
+    clearInterval(this.saveTimer);
+    this.saveState();
     await this.connection?.close().catch(() => undefined);
+  }
+
+  // Writes what has been learned to disk. Skipped until the sensors have reported, so an empty
+  // start never overwrites a good file.
+  private saveState() {
+    if (lastReadingAtMs === 0) return;
+    try {
+      const savedState: SavedState = { savedAtMs: Date.now(), sides: latest, sessions: this.sessions };
+      writeFileSync(STATE_FILE, JSON.stringify(savedState));
+    } catch (error: unknown) {
+      logger.debug(`Bed sensor monitor could not save its state: ${String(error)}`);
+    }
   }
 
   // Connects to the firmware's message bus and handles readings until the connection ends,
@@ -128,6 +187,13 @@ export class BedSensorMonitor {
     lastReadingAtMs = nowMs;
   }
 
+  // Whether someone is on a side, after discounting spill-over from a person on the other side
+  private isSomeoneOn(side: Side): boolean {
+    const estimate = latest[side];
+    if (!estimate?.present) return false;
+    return !isNeighbourSpillOver(estimate, latest[side === 'left' ? 'right' : 'left']);
+  }
+
   // Checks each stay in bed against the settings and runs what has come due
   private async runActions() {
     try {
@@ -143,7 +209,7 @@ export class BedSensorMonitor {
       for (const unit of units) {
         // A side in away mode has nobody to act for
         const activeSides = unit.sides.filter(side => !settings[side].awayMode);
-        const isPresentNow = activeSides.some(side => latest[side]?.present);
+        const isPresentNow = activeSides.some(side => this.isSomeoneOn(side));
         const session = trackBedSession(this.sessions[unit.key], isPresentNow, nowMs);
         if (activeSides.length === 0) continue;
         const isInBed = session.inBedSinceMs !== undefined;
