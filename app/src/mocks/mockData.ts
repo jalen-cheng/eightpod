@@ -199,7 +199,7 @@ const createSettings = (): Settings => ({
   id: 'demo-user',
   timeZone: 'America/Los_Angeles',
   temperatureFormat: 'fahrenheit',
-  linkSides: false,
+  linkSides: true,
   swapSides: false,
   manualOn: { hours: 12, overridesSchedule: false },
   autopilot: { enabled: true },

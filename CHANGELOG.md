@@ -1,7 +1,7 @@
 # Changelog
 
 What SevenSleep changed from [throwaway31265/free-sleep](https://github.com/throwaway31265/free-sleep),
-what was checked on a real Pod, and what was not. SevenSleep is at version 3.14.0. Everything was
+what was checked on a real Pod, and what was not. SevenSleep is at version 3.14.1. Everything was
 developed and tested on one Pod 5 between 13 and 18 Nov 2026.
 
 **The API.** Everything the app does goes through a documented local API, and every command the
@@ -34,6 +34,7 @@ Each of these was seen working on the test Pod 5, in its log or by the person on
 | `.local` name | `http://eight-pod.local:3000` loads on the home network (the test Pod has since been renamed and answers at `http://eightpod.local`; a new install is named `sevensleep`) |
 | Tailscale on the Pod | Installed with the block on; reaches only its sign-in servers and two relay regions; page opened from an iPhone on cellular; comes back after a reboot |
 | In-bed detection | One person detected on each side within about a minute; "Turn on when I get into bed" turned both linked sides on |
+| Priming | The daily prime at 2 PM and a prime started from the API (as the app's button does) both ran in the firmware's log: both pumps, a 10-minute run, heating held until it ended |
 
 ## Not tested
 
@@ -250,3 +251,4 @@ acted on it).
 | [#107](https://github.com/jalen-cheng/sevensleep/pull/107) | Feature | **Data > Nights is a day view.** One day at a time with arrows and a calendar: bedtime, wake time, duration and wake-ups, then breathing rate, pressure on the bed and the autopilot's temperature changes against the clock. Export takes a length (1 week to 3 months). Pressure is saved each minute. With the sides linked and the other side empty, the autopilot steers both (3.12.0) |
 | [#108](https://github.com/jalen-cheng/sevensleep/pull/108) | Fix, change | **Autopilot: a controller that can be reasoned about.** A temperature set by hand in the night was being partly undone a minute later; it is now held exactly, until the schedule's next change or the end of that third of the night. The bed no longer steps back to the set temperature each time the sleeper stirs: once a night has begun it runs by the clock. Moves are one degree at a time. The offset is taken back out when the night ends or the autopilot is switched off, and a night under way survives a restart. The mattress-surface term is gone (it answered the autopilot's own changes). Learning is slower (0.3 of a correction, once per hold). The autopilot now steers the whole bed for one sleeper and links the sides. Sleep rules are fitted to a tracker minute by minute, time awake in the night included, need 5 nights, and are only taken up if they also do better on nights they were not fitted to. A minute with too little sensor signal no longer counts as lying still. The power button on the Temperature page is under the dial (3.13.0) |
 | [#109](https://github.com/jalen-cheng/sevensleep/pull/109) | Rename | The project is named **SevenSleep**, to keep clear of Eight Sleep's names: the app, the docs, the repository (`jalen-cheng/sevensleep`; the old address redirects), the demo ([sevensleep.vercel.app](https://sevensleep.vercel.app)) and a new icon. A new install names the Pod `sevensleep` (`http://sevensleep.local`); a Pod already named `eightpod` keeps that name until you run `sh /home/dac/free-sleep/scripts/setup_local_name.sh name sevensleep`. In the API, the `eightPod` field of the device status is now `sevenSleep`. The README says the project is not affiliated with Eight Sleep (3.14.0) |
+| [#110](https://github.com/jalen-cheng/sevensleep/pull/110) | Design | The power button on the Temperature page sits in line with the heading on a phone and in the top right of the dial's card on a wider screen, in the app's neutral colours. The icon is a plain seven. Screenshots retaken on a taller phone so the schedule is not cut off, with last night's page among them (3.14.1) |
