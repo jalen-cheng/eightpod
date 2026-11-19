@@ -57,8 +57,8 @@ and alarms run in this time zone, and it starts as UTC.
   report it shows "Currently at", the firmware's own estimate.
 - **The next alarm**, across the open bottom of the dial while the bed is on. Tap it to change the next alarm
   or skip it (section 7). With no alarm tonight it reads "Turns off at"; while the bed is off, "Turns on at".
-- **With the autopilot on** (section 10), a line under the dial says what it is doing. Setting the temperature here
-  is how you adjust it by hand: during a night it is steering, it holds what you set until that third of the night
+- **With the autopilot on** (section 10), a line under the dial says what it is doing and links to Settings > Autopilot.
+  Setting the temperature here is how you adjust a night by hand: during a night it is steering, it holds what you set until that third of the night
   ends, then carries on and remembers part of the difference for later nights.
 
 A side you turn on by hand turns itself off after 12 hours unless you change that (section 10).
