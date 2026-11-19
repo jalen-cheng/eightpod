@@ -651,7 +651,7 @@ on both sides.
     "offsetF": -3,
     "lastChange": "12:40 AM: 77°F, heading for 3°F cooler (time of night, first sleep cycle)",
     "learned": { "early": 0, "middle": 0, "late": 0 },
-    "rules": { "stillMinutesToSleep": 10, "restlessSecondsToWake": 20 },
+    "rules": { "stillMinutesToSleep": 10, "restlessSecondsToWake": 20, "calmMinutesToResume": 5 },
     "tracker": { "source": "Apple Health", "syncedAt": "2026-11-18T15:02:11.000Z", "nights": 6, "agreementPercent": 94, "isTuned": true }
   },
   "right": {
@@ -659,7 +659,7 @@ on both sides.
     "offsetF": -3,
     "lastChange": "12:40 AM: 77°F, heading for 3°F cooler (time of night, first sleep cycle)",
     "learned": { "early": 0, "middle": 0, "late": 0 },
-    "rules": { "stillMinutesToSleep": 10, "restlessSecondsToWake": 20 },
+    "rules": { "stillMinutesToSleep": 10, "restlessSecondsToWake": 20, "calmMinutesToResume": 5 },
     "tracker": { "source": "Apple Health", "syncedAt": "2026-11-18T15:02:11.000Z", "nights": 6, "agreementPercent": 94, "isTuned": true }
   }
 }
@@ -675,7 +675,7 @@ on both sides.
 | `offsetF` | How far the plan is from the schedule's temperature |
 | `holdingF` | A temperature set by hand that the autopilot is holding and not adjusting |
 | `learned` | What your changes have taught it for each third of the night, in °F |
-| `rules` | The sleep rules in use: still minutes before "asleep", moving seconds that make a minute restless, and `maxBreathingSpread` when calibration has found that asking for steady breathing helps |
+| `rules` | The sleep rules in use: still minutes before "asleep", moving seconds that make a minute restless, `calmMinutesToResume` (minutes with no restless one before a sleeper who stirred is asleep again; rules saved before 3.20.1 do without it and get 5), and `maxBreathingSpread` when calibration has found that asking for steady breathing helps |
 | `tracker` | The last sleep tracker to report, the share of minutes the bed agrees with it on, whether the rules have been fitted to it, `nightsNeeded` (7) before they are, and the record received last: `lastSleeps` (each `asleepAtMs` and `awakeAtMs`) and `lastMatchedStays`, how many saved stays it was filed with |
 
 ### `POST /api/autopilot/sleepTimes`

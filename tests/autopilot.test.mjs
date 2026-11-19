@@ -104,6 +104,51 @@ test('a sleeper is asleep after lying still, whatever the heart does, and awake 
   assert.deepEqual(tracker.addMinute({ isInBed: false, movementSeconds: 0 }), { stage: 'out', minutesInBed: 0 });
 });
 
+test('a sleeper who stirred is asleep again once the restlessness is over, without lying still for 15 minutes', () => {
+  const still = { isInBed: true, movementSeconds: 0 };
+  const turning = { isInBed: true, movementSeconds: 8 };
+  const restless = { isInBed: true, movementSeconds: 30 };
+  const tracker = createSleepTracker();
+  // Before any sleep, five calm minutes show nothing: falling asleep takes the full 15 still ones
+  assert.equal(addMinutes(tracker, 10, turning).stage, 'awake');
+  assert.equal(addMinutes(tracker, 15, still).stage, 'asleep');
+  assert.equal(addMinutes(tracker, 3, restless).stage, 'awake');
+  // Four minutes with turns in them are not yet enough, the fifth is, and sleep is counted from the first
+  assert.equal(addMinutes(tracker, 4, turning).stage, 'awake');
+  const resumed = tracker.addMinute(turning);
+  assert.equal(resumed.stage, 'asleep');
+  assert.equal(resumed.minutesAsleep, 5);
+  // A restless minute in the stretch starts the count again
+  assert.equal(addMinutes(tracker, 3, restless).stage, 'awake');
+  addMinutes(tracker, 4, still);
+  assert.equal(tracker.addMinute(restless).stage, 'awake');
+  assert.equal(addMinutes(tracker, 4, still).stage, 'awake');
+  assert.equal(tracker.addMinute(still).stage, 'asleep');
+  // A minute the sensor could not read shows nothing
+  assert.equal(addMinutes(tracker, 3, restless).stage, 'awake');
+  addMinutes(tracker, 4, still);
+  assert.equal(tracker.addMinute({ isInBed: true }).stage, 'awake');
+  // Getting out of bed and back in is falling asleep again: five calm minutes are not enough
+  tracker.addMinute({ isInBed: false });
+  assert.equal(addMinutes(tracker, 14, still).stage, 'awake');
+  assert.equal(tracker.addMinute(still).stage, 'asleep');
+});
+
+test('rules saved before going back to sleep was a rule get the default for it, never longer than falling asleep', () => {
+  const still = { isInBed: true, movementSeconds: 0 };
+  const restless = { isInBed: true, movementSeconds: 30 };
+  const older = createSleepTracker(() => ({ stillMinutesToSleep: 15, restlessSecondsToWake: 12 }));
+  addMinutes(older, 15, still);
+  addMinutes(older, 3, restless);
+  assert.equal(addMinutes(older, 4, still).stage, 'awake');
+  assert.equal(older.addMinute(still).stage, 'asleep');
+  const quick = createSleepTracker(() => ({ stillMinutesToSleep: 3, restlessSecondsToWake: 12, calmMinutesToResume: 10 }));
+  addMinutes(quick, 3, still);
+  addMinutes(quick, 3, restless);
+  assert.equal(addMinutes(quick, 2, still).stage, 'awake');
+  assert.equal(quick.addMinute(still).stage, 'asleep');
+});
+
 test('the rules a tracker is given decide how long stillness has to last', () => {
   const quick = createSleepTracker(() => ({ stillMinutesToSleep: 5, restlessSecondsToWake: 30 }));
   assert.equal(addMinutes(quick, 4, { isInBed: true, movementSeconds: 0 }).stage, 'awake');
