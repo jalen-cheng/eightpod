@@ -624,6 +624,17 @@ this a switch in place. Going back is one command; see "Going back to the origin
 Every SevenSleep update runs this installer over an existing install, and that is tested on a Pod
 5. Starting from the original Free Sleep itself has not been tested, on any Pod.
 
+## Optional: watchdogs
+
+Two guards against a Pod that stops answering. Both are off until you switch them on, over SSH:
+
+| Command | What it does |
+|---|---|
+| `sh /home/dac/free-sleep/scripts/setup_watchdog.sh wifi` | Once a minute, checks whether the Pod is on Wi-Fi. After 3 minutes off it, asks it to connect again |
+| `sh /home/dac/free-sleep/scripts/setup_watchdog.sh hardware` | Resets the Pod if its system freezes, so it is not left frozen with the bed as it was. **Not yet run on a Pod.** Switching it on can reset the Pod once; it is tried for 75 seconds first and only kept if the Pod stays up |
+| `sh /home/dac/free-sleep/scripts/setup_watchdog.sh status` | Says which are on |
+| `sh /home/dac/free-sleep/scripts/setup_watchdog.sh remove` | Takes both out |
+
 ## Going back to Eight Sleep
 
 **With a firmware reset (Pod 3 and Pod 4).** This puts the Pod's software back as it left the factory.
@@ -649,6 +660,8 @@ be possible.
    ```
    If you set up Tailscale on the Pod, remove it too:
    `sh /home/dac/free-sleep/scripts/setup_tailscale.sh remove`.
+   If you switched on a watchdog, take it out as well:
+   `sh /home/dac/free-sleep/scripts/setup_watchdog.sh remove`.
 2. Lift the internet block:
    ```
    sh /home/dac/free-sleep/scripts/unblock_internet_access.sh

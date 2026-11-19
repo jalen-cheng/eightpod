@@ -40,7 +40,9 @@ export default defineConfig({
     pageData.frontmatter.head.push(['meta', { 'http-equiv': 'refresh', content: `0; url=${BASE_PATH}${FIRST_PAGE}` }]);
   },
   themeConfig: {
-    logo: '/logo.svg',
+    // The name as lettering stands in for the title beside it
+    logo: { light: '/wordmark-on-light.png', dark: '/wordmark-on-dark.png', alt: 'SevenSleep' },
+    siteTitle: false,
     // Unlike the links below, VitePress uses this one as written, so it carries the base path
     logoLink: `${BASE_PATH}${FIRST_PAGE}`,
     nav: [

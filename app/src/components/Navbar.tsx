@@ -37,7 +37,7 @@ export default function Navbar() {
         } }
       >
         <Box component={ Link } to="/" sx={ { display: 'flex', alignItems: 'center', gap: 1.25, p: 1, mb: 3, textDecoration: 'none' } }>
-          <Box component="img" src="/sevensleep-logo.png" alt="SevenSleep" sx={ { width: 150, height: 'auto' } }/>
+          <Box component="img" src="/sevensleep-logo.png" alt="SevenSleep" sx={ { width: 104, height: 'auto' } }/>
         </Box>
         <Box component="nav" aria-label="Main navigation" sx={ { display: 'flex', flexDirection: 'column', gap: 0.5 } }>
           { PAGES.map(({ title, route, icon }) => (
