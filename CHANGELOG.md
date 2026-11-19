@@ -9,6 +9,9 @@ version. Anything older is in the [git history](https://github.com/jalen-cheng/s
 - The hardware watchdog checks that systemd holds the device before it is kept.
 - Minor UI changes: the plain 7 is the icon again, and the logo is centred.
 
+### 3.24.1
+- Send sleep to SevenSleep sends the last two weeks in one run, so it is tapped now and then and needs no daily automation.
+
 ## 3.23
 - Wi-Fi and hardware watchdogs for the Pod, off until switched on.
 - The SevenSleep lettering is the logo in the app and on the docs site.

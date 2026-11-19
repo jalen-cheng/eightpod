@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="9a00e264-05bf-589d-86a6-f05a6d905a12")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="20563842-6e13-5f3e-8d8d-ae5d96122c04")}catch(e){}}();
 import express from 'express';
 import cors from 'cors';
 import logger from '../logger.js';
@@ -17,7 +17,8 @@ export default function (app) {
         });
         next();
     });
-    app.use(express.json());
+    // Room for two weeks of a tracker's sleep samples in one request (the default is 100 KB)
+    app.use(express.json({ limit: '1mb' }));
     // Allow local development
     app.use(cors({
         origin: (origin, callback) => {
@@ -37,4 +38,4 @@ export default function (app) {
     });
 }
 //# sourceMappingURL=middleware.js.map
-//# debugId=9a00e264-05bf-589d-86a6-f05a6d905a12
+//# debugId=20563842-6e13-5f3e-8d8d-ae5d96122c04

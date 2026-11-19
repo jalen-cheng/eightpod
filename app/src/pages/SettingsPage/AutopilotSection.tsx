@@ -101,7 +101,7 @@ export default function AutopilotSection({ settings, updateSettings }: Autopilot
             </Button>
           </SettingRow>
           <Typography variant="caption" sx={ { display: 'block', mt: 0.5, color: 'text.secondary', lineHeight: 1.6 } }>
-            Add the Shortcut once and it sends each night by itself. With or without a tracker, you can set your own times
+            Add the Shortcut and tap it every week or so: one run sends the last two weeks. With or without a tracker, you can set your own times
             for a night under Data &gt; Sleep.
             At least { MIN_NIGHTS_TO_CALIBRATE } nights are recommended for the best fit. { describeCalibration(autopilot.left.tracker) }
           </Typography>

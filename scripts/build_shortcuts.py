@@ -8,7 +8,7 @@ sign each on a Mac, into docs/shortcuts under the Shortcut's own name:
     shortcuts sign --mode anyone --input "unsigned/Bed off.shortcut" --output "docs/shortcuts/Bed off.shortcut"
 
 Two of them do what the app cannot: "Send sleep to SevenSleep" reads Apple Health (and only
-runs on the home Wi-Fi, where an automation can run it every day), and "Open SevenSleep"
+runs on the home Wi-Fi; one run sends the last two weeks, so it is tapped now and then, not every day), and "Open SevenSleep"
 opens the app from anywhere, connecting Tailscale first when away from home. The other four
 are optional, for Siri and automations: they talk to the Pod at its home address.
 
@@ -35,7 +35,8 @@ WIFI_QUESTION = "Your home Wi-Fi's name, exactly as the phone shows it"
 SLEEP_SOURCE_NAME = 'Apple Health'
 # Two days, so a run late in the day still reaches back over last night. Sending a night twice
 # changes nothing on the Pod.
-SLEEP_DAYS_LOOKED_BACK = 2
+# Two weeks in one run: enough to fit the sleep rules from one tap, and to catch up after days away
+SLEEP_DAYS_LOOKED_BACK = 14
 # Tailscale takes a moment to be usable after it connects
 SECONDS_FOR_TAILSCALE = 2
 
@@ -204,9 +205,9 @@ def iso_date(detail_uuid, property_name, formatted_uuid):
 
 
 def send_sleep_actions():
-    """On the home Wi-Fi: finds the Sleep samples of the last two days, writes each as
+    """On the home Wi-Fi: finds the Sleep samples of the last two weeks, writes each as
     "start|end|value" with ISO 8601 times, posts the lines to the Pod and shows its answer as a
-    notification. On any other network it says so and sends nothing, so it can be run every day
+    notification. On any other network it says so and sends nothing, so it can be run anywhere
     by an automation without failing away from home."""
     address, wifi, network, on_wifi = new_uuid(), new_uuid(), new_uuid(), new_uuid()
     samples, repeat_group, repeat_results = new_uuid(), new_uuid(), new_uuid()
