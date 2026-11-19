@@ -33,3 +33,9 @@
   max-width: 100%;
   height: auto;
 }
+
+/* On a phone VitePress shows two menus: the top bar's, and the sidebar's "Menu". The top bar's
+   is hidden, and its links are at the foot of the sidebar. */
+@media (max-width: 767px) {
+  .VPNav .VPNavBarHamburger { display: none !important; }
+}

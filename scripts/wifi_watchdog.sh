@@ -24,6 +24,7 @@ count=$((count + 1))
 if [ "$count" -ge "$CHECKS_BEFORE_ACTING" ]; then
   echo "wlan0 is '$state' for the ${count}th check in a row: asking NetworkManager to connect"
   nmcli device connect wlan0 || true
-  count=$((0 - CHECKS_TO_WAIT_AFTER))
+  # Counted back up from below zero, so the next ask is that many checks away
+  count=$((CHECKS_BEFORE_ACTING - CHECKS_TO_WAIT_AFTER))
 fi
 echo "$count" > "$COUNT_FILE"

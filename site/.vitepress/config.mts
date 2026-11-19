@@ -15,10 +15,14 @@ const BASE_PATH = '/sevensleep/';
 const FIRST_PAGE = 'getting-started';
 
 // The sidebar follows the groups in scripts/docsManifest.mjs.
-const sidebar = sidebarGroups.map((group) => ({
-  text: group.text,
-  items: group.pages.map((page) => ({ text: page.title, link: `/${page.slug}` })),
-}));
+// On a phone the top bar's own menu is hidden (custom.css), so the links it held are here too
+const sidebar = [
+  ...sidebarGroups.map((group) => ({
+    text: group.text,
+    items: group.pages.map((page) => ({ text: page.title, link: `/${page.slug}` })),
+  })),
+  { text: 'Elsewhere', items: [{ text: 'Demo', link: 'https://sevensleep.vercel.app' }, { text: 'GitHub', link: REPOSITORY_URL }] },
+];
 
 export default defineConfig({
   title: 'SevenSleep',
