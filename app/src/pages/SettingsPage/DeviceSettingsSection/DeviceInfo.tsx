@@ -35,13 +35,13 @@ export default function DeviceInfo({ settings, updateSettings }: DeviceInfoProps
   const { data: latest } = useServerInfo();
   if (isLoading || !deviceStatus) return null;
 
-  const { coverVersion, hubVersion, eightPod } = deviceStatus;
+  const { coverVersion, hubVersion, sevenSleep } = deviceStatus;
   // A cover and hub of the same model are named once
   const models = [coverVersion, hubVersion].filter(version => version !== Version.NotFound);
   const podName = models.length === 0 ? 'Pod'
     : models[0] === models[1] || models.length === 1 ? models[0]
       : `${coverVersion} cover, ${hubVersion} hub`;
-  const branchNote = eightPod.branch && eightPod.branch !== 'main' ? ` (${eightPod.branch})` : '';
+  const branchNote = sevenSleep.branch && sevenSleep.branch !== 'main' ? ` (${sevenSleep.branch})` : '';
 
   return (
     <Box sx={ { display: 'flex', flexDirection: 'column', gap: 1.5 } }>
@@ -49,7 +49,7 @@ export default function DeviceInfo({ settings, updateSettings }: DeviceInfoProps
         <WifiStrength/>
       </InfoRow>
       <InfoRow
-        title={ `EightPod ${eightPod.version}${branchNote}` }
+        title={ `SevenSleep ${sevenSleep.version}${branchNote}` }
         detail={ latest?.updateAvailable ? `Version ${latest.version} is available` : latest ? 'Up to date' : undefined }
       >
         { latest?.updateAvailable && <UpdateButton/> }

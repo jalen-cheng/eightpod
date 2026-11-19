@@ -25,7 +25,7 @@ const describeLink = (link: AutopilotSnapshot['left']['tracker']): string => {
 // it: an app that posts it on a schedule, or a Shortcut run by an automation. Either way, once
 // set up it runs by itself. iPhone only: Android's Health Connect has no such route built here.
 export default function TrackerLinkDialog({ open, onClose, autopilot }: TrackerLinkDialogProps) {
-  const podAddress = import.meta.env.VITE_ENV === 'demo' ? 'http://eightpod.local' : window.location.origin;
+  const podAddress = import.meta.env.VITE_ENV === 'demo' ? 'http://sevensleep.local' : window.location.origin;
   const steps = [
     'In Shortcuts, tap + and add Find Health Samples: Type is Sleep, Start Date is in the last 1 day.',
     'Add Repeat with Each over the samples. Inside it add a Text action holding '

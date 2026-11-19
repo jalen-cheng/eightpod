@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="a4ba33e7-212c-5818-92eb-140555df0c12")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="1406cb9d-71be-531f-8aae-7fd286529916")}catch(e){}}();
 import { z } from 'zod';
 import { getMeasuredWaterF } from './measuredWater.js';
 import { areSidesFlipped } from './sideMapping.js';
@@ -166,7 +166,7 @@ export async function loadDeviceStatus(response, getGestures) {
         },
         coverVersion: detectCoverVersion(rawDeviceData.sensorLabel),
         hubVersion: HUB_VERSION,
-        eightPod: {
+        sevenSleep: {
             version: serverInfo.version,
             branch: serverInfo.branch,
         },
@@ -197,4 +197,4 @@ export async function loadDeviceStatus(response, getGestures) {
     return deviceStatus;
 }
 //# sourceMappingURL=loadDeviceStatus.js.map
-//# debugId=a4ba33e7-212c-5818-92eb-140555df0c12
+//# debugId=1406cb9d-71be-531f-8aae-7fd286529916

@@ -128,7 +128,7 @@ await run("caption('A local API for scripts, Shortcuts and assistants')");
 await run("press(findInApp('a[href=\"/temperature\"]') ?? findInApp('a[href=\"/\"]'))");
 await pause(1200);
 await run('showTerminal()');
-await run(`typeCommand("curl -X POST eightpod.local/api/deviceStatus -d '{\\"left\\": {\\"targetTemperatureF\\": 70}}'")`);
+await run(`typeCommand("curl -X POST sevensleep.local/api/deviceStatus -d '{\\"left\\": {\\"targetTemperatureF\\": 70}}'")`);
 await pause(250);
 await run("sendRequest('/api/deviceStatus', { left: { targetTemperatureF: 70 } })");
 // The page asks the Pod for its state every five seconds; wait for the dial to show the change

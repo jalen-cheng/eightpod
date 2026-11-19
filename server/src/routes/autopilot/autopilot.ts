@@ -46,7 +46,7 @@ const DEFAULT_EXPORT_DAYS = 90;
 router.get('/autopilot/nights/export', (req: Request, res: Response) => {
   const requestedDays = Number(req.query.days);
   const days = EXPORT_DAYS.includes(requestedDays) ? requestedDays : DEFAULT_EXPORT_DAYS;
-  res.attachment(`eightpod-nights-${days}-days-${new Date().toISOString().slice(0, 10)}.json`);
+  res.attachment(`sevensleep-nights-${days}-days-${new Date().toISOString().slice(0, 10)}.json`);
   res.json(getNightsExport(days));
 });
 

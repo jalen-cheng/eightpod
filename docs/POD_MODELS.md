@@ -1,6 +1,6 @@
 # Pod 3, Pod 4 and Pod 5
 
-EightPod was built and tested on **one Pod 5**. It runs the same code on a Pod 3 and a Pod 4, and
+SevenSleep was built and tested on **one Pod 5**. It runs the same code on a Pod 3 and a Pod 4, and
 it has **not been run on either**. This page is what a code review against the original project
 ([throwaway31265/free-sleep](https://github.com/throwaway31265/free-sleep)) found on 17 Nov 2026:
 what should behave as it did there, what was changed on purpose, and what nobody has checked.
@@ -8,7 +8,7 @@ what should behave as it did there, what was changed on purpose, and what nobody
 If you try it on a Pod 3 or 4, the installer keeps your previous install and puts it back if the
 new one fails, and `FREE_SLEEP_REPO=throwaway31265/free-sleep sh /home/dac/free-sleep/scripts/update.sh`
 takes you back to the original. Like every update, that ends with the internet block switched on.
-Two limits: the app's "update available" notice always compares with EightPod's own repository,
+Two limits: the app's "update available" notice always compares with SevenSleep's own repository,
 so after going back it is not meaningful, and the original project's installer does not keep the
 saved-source file, so its own update script then decides where updates come from.
 
@@ -50,7 +50,7 @@ saved-source file, so its own update script then decides where updates come from
 - **The daily reboot follows its own switch.** In the original it only ran while daily priming
   was on. If "Reboot once a day" is on and priming is off, the Pod now reboots daily, an hour
   before the priming time.
-- **Error reporting is off.** The original sent reports to its own Sentry project when enabled; EightPod has no destination built in.
+- **Error reporting is off.** The original sent reports to its own Sentry project when enabled; SevenSleep has no destination built in.
 
 ### Pod 4 taps
 
@@ -94,4 +94,4 @@ saved-source file, so its own update script then decides where updates come from
 - Whether the half-second status polling suits a Pod 4's firmware.
 - Whether a Pod 3 or 4's system image has the IPv6 firewall, `systemd-resolved` and NetworkManager.
 
-Reports from a Pod 3 or 4 are welcome as issues on [this repository](https://github.com/jalen-cheng/eightpod/issues).
+Reports from a Pod 3 or 4 are welcome as issues on [this repository](https://github.com/jalen-cheng/sevensleep/issues).

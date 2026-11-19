@@ -20,7 +20,7 @@ def load_nats_client():
     except ImportError as error:
         raise RuntimeError(
             'NATS sensor data requires nats-py in /home/dac/venv. '
-            'Update EightPod to synchronize biometrics dependencies, or run '
+            'Update SevenSleep to synchronize biometrics dependencies, or run '
             '/home/dac/venv/bin/python -m pip install nats-py with internet access enabled.'
         ) from error
     return nats, api

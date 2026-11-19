@@ -1,7 +1,7 @@
-# How EightPod works
+# How SevenSleep works
 
 Everything that runs on the Pod, what each part does, and how the features affect each other.
-What changed from the original project is in the [README](../README.md); EightPod builds on [throwaway31265/free-sleep](https://github.com/throwaway31265/free-sleep).
+What changed from the original project is in the [README](../README.md); SevenSleep builds on [throwaway31265/free-sleep](https://github.com/throwaway31265/free-sleep).
 Written from the code on `main` on 17 Nov 2026. File references are for anyone who wants to check.
 
 For how to use the app, see [USING.md](USING.md). For the list of changes and what was tested on a Pod, see [CHANGELOG.md](../CHANGELOG.md).
@@ -27,13 +27,13 @@ For how to use the app, see [USING.md](USING.md). For the list of changes and wh
 | Part | What it is | Where |
 |---|---|---|
 | **Firmware** ("frank") | Eight Sleep's own program. It drives the pumps, heaters and vibration motors and is the only thing that touches hardware. | Already on the Pod |
-| **EightPod server** | A Node program on ports 3000 and 80. It tells the firmware what to do, runs the schedule, and serves the app. | `server/` |
+| **SevenSleep server** | A Node program on ports 3000 and 80. It tells the firmware what to do, runs the schedule, and serves the app. | `server/` |
 | **The app** | The web page you open. It only talks to the server. | `app/`, built into `server/public` |
 | **Biometrics** | Python that turns sensor data into sleep and heart data. **Off on a Pod 5**: its firmware publishes that data where the analysis does not read. | `biometrics/` |
 | **Scripts** | Install, update, the internet block, the `.local` name, Tailscale. | `scripts/` |
 
-How the server reaches the firmware: EightPod opens a socket file (`dac.sock`) and the firmware
-connects to it, the same way it would connect to Eight Sleep's cloud program. EightPod then sends
+How the server reaches the firmware: SevenSleep opens a socket file (`dac.sock`) and the firmware
+connects to it, the same way it would connect to Eight Sleep's cloud program. SevenSleep then sends
 numbered commands one at a time and waits up to 10 seconds for each answer
 (`server/src/8sleep/frankenServer.ts`). The commands it uses:
 
@@ -55,7 +55,7 @@ half second on a Pod 4 or 5), the other follows the firmware's log for Pod 5 but
 
 ## 2. Where things are stored
 
-Everything EightPod keeps lives in `/persistent/free-sleep-data/` on the Pod.
+Everything SevenSleep keeps lives in `/persistent/free-sleep-data/` on the Pod.
 
 | File | Holds | Notes |
 |---|---|---|
@@ -76,7 +76,7 @@ them.
 ## 3. Temperature
 
 The firmware works in **levels from -100 to 100**. Eight Sleep's own app shows these as -10 to +10.
-EightPod stores and sends whole **°F** everywhere and converts at the edges.
+SevenSleep stores and sends whole **°F** everywhere and converts at the edges.
 
 **The measured curve.** The original project assumed levels were spread evenly from 55 to 110°F.
 On the test Pod 5 the firmware reports the water temperature it actually aims for, and it is not
@@ -175,7 +175,7 @@ The firmware has three limits, all found by testing on the Pod:
 - Its own "rise" pattern **does not ramp**: it is one steady strength.
 - It **ignores a new request while it is vibrating**.
 
-So EightPod sends one stretch at a time and, when a stretch is due to end, sends the next
+So SevenSleep sends one stretch at a time and, when a stretch is due to end, sends the next
 (`server/src/jobs/alarmSession.ts`). A 30-minute ramp-up alarm at 100% is: 10 s at 20, 10 s at 40,
 10 s at 60, 10 s at 80, then full strength in three-minute stretches until 30 minutes have passed.
 There is a gap of about a second between stretches.
@@ -230,7 +230,7 @@ both sides when linked, whether or not the bed is on.
 ## 6. Pod 5 buttons and Pod 4 taps
 
 A **Pod 5** has three buttons per side: -, + and a middle button. The firmware does not report them
-through the status the Pod 4 uses, but it writes each press to its log, so EightPod follows that
+through the status the Pod 4 uses, but it writes each press to its log, so SevenSleep follows that
 log (`server/src/8sleep/buttonMonitor.ts`). The server's user is given permission to read it by the
 installer. A **Pod 4** reports double, triple and quadruple taps as counters, read by polling.
 
@@ -266,7 +266,7 @@ Linking is applied by the app and by those server paths. A hand-written request 
 `/api/deviceStatus` or `/api/schedules` naming one side changes only that side.
 
 **Flip left and right** (Settings > General) swaps which physical side the app calls left
-and right. It is applied where EightPod meets the firmware (commands, status, buttons, sensors),
+and right. It is applied where SevenSleep meets the firmware (commands, status, buttons, sensors),
 so each side keeps its name, schedule and settings and simply drives the other half of the bed.
 
 **Away mode** (Settings > General) switches both sides away together. The API can still set it per side, which is for one person being away: that side's schedule, alarm and
@@ -277,7 +277,7 @@ person who is there. One-time alarms and the alarm test still vibrate an away si
 ## 8. In-bed detection (Pod 5)
 
 The bed has capacitive sensors under each side, three zones per side, and a Pod 5's firmware
-publishes their readings twice a second on its local message bus. EightPod listens to them
+publishes their readings twice a second on its local message bus. SevenSleep listens to them
 (`server/src/8sleep/bedSensorMonitor.ts`), works out whether someone is in bed
 (`server/src/8sleep/presenceDetector.ts`), and decides what that sets off
 (`server/src/jobs/presenceActions.ts`):
@@ -301,7 +301,7 @@ bed" was forgotten, so the bed stayed on. The monitor now writes what it has lea
 `/persistent/free-sleep-data/presence_state.json` every minute and on shutdown, and reads it back
 on start if it is under 30 minutes old. The file sits outside the `lowdb` folder on purpose:
 anything written there rebuilds every scheduled job. If detection ever looks stuck, delete that
-file and restart EightPod with the bed empty. **Settings > In-bed detection > Bed is empty now** does
+file and restart SevenSleep with the bed empty. **Settings > In-bed detection > Bed is empty now** does
 the same without a restart.
 
 Two optional actions, both off by default, each run once per stay:
@@ -324,12 +324,12 @@ sensitivity. `GET /api/metrics/presence/sensors` returns the live signal and emp
 **Seen on the Pod:** "Turn on when I get into bed" turned both linked sides on when someone got in. Not yet
 seen: it turning off after they got out, and the long-stay alarm.
 
-**Autopilot.** The same sensor bus carries the piezo signal and the room temperature. With Settings > Autopilot on, EightPod reads a heart rate from it, judges sleep, and
+**Autopilot.** The same sensor bus carries the piezo signal and the room temperature. With Settings > Autopilot on, SevenSleep reads a heart rate from it, judges sleep, and
 moves a sleeping side a few degrees around its set temperature. It is experimental; [AUTOPILOT.md](AUTOPILOT.md) has the rules, the evidence and the limits.
 
 ## 9. Daily housekeeping: priming, reboot, calibration
 
-All three are timed from Settings > "Prime daily" (default 14:00, on by default in EightPod).
+All three are timed from Settings > "Prime daily" (default 14:00, on by default in SevenSleep).
 
 | Job | When | Notes |
 |---|---|---|
@@ -369,7 +369,7 @@ offers to dismiss it.
 
 **Data.** Sleep records and logs. Sleep needs biometrics. Nights lists every stay in bed the autopilot has saved (Pod 5), with the bed's sleep and wake times beside a linked tracker's, the tuning in use, and an Export button.
 
-**Status** (opened from the "Status: Healthy" link, bottom right on a computer and beside the heading of Data and Settings on a phone; it has no tab). Wi-Fi strength and whether EightPod is up to date, then each internal service with
+**Status** (opened from the "Status: Healthy" link, bottom right on a computer and beside the heading of Data and Settings on a phone; it has no tab). Wi-Fi strength and whether SevenSleep is up to date, then each internal service with
 its state. Services that are jobs have a Run button. The biometrics and sleep-analysis rows are greyed and
 marked "Untested in this version".
 
@@ -399,8 +399,8 @@ in [server/API.md](../server/API.md). The ones made for shortcuts:
 Step-by-step shortcut recipes are in [IOS_SHORTCUTS.md](IOS_SHORTCUTS.md).
 
 **Which pages may call the API.** A browser tells the server which page a request came from. The
-server accepts the Pod's own addresses and names (home network addresses, `eightpod`,
-`eightpod.local`, its Tailscale address and name) and refuses any other website, so a page on the
+server accepts the Pod's own addresses and names (home network addresses, `sevensleep`,
+`sevensleep.local`, its Tailscale address and name) and refuses any other website, so a page on the
 internet cannot drive the bed through your browser. Requests with no page behind them, such as
 shortcuts, are accepted.
 
@@ -412,8 +412,8 @@ name lookups on the home network. It is restored at every boot before the networ
 on, the Pod cannot reach Eight Sleep or anything else. `scripts/updater_lockout.sh` separately
 switches off Eight Sleep's updater so it cannot replace the firmware.
 
-**The name.** The installer renames a Pod that still has its factory name to `eightpod` and switches
-on a responder, so the Pod answers at `http://eightpod.local` at home, whatever address the router
+**The name.** The installer renames a Pod that still has its factory name to `sevensleep` and switches
+on a responder, so the Pod answers at `http://sevensleep.local` at home, whatever address the router
 gives it. The server listens on port 80 as well as 3000, so the port can be left out.
 `setup_local_name.sh disable` turns it off for good.
 
@@ -423,22 +423,22 @@ anywhere:
 - It runs on the Pod in a mode that adds no routes or firewall rules.
 - The block is opened for Tailscale's sign-in servers and the relays of two regions only, replies only.
 - A daily timer re-reads Tailscale's relay list and updates the allowed addresses.
-- Updating EightPod also installs a newer Tailscale when one is out.
+- Updating SevenSleep also installs a newer Tailscale when one is out.
 - **Home access never depends on it.** If Tailscale is down, `http://<pod-ip>:3000` and
-  `eightpod.local` work as before on your home network.
+  `sevensleep.local` work as before on your home network.
 
 Details, limits and alternatives: [REMOTE_ACCESS.md](REMOTE_ACCESS.md).
 
 ## 13. Installing and updating
 
-**Install** (`scripts/install.sh`, as root) downloads EightPod, installs Node, finds the
+**Install** (`scripts/install.sh`, as root) downloads SevenSleep, installs Node, finds the
 firmware's socket path, sets up the database, creates the `free-sleep` service (and gives it
 permission to read the firmware log), adds the `fs-*` shortcuts, switches on the `.local` name, and
 refreshes Tailscale's files if Tailscale is installed.
 
 **Update** (`fs-update`, or `sh /home/dac/free-sleep/scripts/update.sh`):
 
-1. Stops EightPod and backs up the database.
+1. Stops SevenSleep and backs up the database.
 2. Opens the internet block **temporarily**: the saved rules stay, so a power cut mid-update still
    comes back blocked.
 3. Keeps the old install aside, downloads and runs the installer from the saved source.
@@ -446,7 +446,7 @@ refreshes Tailscale's files if Tailscale is installed.
 5. Blocks the internet again, with the same options as before.
 
 It takes about four minutes. The bed's firmware keeps running throughout, so the bed stays at its
-temperature, but nothing scheduled fires while EightPod is stopped. The app's Update button runs
+temperature, but nothing scheduled fires while SevenSleep is stopped. The app's Update button runs
 the same thing.
 
 **The repository contains the built app and server** (`server/public`, `server/dist`), because the
@@ -470,8 +470,8 @@ The cases where one feature changes what another does:
 | Sides are not linked and one side dismisses | The other side's alarm restarts from the beginning |
 | One side is in away mode | The other side's changes are mirrored to it; its own schedule and alarm do not run |
 | Daily priming is switched off | The daily reboot still runs, at the same time |
-| The Pod reboots or EightPod restarts during an alarm | The alarm is forgotten: the current stretch (up to three minutes) finishes and nothing follows |
-| A side is switched on by hand with "Ignore the schedule until it turns off" set | The schedule skips that side until it turns off: no scheduled power on or off, temperature changes or warm-up. Alarms still go off. A restart of EightPod ends it early |
+| The Pod reboots or SevenSleep restarts during an alarm | The alarm is forgotten: the current stretch (up to three minutes) finishes and nothing follows |
+| A side is switched on by hand with "Ignore the schedule until it turns off" set | The schedule skips that side until it turns off: no scheduled power on or off, temperature changes or warm-up. Alarms still go off. A restart of SevenSleep ends it early |
 | Someone gets into a bed that is off, with "Turn on when I get into bed" set | The bed turns on as if by hand, so the manual-on settings apply, but for the hours chosen for this setting |
 | An update is running | Nothing scheduled fires for about four minutes |
 | Tailscale is down | Only remote access is affected |

@@ -1,13 +1,13 @@
-# Using EightPod
+# Using SevenSleep
 
 A first-use guide for the app, once it is installed ([INSTALLATION.md](../INSTALLATION.md)).
-It was written against a Pod 5, the only model EightPod was tested on. Where a Pod 3 or 4
+It was written against a Pod 5, the only model SevenSleep was tested on. Where a Pod 3 or 4
 differs, it says so; [POD_MODELS.md](POD_MODELS.md) has the detail.
 
 ## 1. Open the app
 
 On a phone or computer on the same Wi-Fi as the Pod, open `http://<pod-ip>:3000`, for example
-`http://192.168.1.50:3000`. `http://eightpod.local` also works where the installer could set the name up.
+`http://192.168.1.50:3000`. `http://sevensleep.local` also works where the installer could set the name up.
 
 To keep it on your phone's home screen: in Safari, tap Share, then **Add to Home Screen**. In
 Chrome on Android, open the three-dot menu, then **Add to Home screen**.
@@ -101,7 +101,7 @@ A scheduled alarm only vibrates if that side is on at the alarm time.
 ## 6. Dismiss an alarm
 
 - **Pod 5:** press any button on the side of the bed.
-- **Pod 4:** tap the bed four times. Not tested in EightPod.
+- **Pod 4:** tap the bed four times. Not tested in SevenSleep.
 - **Any Pod:** open the app. The Temperature page shows a **Dismiss Alarm** button while the bed vibrates.
 
 A press stops the alarm on the side it was made on, and that side gives a short double buzz to
@@ -154,7 +154,7 @@ When the sides are linked, the buttons on either side control both. The step siz
 | **Light on the hub** | General | The hub's light, on or off |
 | **Prime daily** | Priming | Runs the water priming cycle every day at **Prime time**, 2 PM by default. It does not check whether the bed is in use |
 | **Reboot once a day** | Pod | Restarts the Pod one hour before the priming time. A vibrating alarm or running warm-up is lost in a reboot, so keep the time in the afternoon |
-| **Status page** | The "Status" link (bottom right on a computer, beside the heading of Data and Settings on a phone) | Shows Wi-Fi strength, whether EightPod is up to date, and each service. The biometrics and sleep-analysis rows are greyed and marked untested |
+| **Status page** | The "Status" link (bottom right on a computer, beside the heading of Data and Settings on a phone) | Shows Wi-Fi strength, whether SevenSleep is up to date, and each service. The biometrics and sleep-analysis rows are greyed and marked untested |
 | **API** | Settings > API > **Open** | A page with the common requests and two examples with your Pod's address filled in. Tap a command to select it. The page's own address is `/api-guide` |
 | **In-bed detection** | Its own section, Pod 5 only | Two options, both off by default: **Turn on when I get into bed** and **Alarm after a long time in bed**. Detection was checked with one person on one Pod; the first option has been seen turning the bed on, the rest has not been seen working yet |
 | **Autopilot** | Its own section, Pod 5 only | **Adjust the temperature while I sleep**, off by default. Moves a sleeping side up to 4°F around its set temperature: cooler early, warmer toward morning, against a room that warms or cools, and it learns from the changes you make. It treats the bed as one sleeper's, so switching it on links the sides. A temperature you set in the night is held as you set it. A nap (a sleep under 3 hours) is left alone. **Data > Nights** shows a day at a time (bedtime, wake time, duration, wake-ups, and graphs of breathing rate, pressure and temperature changes), and **Export** downloads a week to three months. Sleep tracker sync is iPhone only. **Sleep tracker > Link** has the steps to send a watch's or band's sleep and wake times each morning, which the bed uses to tune how it judges sleep. Experimental and not yet run through a night; see [AUTOPILOT.md](AUTOPILOT.md) |
@@ -168,7 +168,7 @@ during the update.
   ```
   fs-update
   ```
-- Or, when the app knows of a newer version, tap **Update** next to the EightPod version in **Settings > Pod**.
+- Or, when the app knows of a newer version, tap **Update** next to the SevenSleep version in **Settings > Pod**.
   The button only shows then; `fs-update` works at any time.
 
 **An update always ends with the internet block switched on**, even if you had turned it off.

@@ -1,7 +1,7 @@
 import { useServerInfo } from '@api/serverInfo.ts';
 import StatusTag from './StatusTag.tsx';
 
-// Whether EightPod is up to date, in two words
+// Whether SevenSleep is up to date, in two words
 export default function VersionStatus() {
   const { data: serverInfo, isLoading, isError } = useServerInfo();
   if (isError || isLoading) return null;

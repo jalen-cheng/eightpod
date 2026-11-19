@@ -5,7 +5,7 @@ print_yellow() {
 }
 
 
-print_yellow "WARNING: This will permanently delete all EightPod biometric data!"
+print_yellow "WARNING: This will permanently delete all SevenSleep biometric data!"
 print_yellow "After deleting, this will recreate the DB"
 read -p "Are you sure you want to continue? (y/N): " confirm
 

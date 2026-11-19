@@ -1,7 +1,7 @@
 #!/bin/bash
 # Optional extra lockdown on top of block_internet_access.sh: stops Eight Sleep's updater services
 # and points the Eight Sleep cloud hosts at nowhere, so nothing phones home even while the
-# firewall is temporarily open during a EightPod update.
+# firewall is temporarily open during a SevenSleep update.
 #
 # Usage:
 #   sh updater_lockout.sh enable

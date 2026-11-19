@@ -25,7 +25,7 @@ def call(calls, name):
 
 events = [{key: (round(value, 4) if isinstance(value, float) else value) for key, value in event.items()} for event in take['pointerEvents']]
 log = call([
-    {'tool': 'createProject', 'args': {'title': 'EightPod demo', 'videoPath': f'{SCRATCH}{take_folder}/take.mp4'}, 'save': {'projectId': 'projectId'}},
+    {'tool': 'createProject', 'args': {'title': 'SevenSleep demo', 'videoPath': f'{SCRATCH}{take_folder}/take.mp4'}, 'save': {'projectId': 'projectId'}},
     {'tool': 'setPointerTrack', 'args': {'projectId': '$projectId', 'events': events, 'recordingStartedAt': 0}},
     {'tool': 'setAspectRatio', 'args': {'projectId': '$projectId', 'aspectRatio': '16:9'}},
     {'tool': 'getCurrentDocument', 'args': {'projectId': '$projectId'}, 'show': 100000},
@@ -60,7 +60,7 @@ for index, (start, text) in enumerate(captions):
         'projectId': project_id, 'startSec': round(start, 2), 'endSec': round(stop, 2), 'text': text, 'x': 50, 'y': 94,
         'fontSize': 34, 'animation': 'fade' if index == 0 else 'none'}})
 edits.append({'tool': 'addAnnotation', 'show': 120, 'args': {
-    'projectId': project_id, 'startSec': round(end_title_at, 2), 'endSec': duration, 'text': 'EightPod: local control for Eight Sleep Pods',
+    'projectId': project_id, 'startSec': round(end_title_at, 2), 'endSec': duration, 'text': 'SevenSleep: local control for Eight Sleep Pods',
     'x': 50, 'y': 94, 'fontSize': 34, 'animation': 'none'}})
 edits.append({'tool': 'exportVideo', 'args': {'projectId': project_id, 'path': output_path, 'quality': 'good', 'fps': 60}, 'show': 400})
 print(call(edits, 'os_phase2'))

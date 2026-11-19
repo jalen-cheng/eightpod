@@ -31,7 +31,7 @@ export default function Donate() {
     <Section title="Support the original author">
       <Box sx={ { display: 'flex', flexDirection: 'column', gap: 2 } }>
         <Typography variant="body2" sx={ { color: 'text.secondary', fontSize: 12 } }>
-          EightPod builds on Free Sleep, created by the author of the original project. These donations go to them.
+          SevenSleep builds on Free Sleep, created by the author of the original project. These donations go to them.
         </Typography>
         <Box
           sx={ {

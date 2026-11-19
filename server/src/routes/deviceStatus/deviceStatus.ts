@@ -16,7 +16,7 @@ router.get('/deviceStatus', async (req: Request, res: Response) => {
   res.json(resp);
 });
 
-// Debugging aid: the firmware's unparsed status text, to see what a Pod reports beyond what EightPod reads
+// Debugging aid: the firmware's unparsed status text, to see what a Pod reports beyond what SevenSleep reads
 router.get('/deviceStatus/raw', async (req: Request, res: Response) => {
   const franken = await connectFranken();
   res.type('text/plain').send(await franken.getRawDeviceStatus());

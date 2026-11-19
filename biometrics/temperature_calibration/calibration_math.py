@@ -5,7 +5,7 @@ from typing import Dict, List, Optional
 
 MIN_LEVEL = -100
 MAX_LEVEL = 100
-# What EightPod takes each level to mean, in °C: straight lines between these points.
+# What SevenSleep takes each level to mean, in °C: straight lines between these points.
 # Must match server/src/db/temperatureCurve.ts.
 CURVE_POINTS_C = [(-100, 10.0), (-99, 15.12), (0, 27.0), (50, 36.0), (100, 42.0)]
 
@@ -15,7 +15,7 @@ RAW_UNITS_PER_DEGREE_C = 100
 
 
 def level_to_assumed_temp_f(level: float) -> float:
-    """The °F that EightPod takes a Pod level to mean (not rounded)."""
+    """The °F that SevenSleep takes a Pod level to mean (not rounded)."""
     level = min(MAX_LEVEL, max(MIN_LEVEL, level))
     for (lower_level, lower_c), (upper_level, upper_c) in zip(CURVE_POINTS_C, CURVE_POINTS_C[1:]):
         if level <= upper_level:

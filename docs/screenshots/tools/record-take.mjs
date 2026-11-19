@@ -122,7 +122,7 @@ await send('Page.navigate', { url: 'http://localhost:5199/' });
 await realPause(7000);
 await run(TERMINAL);
 // The take is made on a development address; the API section shows the one a Pod has
-await run("(new MutationObserver(() => document.querySelectorAll('code').forEach(code => { if (code.textContent.includes(location.origin)) code.textContent = code.textContent.replaceAll(location.origin, 'http://eightpod.local'); })).observe(document.body, { childList: true, subtree: true }), true)");
+await run("(new MutationObserver(() => document.querySelectorAll('code').forEach(code => { if (code.textContent.includes(location.origin)) code.textContent = code.textContent.replaceAll(location.origin, 'http://sevensleep.local'); })).observe(document.body, { childList: true, subtree: true }), true)");
 // The take opens on a bed that is off
 await run("fetch('/api/deviceStatus', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ left: { isOn: false } }) }).then(() => true)");
 await realPause(7000);
@@ -176,7 +176,7 @@ beat('A local API for anything');
 await press("document.querySelector('a[href=\"/temperature\"]') ?? document.querySelector('a[href=\"/\"]')");
 await pause(1100);
 await run('showTerminal()');
-await run(`typeCommand("curl -X POST eightpod.local/api/deviceStatus -d '{\\"left\\": {\\"targetTemperatureF\\": 70}}'")`);
+await run(`typeCommand("curl -X POST sevensleep.local/api/deviceStatus -d '{\\"left\\": {\\"targetTemperatureF\\": 70}}'")`);
 await pause(250);
 await run("sendRequest('/api/deviceStatus', { left: { targetTemperatureF: 70 } })");
 // The page asks the Pod for its state every five seconds; wait for the dial to show the change

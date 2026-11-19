@@ -143,7 +143,7 @@ could ask: only something on the phone can read it.
 
 - **An app, no Shortcut.** The paid iPhone app Health Auto Export posts Apple Health data on a
   schedule. Add a REST API automation for Sleep Analysis with the address
-  `http://eightpod.local/api/autopilot/sleepTimes`, and switch **Summarize Data** off so it
+  `http://sevensleep.local/api/autopilot/sleepTimes`, and switch **Summarize Data** off so it
   sends each stretch of sleep and waking, not one row a night.
 - **A Shortcut with an automation.** **Settings > Autopilot > Sleep tracker > Link** has the
   steps. Set the automation to run when your Sleep Focus turns off, or at a set time.
@@ -157,7 +157,7 @@ Connect data to an address exist (HC Webhook, HCGateway), but the bed does not r
 formats; a script that sends the request below would work.
 
 ```bash
-curl -X POST http://eightpod.local/api/autopilot/sleepTimes -H 'Content-Type: application/json' \
+curl -X POST http://sevensleep.local/api/autopilot/sleepTimes -H 'Content-Type: application/json' \
   -d '{"source":"Whoop","asleepAt":"2026-11-18T23:12:00-08:00","awakeAt":"2026-11-19T06:48:00-08:00"}'
 ```
 
@@ -210,7 +210,7 @@ Settings > Autopilot shows, while someone is in bed, whether they are asleep, th
 rate and the last change with its reasons. `GET /api/autopilot` returns the same (see
 [server/API.md](../server/API.md#autopilot)), and the server log has a line for every change.
 What it has learned is kept in `/persistent/free-sleep-data/autopilot_state.json`; delete the
-file and restart EightPod to forget it.
+file and restart SevenSleep to forget it.
 
 ## Code
 
