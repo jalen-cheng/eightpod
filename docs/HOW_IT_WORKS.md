@@ -4,7 +4,7 @@ Everything that runs on the Pod, what each part does, and how the features affec
 What changed from the original project is in the [README](../README.md); SevenSleep builds on [throwaway31265/free-sleep](https://github.com/throwaway31265/free-sleep).
 Written from the code on `main` on 17 Nov 2026. File references are for anyone who wants to check.
 
-For how to use the app, see [USING.md](USING.md). For the list of changes and what was tested on a Pod, see [CHANGELOG.md](../CHANGELOG.md).
+For how to use the app, see [USING.md](USING.md). For what changed in each version, see [CHANGELOG.md](../CHANGELOG.md).
 
 The whole of it on one page: what can ask the bed for something, how a side is chosen, what can
 stop a change, and how sleep is followed. [Open it full size](diagrams/system-logic.svg).
@@ -494,7 +494,7 @@ The cases where one feature changes what another does:
 
 ## 15. Known rough edges
 
-Listed so nothing here is a surprise. [CHANGELOG.md](../CHANGELOG.md) keeps the full list.
+Listed so nothing here is a surprise.
 
 - **A restarted alarm starts over**, ramp included (the unlinked two-sides case).
 - **A time just before bedtime is treated as the next day.** With bedtime at 22:00, a change at

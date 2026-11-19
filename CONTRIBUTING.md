@@ -41,7 +41,7 @@ comment with your Pod model, what you did and what happened. "Works" is a useful
   `app/` ships with both rebuilt.
 - Schedule and alarm timing lives in small tested modules (`server/src/jobs/`); add a test there
   when you change it.
-- Raise the version in `server/src/serverInfo.json` and add a row to [CHANGELOG.md](CHANGELOG.md)
+- Raise the version in `server/src/serverInfo.json` and add a bullet under its version in [CHANGELOG.md](CHANGELOG.md)
   when people should update for the change.
 
 [DEVELOPING.md](DEVELOPING.md) covers setup, and running the app on made-up data with no Pod.

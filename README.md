@@ -1,10 +1,6 @@
 # SevenSleep — subscription-free, open-source local control for Eight Sleep Pods
 
 <p align="center">
-  <img src="docs/logo.png" width="520" alt="SevenSleep">
-</p>
-
-<p align="center">
   <img src="docs/screenshots/overview.png" width="900" alt="Four phone screens: the temperature dial with the next alarm, a night's schedule, last night's sleep, and the autopilot and alarm settings">
 </p>
 
@@ -111,36 +107,21 @@ No Pod yet? **[sevensleep.vercel.app](https://sevensleep.vercel.app)** is the ap
 
 ## What it does
 
-- **The Eight Sleep app's controls, on your own network:** temperature for each side, a schedule for every night, vibration alarms, wake-up heat, priming and away mode. Eight Sleep's sleep tracking and Autopilot are not part of it.
-- **A local API:** every control is a documented request to the Pod itself, so it keeps working when your internet or Eight Sleep's servers are down, which tools built on the cloud cannot do. Anything that sends a web request can drive the bed: iPhone Shortcuts, Home Assistant, a script, or an AI assistant. See [server/API.md](server/API.md).
-- **A private tunnel for access away from home:** optional Tailscale on the Pod opens the same app from anywhere, with the Pod still blocked from the internet.
-- **Pod 5 side buttons enabled:** + and - change the temperature, holding the middle button switches the side on or off, and any button stops an alarm.
+- **The Eight Sleep app's controls, on your own network:** temperature for each side, a schedule for every night, vibration alarms, wake-up heat, priming and away mode.
+- **A local API:** every control is a documented request to the Pod, so Shortcuts, Home Assistant, scripts and AI assistants can drive the bed with the internet down. See [server/API.md](server/API.md).
+- **Access away from home:** optional Tailscale on the Pod, with the Pod still blocked from the internet.
+- **Pod 5 side buttons:** + and - change the temperature, the middle button switches the side, any button stops an alarm.
+- **In-bed detection (Pod 5):** the bed can turn on when you get in and off after you get out, and tells a body from a thing left on it.
+- **Autopilot (Pod 5, experimental):** cooler early in the night, warmer toward morning, one degree at a time. It holds a temperature you set and learns from it. Off by default. See [docs/AUTOPILOT.md](docs/AUTOPILOT.md).
+- **A record of each night (Pod 5):** sleep and wake times, wake-ups and movement, kept on the Pod, and checked against a watch through Apple Health if you have one.
+- **Quality of life:** a phone-first app that installs to the Home Screen, `http://sevensleep.local`, alarms that keep going until dismissed, one-time alarms, linked sides, measured temperatures, and updates from the app.
 
-**Quality of life**
+**The autopilot's limits.** Its evidence is limited: one sleeper on one Pod 5 (n=1).
 
-- **A redesigned app:** dark, phone-first and quiet, with one screen per night, explanations behind an "i", and controls that respond at once. It installs to a phone's Home Screen like an app.
-- **In-bed detection (Pod 5):** the bed knows when someone is in it, and can turn on when you get in, off after you get out, or vibrate after a long stay.
-- **Autopilot (Pod 5, experimental):** while you sleep the temperature is the autopilot's. It runs the bed up to 4°F around a base temperature, cooler early in the night and warmer toward morning, one degree at a time, and the schedule's temperature changes wait until the night is over. Set the temperature yourself and it holds what you set, then learns from it. Off by default. See [docs/AUTOPILOT.md](docs/AUTOPILOT.md) and its limits below.
-- **A record of each night (Pod 5):** when you fell asleep and woke, wake-ups, movement, pressure and the bed's temperature minute by minute, under Data > Sleep. It is kept on the Pod and can be exported.
-- **A body, not a thing on the bed (Pod 5):** a laptop or a bag left on the bed is not taken for a sleeper.
-- **Calibration against a watch or band (Pod 5, iPhone):** a Shortcut sends each night's sleep from Apple Health, the bed shows how far its own judgement agrees, and after 7 nights it fits its sleep rules to yours. Without a tracker you can enter your own times.
-- **Calibrated temperatures:** the number shown is what the firmware aims for at each level, measured on a Pod 5, beside the temperature the bed measures. Units are °F, °C, or Eight Sleep's -10 to +10.
-- **An address you can remember:** `http://sevensleep.local`, with no IP address or port.
-- **Wake-up heat:** the bed warms to a temperature you choose 15 to 45 minutes before the alarm.
-- **Alarms that keep going:** they vibrate until you dismiss them, with a real ramp-up on a Pod 5, and go off even if the bed is off.
-- **One-time alarms:** change one morning's alarm without touching the schedule.
-- **Linked sides:** control the whole bed as one, across temperature, power, schedules, buttons and shortcuts.
-- **Updates from the app:** it shows when a newer version exists and updates in about four minutes, putting the old version back if anything fails.
-
-The rest, and the full comparison with Free Sleep, is in [CHANGELOG.md](CHANGELOG.md#compared-with-free-sleep).
-
-**What the autopilot cannot do.** It is one person's work and its evidence is limited: one sleeper on one Pod 5 (n=1).
-
-- **Sleep is judged by stillness alone.** Compared with a watch (n=1), the bed fell asleep at the same minute but agreed with the watch on 73% of the night's minutes; it called restless light sleep "awake". Lying awake and still reads as asleep.
-- **No sleep stages, heart rate or breathing.** The estimates were not reliable on a Pod 5 and are switched off. Deep sleep is assumed by the clock, not detected.
-- **The temperature curve is a starting guess.** No study tested this curve or these sizes; your own changes are what shape it.
-- **The room is acted on cautiously** (only once it has moved 2°F, and by half as much), and the bed is treated as one sleeper's: switching the autopilot on links the two sides.
-- **Calibration has not yet run on real nights.** It needs 7 with a record.
+- Sleep is judged by stillness alone. Against a watch (n=1) it agreed on 73% of minutes, and lying awake and still reads as asleep.
+- No sleep stages, heart rate or breathing.
+- The temperature curve is a starting guess that your own changes shape.
+- The bed is treated as one sleeper's.
 
 If accurate sleep tracking is what you are after, Eight Sleep's own plan is still the way to get it.
 
@@ -169,7 +150,7 @@ recorded and compared with a watch. The autopilot's evidence is one sleeper (n=1
 
 Not yet seen working on a Pod: the bed turning off after someone gets out, the long-stay alarm,
 "ignore the schedule" after turning on by hand, and flipping left and right. Nothing has been run
-on a Pod 3 or Pod 4. [CHANGELOG.md](CHANGELOG.md) keeps the full list.
+on a Pod 3 or Pod 4.
 
 **Biometrics (legacy) is untested.** The sleep tracking, heart rate and other measurements on
 the Data page's Biometrics (legacy) tab are Free Sleep's code, unchanged, and off unless you
@@ -313,7 +294,7 @@ Yes. One command over SSH reinstalls it and keeps your schedules; see
 | Control the bed from iPhone Shortcuts | [docs/IOS_SHORTCUTS.md](docs/IOS_SHORTCUTS.md) |
 | Understand every part and how they interact | [docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md) |
 | Use the API | [server/API.md](server/API.md) |
-| See what changed and what was tested | [CHANGELOG.md](CHANGELOG.md) |
+| See what changed in each version | [CHANGELOG.md](CHANGELOG.md) |
 | Help test or contribute | [CONTRIBUTING.md](CONTRIBUTING.md) |
 
 ## Development

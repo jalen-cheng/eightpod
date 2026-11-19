@@ -62,6 +62,7 @@
 
 # Releases
 - `server/src/serverInfo.json` holds SevenSleep's version. The app compares it with the copy on `main` to offer an update, so raise it (semver) in any PR whose change people should update for.
+- `CHANGELOG.md` is by version, not by PR: one heading a minor version (`## 3.23`), one short bullet a change, patches (`3.23.1`) as a sub-heading under their version, and small UI changes rolled into one "Minor UI changes" bullet.
 
 # Code smells
 - Any complicated functions should have concise, short comments explaining what the function does

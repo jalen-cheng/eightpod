@@ -63,7 +63,9 @@ for (const image of context.images) {
   copyFile(path.join(repositoryRoot, image), path.join(contentRoot, 'images', image));
 }
 
-// The site logo and favicon are the app's own icon, not a second copy in git.
+// The favicon is the app's own icon and the logo its lettering, light and dark: not second copies in git.
 copyFile(path.join(repositoryRoot, 'app/public/sevensleep-icon.svg'), path.join(contentRoot, 'public/logo.svg'));
+copyFile(path.join(repositoryRoot, 'app/public/sevensleep-logo.png'), path.join(contentRoot, 'public/wordmark-on-dark.png'));
+copyFile(path.join(repositoryRoot, 'app/public/sevensleep-logo-dark.png'), path.join(contentRoot, 'public/wordmark-on-light.png'));
 
 console.log(`Synced ${generatedPages.length} pages and ${context.images.size} images into site/content`);
