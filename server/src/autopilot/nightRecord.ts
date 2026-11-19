@@ -10,14 +10,23 @@ export type SleepKind = 'night' | 'nap';
 export type NightMinute = {
   // Undefined when the sensor sent too little that minute to say
   movementSeconds?: number;
+  // The swing of the piezo signal over the minute's seconds: a quiet second (lower quartile), a
+  // middling one and a lively one (the 90th in a hundred). Kept so that what counts as
+  // movement can be worked out again from saved nights.
+  swingLow?: number;
+  swingMid?: number;
+  swingHigh?: number;
   heartRate?: number;
   breathingRate?: number;
   breathingSpread?: number;
   // How far the side's pressure sensors read above the empty bed (their own units)
   pressure?: number;
   stage: SleepStage;
-  // How far the autopilot had the side from its set temperature, °F
+  // How far the autopilot wanted the bed from its set temperature, °F
   offsetF?: number;
+  // What the side was set to, and the water temperature the Pod measured, °F
+  targetF?: number;
+  waterF?: number;
   // The air at the cover, the air at the hub on the floor, and the mattress surface, °F. Only
   // the first is acted on; the other two are kept to check it against.
   roomF?: number;

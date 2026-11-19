@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="3072eae5-90a5-511d-a873-4e31f0242690")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="2974d726-4ae6-5210-afaa-2aa2e44ae2db")}catch(e){}}();
 import express from 'express';
 import { z } from 'zod';
 import { applyTrackerSleep, getAutopilotSnapshot, getNightSummaries, getNightsExport, getNightsOn, } from '../../autopilot/autopilotMonitor.js';
@@ -43,8 +43,10 @@ router.get('/autopilot/nights/export', (req, res) => {
     res.attachment(`sevensleep-nights-${days}-days-${new Date().toISOString().slice(0, 10)}.json`);
     res.json(getNightsExport(days));
 });
-const isDate = (text) => !Number.isNaN(Date.parse(text));
-const DateText = z.string().refine(isDate, 'Not a date and time');
+// A time has to say its zone ("Z", or an offset such as -08:00): without one it would be read
+// in the Pod's own clock zone, which is not the sleeper's
+const isDate = (text) => !Number.isNaN(Date.parse(text)) && /(Z|[+-]\d{2}:?\d{2})$/.test(text.trim());
+const DateText = z.string().refine(isDate, 'Not a date and time with its zone, such as 2026-11-18T23:12:00-08:00');
 // A worn tracker's account of a sleep: either the two times, or the health app's raw samples.
 // `side` narrows it to one side's stays; without it the stays of both sides are looked at.
 const TrackerSleepSchema = z.object({
@@ -95,4 +97,4 @@ router.post('/autopilot/sleepTimes', (req, res) => {
 });
 export default router;
 //# sourceMappingURL=autopilot.js.map
-//# debugId=3072eae5-90a5-511d-a873-4e31f0242690
+//# debugId=2974d726-4ae6-5210-afaa-2aa2e44ae2db

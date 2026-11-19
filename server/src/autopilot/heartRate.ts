@@ -138,13 +138,23 @@ export function measureSwing(secondOfSamples: ArrayLike<number>): number {
   return high - low;
 }
 
-// A second counts as movement when its swing is this many times the usual swing of the last minute
+// A second counts as movement when its swing is this many times the sleeper's quiet swing
 const MOVEMENT_SWING_RATIO = 3;
 
-// How many of the given seconds had movement in them, judged against their own median
-export function countMovementSeconds(swings: number[]): number {
-  if (swings.length === 0) return 0;
+// The swing of a quiet second among these: their lower quartile. A sleeper lying still spends
+// most seconds near it, and a minute needs to be three quarters movement before it shifts.
+export function findQuietSwing(swings: number[]): number | undefined {
+  if (swings.length === 0) return undefined;
   const sorted = [...swings].sort((first, second) => first - second);
-  const usualSwing = sorted[Math.floor(sorted.length / 2)];
-  return swings.filter(swing => swing > usualSwing * MOVEMENT_SWING_RATIO).length;
+  return sorted[Math.floor(sorted.length / 4)];
+}
+
+// How many of the given seconds had movement in them. `quietSwing` is the sleeper's swing when
+// lying still, taken from a longer stretch than these seconds, so that a whole minute of
+// fidgeting counts as movement and not as the new normal. Without it the seconds are judged
+// against their own lower quartile.
+export function countMovementSeconds(swings: number[], quietSwing?: number): number {
+  const baseline = quietSwing ?? findQuietSwing(swings) ?? 0;
+  if (baseline <= 0) return 0;
+  return swings.filter(swing => swing > baseline * MOVEMENT_SWING_RATIO).length;
 }

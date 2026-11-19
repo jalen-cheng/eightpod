@@ -17,8 +17,14 @@ While someone is asleep, it moves the bed a few degrees around the temperature t
   night, whichever comes first. The autopilot then carries on, a degree at a time.
 - **It leaves alone** a side that is off (setting a temperature never switches one on), away
   mode, the wake-up heat, and a manual temperature that is holding the schedule back.
-- **It cleans up.** When the bed has been empty for 30 minutes, or the autopilot is switched
-  off mid-night, it takes its offset back out, unless you have set the temperature since.
+- **The night ends at the wake-up time.** From then the bed is the schedule's and the alarm's
+  again, and the autopilot does not start another night until the bed has been empty.
+- **It cleans up.** When a night ends (the wake-up time, the bed empty for 30 minutes, or the
+  autopilot switched off), it takes its offset back out, unless you have set the temperature
+  since. If the Pod cannot be reached at that moment it tries again the next minute.
+- **It only asks for temperatures the bed has.** The bed takes about two hundred settings, not
+  every whole degree; near its coldest, the next setting down is nine degrees away, and the
+  autopilot stays where it is before it goes past what it wants.
 - **A restart does not start the night over.** The night under way is saved; after an update
   or reboot it carries on from the same point if someone is still in bed.
 - **Once the night has begun it runs by the clock.** Stirring for a few minutes does not send
@@ -36,8 +42,10 @@ While someone is asleep, it moves the bed a few degrees around the temperature t
 When these add up to more than 4°F, they are cut from the bottom of the table up, so what you
 taught it is the last to go.
 
-**Learning.** At 0.3, a one-degree change takes two nights that agree before it shows, and one
-odd night fades. A change is counted once per hold, not once per button press. Any request that
+**Learning.** At 0.3, a one-degree change takes two nights that agree before it shows. A change
+is counted once per hold, not once per button press, and for no more than 4°F however large it
+was, so one odd night teaches it a little over a degree at most. What it has learned stays
+until you correct it the other way. Any request that
 sets the temperature counts as yours, including one from an automation of your own.
 
 The night runs from falling asleep to that night's wake-up time (8 hours if the night has no
@@ -83,8 +91,10 @@ up as a count of seconds with movement, and two rules decide the state
 - **Awake again:** 3 minutes out of 5 with 12 or more moving seconds each. A turn in bed, or
   two, is not waking.
 
-A minute in which the sensor sent too little, or a dead flat line, counts as neither, so a
-sensor that stops is not taken for a sleeper lying still. Lying awake and still does read as
+Movement is judged against the sleeper's own quiet level over the last quarter of an hour, so
+a whole minute of fidgeting counts as movement and not as the new normal. A minute in which the
+sensor sent too little, or a dead flat line, is not counted as lying still, so a sensor that
+stops is not taken for a sleeper. Lying awake and still does read as
 asleep, which is the known weak point of judging by movement.
 
 A heart rate is read from the same sensor, saved and shown, and decides nothing yet. Deep sleep
@@ -161,6 +171,8 @@ curl -X POST http://sevensleep.local/api/autopilot/sleepTimes -H 'Content-Type: 
   -d '{"source":"Whoop","asleepAt":"2026-11-18T23:12:00-08:00","awakeAt":"2026-11-19T06:48:00-08:00"}'
 ```
 
+Times have to say their zone (`-08:00`, or `Z`); one without is refused.
+
 **What is done with it.** Each sleep is filed with every saved stay in bed it overlaps (a night
 split in two by a restart gets both halves). Sending the same night again, or a corrected
 version of it, replaces what was there. Sleeps in the future, older than 100 days or longer
@@ -189,8 +201,9 @@ documentation.
 
 Every stay in bed of 20 minutes or more is saved on the Pod, whether or not the autopilot is
 switched on, as one file in `/persistent/free-sleep-data/autopilot_nights/`: a row per minute
-(moving seconds, heart rate, breathing rate and spread, pressure on the bed, state, the
-autopilot's offset, the air at the cover and at the hub, the mattress surface), the bed's sleep
+(moving seconds and the raw size of the movement signal, heart rate, breathing rate and spread,
+pressure on the bed, state, what the bed was set to and its water temperature, the autopilot's
+offset, the air at the cover and at the hub, the mattress surface), the bed's sleep
 and wake times, whether the autopilot steered, and the tracker's record if one was sent. A
 night is about 50 KB. The newest 180 files are kept (three months for two sides), under 10 MB
 of the Pod's 14 GB free. An open stay is written every 10 minutes, so a restart loses at most

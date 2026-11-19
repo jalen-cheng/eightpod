@@ -6,7 +6,7 @@
 // where it gave 65 to 78.
 // Keep this file free of runtime imports so tests can load it without a Pod environment.
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="4536bb18-cc46-5e11-959c-989e0f2b67f9")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="3dc46a50-4ed3-51e6-b69a-0ffc86cd8c43")}catch(e){}}();
 export const PIEZO_SAMPLES_PER_SECOND = 500;
 // The signal is averaged down to this rate before filtering; a heartbeat's knock sits well under it
 const WORKING_SAMPLES_PER_SECOND = 50;
@@ -131,15 +131,25 @@ export function measureSwing(secondOfSamples) {
     }
     return high - low;
 }
-// A second counts as movement when its swing is this many times the usual swing of the last minute
+// A second counts as movement when its swing is this many times the sleeper's quiet swing
 const MOVEMENT_SWING_RATIO = 3;
-// How many of the given seconds had movement in them, judged against their own median
-export function countMovementSeconds(swings) {
+// The swing of a quiet second among these: their lower quartile. A sleeper lying still spends
+// most seconds near it, and a minute needs to be three quarters movement before it shifts.
+export function findQuietSwing(swings) {
     if (swings.length === 0)
-        return 0;
+        return undefined;
     const sorted = [...swings].sort((first, second) => first - second);
-    const usualSwing = sorted[Math.floor(sorted.length / 2)];
-    return swings.filter(swing => swing > usualSwing * MOVEMENT_SWING_RATIO).length;
+    return sorted[Math.floor(sorted.length / 4)];
+}
+// How many of the given seconds had movement in them. `quietSwing` is the sleeper's swing when
+// lying still, taken from a longer stretch than these seconds, so that a whole minute of
+// fidgeting counts as movement and not as the new normal. Without it the seconds are judged
+// against their own lower quartile.
+export function countMovementSeconds(swings, quietSwing) {
+    const baseline = quietSwing ?? findQuietSwing(swings) ?? 0;
+    if (baseline <= 0)
+        return 0;
+    return swings.filter(swing => swing > baseline * MOVEMENT_SWING_RATIO).length;
 }
 //# sourceMappingURL=heartRate.js.map
-//# debugId=4536bb18-cc46-5e11-959c-989e0f2b67f9
+//# debugId=3dc46a50-4ed3-51e6-b69a-0ffc86cd8c43
