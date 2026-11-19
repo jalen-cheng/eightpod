@@ -7,8 +7,8 @@
 // without those subjects, simply never produces a reading: presence stays "not available", no
 // measured temperature is shown, and nothing else is affected.
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="40b22933-1cbd-5800-aafd-80d34364b3e5")}catch(e){}}();
-import { recordHubRoom, recordPiezoSecond, recordPressure, recordSurroundings } from '../autopilot/autopilotMonitor.js';
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="643135d6-adf9-5ee4-8e7b-9c519f507a25")}catch(e){}}();
+import { forgetEmptySwing, recordHubRoom, recordPiezoSecond, recordPressure, recordSurroundings, } from '../autopilot/autopilotMonitor.js';
 import { readFileSync, writeFileSync } from 'fs';
 import { registerInBedCheck } from '../jobs/inBedCheck.js';
 import cbor from 'cbor';
@@ -110,6 +110,7 @@ export class BedSensorMonitor {
             delete latest[side];
         }
         Object.assign(this.sessions, { left: createBedSession(), right: createBedSession(), both: createBedSession() });
+        forgetEmptySwing();
         logger.info('Bed sensor monitor was told the bed is empty; learning the empty bed again');
     }
     start() {
@@ -300,4 +301,4 @@ export class BedSensorMonitor {
     }
 }
 //# sourceMappingURL=bedSensorMonitor.js.map
-//# debugId=40b22933-1cbd-5800-aafd-80d34364b3e5
+//# debugId=643135d6-adf9-5ee4-8e7b-9c519f507a25

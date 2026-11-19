@@ -114,12 +114,16 @@ breath of someone lying on the bed, however still, and not at all by a thing. Me
 Pod 5 as the swing of a quiet second: an empty bed, or one with a laptop on it, 13,000 to
 24,000; one person lying still, 1,100,000 to 2,100,000 on their own side and 225,000 to
 440,000 on the other. A minute is a body's when it reads at least 5 times the empty bed's
-level, which the Pod measures itself from the minutes with nothing on either side (the lower
-quartile of the last two hours of them, kept across restarts). Something on the sensors that
-is not a body is a thing left on the bed: it gets no stay, no sleep and no steering, and
-Settings > Autopilot says "Something is on the bed, but not a person". Until the empty level
-is known (ten empty minutes after installing), and in a minute when the piezo sent too
-little, the capacitive sensors are taken at their word.
+level: on those figures a person is 50 to 100 times it on their own side, a laptop 1.
+
+The empty level is each Pod's own, set once when it is set up: from the first ten minutes
+with nothing on either side (their lower quartile), and only if it falls between 5,000 and
+50,000, the range an empty bed can read. Outside that the measuring goes on. It is kept in
+`autopilot_state.json` and not adjusted afterwards; **Settings > In-bed detection > Bed is
+empty now** measures it afresh, with the capacitive baseline. A side with a thing on it and no
+body is simply an empty side: no stay, no sleep, no steering. Until the empty level is set,
+and in a minute when the piezo sent too little, the capacitive sensors are taken at their
+word.
 
 This step was added after a laptop left on the bed was logged as asleep for 77 minutes one
 afternoon and 177 that evening. Replayed through the check, both come out as nobody in bed.
@@ -146,8 +150,14 @@ sensor sent too little, or a dead flat line, is not counted as lying still, so a
 stops is not taken for a sleeper. Lying awake and still does read as
 asleep, which is the known weak point of judging by movement.
 
-A heart rate is read from the same sensor, saved and shown, and decides nothing yet. Deep sleep
-is not detected.
+Deep sleep is not detected.
+
+**Heart rate and breathing are switched off for now** (`USES_HEART_AND_BREATHING` in
+`autopilotMonitor.ts`): they are not worked out, shown or saved. The breathing estimate read a
+rate of 8 to 19 a minute from an empty bed with a laptop on it, in half its minutes, and the
+heart rate came through in about one minute in eight with a sleeper on the bed. Neither
+decided anything. They are the way to tell lying awake from sleeping, so they are worth
+making trustworthy; what follows describes the estimate as it stands.
 
 **Breathing.** Each breath is a slow swell in the piezo signal. Every 10 seconds the last 30
 are averaged down to 10 readings a second, drift and heartbeats are taken out, and the rate is
@@ -210,14 +220,14 @@ schedule: if a scheduled temperature change, bed-on or bed-off time comes up whi
 test ends and the bed is the schedule's. `POST /api/autopilot/rehearsal` starts one and `DELETE` stops it.
 
 Sleep detection can be checked without the autopilot on, in about 20 minutes: lie down and
-keep still. Settings > Autopilot shows "Awake" with your breathing rate, then "Asleep" once
+keep still. Settings > Autopilot shows "Awake", then "Asleep" once
 you have been still for 15 minutes (lying awake and still reads as asleep, as said above), and
 after 20 minutes in bed the stay is saved and shows under **Data > Sleep** as a nap.
 
-The body check takes two minutes: put a laptop on the bed where you sleep and wait. If
-Settings > In-bed detection shows that side as in bed, Settings > Autopilot should say
-"Something is on the bed, but not a person", and nothing is saved under Data > Sleep however
-long it stays. Then lie down beside it: the line changes to "Awake" within a minute.
+The body check takes two minutes: put a laptop on the bed where you sleep and wait. Even if
+Settings > In-bed detection shows that side as in bed, Settings > Autopilot shows nothing for
+it, and nothing is saved under Data > Sleep however long it stays. Then lie down beside it:
+Settings > Autopilot says "Awake" within a minute.
 
 ## Linking a sleep tracker
 
@@ -253,7 +263,7 @@ that, and starts a new file.
 <img src="screenshots/nights.png" width="260" alt="Data > Nights: a night's summary and its breathing rate">
 
 **Data > Sleep** shows one day at a time, last night first, with arrows and a calendar to move:
-bedtime, wake time, duration and wake-ups, then breathing rate, pressure on the bed and the
+bedtime, wake time, duration and wake-ups, then movement, pressure on the bed and the
 autopilot's temperature changes against the clock. A night belongs to the morning it ended on.
 With the sides linked the bed is shown as one sleeper's, whichever side they lay on (where both
 sides saw the same hours, the one with the most sleep); otherwise the side this device controls.

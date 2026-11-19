@@ -6,7 +6,9 @@
 // A Pod 5's firmware publishes both on its local message bus (NATS). A Pod without that bus, or
 // without those subjects, simply never produces a reading: presence stays "not available", no
 // measured temperature is shown, and nothing else is affected.
-import { recordHubRoom, recordPiezoSecond, recordPressure, recordSurroundings } from '../autopilot/autopilotMonitor.js';
+import {
+  forgetEmptySwing, recordHubRoom, recordPiezoSecond, recordPressure, recordSurroundings,
+} from '../autopilot/autopilotMonitor.js';
 import { readFileSync, writeFileSync } from 'fs';
 import { registerInBedCheck } from '../jobs/inBedCheck.js';
 import cbor from 'cbor';
@@ -133,6 +135,7 @@ export class BedSensorMonitor {
       delete latest[side];
     }
     Object.assign(this.sessions, { left: createBedSession(), right: createBedSession(), both: createBedSession() });
+    forgetEmptySwing();
     logger.info('Bed sensor monitor was told the bed is empty; learning the empty bed again');
   }
 

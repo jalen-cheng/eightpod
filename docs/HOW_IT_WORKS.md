@@ -369,7 +369,7 @@ an alarm vibrates, a dialog offers to dismiss it.
   name copies a saved night to any other days.
 - Saving always writes the whole night shown, to each chosen day, on both sides when linked.
 
-**Data.** Sleep and logs. Sleep shows one day at a time from the bed's own record of each stay in bed (Pod 5): bedtime, wake time, duration and wake-ups, graphs of breathing rate, pressure and the autopilot's temperature changes, the tuning in use, and an Export button. Where the biometrics service is switched on, its older page is listed as Biometrics.
+**Data.** Sleep and logs. Sleep shows one day at a time from the bed's own record of each stay in bed (Pod 5): bedtime, wake time, duration and wake-ups, graphs of movement, pressure and the autopilot's temperature changes, the tuning in use, and an Export button. Where the biometrics service is switched on, its older page is listed as Biometrics.
 
 **Status** (opened from the "Status: Healthy" link, bottom right on a computer and beside the heading of Data and Settings on a phone; it has no tab). The Pod itself (the model, Wi-Fi, version and Update, daily reboot and Reboot), then each internal service with
 its state. Services that are jobs have a Run button. The biometrics and sleep-analysis rows are greyed and

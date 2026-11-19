@@ -671,9 +671,8 @@ on both sides.
 | `room` | The air at the cover. Read as hundredths of a degree; not checked against a thermometer, and not acted on |
 | `rehearsal` | Present only while a 20-minute test is running, with the minutes it has left |
 | `stage` | `out`, `awake` or `asleep` |
-| `thingOnBed` | `true` while the side's sensors feel something on it that does not shake the piezo sensor as a body does (a laptop, a bag). The stage stays `out` |
 | `sleepKind` | While asleep: `night` when the autopilot is treating it as the night's sleep, `nap` when it is leaving it alone (it began at an hour that looks like a nap and has not yet lasted 3 hours) |
-| `heartRate`, `breathingRate` | Over the last 5 minutes; missing when no reading could be trusted. Shown only |
+| `heartRate`, `breathingRate` | Absent for now: neither is worked out until the estimates can be trusted |
 | `offsetF` | How far the plan is from the schedule's temperature |
 | `holdingF` | A temperature set by hand that the autopilot is holding and not adjusting |
 | `learned` | What your changes have taught it for each third of the night, in °F |

@@ -65,7 +65,7 @@ export default function NightChart({ night }: { night: NightDetail }) {
     return {
       times: stretches.map((_stretch, index) => new Date(night.startedAtMs + index * step * MINUTE_MS)),
       series: [
-        { label: 'Breathing rate', unit: 'breaths/min', color: theme.palette.primary.main, values: read(minute => minute.breathingRate) },
+        { label: 'Movement', unit: 's/min', color: theme.palette.primary.main, values: read(minute => minute.movementSeconds) },
         { label: 'Pressure', unit: '', color: theme.palette.text.secondary, values: read(minute => minute.pressure) },
         { label: 'Temperature change', unit: '°F', color: COOLING_COLOR, values: read(minute => minute.offsetF) },
       ] satisfies Series[],

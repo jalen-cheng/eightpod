@@ -29,15 +29,14 @@ const TEST_INFO = 'Plays a whole night\'s plan in 20 minutes on the bed as it is
 const TRACKER_INFO = 'An iPhone Shortcut sends last night\'s sleep from Apple Health each morning (Apple Watch, Whoop and '
   + 'Fitbit all write there), and the bed tunes how it judges sleep to match.';
 
-// What the bed makes of whoever, or whatever, is on it right now, in a line. Nothing when it is empty.
+// What the bed makes of whoever is in it right now, in a line. Nothing when it is empty.
 const describeSleeper = (autopilot: AutopilotSnapshot, isEnabled: boolean): string | undefined => {
   const sleeper = SIDES.map(side => autopilot[side]).find(side => side.stage !== 'out');
-  if (!sleeper) return SIDES.some(side => autopilot[side].thingOnBed) ? 'Something is on the bed, but not a person' : undefined;
+  if (!sleeper) return undefined;
   const isNap = sleeper.sleepKind === 'nap';
   const isSteered = isEnabled && !isNap;
   return [
     sleeper.stage === 'asleep' ? (isNap && isEnabled ? 'Napping, not adjusted' : 'Asleep') : 'Awake',
-    sleeper.breathingRate !== undefined && `${sleeper.breathingRate} breaths/min`,
     isSteered && !autopilot.rehearsal && sleeper.lastChange,
   ].filter(Boolean).join(' · ');
 };
