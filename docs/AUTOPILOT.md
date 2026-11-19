@@ -165,8 +165,8 @@ an automation:
    the file.
 6. In **Automation**, run it when your **Sleep Focus turns off**, or at a set time each morning.
 
-**Settings > Autopilot > Sleep tracker > Link** shows the same in short, with your Pod's address
-filled in. Once set up it runs by itself, with one catch: an iPhone only lets a shortcut read
+**Settings > Autopilot > Sleep tracker > Link** opens these steps. In step 5 use your own Pod's
+address, the one the app opens at, if it is not `sevensleep.local`. Once set up it runs by itself, with one catch: an iPhone only lets a shortcut read
 health data while it is unlocked, so the night arrives when you first use the phone, not at a
 fixed minute. That is fine here: it is looked at after the fact.
 

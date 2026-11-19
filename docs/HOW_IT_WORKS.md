@@ -102,8 +102,8 @@ temperature was converted to keep its *level*. The originals are in
 `schedulesDB.before-measured-temperatures.json`.
 
 **Display units** (Settings > General > Temperature format): °F, °C (to half a degree), or **Level** (-10 to
-+10, matching Eight Sleep's app). In Level, the + and - buttons move one level; in °F and °C, one
-degree.
++10, matching Eight Sleep's app). The dial moves a whole level at a time in Level, and a whole °F in
+°F and °C.
 
 **Setting a temperature.** The server turns °F into the nearest level and sends it. Turning a side
 on by hand (app, shortcut or buttons) sets its timer to 3, 6 or 12 hours, chosen in Settings >
@@ -346,10 +346,10 @@ back by themselves. Anything held in memory (a vibrating alarm, a running warm-u
 
 The app refreshes the bed's state every 5 seconds.
 
-**Temperature.** The side this device controls (set in Settings); the dial with the target and the current reading;
-+ and -; the power button, in line with the heading on a phone and at the top right of the dial's section on a
+**Temperature.** The side this device controls (set in Settings); the dial with the target and the current reading
+(dragged, or stepped with the arrow keys); the power button, in line with the heading on a phone and at the top right of the dial's section on a
 wider screen, which turns the side off (a side that is off turns on with a tap anywhere in the section). While the
-bed is on, the next alarm's time sits inside the dial with the bed's off time beside it; tapping it offers
+bed is on, the next alarm's time sits across the open bottom of the dial with the bed's off time beside it; tapping it offers
 "Change the next alarm" (a one-time alarm) and "Skip the next alarm". With no alarm it reads "Turns off at". While
 an alarm vibrates, a dialog offers to dismiss it.
 

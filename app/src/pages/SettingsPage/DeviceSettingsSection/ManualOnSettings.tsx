@@ -10,8 +10,8 @@ type ManualOnSettingsProps = {
   updateSettings: (settings: DeepPartial<Settings>) => void;
 };
 
-const LENGTH_INFO = 'Applies when you turn the bed on in the app, with a shortcut, or with the buttons on the bed. '
-  + 'The schedule has its own off time.';
+const LENGTH_INFO = 'How long the bed stays on when you turn it on yourself: in the app, with a shortcut, or with the '
+  + 'buttons on the bed. The schedule has its own off time.';
 const OVERRIDE_INFO = 'When you turn the bed on yourself, the schedule leaves it alone until it turns off: it will not '
   + 'change the temperature, warm up for the alarm, or switch the bed off at the scheduled time. Alarms still go off.';
 
@@ -23,7 +23,7 @@ export default function ManualOnSettings({ settings, updateSettings }: ManualOnS
 
   return (
     <>
-      <SettingRow label="Manual on lasts" info={ LENGTH_INFO }>
+      <SettingRow label="Auto-off after" info={ LENGTH_INFO }>
         <TextField
           select
           size="small"

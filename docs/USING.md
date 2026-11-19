@@ -28,13 +28,12 @@ and alarms run in this time zone, and it starts as UTC.
   (Left, Right or Both). Left or right is remembered on the device, so two people can each keep their own side
   on their own phone. **Both** makes the two sides act as one for everyone, and copies this side's state to
   the other at once.
-- **The dial**: drag it to set the target temperature.
-- **- and +**: one step colder or warmer. The app waits a moment after your last tap, then sends one change.
+- **The dial**: drag it to set the target temperature. With a keyboard, the arrow keys move it a step at a time.
 - **Power**: the power button, in line with the heading on a phone and at the top right of the dial's section on a
   wider screen, turns the side off. While the side is off, tap anywhere in that section to turn it on.
 - **Bed at**: the water temperature the Pod measures, shown under the target. A Pod that does not
   report it shows "Currently at", the firmware's own estimate.
-- **The next alarm**, inside the dial while the bed is on: its time, with "Off at" and the time the bed turns
+- **The next alarm**, across the open bottom of the dial while the bed is on: its time, with "Off at" and the time the bed turns
   off beside it. Tap it to change the next alarm or skip it (section 7). With no alarm tonight it reads
   "Turns off at"; while the bed is off, "Turns on at".
 
@@ -116,7 +115,7 @@ beginning, because the firmware can only stop both sides at once).
 
 To wake at a different time once, without touching the weekly schedule:
 
-1. On the **Temperature** page, tap the alarm's time inside the dial. It shows while the bed is on and tonight's
+1. On the **Temperature** page, tap the alarm's time at the bottom of the dial. It shows while the bed is on and tonight's
    schedule and its alarm are on.
 2. Choose **Change the next alarm**. **Change next alarm only (overrides schedule)** opens.
 3. Pick the time and tap **Set**.
@@ -151,7 +150,7 @@ When the sides are linked, the buttons on either side control both. The step siz
 
 | Setting | Where | What it does |
 |---|---|---|
-| **Manual on lasts** | General | 3, 6 or 12 hours. Applies when you turn the bed on from the app, a shortcut or the buttons |
+| **Auto-off after** | General | 3, 6 or 12 hours. Applies when you turn the bed on from the app, a shortcut or the buttons |
 | **This device controls** | General | Left, Right or Both: the side the Temperature and Schedules pages show and change. Left or right is remembered on the device; Both links the sides for everyone |
 | **Pause the schedule until it turns off** | General | When you turn the bed on yourself, the schedule leaves it alone until it turns off: no temperature changes, warm-up or scheduled off time. Alarms still go off |
 | **Away mode** | General | For when nobody is home. The schedule and alarms stop on both sides until you switch it off |
@@ -162,7 +161,7 @@ When the sides are linked, the buttons on either side control both. The step siz
 | **Status page** | The "Status" link (bottom right on a computer, beside the heading of Data and Settings on a phone) | Shows Wi-Fi strength, whether SevenSleep is up to date, and each service. The biometrics and sleep-analysis rows are greyed and marked untested |
 | **API** | Settings > API > **Open** | A page with the common requests and two examples with your Pod's address filled in. Tap a command to select it. The page's own address is `/api-guide` |
 | **In-bed detection** | Its own section, Pod 5 only | Two options, both off by default: **Turn on when I get into bed** and **Alarm after a long time in bed**. Detection was checked with one person on one Pod; the first option has been seen turning the bed on, the rest has not been seen working yet |
-| **Autopilot** | Its own section, Pod 5 only | **Adjust the temperature while I sleep**, off by default. Moves a sleeping side up to 4°F around its set temperature: cooler early, warmer toward morning, against a room that warms or cools, and it learns from the changes you make. It treats the bed as one sleeper's, so switching it on links the sides. A temperature you set in the night is held as you set it. A nap (a sleep under 3 hours) is left alone. **Data > Sleep** shows a day at a time (bedtime, wake time, duration, wake-ups, and graphs of breathing rate, pressure and temperature changes), and **Export** downloads a week to three months. Sleep tracker sync is iPhone only. **Sleep tracker > Link** has the steps for an iPhone Shortcut that sends a watch's or band's sleep each morning, which the bed uses to tune how it judges sleep. Experimental and not yet run through a night; see [AUTOPILOT.md](AUTOPILOT.md) |
+| **Autopilot** | Its own section, Pod 5 only | **Adjust the temperature while I sleep**, off by default. Moves a sleeping side up to 4°F around its set temperature: cooler early, warmer toward morning, against a room that warms or cools, and it learns from the changes you make. It treats the bed as one sleeper's, so switching it on links the sides. A temperature you set in the night is held as you set it. A nap (a sleep under 3 hours) is left alone. **Data > Sleep** shows a day at a time (bedtime, wake time, duration, wake-ups, and graphs of breathing rate, pressure and temperature changes), and **Export** downloads a week to three months. Sleep tracker sync is iPhone only. **Sleep tracker > Link** opens the steps for an iPhone Shortcut that sends a watch's or band's sleep each morning, which the bed uses to tune how it judges sleep. Experimental and not yet run through a night; see [AUTOPILOT.md](AUTOPILOT.md) |
 
 ## 11. Updating
 

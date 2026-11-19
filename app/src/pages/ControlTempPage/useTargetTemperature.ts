@@ -6,7 +6,7 @@ import { useTemperatureFormat } from '@lib/useTemperatureFormat.ts';
 import { buildSidesPayload, getControlledSides } from '@lib/sides.ts';
 import { useControlTempStore } from './controlTempStore.tsx';
 
-// How long to wait after the last +/- press before sending, so a run of presses is one request
+// How long to wait after the last arrow-key press before sending, so a run of presses is one request
 const COMMIT_DELAY_MS = 700;
 // The Pod takes a moment to report a new target back
 const STATUS_SETTLE_MS = 1_500;

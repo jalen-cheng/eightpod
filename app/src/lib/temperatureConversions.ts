@@ -90,11 +90,6 @@ export function stepTemperature(tempF: number, steps: number, format: Temperatur
   return stepTemperatureF(Math.round(tempF), steps, MIN_TEMP_F, MAX_TEMP_F);
 }
 
-// The size of one such step in °F, for labelling the step
-export function getStepSizeF(format: TemperatureFormat): number {
-  return format === 'level' ? DEGREES_F_PER_LEVEL : 1;
-}
-
 // The nearest temperature that can be picked in the chosen unit
 export function snapTemperature(tempF: number, format: TemperatureFormat): number {
   return stepTemperature(tempF, 0, format);
