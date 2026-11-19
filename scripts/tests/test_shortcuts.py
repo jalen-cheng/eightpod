@@ -11,7 +11,6 @@ spec = importlib.util.spec_from_file_location('build_shortcuts', script_path)
 builder = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(builder)
 
-TAILSCALE = builder.TAILSCALE_SUFFIX
 TAILSCALE_ACTION = 'io.tailscale.ipn.ios.ConnectIntent'
 
 
@@ -83,31 +82,6 @@ class EveryShortcutTests(unittest.TestCase):
         for name in builder.SHORTCUTS:
             shortcut = builder.build_shortcut(name)
             self.assertEqual(plistlib.loads(plistlib.dumps(shortcut, fmt=plistlib.FMT_BINARY)), shortcut, name)
-
-
-class HomeAndTailscaleTests(unittest.TestCase):
-    def test_each_bed_shortcut_comes_in_both_kinds(self):
-        for name in builder.TWO_KINDS:
-            self.assertIn(name, builder.SHORTCUTS)
-            self.assertIn(f'{name}{TAILSCALE}', builder.SHORTCUTS)
-
-    def test_the_home_kind_asks_for_the_home_address_and_has_no_tailscale_step(self):
-        for name in builder.TWO_KINDS:
-            shortcut = builder.build_shortcut(name)
-            question, = shortcut['WFWorkflowImportQuestions']
-            self.assertEqual(question['DefaultValue'], builder.HOME_ADDRESS, name)
-            self.assertNotIn(TAILSCALE_ACTION, [action['WFWorkflowActionIdentifier'] for action in shortcut['WFWorkflowActions']], name)
-
-    def test_the_tailscale_kind_connects_and_waits_before_its_request(self):
-        for name in builder.TWO_KINDS:
-            shortcut = builder.build_shortcut(f'{name}{TAILSCALE}')
-            question, = shortcut['WFWorkflowImportQuestions']
-            self.assertEqual(question['DefaultValue'], builder.TAILSCALE_ADDRESS, name)
-            self.assertEqual(question['Text'], builder.TAILSCALE_ADDRESS_QUESTION, name)
-            order = [action['WFWorkflowActionIdentifier'] for action in shortcut['WFWorkflowActions']]
-            connect = order.index(TAILSCALE_ACTION)
-            self.assertEqual(order[connect + 1], 'is.workflow.actions.delay', name)
-            self.assertLess(connect, order.index('is.workflow.actions.downloadurl'), name)
 
 
 class SendSleepTests(unittest.TestCase):
@@ -184,16 +158,20 @@ class BedShortcutTests(unittest.TestCase):
         self.assertNotIn('WFHTTPMethod', actions[1]['WFWorkflowActionParameters'])
         self.assertEqual(actions[2]['WFWorkflowActionParameters']['WFDictionaryKey'], 'summary')
 
-    def test_bed_off_and_away_mode_set_both_sides(self):
-        for name, key, wanted in (('Bed off', 'isOn', False), ('Away mode on', 'awayMode', True), ('Away mode off', 'awayMode', False)):
-            request = find_action(actions_of(name), 'downloadurl')
-            self.assertEqual([side['WFKey']['Value']['string'] for side in json_fields(request)], ['left', 'right'], name)
-            for side in json_fields(request):
-                self.assertEqual(side['WFItemType'], builder.ITEM_TYPE_DICTIONARY, name)
-                switch, = side['WFValue']['Value']['WFDictionaryFieldValueItems']
-                self.assertEqual((switch['WFKey']['Value']['string'], switch['WFValue']['Value']), (key, wanted), name)
-        away = find_action(actions_of('Away mode on'), 'downloadurl')
-        self.assertTrue(away['WFWorkflowActionParameters']['WFURL']['Value']['string'].endswith('/api/settings'))
+    def test_bed_off_turns_both_sides_off(self):
+        request = find_action(actions_of('Bed off'), 'downloadurl')
+        self.assertEqual([side['WFKey']['Value']['string'] for side in json_fields(request)], ['left', 'right'])
+        for side in json_fields(request):
+            self.assertEqual(side['WFItemType'], builder.ITEM_TYPE_DICTIONARY)
+            switch, = side['WFValue']['Value']['WFDictionaryFieldValueItems']
+            self.assertEqual((switch['WFKey']['Value']['string'], switch['WFValue']['Value']), ('isOn', False))
+
+    def test_the_bed_shortcuts_use_the_home_address_and_need_no_other_app(self):
+        for name in ('Bed temperature', 'Bed alarm', 'Bed status', 'Bed off'):
+            shortcut = builder.build_shortcut(name)
+            question, = shortcut['WFWorkflowImportQuestions']
+            self.assertEqual(question['DefaultValue'], builder.HOME_ADDRESS, name)
+            self.assertNotIn(TAILSCALE_ACTION, [action['WFWorkflowActionIdentifier'] for action in shortcut['WFWorkflowActions']], name)
 
     def test_open_sevensleep_goes_straight_in_at_home_and_through_tailscale_elsewhere(self):
         actions = actions_of('Open SevenSleep')

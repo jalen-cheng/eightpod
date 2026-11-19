@@ -60,7 +60,7 @@ const buildComponents = (colors: typeof DARK_COLORS): ThemeOptions['components']
     defaultProps: { disableElevation: true },
     styleOverrides: {
       root: { borderRadius: 12, padding: '10px 18px', minHeight: 44, transition: 'background-color 150ms ease, border-color 150ms ease' },
-      sizeSmall: { minHeight: 36, padding: '6px 12px', borderRadius: 10 },
+      sizeSmall: { minHeight: 40, padding: '6px 12px', borderRadius: 10 },
       outlined: ({ theme }) => ({
         borderColor: theme.palette.divider,
         backgroundColor: colors.raised,
@@ -187,7 +187,8 @@ const buildComponents = (colors: typeof DARK_COLORS): ThemeOptions['components']
         '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: theme.palette.primary.main, borderWidth: 1 },
         '&.Mui-error .MuiOutlinedInput-notchedOutline': { borderColor: theme.palette.error.main },
         '&.Mui-disabled': { opacity: 0.55 },
-        '& .MuiInputBase-inputSizeSmall': { paddingTop: 9, paddingBottom: 9 },
+        // 40px tall with the text's own line: small enough for a row, large enough for a finger
+        '& .MuiInputBase-inputSizeSmall': { paddingTop: 10.5, paddingBottom: 10.5 },
       }),
     },
   },

@@ -11,7 +11,7 @@ import settingsDB from '../../db/settings.js';
 import { temperatureFToLevel } from '../../db/temperatureCurve.js';
 import { alarmSession } from '../../jobs/alarmScheduler.js';
 import { cancelPreWarm } from '../../jobs/preWarmState.js';
-import { cancelManualHold, startManualHold } from '../../jobs/manualHold.js';
+import { cancelManualHold, isManualHoldActive, startManualHold } from '../../jobs/manualHold.js';
 import { INVERTED_SETTINGS_KEY_MAPPING } from '../../8sleep/loadDeviceStatus.js';
 
 const calculateLevelFromF = (temperatureF: number) => temperatureFToLevel(temperatureF).toString();
@@ -99,9 +99,14 @@ const updateSide = async (side: 'left' | 'right', sideStatus: DeepPartial<SideSt
       const secondsLeft = currentStatus?.[updatedSide].isOn ? currentStatus[updatedSide].secondsRemaining : 0;
       const onSeconds = Math.max(requestedSeconds, secondsLeft);
       await executeFunction(updatedSide === 'left' ? 'LEFT_TEMP_DURATION' : 'RIGHT_TEMP_DURATION', isOn ? onSeconds.toString() : '0');
-      // Switched on by hand with "ignore the schedule": the schedule stays away until it turns off
-      if (isOn && isManual && settings.manualOn.overridesSchedule) startManualHold(updatedSide, onSeconds);
-      else cancelManualHold(updatedSide);
+      // Switched on by hand with "ignore the schedule": the schedule stays away until it turns
+      // off. Only a side that was off, or is already being kept from the schedule, counts: a
+      // shortcut that sets the temperature says "on" too, and on a bed the schedule turned on
+      // that must not pause the schedule for the rest of the night.
+      const wasOn = currentStatus?.[updatedSide].isOn ?? false;
+      const isTurnedOnByHand = isOn && isManual && (!wasOn || isManualHoldActive(updatedSide));
+      if (isTurnedOnByHand && settings.manualOn.overridesSchedule) startManualHold(updatedSide, onSeconds);
+      else if (!(isOn && isManual)) cancelManualHold(updatedSide);
     }
   }
 

@@ -6,6 +6,9 @@ import { Time } from '@api/schedulesSchema.ts';
 import { formatTemperature, getTemperatureOptions } from '@lib/temperatureConversions.ts';
 import { useTemperatureFormat } from '@lib/useTemperatureFormat.ts';
 
+// Phones under 360px wide (the oldest and smallest): a night's row of fields only fits if each gives a little
+export const NARROW_PHONE_QUERY = '@media (max-width: 359.95px)';
+
 type TimeFieldProps = {
   label: string;
   value: Time;
@@ -30,6 +33,7 @@ export function TimeField({ label, value, onChange, disabled, error, isLarge }: 
       sx={ {
         // Wider off a phone: some browsers write "a.m." in full and keep their own picker icon
         width: isLarge ? { xs: 168, sm: 208 } : { xs: 104, sm: 148 }, flexShrink: 0,
+        ...(isLarge ? {} : { [NARROW_PHONE_QUERY]: { width: 92 } }),
         '& input': { fontWeight: 500, textAlign: 'center', px: 1, ...(isLarge ? { fontSize: 22, py: 1.5 } : {}) },
         '& input::-webkit-calendar-picker-indicator': { display: 'none' },
       } }
@@ -70,7 +74,7 @@ export function TemperatureSelect({ label, value, onChange, disabled }: Temperat
       value={ value }
       onChange={ (event) => onChange(Number(event.target.value)) }
       disabled={ disabled }
-      sx={ { width: 92, flexShrink: 0, '& .MuiSelect-select': { fontWeight: 500 } } }
+      sx={ { width: 92, flexShrink: 0, [NARROW_PHONE_QUERY]: { width: 84 }, '& .MuiSelect-select': { fontWeight: 500 } } }
       slotProps={ { htmlInput: { 'aria-label': label } } }
     >
       { temperatureOptions.map(temperatureF => (

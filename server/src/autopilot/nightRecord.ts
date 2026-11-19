@@ -50,9 +50,12 @@ export type NightRecord = {
   startedAtMs: number;
   minutes: NightMinute[];
   kind?: SleepKind;
-  // By the bed's own reckoning; both undefined when no sleep was seen
+  // By the bed's own reckoning; both undefined when no sleep was seen. A night's sleep is
+  // counted from when the stillness that showed it began (`stillSinceMs`); a nap's from when
+  // it was first taken for sleep (`asleepConfirmedAtMs`).
   asleepAtMs?: number;
   awakeAtMs?: number;
+  stillSinceMs?: number;
   // When the bed first knew of the sleep: later than `asleepAtMs`, which is counted back to
   // the start of the stillness that showed it
   asleepConfirmedAtMs?: number;

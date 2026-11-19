@@ -7,7 +7,7 @@
 // from the rest: the night plan assumes deep sleep by the clock instead.
 // Keep this file free of runtime imports so tests can load it without a Pod environment.
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="34edb52a-c175-5efd-b037-ab4e15b50376")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="c13b8803-c1f0-5e66-9506-fc81f54f6f99")}catch(e){}}();
 export const DEFAULT_SLEEP_RULES = { stillMinutesToSleep: 15, restlessSecondsToWake: 12 };
 // A minute with this many moving seconds or fewer counts as lying still
 const STILL_MINUTE_MAX_MOVEMENT_SECONDS = 3;
@@ -77,8 +77,8 @@ export function createSleepTracker(getRules = () => DEFAULT_SLEEP_RULES) {
     };
     return { addMinute, reset };
 }
-// Fewer nights than this and the rules are left alone
-export const MIN_NIGHTS_TO_CALIBRATE = 5;
+// Fewer nights than this and the rules are left alone: a week covers a working week and a weekend
+export const MIN_NIGHTS_TO_CALIBRATE = 7;
 // Fitted rules are only taken up if, tried on each night after being fitted to the others, they
 // disagree with the tracker on fewer than this fraction of the minutes the default rules do. A
 // fit that only looks good on the nights it was made from is not taken.
@@ -215,4 +215,4 @@ export function readTrackerMinutes(tracker, startedAtMs, minuteCount) {
     });
 }
 //# sourceMappingURL=sleepTracker.js.map
-//# debugId=34edb52a-c175-5efd-b037-ab4e15b50376
+//# debugId=c13b8803-c1f0-5e66-9506-fc81f54f6f99

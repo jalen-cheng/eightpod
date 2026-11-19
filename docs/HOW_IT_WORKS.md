@@ -476,7 +476,7 @@ The cases where one feature changes what another does:
 | A one-time alarm is due after the off time | The bed stays on for it, and turns off 30 minutes after it goes off |
 | Any night | The bed turns off 30 minutes after the wake-up time, with or without a vibrating alarm; "Bed off on dismiss" turns it off sooner |
 | A warm-up is running | Scheduled temperature changes are skipped until the alarm. Changes you make by hand are not |
-| The autopilot has a base temperature of its own and is steering a night | Scheduled temperature changes are skipped until the night is over, when the bed is given what the schedule wants at that hour |
+| The autopilot is steering a night | Scheduled temperature changes are skipped until the night is over, when the bed is given what the schedule wants at that hour. Bed on, bed off, the warm-up and the alarm run as scheduled |
 | A one-time alarm goes off during an autopilot night | The night ends there; the autopilot does not carry on to the scheduled wake-up time |
 | One side is away, warming up or paused by hand during an autopilot night | That side is left alone; the other is still moved |
 | "Turn on when I get into bed, until I get out" turned the bed on, and the schedule's night has begun since | Getting out no longer turns the bed off: it is the schedule's to turn off |
@@ -502,15 +502,10 @@ Listed so nothing here is a surprise. [CHANGELOG.md](../CHANGELOG.md) keeps the 
 - **Two saves in quick succession** can leave the jobs built from the first; any later save fixes it.
 - **Priming does not check whether the bed is in use.** Keep its time in the afternoon. The daily reboot is skipped
   while a side is on or an alarm is going, but not for someone lying in a bed that is off.
-- **Linking or unlinking the sides can leave an old in-bed stay behind.** The stay kept for the other mode (each side's
-  own, or the one for both) is not cleared, and may act on its old times when the mode is switched back: an alarm
-  after a long time in bed, or turning the bed off.
-- **"Pause the schedule until it turns off" also starts from a Shortcut or from linking.** Both turn the bed on "by
-  hand", so with that setting on, setting the temperature from a Shortcut in the night pauses the schedule (bed off,
-  temperature changes, warm-up, the autopilot) for the rest of it.
 - **A night longer than 11.5 hours asks the bed for more than 12 hours on.** The firmware's longest on-time is taken to
   be 12 hours, and its answers are not read, so whether it cuts such a night short is not known.
-- **Nothing checks the bed's answers.** A value the firmware refuses or rounds is not noticed.
+- **Nothing acts on the bed's answers.** What the firmware says to each command is written to the log ("Firmware
+  answered …"), so a value it refuses or rounds can be found there, but the server does not check it.
 - **Jobs missed while SevenSleep is stopped are not caught up**: an update, a reboot, a restart. (Timers that
   stop while it is running are another matter: once a minute the jobs are looked over, and if one should have run
   more than 90 seconds ago every job is built again, `server/src/jobs/overdueJobs.ts`.)

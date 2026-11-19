@@ -38,7 +38,7 @@
   - `server/src/jobs/temperatureScheduler.ts`
   - `server/src/jobs/alarmScheduler.ts`
   - `server/src/jobs/primeScheduler.ts`
-- Pure helpers the jobs rely on, each with tests in `tests/`: `server/src/jobs/scheduleTiming.ts` (which day a time belongs to), `alarmSession.ts` (alarm stretches and dismissal), `presenceActions.ts` (what being in bed sets off), `manualHold.ts`, `preWarmState.ts`, `autopilotBase.ts`, `overdueJobs.ts` (timers that have stopped), and `server/src/db/automaticOffTime.ts` (the bed's off time follows the wake-up time).
+- Pure helpers the jobs rely on, each with tests in `tests/`: `server/src/jobs/scheduleTiming.ts` (which day a time belongs to), `alarmSession.ts` (alarm stretches and dismissal), `presenceActions.ts` (what being in bed sets off), `manualHold.ts`, `preWarmState.ts`, `autopilotSteering.ts` (scheduled temperature changes wait while the autopilot steers a night), `overdueJobs.ts` (timers that have stopped), and `server/src/db/automaticOffTime.ts` (the bed's off time follows the wake-up time).
 
 ## Franken Hotspots
 - Socket lifecycle: `server/src/8sleep/frankenServer.ts`
@@ -52,7 +52,7 @@
 - Startup initializes Franken from `server/src/server.ts`; health is surfaced through `server/src/serverStatus.ts`.
 
 ## Autopilot Hotspots
-- `server/src/autopilot/`: `heartRate.ts`, `breathingRate.ts`, `bodySignal.ts` (a body or a thing left on the bed, by the piezo), `sleepTracker.ts` (sleep rules and fitting them to a worn tracker), `nightPlan.ts` and `scheduledBase.ts` are pure and tested in `tests/autopilot.test.mjs`; `nightLog.ts` saves each stay in bed under `autopilot_nights/`; `autopilotMonitor.ts` holds the state and is the only one that sets the bed: one night for the whole bed (sides linked), each side moved one setting at a time, a manual temperature held exactly, the offset withdrawn when the night ends, and an optional base temperature of its own (scheduled temperature changes then wait, `server/src/jobs/autopilotBase.ts`). `docs/AUTOPILOT.md` explains the rules and the evidence.
+- `server/src/autopilot/`: `heartRate.ts`, `breathingRate.ts`, `bodySignal.ts` (a body or a thing left on the bed, by the piezo), `sleepTracker.ts` (sleep rules and fitting them to a worn tracker), `nightPlan.ts` and `scheduledBase.ts` are pure and tested in `tests/autopilot.test.mjs`; `nightLog.ts` saves each stay in bed under `autopilot_nights/`; `autopilotMonitor.ts` holds the state and is the only one that sets the bed: one night for the whole bed (sides linked), each side moved one setting at a time, a manual temperature held exactly, the offset withdrawn when the night ends, and the schedule's temperature changes made to wait while a night is steered (`server/src/jobs/autopilotSteering.ts`); the base is the bed's setting at sleep onset, or one set in Settings. `docs/AUTOPILOT.md` explains the rules and the evidence.
 
 ## Review Cautions
 - Check timezone behavior with `moment-timezone`; the app sets a default timezone after settings load, and server jobs set `RecurrenceRule.tz`.

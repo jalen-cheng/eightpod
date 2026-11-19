@@ -10,10 +10,10 @@ import {
   planTemperature, roomOffsetF,
 } from '../server/src/autopilot/nightPlan.ts';
 import {
-  findNightBaseF, findScheduledTemperatureF, findUsualSleep, isNightExpected, isWithinScheduledNight, kindOfSleep,
+  findScheduledTemperatureF, findUsualSleep, isNightExpected, isWithinScheduledNight, kindOfSleep,
 } from '../server/src/autopilot/scheduledBase.ts';
 import { countWakeUps, pickBedStays } from '../server/src/autopilot/nightRecord.ts';
-import { doesAutopilotKeepOwnBase, setAutopilotKeepsOwnBase } from '../server/src/jobs/autopilotBase.ts';
+import { isAutopilotSteering, setAutopilotSteering } from '../server/src/jobs/autopilotSteering.ts';
 import { OVERDUE_BY_MS, findOverdueJob } from '../server/src/jobs/overdueJobs.ts';
 import {
   BREATHING_SAMPLES_PER_SECOND, BREATHING_WINDOW_SECONDS, estimateBreathingRate, measureBreathingSpread,
@@ -160,17 +160,17 @@ test('a stay replays to which minutes were asleep, counted from when the stillne
 });
 
 test('calibration fits the rules to a tracker minute by minute, once there are enough nights', () => {
-  const nights = [420, 400, 440, 410, 430, 415].map(makeRollingNight);
+  const nights = [420, 400, 440, 410, 430, 415, 425, 405].map(makeRollingNight);
   // The default rules want fifteen still minutes and never get them, so they see no sleep
   const defaultDisagreements = countDisagreements(nights[0], DEFAULT_SLEEP_RULES);
   assert.ok(defaultDisagreements > 100, `default rules disagreed on ${defaultDisagreements} minutes`);
-  // Four nights are too few to change anything, but the agreement is still reported
-  const few = calibrateSleepRules(nights.slice(0, 4));
+  // Six nights are too few to change anything, but the agreement is still reported
+  const few = calibrateSleepRules(nights.slice(0, 6));
   assert.deepEqual(few.rules, DEFAULT_SLEEP_RULES);
   assert.equal(few.isTuned, false);
   assert.ok(few.agreementPercent < 80, `agreement ${few.agreementPercent}`);
   const calibrated = calibrateSleepRules(nights);
-  assert.equal(calibrated.nights, 6);
+  assert.equal(calibrated.nights, 8);
   assert.equal(calibrated.isTuned, true);
   assert.ok(calibrated.rules.stillMinutesToSleep < 15, JSON.stringify(calibrated));
   assert.ok(calibrated.agreementPercent >= 95, `agreement ${calibrated.agreementPercent}`);
@@ -178,7 +178,7 @@ test('calibration fits the rules to a tracker minute by minute, once there are e
 
 test('when the default rules already fit, calibration leaves them alone', () => {
   const night = makeTrackedNight(makeStay({ restlessMinutes: 25, asleepMinutes: 400 }), index => index >= 25 && index < 425);
-  const calibrated = calibrateSleepRules([night, night, night, night, night]);
+  const calibrated = calibrateSleepRules(new Array(8).fill(night));
   assert.deepEqual(calibrated.rules, DEFAULT_SLEEP_RULES);
   assert.equal(calibrated.isTuned, false);
   assert.ok(calibrated.agreementPercent >= 99);
@@ -191,7 +191,7 @@ test('where the default rules agree on every minute, nothing is tuned', () => {
     const asleep = replaySleep(minutes, DEFAULT_SLEEP_RULES);
     return makeTrackedNight(minutes, index => asleep[index]);
   };
-  const nights = [400, 380, 420, 390, 410, 405].map(makePerfectNight);
+  const nights = [400, 380, 420, 390, 410, 405, 395, 415].map(makePerfectNight);
   assert.equal(countDisagreements(nights[0], DEFAULT_SLEEP_RULES), 0);
   const calibrated = calibrateSleepRules(nights);
   assert.equal(calibrated.isTuned, false);
@@ -200,7 +200,7 @@ test('where the default rules agree on every minute, nothing is tuned', () => {
 });
 
 test('rules that only fit the nights they were made from are not taken', () => {
-  // Five nights with nothing in common: each one's best rules are wrong for the others
+  // Eight nights with nothing in common: each one's best rules are wrong for the others
   const makeOddNight = (seed) => {
     let state = seed;
     const random = () => {
@@ -210,7 +210,7 @@ test('rules that only fit the nights they were made from are not taken', () => {
     const minutes = Array.from({ length: 300 }, () => ({ isInBed: true, movementSeconds: Math.floor(random() * 25) }));
     return makeTrackedNight(minutes, () => random() < 0.5);
   };
-  const calibrated = calibrateSleepRules([1, 2, 3, 4, 5].map(makeOddNight));
+  const calibrated = calibrateSleepRules([1, 2, 3, 4, 5, 6, 7, 8].map(makeOddNight));
   assert.equal(calibrated.isTuned, false);
   assert.deepEqual(calibrated.rules, DEFAULT_SLEEP_RULES);
 });
@@ -355,7 +355,7 @@ test('calibration turns the breathing rule on when the tracker says the sleeper 
     ...new Array(150).fill({ isInBed: true, movementSeconds: 0, breathingSpread: 1 }),
     ...new Array(10).fill({ isInBed: true, movementSeconds: 45 }),
   ], index => (index >= 40 && index < 40 + asleepMinutes) || (index >= 76 + asleepMinutes && index < 226 + asleepMinutes));
-  const nights = [200, 210, 190, 220, 205].map(makeNight);
+  const nights = [200, 210, 190, 220, 205, 215, 195, 225].map(makeNight);
   assert.ok(countDisagreements(nights[0], DEFAULT_SLEEP_RULES) >= 60);
   const calibrated = calibrateSleepRules(nights);
   assert.equal(calibrated.isTuned, true);
@@ -481,24 +481,6 @@ test('wake-ups are the breaks in a night\'s sleep, not the time before it or aft
   assert.equal(countWakeUps(stages(['awake', 40])), 0);
 });
 
-test('a temperature set before falling asleep is the night\'s base until the schedule moves on', () => {
-  const setByHand = { temperatureAtOnsetF: 75, scheduledAtOnsetF: 70, isOnsetTemperatureOwn: true };
-  // The schedule still wants what it wanted at bedtime: the sleeper's own setting stands
-  assert.equal(findNightBaseF({ ...setByHand, scheduledNowF: 70, lastBaseF: 75 }), 75);
-  // The schedule's next change is followed, as it would be without the autopilot
-  assert.equal(findNightBaseF({ ...setByHand, scheduledNowF: 68, lastBaseF: 75 }), 68);
-  // A bed the schedule set is counted from the schedule
-  assert.equal(findNightBaseF({ temperatureAtOnsetF: 70, scheduledAtOnsetF: 70, isOnsetTemperatureOwn: false, scheduledNowF: 70 }), 70);
-});
-
-test('the base never falls back to an earlier temperature when the schedule stops covering the hour', () => {
-  const night = { temperatureAtOnsetF: 68, scheduledAtOnsetF: 68, isOnsetTemperatureOwn: false };
-  // The schedule had warmed the bed to 82 by morning; past its off time the base stays there
-  assert.equal(findNightBaseF({ ...night, scheduledNowF: undefined, lastBaseF: 82 }), 82);
-  // With no schedule at all, the bed's own setting at sleep onset
-  assert.equal(findNightBaseF({ temperatureAtOnsetF: 77, isOnsetTemperatureOwn: false, scheduledNowF: undefined }), 77);
-});
-
 test('one sleeper seen by both sides is one sleep: the side with the most sleep is kept', () => {
   const stay = (side, startedAtMs, asleep, awake = 0) => ({
     side, startedAtMs, minutes: [...Array(asleep).fill({ stage: 'asleep' }), ...Array(awake).fill({ stage: 'awake' })],
@@ -585,12 +567,12 @@ test('samples sent as text are read one a line, leaving out lines without both t
   assert.deepEqual(parseSampleLines(''), []);
 });
 
-test('scheduled temperature changes wait only while the autopilot keeps a base of its own', () => {
-  assert.equal(doesAutopilotKeepOwnBase(), false);
-  setAutopilotKeepsOwnBase(true);
-  assert.equal(doesAutopilotKeepOwnBase(), true);
-  setAutopilotKeepsOwnBase(false);
-  assert.equal(doesAutopilotKeepOwnBase(), false);
+test('scheduled temperature changes wait only while the autopilot is steering a night', () => {
+  assert.equal(isAutopilotSteering(), false);
+  setAutopilotSteering(true);
+  assert.equal(isAutopilotSteering(), true);
+  setAutopilotSteering(false);
+  assert.equal(isAutopilotSteering(), false);
 });
 
 test('readings the firmware lost are filled in, so a quiet second does not read as movement', () => {

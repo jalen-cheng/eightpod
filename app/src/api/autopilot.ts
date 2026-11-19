@@ -6,6 +6,8 @@ import type { AutopilotSnapshot } from '../../../server/src/autopilot/autopilotS
 import type { NightDetail, NightSummary } from '../../../server/src/autopilot/nightRecord.ts';
 
 export type { AutopilotSnapshot, NightDetail, NightSummary };
+// How many nights with a record the bed wants before it fits its sleep rules to them
+export { MIN_NIGHTS_TO_CALIBRATE } from '../../../server/src/autopilot/sleepTracker.ts';
 
 // What the autopilot sees and has done. `available` is false on Pods without the sensors.
 export const useAutopilot = (refetchInterval?: number) => {

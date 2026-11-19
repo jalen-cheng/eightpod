@@ -1,3 +1,4 @@
+import moment from 'moment-timezone';
 import { Box, Paper, Typography } from '@mui/material';
 import { AutopilotSnapshot } from '@api/autopilot.ts';
 
@@ -12,6 +13,17 @@ const describeDetection = ({ tracker }: AutopilotSnapshot['left']): string => {
   return `${tracker.isTuned ? 'Tuned to' : 'Default, checked against'} ${tracker.source}: ${tracker.agreementPercent}% match over ${nights}`;
 };
 
+// The record received last, from a tracker or set by hand: its longest sleep, and whether the
+// Pod had a stay in bed to file it with. Nothing when no record has arrived.
+const describeLastRecord = ({ tracker }: AutopilotSnapshot['left']): string | undefined => {
+  const longest = [...(tracker?.lastSleeps ?? [])].sort((first, second) => (
+    (second.awakeAtMs - second.asleepAtMs) - (first.awakeAtMs - first.asleepAtMs)
+  ))[0];
+  if (!tracker || !longest) return undefined;
+  const times = `${moment(longest.asleepAtMs).format('ddd h:mm A')} to ${moment(longest.awakeAtMs).format('h:mm A')}`;
+  return `${tracker.source}, ${times}. ${tracker.lastMatchedStays ? 'Filed with a stay in bed.' : 'No stay in bed matched it.'}`;
+};
+
 // What the sleeper's own temperature changes have taught the autopilot, whole degrees only
 const describePreference = ({ learned }: AutopilotSnapshot['left']): string => {
   const parts = (Object.keys(PART_NAMES) as (keyof typeof PART_NAMES)[])
@@ -21,10 +33,12 @@ const describePreference = ({ learned }: AutopilotSnapshot['left']): string => {
   return parts.length > 0 ? parts.join(' · ') : 'None yet';
 };
 
-// The two things the autopilot has tuned for the bed's sleeper, each in a line
+// What the autopilot has tuned for the bed's sleeper, and the record it last received, each in a line
 export default function TuningCard({ tuning }: TuningCardProps) {
+  const lastRecord = describeLastRecord(tuning);
   const facts = [
     ['Sleep detection', describeDetection(tuning)],
+    ...(lastRecord ? [['Last record', lastRecord]] : []),
     ['Your adjustments', describePreference(tuning)],
   ];
   return (

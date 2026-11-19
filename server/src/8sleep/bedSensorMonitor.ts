@@ -37,6 +37,8 @@ const NATS_SERVER = process.env.NATS_SERVER || '127.0.0.1:4222';
 const CAPACITIVE_SUBJECT = 'rawmem.sens.capsense';
 const WATER_SUBJECT = 'rawmem.frz.temp';
 const SIDES: Side[] = ['left', 'right'];
+// A stay in bed is kept for each side, and one for the whole bed while the sides are linked
+const SESSION_KEYS: (Side | 'both')[] = ['left', 'right', 'both'];
 const RECONNECT_WAIT_MS = 60_000;
 // How often the stays in bed are checked against the settings
 const ACTION_CHECK_INTERVAL_MS = 10_000;
@@ -270,6 +272,12 @@ export class BedSensorMonitor {
       const units: { key: Side | 'both'; sides: Side[] }[] = settings.linkSides
         ? [{ key: 'both', sides: SIDES }]
         : SIDES.map(side => ({ key: side, sides: [side] }));
+
+      // A stay kept under the other arrangement (each side's own, or one for both) is let go,
+      // so it cannot act on its old times when the sides are linked or unlinked again
+      for (const key of SESSION_KEYS) {
+        if (!units.some(unit => unit.key === key)) this.sessions[key] = createBedSession();
+      }
 
       for (const unit of units) {
         // A side in away mode has nobody to act for

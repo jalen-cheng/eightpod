@@ -7,7 +7,7 @@
 // without those subjects, simply never produces a reading: presence stays "not available", no
 // measured temperature is shown, and nothing else is affected.
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="b5058510-14e7-5c9f-95d5-67dd9ea72c6c")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="bca8bf9f-8b1c-5623-8f8c-d6ad33557769")}catch(e){}}();
 import { forgetEmptySwing, recordHubRoom, recordPiezoSecond, recordPressure, recordSurroundings, } from '../autopilot/autopilotMonitor.js';
 import { readFileSync, writeFileSync } from 'fs';
 import { registerInBedCheck } from '../jobs/inBedCheck.js';
@@ -31,6 +31,8 @@ const NATS_SERVER = process.env.NATS_SERVER || '127.0.0.1:4222';
 const CAPACITIVE_SUBJECT = 'rawmem.sens.capsense';
 const WATER_SUBJECT = 'rawmem.frz.temp';
 const SIDES = ['left', 'right'];
+// A stay in bed is kept for each side, and one for the whole bed while the sides are linked
+const SESSION_KEYS = ['left', 'right', 'both'];
 const RECONNECT_WAIT_MS = 60_000;
 // How often the stays in bed are checked against the settings
 const ACTION_CHECK_INTERVAL_MS = 10_000;
@@ -251,6 +253,12 @@ export class BedSensorMonitor {
             const units = settings.linkSides
                 ? [{ key: 'both', sides: SIDES }]
                 : SIDES.map(side => ({ key: side, sides: [side] }));
+            // A stay kept under the other arrangement (each side's own, or one for both) is let go,
+            // so it cannot act on its old times when the sides are linked or unlinked again
+            for (const key of SESSION_KEYS) {
+                if (!units.some(unit => unit.key === key))
+                    this.sessions[key] = createBedSession();
+            }
             for (const unit of units) {
                 // A side in away mode has nobody to act for
                 const activeSides = unit.sides.filter(side => !settings[side].awayMode);
@@ -314,4 +322,4 @@ export class BedSensorMonitor {
     }
 }
 //# sourceMappingURL=bedSensorMonitor.js.map
-//# debugId=b5058510-14e7-5c9f-95d5-67dd9ea72c6c
+//# debugId=bca8bf9f-8b1c-5623-8f8c-d6ad33557769

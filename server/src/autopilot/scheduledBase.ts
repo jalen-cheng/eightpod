@@ -28,32 +28,6 @@ export function findScheduledTemperatureF(night: Pick<DailySchedule, 'power' | '
   return temperatureF;
 }
 
-export type NightBaseInput = {
-  // What the schedule wants now; undefined at an hour it does not cover
-  scheduledNowF?: number;
-  // What the schedule wanted when sleep began, if it covered that hour
-  scheduledAtOnsetF?: number;
-  // What the bed was set to when sleep began
-  temperatureAtOnsetF: number;
-  // True when the sleeper had set the bed to something other than the schedule's temperature
-  // before falling asleep
-  isOnsetTemperatureOwn: boolean;
-  // The base in use until now
-  lastBaseF?: number;
-};
-
-// The temperature a night's offset is counted from:
-//   - a temperature the sleeper set before falling asleep, for as long as the schedule still
-//     wants what it wanted then: the night does not undo their choice
-//   - otherwise what the schedule wants now
-//   - at an hour the schedule does not cover, whatever it was last, so the base never jumps
-//     back to an earlier temperature in the middle of a night
-export function findNightBaseF(input: NightBaseInput): number {
-  if (input.scheduledNowF === undefined) return input.lastBaseF ?? input.temperatureAtOnsetF;
-  const isScheduleUnchanged = input.scheduledAtOnsetF !== undefined && input.scheduledNowF === input.scheduledAtOnsetF;
-  return input.isOnsetTemperatureOwn && isScheduleUnchanged ? input.temperatureAtOnsetF : input.scheduledNowF;
-}
-
 // A sleep shorter than this is a nap
 export const NAP_UNDER_MINUTES = 3 * 60;
 

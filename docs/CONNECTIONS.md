@@ -85,13 +85,7 @@ The same actions, in order:
 
 **Data > Sleep > Set when you slept** takes the time you fell asleep and the time you woke for
 the stay shown. It is filed the way a tracker's record is, under "You", and counts toward the
-same 5 nights. A tracker that reports the same night later replaces it.
-
-## Other Shortcuts
-
-Ready-made Shortcuts for the bed itself (its temperature, an alarm, its status, turning it off,
-away mode, opening the app) come in two kinds, for use at home and for use anywhere through
-Tailscale. They are listed in [iPhone Shortcuts](IOS_SHORTCUTS.md#ready-made-shortcuts).
+same 7 nights. A tracker that reports the same night later replaces it.
 
 ## Other trackers, Android and scripts
 
@@ -113,18 +107,30 @@ Times have to say their zone (`-08:00`, or `Z`); one without is refused.
 
 ## What the bed does with it
 
-Each sleep is filed with every saved stay in bed it overlaps (a night split in two by a restart
-gets both halves). Sending the same night again, or a corrected version of it, replaces what
-was there. Sleeps in the future, older than 100 days or longer than 18 hours are refused.
+**Where a record is kept.** On the Pod, inside the file of the stay in bed it overlaps
+(`/persistent/free-sleep-data/autopilot_nights/`, one file a stay; the record is its `tracker`
+field: who sent it, when you fell asleep and woke, and any stretches awake between). Nothing
+is sent anywhere else. A night split in two by a restart gets it in both halves. A record that
+overlaps no saved stay has nowhere to go and is not kept, apart from the last one received,
+which **Data > Sleep** shows under "Last record" with whether a stay matched it. That line is
+the quickest check that the Shortcut pulled the right night.
+
+Sending the same night again, or a corrected version of it, replaces what was there. Sleeps in
+the future, older than 100 days or longer than 18 hours are refused.
+
+**How it is compared.** Minute by minute over the stay. For each minute the record says asleep
+or awake, and so does the bed (its saved movement, run through its sleep rules). The share of
+minutes on which the two agree is the match shown under "Sleep detection" on Data > Sleep,
+and each night's Summary shows the record's own times beside the bed's.
 
 **Fitting.** The bed's own numbers (15 still minutes, 12 moving seconds, breathing not asked
 for) are guesses, and a watch or band is the better judge of when you slept. When the tracker's
 record says when you were awake in the night, that is used, not only when you fell asleep and
 woke: the bed's saved minutes are replayed under each candidate set of numbers and scored on
 how many minutes they disagree with the tracker. That is what lets it learn about lying awake
-at 3 am. It needs 5 nights. A fitted set is only taken up if, fitted to all the nights but one
+at 3 am. It needs 7 nights. A fitted set is only taken up if, fitted to all the nights but one
 and tried on that one, it does at least a tenth better than the default; otherwise the default
-stays. **Data > Sleep** shows the result: "Tuned to Apple Health: 94% match over 6 nights", or
+stays. **Data > Sleep** shows the result: "Tuned to Apple Health: 94% match over 8 nights", or
 "Default, checked against…" while it is not.
 
 Naps are filed but not used for fitting, and sleep stages are not used at all. A wrist tracker
