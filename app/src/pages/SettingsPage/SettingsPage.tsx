@@ -18,7 +18,7 @@ import PageHeader from '@components/PageHeader.tsx';
 
 // Every setting, in sections that fold down to their names: General starts open, and the page
 // remembers which were opened and closed. The Pod itself (its version, updating, restarting)
-// is on the Status page; the API guide, help and the license are in the footer.
+// is on the Status page; the documentation, the license and help are in the footer.
 export default function SettingsPage() {
   const { data: settings } = useSettings();
   const updateSettings = useUpdateSettings();

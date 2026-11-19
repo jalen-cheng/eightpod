@@ -136,6 +136,9 @@ const buildComponents = (colors: typeof DARK_COLORS): ThemeOptions['components']
         '&.Mui-disabled .MuiSwitch-thumb': { opacity: 0.6 },
       }),
       thumb: { width: 14, height: 14, borderRadius: 3, backgroundColor: 'currentColor', boxShadow: 'none' },
+      // The invisible input that takes the press covers the switch and no more. Left at its
+      // usual three widths it reached 20px past a switch that is on, and widened the page.
+      input: { left: 0, width: '170%', '.Mui-checked > &': { left: '-70%' } },
       track: { borderRadius: 5, backgroundColor: colors.track, opacity: 1, transition: 'background-color 200ms ease' },
     },
   },

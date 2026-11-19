@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react';
 import moment from 'moment-timezone';
-import BedIcon from '@mui/icons-material/Bed';
+import MonitorHeartOutlinedIcon from '@mui/icons-material/MonitorHeartOutlined';
 import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
-import { Alert } from '@mui/material';
-import { Box, Typography } from '@mui/material';
+import { Alert, Box, IconButton, Typography } from '@mui/material';
 import { useResizeDetector } from 'react-resize-detector';
 
 import Header from '../Header';
@@ -26,7 +25,7 @@ import ErrorBoundary from '@components/ErrorBoundary.tsx';
 const NoData = () => {
   return (
     <Alert severity="info">
-      No data available for the selected time range
+      No data for these days. To collect it, switch Biometrics on under Settings &gt; Other.
     </Alert>
   );
 };
@@ -92,29 +91,13 @@ export default function SleepPage() {
   return (
     <ErrorBoundary componentName="Sleep page">
       <PageContainer containerProps={ { ref } } sx={ { mb: 15, gap: 1, mt: 0 } }>
-        <Header title="Sleep" icon={ <BedIcon/> }/>
-        <Box
-          sx={ {
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            width: '80%',
-            color: theme.palette.grey[500]
-          } }>
-          { /* Previous Button */ }
-          <NavigateBeforeIcon onClick={ handlePrevWeek } sx={ { cursor: 'pointer' } }/>
-
-          { /* Title - Always Centered */ }
+        <Header title="Biometrics" icon={ <MonitorHeartOutlinedIcon/> }/>
+        <Box sx={ { display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', color: theme.palette.grey[500] } }>
+          <IconButton aria-label="Previous week" onClick={ handlePrevWeek }><NavigateBeforeIcon/></IconButton>
           <Typography>
-            { startTime.format('YYYY-MM-DD') } - { endTime.format('YYYY-MM-DD') }
+            { startTime.format('D MMM') } to { endTime.format('D MMM YYYY') }
           </Typography>
-
-          { /* Next Button (Hidden but Maintains Space) */ }
-          <Box sx={ { width: 24, display: 'flex', justifyContent: 'center' } }>
-            { !isNextDisabled && (
-              <NavigateNextIcon onClick={ handleNextWeek } sx={ { cursor: 'pointer' } }/>
-            ) }
-          </Box>
+          <IconButton aria-label="Next week" disabled={ Boolean(isNextDisabled) } onClick={ handleNextWeek }><NavigateNextIcon/></IconButton>
         </Box>
         {
           sleepRecords?.length === 0 && <NoData/>

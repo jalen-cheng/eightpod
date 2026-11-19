@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="052fa2d3-fe48-50e5-ae44-f51866c78e5e")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="4357dbd8-be14-5d90-8b02-571b412b43c7")}catch(e){}}();
 import { z } from 'zod';
 import { TIME_ZONES } from './timeZones.js';
 import { TimeSchema } from './schedulesSchema.js';
@@ -66,7 +66,12 @@ export const SettingsSchema = z.object({
         overridesSchedule: z.boolean(),
     }),
     // Lets the bed adjust its own temperature around the schedule while someone sleeps (Pod 5)
-    autopilot: z.object({ enabled: z.boolean() }),
+    autopilot: z.object({
+        enabled: z.boolean(),
+        // The temperature its changes are counted from, °F. Null or absent: the schedule's
+        // temperature, or the one the sleeper set before falling asleep.
+        baseTemperatureF: z.number().min(50).max(110).nullable().optional(),
+    }),
     // What being in bed sets off, using the bed's own presence sensors (Pod 5)
     presence: z.object({
         // How easily a rise in the sensors counts as someone in bed
@@ -84,4 +89,4 @@ export const SettingsSchema = z.object({
 }).strict();
 export const MANUAL_ON_HOUR_CHOICES = [3, 6, 12];
 //# sourceMappingURL=settingsSchema.js.map
-//# debugId=052fa2d3-fe48-50e5-ae44-f51866c78e5e
+//# debugId=4357dbd8-be14-5d90-8b02-571b412b43c7

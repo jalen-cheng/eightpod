@@ -57,12 +57,13 @@ export default function Donate() {
             inputRef={ textFieldRef }
             variant="outlined"
             fullWidth
+            multiline
             onSelect={ handleCopy }
             value={ bitcoinAddress }
             size="small"
             sx={ {
               cursor: 'pointer',
-              '& .MuiInputBase-input': { cursor: 'pointer', fontSize: '12px', fontFamily: 'monospace', py: 1.5 },
+              '& .MuiInputBase-input': { cursor: 'pointer', fontSize: '12px', fontFamily: 'monospace', overflowWrap: 'anywhere' },
             } }
             slotProps={ {
               input: {

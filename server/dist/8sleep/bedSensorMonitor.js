@@ -7,7 +7,7 @@
 // without those subjects, simply never produces a reading: presence stays "not available", no
 // measured temperature is shown, and nothing else is affected.
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="643135d6-adf9-5ee4-8e7b-9c519f507a25")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="b5058510-14e7-5c9f-95d5-67dd9ea72c6c")}catch(e){}}();
 import { forgetEmptySwing, recordHubRoom, recordPiezoSecond, recordPressure, recordSurroundings, } from '../autopilot/autopilotMonitor.js';
 import { readFileSync, writeFileSync } from 'fs';
 import { registerInBedCheck } from '../jobs/inBedCheck.js';
@@ -16,11 +16,14 @@ import moment from 'moment-timezone';
 import { connect } from 'nats';
 import logger from '../logger.js';
 import config from '../config.js';
+import schedulesDB from '../db/schedules.js';
 import settingsDB from '../db/settings.js';
 import { connectFranken } from './frankenServer.js';
 import { PRESENCE_DELTAS, createPresenceDetector, isNeighbourSpillOver, } from './presenceDetector.js';
 import { UNTIL_OUT_OF_BED, createBedSession, takeDueActions, trackBedSession, } from '../jobs/presenceActions.js';
 import { executeAlarm, getOneOffAlarmSettings } from '../jobs/alarmScheduler.js';
+import { findNightDay } from '../jobs/scheduleTiming.js';
+import { isWithinScheduledNight } from '../autopilot/scheduledBase.js';
 import { updateDeviceStatus } from '../routes/deviceStatus/updateDeviceStatus.js';
 import { recordWaterReading, reportedWaterToF } from './measuredWater.js';
 import { toFirmwareSide } from './sideMapping.js';
@@ -261,7 +264,8 @@ export class BedSensorMonitor {
                 // The firmware is only asked whether the bed is on when turning it on or off is possible
                 const mayChangePower = session.isTurnOffDue || (turnOnWhenInBed.enabled && !session.hasTurnedOn && isPresentNow);
                 const isOn = mayChangePower ? await this.isAnySideOn(activeSides) : true;
-                const dueActions = takeDueActions(session, settings.presence, { nowMs, isPresentNow, isOn });
+                const isScheduledOn = session.isTurnOffDue ? await this.isScheduledOn(activeSides, nowMs) : false;
+                const dueActions = takeDueActions(session, settings.presence, { nowMs, isPresentNow, isOn, isScheduledOn });
                 for (const action of dueActions)
                     await this.runAction(action, activeSides);
             }
@@ -269,6 +273,15 @@ export class BedSensorMonitor {
         catch (error) {
             logger.error(error);
         }
+    }
+    // Whether the weekly schedule has any of these sides on at this hour
+    async isScheduledOn(sides, nowMs) {
+        await schedulesDB.read();
+        const now = moment.tz(nowMs, settingsDB.data.timeZone);
+        return sides.some((side) => {
+            const scheduledNight = schedulesDB.data[side][findNightDay(now, schedulesDB.data[side])];
+            return scheduledNight.power.enabled && isWithinScheduledNight(scheduledNight, now.format('HH:mm'));
+        });
     }
     async isAnySideOn(sides) {
         const deviceStatus = await (await connectFranken()).getDeviceStatus();
@@ -301,4 +314,4 @@ export class BedSensorMonitor {
     }
 }
 //# sourceMappingURL=bedSensorMonitor.js.map
-//# debugId=643135d6-adf9-5ee4-8e7b-9c519f507a25
+//# debugId=b5058510-14e7-5c9f-95d5-67dd9ea72c6c

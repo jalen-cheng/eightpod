@@ -6,7 +6,7 @@
 // where it gave 65 to 78.
 // Keep this file free of runtime imports so tests can load it without a Pod environment.
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="3dc46a50-4ed3-51e6-b69a-0ffc86cd8c43")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="b428761c-1bf7-5c2d-83cc-d386b6ed49f0")}catch(e){}}();
 export const PIEZO_SAMPLES_PER_SECOND = 500;
 // The signal is averaged down to this rate before filtering; a heartbeat's knock sits well under it
 const WORKING_SAMPLES_PER_SECOND = 50;
@@ -118,6 +118,24 @@ export function estimateHeartRate(samples) {
         return undefined;
     return { beatsPerMinute: WORKING_SAMPLES_PER_SECOND * 60 / chosen.lag, confidence: Math.min(1, chosen.score) };
 }
+// What the firmware writes in place of a reading it lost. They come in runs (26 in a row on
+// both sides at once, on the test Pod), and left in they make a quiet second look like the
+// largest movement there could be.
+export const LOST_SAMPLE = 2147483647;
+// A second of signal with each lost reading replaced by the last good one before it (or the
+// first good one, at the start). Empty when the whole second was lost.
+export function fillLostSamples(samples) {
+    if (!samples.includes(LOST_SAMPLE))
+        return samples;
+    let lastGood = samples.find(sample => sample !== LOST_SAMPLE);
+    if (lastGood === undefined)
+        return [];
+    return samples.map((sample) => {
+        if (sample !== LOST_SAMPLE)
+            lastGood = sample;
+        return lastGood;
+    });
+}
 // The spread between the highest and lowest sample of one second of signal. Lying still it is
 // small and steady; turning over makes it many times larger.
 export function measureSwing(secondOfSamples) {
@@ -152,4 +170,4 @@ export function countMovementSeconds(swings, quietSwing) {
     return swings.filter(swing => swing > baseline * MOVEMENT_SWING_RATIO).length;
 }
 //# sourceMappingURL=heartRate.js.map
-//# debugId=3dc46a50-4ed3-51e6-b69a-0ffc86cd8c43
+//# debugId=b428761c-1bf7-5c2d-83cc-d386b6ed49f0

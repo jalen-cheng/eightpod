@@ -102,17 +102,6 @@ export function roomOffsetF(roomAtSleepOnsetF: number | undefined, roomNowF: num
 }
 
 // ---------------------------------------------------------------------------------------------
-// A rehearsal plays a whole night's plan in a few minutes, so what the autopilot does to the
-// bed can be watched without sleeping through it. Only its clock differs from a night's.
-// ---------------------------------------------------------------------------------------------
-export const REHEARSAL_MINUTES = 20;
-export const REHEARSAL_NIGHT_HOURS = 8;
-const REHEARSAL_SPEED = REHEARSAL_NIGHT_HOURS * 60 / REHEARSAL_MINUTES;
-
-// Where a rehearsal that began at `startedAtMs` has got to on the clock of the night it plays
-export const rehearsalClockMs = (startedAtMs: number, nowMs: number): number => startedAtMs + (nowMs - startedAtMs) * REHEARSAL_SPEED;
-
-// ---------------------------------------------------------------------------------------------
 // Putting it together
 // ---------------------------------------------------------------------------------------------
 export type PlanInput = {

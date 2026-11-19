@@ -72,7 +72,12 @@ export const SettingsSchema = z.object({
     overridesSchedule: z.boolean(),
   }),
   // Lets the bed adjust its own temperature around the schedule while someone sleeps (Pod 5)
-  autopilot: z.object({ enabled: z.boolean() }),
+  autopilot: z.object({
+    enabled: z.boolean(),
+    // The temperature its changes are counted from, °F. Null or absent: the schedule's
+    // temperature, or the one the sleeper set before falling asleep.
+    baseTemperatureF: z.number().min(50).max(110).nullable().optional(),
+  }),
   // What being in bed sets off, using the bed's own presence sensors (Pod 5)
   presence: z.object({
     // How easily a rise in the sensors counts as someone in bed

@@ -1,6 +1,6 @@
 // Getting up for a few minutes does not end a night in bed; being out this long does
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="ab683408-ba2f-5265-b3b6-a30b5ebf92eb")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="98f39c04-9e92-58c3-9fd9-bf951b34ff82")}catch(e){}}();
 export const SESSION_GAP_MS = 15 * 60_000;
 // The "stay on" choice that means: until the person gets out of bed
 export const UNTIL_OUT_OF_BED = 'untilOutOfBed';
@@ -27,10 +27,12 @@ export function trackBedSession(session, present, nowMs) {
 export function takeDueActions(session, presenceSettings, context) {
     const dueActions = [];
     const { wakeAfterHours, turnOnWhenInBed } = presenceSettings;
-    // A stay that turned the bed on "until I get out of bed" has ended
+    // A stay that turned the bed on "until I get out of bed" has ended. If the schedule's night
+    // has begun since, the bed stays on: someone who got in before bedtime and is out of bed
+    // for a while in the night would otherwise come back to a bed that is off until tomorrow.
     if (session.isTurnOffDue) {
         session.isTurnOffDue = false;
-        if (context.isOn)
+        if (context.isOn && !context.isScheduledOn)
             dueActions.push('turnOff');
     }
     if (session.inBedSinceMs === undefined)
@@ -51,4 +53,4 @@ export function takeDueActions(session, presenceSettings, context) {
     return dueActions;
 }
 //# sourceMappingURL=presenceActions.js.map
-//# debugId=ab683408-ba2f-5265-b3b6-a30b5ebf92eb
+//# debugId=98f39c04-9e92-58c3-9fd9-bf951b34ff82

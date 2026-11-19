@@ -1,9 +1,8 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="bea08966-add7-5604-abdc-d82792beaae5")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="da38c0b8-6c30-5467-a00d-762a812f2d64")}catch(e){}}();
 import express from 'express';
 import { z } from 'zod';
-import { applyTrackerSleep, getAutopilotSnapshot, getNightSummaries, getNightsExport, getNightsOn, startRehearsal, stopRehearsal, } from '../../autopilot/autopilotMonitor.js';
-import { REHEARSAL_MINUTES } from '../../autopilot/nightPlan.js';
+import { applyTrackerSleep, getAutopilotSnapshot, getNightSummaries, getNightsExport, getNightsOn, } from '../../autopilot/autopilotMonitor.js';
 import { findSleepPeriods, parseSampleLines } from '../../autopilot/sleepTracker.js';
 const router = express.Router();
 // What the autopilot sees and has done: each side's sleep state, heart rate and current offset,
@@ -34,20 +33,6 @@ router.get('/autopilot/nights', (req, res) => {
     }
     const limit = Math.min(MAX_NIGHTS_LISTED, Math.max(1, Number(req.query.limit) || 14));
     res.json(getNightSummaries(limit));
-});
-// Plays a whole night's plan on the bed in a few minutes, from the temperature it is set to now,
-// so what the autopilot does can be watched. Refused with the reason when it cannot start.
-router.post('/autopilot/rehearsal', async (_req, res) => {
-    const refusal = await startRehearsal();
-    if (refusal) {
-        res.status(409).json({ error: refusal });
-        return;
-    }
-    res.json({ minutes: REHEARSAL_MINUTES });
-});
-// Ends a rehearsal early; the bed returns to where it began within a minute
-router.delete('/autopilot/rehearsal', (_req, res) => {
-    res.json({ stopped: stopRehearsal() });
 });
 // The lengths of time an export can cover, in days
 const EXPORT_DAYS = [7, 14, 30, 60, 90];
@@ -129,4 +114,4 @@ router.post('/autopilot/sleepTimes', (req, res) => {
 });
 export default router;
 //# sourceMappingURL=autopilot.js.map
-//# debugId=bea08966-add7-5604-abdc-d82792beaae5
+//# debugId=da38c0b8-6c30-5467-a00d-762a812f2d64

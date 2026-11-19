@@ -150,10 +150,11 @@ export default function NightsPage() {
             value={ Math.min(stayIndex, nights.length - 1) }
             onChange={ (_event, picked: number | null) => picked !== null && setStayIndex(picked) }
             aria-label="Which sleep of the day"
-            sx={ { alignSelf: 'flex-end' } }
+            // A day can hold several stays: they stay on one line and scroll sideways on a narrow screen
+            sx={ { alignSelf: 'stretch', overflowX: 'auto', scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' } } }
           >
             { nights.map((stay, index) => (
-              <ToggleButton key={ `${stay.side}-${stay.startedAtMs}` } value={ index } sx={ { px: 1.5 } }>
+              <ToggleButton key={ `${stay.side}-${stay.startedAtMs}` } value={ index } sx={ { px: 1.5, flexShrink: 0, whiteSpace: 'nowrap' } }>
                 { STAY_NAMES[stay.kind ?? 'none'] } { formatClock(stay.asleepAtMs ?? stay.startedAtMs) }
               </ToggleButton>
             )) }

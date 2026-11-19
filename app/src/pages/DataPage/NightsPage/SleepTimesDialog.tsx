@@ -57,22 +57,19 @@ export default function SleepTimesDialog({ night, onClose, onSaved }: SleepTimes
       <DialogTitle>When you slept</DialogTitle>
       <DialogContent>
         <Box sx={ { display: 'flex', flexDirection: 'column', gap: 2, pt: 1 } }>
-          <TextField
-            label="Fell asleep"
-            type="time"
-            size="small"
-            value={ asleepClock }
-            onChange={ event => setAsleepClock(event.target.value) }
-            slotProps={ { inputLabel: { shrink: true } } }
-          />
-          <TextField
-            label="Woke up"
-            type="time"
-            size="small"
-            value={ awakeClock }
-            onChange={ event => setAwakeClock(event.target.value) }
-            slotProps={ { inputLabel: { shrink: true } } }
-          />
+          { ([['Fell asleep', asleepClock, setAsleepClock], ['Woke up', awakeClock, setAwakeClock]] as const).map(([name, clock, setClock]) => (
+            <Box key={ name } sx={ { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2 } }>
+              <Typography sx={ { fontSize: 14, fontWeight: 500 } }>{ name }</Typography>
+              <TextField
+                type="time"
+                size="small"
+                value={ clock }
+                onChange={ event => setClock(event.target.value) }
+                sx={ { width: 148 } }
+                slotProps={ { htmlInput: { 'aria-label': name } } }
+              />
+            </Box>
+          )) }
           <Typography variant="caption" sx={ { color: 'text.secondary' } }>
             Kept beside what the bed saw, like a tracker&apos;s record. Once 5 nights have one, the bed fits how it
             judges sleep to them. A tracker that reports this night later replaces what you enter here.

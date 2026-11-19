@@ -2,16 +2,19 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
-  HEART_RATE_WINDOW_SECONDS, PIEZO_SAMPLES_PER_SECOND, countMovementSeconds, estimateHeartRate, findQuietSwing, measureSwing,
+  HEART_RATE_WINDOW_SECONDS, LOST_SAMPLE, PIEZO_SAMPLES_PER_SECOND, countMovementSeconds, estimateHeartRate, fillLostSamples,
+  findQuietSwing, measureSwing,
 } from '../server/src/autopilot/heartRate.ts';
 import {
-  MAX_OFFSET_F, NO_LEARNED_OFFSETS, REHEARSAL_MINUTES, REHEARSAL_NIGHT_HOURS, curveOffsetF, learnFromCorrection, nightPartAt,
-  planTemperature, rehearsalClockMs, roomOffsetF,
+  MAX_OFFSET_F, NO_LEARNED_OFFSETS, curveOffsetF, learnFromCorrection, nightPartAt,
+  planTemperature, roomOffsetF,
 } from '../server/src/autopilot/nightPlan.ts';
 import {
   findNightBaseF, findScheduledTemperatureF, findUsualSleep, isNightExpected, isWithinScheduledNight, kindOfSleep,
 } from '../server/src/autopilot/scheduledBase.ts';
 import { countWakeUps, pickBedStays } from '../server/src/autopilot/nightRecord.ts';
+import { doesAutopilotKeepOwnBase, setAutopilotKeepsOwnBase } from '../server/src/jobs/autopilotBase.ts';
+import { OVERDUE_BY_MS, findOverdueJob } from '../server/src/jobs/overdueJobs.ts';
 import {
   BREATHING_SAMPLES_PER_SECOND, BREATHING_WINDOW_SECONDS, estimateBreathingRate, measureBreathingSpread,
 } from '../server/src/autopilot/breathingRate.ts';
@@ -496,29 +499,6 @@ test('the base never falls back to an earlier temperature when the schedule stop
   assert.equal(findNightBaseF({ temperatureAtOnsetF: 77, isOnsetTemperatureOwn: false, scheduledNowF: undefined }), 77);
 });
 
-test('a rehearsal plays the whole night in its few minutes, never asking for more than a step a minute apart', () => {
-  const startedAtMs = Date.UTC(2026, 10, 18, 20, 0);
-  const nightMs = REHEARSAL_NIGHT_HOURS * 60 * 60_000;
-  assert.equal(rehearsalClockMs(startedAtMs, startedAtMs), startedAtMs);
-  assert.equal(rehearsalClockMs(startedAtMs, startedAtMs + REHEARSAL_MINUTES * 60_000), startedAtMs + nightMs);
-  // Minute by minute the plan it reads moves by small amounts, so stepping one degree a minute keeps up
-  let previousTargetF = 80;
-  const seen = new Set();
-  for (let minute = 1; minute <= REHEARSAL_MINUTES; minute++) {
-    const clockMs = rehearsalClockMs(startedAtMs, startedAtMs + minute * 60_000);
-    const plan = planTemperature({
-      baseTemperatureF: 80, progress: (clockMs - startedAtMs) / nightMs, minutesSinceSleepOnset: (clockMs - startedAtMs) / 60_000,
-      learned: NO_LEARNED_OFFSETS,
-    });
-    assert.ok(Math.abs(plan.targetTemperatureF - previousTargetF) <= 2, `minute ${minute} jumps ${plan.targetTemperatureF - previousTargetF}`);
-    assert.ok(Math.abs(plan.offsetF) <= MAX_OFFSET_F);
-    previousTargetF = plan.targetTemperatureF;
-    seen.add(plan.offsetF);
-  }
-  // It shows the cool first half and the warm end
-  assert.ok(seen.has(-3) && seen.has(1));
-});
-
 test('one sleeper seen by both sides is one sleep: the side with the most sleep is kept', () => {
   const stay = (side, startedAtMs, asleep, awake = 0) => ({
     side, startedAtMs, minutes: [...Array(asleep).fill({ stage: 'asleep' }), ...Array(awake).fill({ stage: 'awake' })],
@@ -603,4 +583,36 @@ test('samples sent as text are read one a line, leaving out lines without both t
     { start: '2026-11-19T01:48:00-08:00', end: '2026-11-19T06:30:00-08:00', value: undefined },
   ]);
   assert.deepEqual(parseSampleLines(''), []);
+});
+
+test('scheduled temperature changes wait only while the autopilot keeps a base of its own', () => {
+  assert.equal(doesAutopilotKeepOwnBase(), false);
+  setAutopilotKeepsOwnBase(true);
+  assert.equal(doesAutopilotKeepOwnBase(), true);
+  setAutopilotKeepsOwnBase(false);
+  assert.equal(doesAutopilotKeepOwnBase(), false);
+});
+
+test('readings the firmware lost are filled in, so a quiet second does not read as movement', () => {
+  // A quiet second with a run of lost readings in the middle, as the test Pod sent it
+  const quiet = [100, 120, 90, LOST_SAMPLE, LOST_SAMPLE, LOST_SAMPLE, 110, 95];
+  assert.deepEqual(fillLostSamples(quiet), [100, 120, 90, 90, 90, 90, 110, 95]);
+  assert.equal(measureSwing(fillLostSamples(quiet)), 30);
+  assert.ok(measureSwing(quiet) > 2_000_000_000);
+  // Lost at the very start: the first good reading stands in. Nothing lost: the same array back.
+  assert.deepEqual(fillLostSamples([LOST_SAMPLE, LOST_SAMPLE, 7, 9]), [7, 7, 7, 9]);
+  const whole = [1, 2, 3];
+  assert.equal(fillLostSamples(whole), whole);
+  // A second lost whole is no second at all
+  assert.deepEqual(fillLostSamples([LOST_SAMPLE, LOST_SAMPLE]), []);
+});
+
+test('a job whose next run is well in the past is found; one a moment late, or waiting, is not', () => {
+  const nowMs = Date.UTC(2026, 10, 19, 8, 0);
+  const waiting = { name: 'left-monday-power-on', nextRunMs: nowMs + 60_000 };
+  assert.equal(findOverdueJob([waiting], nowMs), undefined);
+  assert.equal(findOverdueJob([waiting, { name: 'just-late', nextRunMs: nowMs - OVERDUE_BY_MS }], nowMs), undefined);
+  assert.equal(findOverdueJob([waiting, { name: 'stuck', nextRunMs: nowMs - OVERDUE_BY_MS - 1 }], nowMs), 'stuck');
+  // A job with no run to come (a one-time alarm that has gone off) is not stuck
+  assert.equal(findOverdueJob([{ name: 'done' }], nowMs), undefined);
 });

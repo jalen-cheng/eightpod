@@ -7,10 +7,15 @@ sign each on a Mac, into docs/shortcuts under the Shortcut's own name:
     python3 scripts/build_shortcuts.py unsigned/
     shortcuts sign --mode anyone --input "unsigned/Bed off.shortcut" --output "docs/shortcuts/Bed off.shortcut"
 
-Every Shortcut begins with a Text action holding the Pod's address, which is asked for when the
-Shortcut is added, so nobody has to edit an action. Every action is written the way the
-Shortcuts editor writes it, taken from exported shortcuts: a wrong key or label makes an action
-import with an empty setting.
+There are two sets. The home set talks to the Pod at its home address and needs nothing else.
+The "via Tailscale" set connects Tailscale first, so it works anywhere. "Send sleep to
+SevenSleep" only runs on the home Wi-Fi, where an automation can run it every day.
+
+Every Shortcut begins with Text actions holding what differs from one home to the next (the
+Pod's address, the home Wi-Fi's name). They are asked for when the Shortcut is added, so nobody
+has to edit an action. Every action is written the way the Shortcuts editor writes it, taken
+from exported shortcuts: a wrong key or label makes an action import with an empty setting.
+The one exception is Tailscale's Connect, written from Tailscale's published list of actions.
 """
 
 from pathlib import Path
@@ -18,18 +23,26 @@ import plistlib
 import sys
 import uuid
 
-DEFAULT_POD_ADDRESS = 'http://sevensleep.local'
-ADDRESS_QUESTION = "Your Pod's address: http://sevensleep.local at home, or http://sevensleep:3000 over Tailscale"
+HOME_ADDRESS = 'http://sevensleep.local'
+TAILSCALE_ADDRESS = 'http://sevensleep:3000'
+TAILSCALE_SUFFIX = ' via Tailscale'
 ADDRESS_OUTPUT_NAME = 'Pod address'
+AWAY_ADDRESS_OUTPUT_NAME = 'Pod address away'
+WIFI_OUTPUT_NAME = 'Home Wi-Fi'
+HOME_ADDRESS_QUESTION = "Your Pod's address at home, as you open the app there"
+TAILSCALE_ADDRESS_QUESTION = "Your Pod's address over Tailscale: its Tailscale name, then :3000"
+WIFI_QUESTION = "Your home Wi-Fi's name, exactly as the phone shows it"
 SLEEP_SOURCE_NAME = 'Apple Health'
 # Two days, so a run late in the day still reaches back over last night. Sending a night twice
 # changes nothing on the Pod.
 SLEEP_DAYS_LOOKED_BACK = 2
+# Tailscale takes a moment to be usable after it connects
+SECONDS_FOR_TAILSCALE = 2
 
 # The marker the editor puts in a text where a variable goes
 VARIABLE_MARK = '￼'
-# The editor's codes: "is", "is in the last", days, the kinds of value a JSON field can hold,
-# and the two ends of a repeat
+# The editor's codes: "is" (for a filter and for an If), "is in the last", days, the kinds of
+# value a JSON field can hold, and the parts of a repeat or an If
 OPERATOR_IS = 4
 OPERATOR_IN_THE_LAST = 1001
 UNIT_DAYS = 16
@@ -38,6 +51,7 @@ ITEM_TYPE_DICTIONARY = 1
 ITEM_TYPE_NUMBER = 3
 ITEM_TYPE_BOOLEAN = 4
 CONTROL_FLOW_START = 0
+CONTROL_FLOW_MIDDLE = 1
 CONTROL_FLOW_END = 2
 
 
@@ -99,14 +113,19 @@ def dictionary_field(key, items):
     return {'WFKey': text_with([key]), 'WFItemType': ITEM_TYPE_DICTIONARY, 'WFValue': fields(items)}
 
 
-def pod_address(address_uuid):
-    """The Text action every Shortcut begins with: the Pod's address, asked for on import."""
-    return action('gettext', {'WFTextActionText': DEFAULT_POD_ADDRESS, 'UUID': address_uuid, 'CustomOutputName': ADDRESS_OUTPUT_NAME})
+def both_sides(key, is_true):
+    """A JSON body that sets one switch the same on the left and the right."""
+    return [dictionary_field(side, [boolean_field(key, is_true)]) for side in ('left', 'right')]
 
 
-def request(address_uuid, path, response_uuid, json_items=None):
+def asked_text(output_name, default, text_uuid):
+    """A Text action whose content is asked for when the Shortcut is added."""
+    return action('gettext', {'WFTextActionText': default, 'UUID': text_uuid, 'CustomOutputName': output_name})
+
+
+def request(address_uuid, path, response_uuid, json_items=None, address_name=ADDRESS_OUTPUT_NAME):
     """Get Contents of URL on the Pod: a GET, or a POST with a JSON body when fields are given."""
-    parameters = {'WFURL': text_with([output_of(address_uuid, ADDRESS_OUTPUT_NAME), path]), 'UUID': response_uuid}
+    parameters = {'WFURL': text_with([output_of(address_uuid, address_name), path]), 'UUID': response_uuid}
     if json_items is not None:
         parameters.update({'WFHTTPMethod': 'POST', 'WFHTTPBodyType': 'JSON', 'WFJSONValues': fields(json_items)})
     return action('downloadurl', parameters)
@@ -117,6 +136,52 @@ def answer_value(response_uuid, key, value_uuid):
     return action('getvalueforkey', {
         'WFInput': variable_input(output_of(response_uuid, 'Contents of URL')), 'WFDictionaryKey': key, 'UUID': value_uuid,
     })
+
+
+def notification(body_parts):
+    return action('notification', {
+        'WFNotificationActionTitle': 'SevenSleep', 'WFNotificationActionBody': text_with(body_parts), 'UUID': new_uuid(),
+    })
+
+
+def network_name(network_uuid):
+    """Get Network Details as the editor leaves it: the name of the Wi-Fi the phone is on."""
+    return action('getwifi', {'UUID': network_uuid})
+
+
+def if_on_wifi(network_uuid, wifi_uuid, group):
+    """If the Wi-Fi the phone is on is the home Wi-Fi asked for when the Shortcut was added."""
+    return action('conditional', {
+        'WFInput': {'Type': 'Variable', 'Variable': variable_input(output_of(network_uuid, 'Network Details'))},
+        'WFCondition': OPERATOR_IS,
+        'WFConditionalActionString': text_with([output_of(wifi_uuid, WIFI_OUTPUT_NAME)]),
+        'GroupingIdentifier': group,
+        'WFControlFlowMode': CONTROL_FLOW_START,
+    })
+
+
+def otherwise(group):
+    return action('conditional', {'GroupingIdentifier': group, 'WFControlFlowMode': CONTROL_FLOW_MIDDLE})
+
+
+def end_if(group):
+    return action('conditional', {'GroupingIdentifier': group, 'WFControlFlowMode': CONTROL_FLOW_END, 'UUID': new_uuid()})
+
+
+def tailscale_connect():
+    """Tailscale's own Connect action, then a moment for the connection to be usable. Connecting
+    when already connected changes nothing. Not taken from an export: see the note at the top."""
+    connect = {
+        'WFWorkflowActionIdentifier': 'io.tailscale.ipn.ios.ConnectIntent',
+        'WFWorkflowActionParameters': {
+            'AppIntentDescriptor': {
+                'AppIntentIdentifier': 'ConnectIntent', 'BundleIdentifier': 'io.tailscale.ipn.ios',
+                'Name': 'Tailscale', 'TeamIdentifier': 'W5364U7YZB',
+            },
+            'UUID': new_uuid(),
+        },
+    }
+    return [connect, action('delay', {'WFDelayTime': SECONDS_FOR_TAILSCALE})]
 
 
 def sample_detail(property_name, detail_uuid):
@@ -139,13 +204,19 @@ def iso_date(detail_uuid, property_name, formatted_uuid):
 
 
 def send_sleep_actions():
-    """Finds the Sleep samples of the last two days, writes each as "start|end|value" with ISO
-    8601 times, posts the lines to the Pod and shows its answer as a notification."""
-    address, samples, repeat_group, repeat_results = new_uuid(), new_uuid(), new_uuid(), new_uuid()
+    """On the home Wi-Fi: finds the Sleep samples of the last two days, writes each as
+    "start|end|value" with ISO 8601 times, posts the lines to the Pod and shows its answer as a
+    notification. On any other network it says so and sends nothing, so it can be run every day
+    by an automation without failing away from home."""
+    address, wifi, network, on_wifi = new_uuid(), new_uuid(), new_uuid(), new_uuid()
+    samples, repeat_group, repeat_results = new_uuid(), new_uuid(), new_uuid()
     start, start_iso, end, end_iso, value, line = (new_uuid() for _ in range(6))
     response, message = new_uuid(), new_uuid()
     return [
-        pod_address(address),
+        asked_text(ADDRESS_OUTPUT_NAME, HOME_ADDRESS, address),
+        asked_text(WIFI_OUTPUT_NAME, '', wifi),
+        network_name(network),
+        if_on_wifi(network, wifi, on_wifi),
         action('filter.health.quantity', {
             'WFContentItemFilter': {
                 'Value': {
@@ -191,19 +262,29 @@ def send_sleep_actions():
             text_field('samples', [output_of(repeat_results, 'Repeat Results')]),
         ]),
         answer_value(response, 'message', message),
-        action('notification', {
-            'WFNotificationActionTitle': 'SevenSleep',
-            'WFNotificationActionBody': text_with([output_of(message, 'Dictionary Value')]),
-            'UUID': new_uuid(),
-        }),
+        notification([output_of(message, 'Dictionary Value')]),
+        otherwise(on_wifi),
+        notification([
+            'Not on ', output_of(wifi, WIFI_OUTPUT_NAME), ' (this phone is on ', output_of(network, 'Network Details'),
+            '), so no sleep was sent.',
+        ]),
+        end_if(on_wifi),
     ]
 
 
-def bed_temperature_actions():
+def with_address(is_via_tailscale, build_rest):
+    """A Shortcut that begins with the Pod's address, connects Tailscale first when it is the
+    Tailscale kind, and then does what `build_rest(address_uuid)` returns."""
+    address = new_uuid()
+    default = TAILSCALE_ADDRESS if is_via_tailscale else HOME_ADDRESS
+    connect = tailscale_connect() if is_via_tailscale else []
+    return [asked_text(ADDRESS_OUTPUT_NAME, default, address), *connect, *build_rest(address)]
+
+
+def bed_temperature_actions(is_via_tailscale):
     """Asks for a number from -10 to 10, turns the bed on and sets it."""
-    address, asked = new_uuid(), new_uuid()
-    return [
-        pod_address(address),
+    asked = new_uuid()
+    return with_address(is_via_tailscale, lambda address: [
         action('ask', {
             'WFAskActionPrompt': 'Bed temperature, -10 to 10',
             'WFInputType': 'Number',
@@ -212,70 +293,107 @@ def bed_temperature_actions():
             'UUID': asked,
         }),
         request(address, '/api/deviceStatus/dial', new_uuid(), [number_field('dial', [output_of(asked, 'Provided Input')])]),
-    ]
+    ])
 
 
-def bed_alarm_actions():
+def bed_alarm_actions(is_via_tailscale):
     """Asks for a time and sets a one-time alarm for the next time the clock shows it."""
-    address, asked = new_uuid(), new_uuid()
-    return [
-        pod_address(address),
+    asked = new_uuid()
+    return with_address(is_via_tailscale, lambda address: [
         action('ask', {'WFAskActionPrompt': 'Alarm time', 'WFInputType': 'Time', 'UUID': asked}),
         request(address, '/api/alarm/time', new_uuid(), [text_field('time', [output_of(asked, 'Provided Input')])]),
-    ]
+    ])
 
 
-def bed_status_actions():
+def bed_status_actions(is_via_tailscale):
     """Shows what the bed is set to and what it has reached, as a sentence."""
-    address, response, summary = new_uuid(), new_uuid(), new_uuid()
-    return [
-        pod_address(address),
+    response, summary = new_uuid(), new_uuid()
+    return with_address(is_via_tailscale, lambda address: [
         request(address, '/api/deviceStatus/dial', response),
         answer_value(response, 'summary', summary),
         action('showresult', {'Text': text_with([output_of(summary, 'Dictionary Value')])}),
-    ]
+    ])
 
 
-def bed_off_actions():
+def bed_off_actions(is_via_tailscale):
     """Turns both sides off."""
-    address = new_uuid()
+    return with_address(is_via_tailscale, lambda address: [
+        request(address, '/api/deviceStatus', new_uuid(), both_sides('isOn', False)),
+    ])
+
+
+def away_mode_actions(is_via_tailscale, is_away):
+    """Switches away mode on or off for both sides: the schedule and alarms stop, or start again."""
+    return with_address(is_via_tailscale, lambda address: [
+        request(address, '/api/settings', new_uuid(), both_sides('awayMode', is_away)),
+    ])
+
+
+def open_app_actions():
+    """Opens the app: straight away on the home Wi-Fi, and after connecting Tailscale anywhere else."""
+    home, away, wifi, network, on_wifi = (new_uuid() for _ in range(5))
     return [
-        pod_address(address),
-        request(address, '/api/deviceStatus', new_uuid(), [
-            dictionary_field('left', [boolean_field('isOn', False)]),
-            dictionary_field('right', [boolean_field('isOn', False)]),
-        ]),
+        asked_text(ADDRESS_OUTPUT_NAME, HOME_ADDRESS, home),
+        asked_text(AWAY_ADDRESS_OUTPUT_NAME, TAILSCALE_ADDRESS, away),
+        asked_text(WIFI_OUTPUT_NAME, '', wifi),
+        network_name(network),
+        if_on_wifi(network, wifi, on_wifi),
+        action('openurl', {'WFInput': text_with([output_of(home, ADDRESS_OUTPUT_NAME)]), 'UUID': new_uuid()}),
+        otherwise(on_wifi),
+        *tailscale_connect(),
+        action('openurl', {'WFInput': text_with([output_of(away, AWAY_ADDRESS_OUTPUT_NAME)]), 'UUID': new_uuid()}),
+        end_if(on_wifi),
     ]
 
 
-# Each Shortcut by the name it is added under
-SHORTCUTS = {
-    'Send sleep to SevenSleep': send_sleep_actions,
+# The Shortcuts that come in both kinds, by name, each built for home or for Tailscale
+TWO_KINDS = {
     'Bed temperature': bed_temperature_actions,
     'Bed alarm': bed_alarm_actions,
     'Bed status': bed_status_actions,
     'Bed off': bed_off_actions,
+    'Away mode on': lambda is_via_tailscale: away_mode_actions(is_via_tailscale, True),
+    'Away mode off': lambda is_via_tailscale: away_mode_actions(is_via_tailscale, False),
+}
+
+# Every Shortcut by the name it is added under
+SHORTCUTS = {
+    'Send sleep to SevenSleep': send_sleep_actions,
+    'Open SevenSleep': open_app_actions,
+    **{name: (lambda build=build: build(False)) for name, build in TWO_KINDS.items()},
+    **{f'{name}{TAILSCALE_SUFFIX}': (lambda build=build: build(True)) for name, build in TWO_KINDS.items()},
+}
+
+# What is asked when a Shortcut is added, by the name of the Text action that holds the answer
+QUESTIONS = {
+    ADDRESS_OUTPUT_NAME: HOME_ADDRESS_QUESTION,
+    AWAY_ADDRESS_OUTPUT_NAME: TAILSCALE_ADDRESS_QUESTION,
+    WIFI_OUTPUT_NAME: WIFI_QUESTION,
 }
 
 
 def build_shortcut(name):
     actions = SHORTCUTS[name]()
-    address_index = next(
-        index for index, built in enumerate(actions)
-        if built['WFWorkflowActionParameters'].get('CustomOutputName') == ADDRESS_OUTPUT_NAME
-    )
+    questions = []
+    for index, built in enumerate(actions):
+        parameters = built['WFWorkflowActionParameters']
+        output_name = parameters.get('CustomOutputName')
+        if output_name not in QUESTIONS:
+            continue
+        is_tailscale_address = output_name == ADDRESS_OUTPUT_NAME and parameters['WFTextActionText'] == TAILSCALE_ADDRESS
+        questions.append({
+            'ActionIndex': index,
+            'Category': 'Parameter',
+            'DefaultValue': parameters['WFTextActionText'],
+            'ParameterKey': 'WFTextActionText',
+            'Text': TAILSCALE_ADDRESS_QUESTION if is_tailscale_address else QUESTIONS[output_name],
+        })
     return {
         'WFWorkflowClientVersion': '4607',
         'WFWorkflowMinimumClientVersion': 900,
         'WFWorkflowMinimumClientVersionString': '900',
         'WFWorkflowIcon': {'WFWorkflowIconStartColor': 463140863, 'WFWorkflowIconGlyphNumber': 61440},
-        'WFWorkflowImportQuestions': [{
-            'ActionIndex': address_index,
-            'Category': 'Parameter',
-            'DefaultValue': DEFAULT_POD_ADDRESS,
-            'ParameterKey': 'WFTextActionText',
-            'Text': ADDRESS_QUESTION,
-        }],
+        'WFWorkflowImportQuestions': questions,
         'WFWorkflowTypes': [],
         'WFWorkflowInputContentItemClasses': [],
         'WFWorkflowOutputContentItemClasses': [],

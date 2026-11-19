@@ -16,6 +16,7 @@ import moment from 'moment-timezone';
 import { Msg, NatsConnection, NatsError, connect } from 'nats';
 import logger from '../logger.js';
 import config from '../config.js';
+import schedulesDB from '../db/schedules.js';
 import settingsDB from '../db/settings.js';
 import { Side } from '../db/schedulesSchema.js';
 import { connectFranken } from './frankenServer.js';
@@ -26,6 +27,8 @@ import {
   BedSession, PresenceAction, UNTIL_OUT_OF_BED, createBedSession, takeDueActions, trackBedSession,
 } from '../jobs/presenceActions.js';
 import { executeAlarm, getOneOffAlarmSettings } from '../jobs/alarmScheduler.js';
+import { findNightDay } from '../jobs/scheduleTiming.js';
+import { isWithinScheduledNight } from '../autopilot/scheduledBase.js';
 import { updateDeviceStatus } from '../routes/deviceStatus/updateDeviceStatus.js';
 import { recordWaterReading, reportedWaterToF } from './measuredWater.js';
 import { toFirmwareSide } from './sideMapping.js';
@@ -280,12 +283,23 @@ export class BedSensorMonitor {
         // The firmware is only asked whether the bed is on when turning it on or off is possible
         const mayChangePower = session.isTurnOffDue || (turnOnWhenInBed.enabled && !session.hasTurnedOn && isPresentNow);
         const isOn = mayChangePower ? await this.isAnySideOn(activeSides) : true;
-        const dueActions = takeDueActions(session, settings.presence, { nowMs, isPresentNow, isOn });
+        const isScheduledOn = session.isTurnOffDue ? await this.isScheduledOn(activeSides, nowMs) : false;
+        const dueActions = takeDueActions(session, settings.presence, { nowMs, isPresentNow, isOn, isScheduledOn });
         for (const action of dueActions) await this.runAction(action, activeSides);
       }
     } catch (error: unknown) {
       logger.error(error);
     }
+  }
+
+  // Whether the weekly schedule has any of these sides on at this hour
+  private async isScheduledOn(sides: Side[], nowMs: number) {
+    await schedulesDB.read();
+    const now = moment.tz(nowMs, settingsDB.data.timeZone);
+    return sides.some((side) => {
+      const scheduledNight = schedulesDB.data[side][findNightDay(now, schedulesDB.data[side])];
+      return scheduledNight.power.enabled && isWithinScheduledNight(scheduledNight, now.format('HH:mm'));
+    });
   }
 
   private async isAnySideOn(sides: Side[]) {
