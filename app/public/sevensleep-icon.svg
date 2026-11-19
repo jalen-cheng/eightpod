@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="112" fill="#0e0e0e"/>
-  <!-- A plain geometric seven: one even stroke, square ends -->
-  <path d="M150 152 H362 L240 380" fill="none" stroke="#ffffff" stroke-width="38" stroke-linecap="butt" stroke-linejoin="miter"/>
+  <rect width="512" height="512" rx="112" fill="#101010"/>
+  <!-- The numeral 7 as drawn in Geist, the app's typeface -->
+  <path d="M214.5 381Q214.5 342.3 224.3 306Q234.1 269.8 252 237Q269.9 204.2 293.9 176H163.7V131H348.3V173Q322.1 202.6 304.2 233.6Q286.4 264.7 277.5 300.6Q268.7 336.6 268.7 381Z" fill="#f4f3ef"/>
 </svg>

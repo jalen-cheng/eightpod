@@ -1,6 +1,15 @@
 import { defineConfig } from 'vitepress';
 import { REPOSITORY_URL, sidebarGroups } from '../scripts/docsManifest.mjs';
 
+// GitHub's way of turning a heading into a link target: lower case, punctuation dropped, each
+// space a dash. The Markdown files link to each other's headings in that form, so the site
+// uses it too and those links land where they do on GitHub.
+const slugifyLikeGitHub = (heading: string): string => heading
+  .trim()
+  .toLowerCase()
+  .replace(/[^\p{L}\p{N}\s_-]/gu, '')
+  .replace(/\s/g, '-');
+
 // The sidebar follows the groups in scripts/docsManifest.mjs.
 const sidebar = sidebarGroups.map((group) => ({
   text: group.text,
@@ -14,6 +23,11 @@ export default defineConfig({
   base: '/sevensleep/',
   cleanUrls: true,
   appearance: 'force-dark',
+  markdown: {
+    anchor: { slugify: slugifyLikeGitHub },
+    headers: { slugify: slugifyLikeGitHub },
+    toc: { slugify: slugifyLikeGitHub },
+  },
   head: [['link', { rel: 'icon', type: 'image/svg+xml', href: '/sevensleep/logo.svg' }]],
   themeConfig: {
     logo: '/logo.svg',

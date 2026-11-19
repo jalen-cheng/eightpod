@@ -274,31 +274,3 @@ export function readTrackerMinutes(
       && !(tracker.awakeIntervals ?? []).some(interval => atMs >= interval.startMs && atMs < interval.endMs);
   });
 }
-
-// The iPhone app Health Auto Export can post Apple Health data on its own schedule. Its sleep
-// rows come either one a night (`sleepStart`, `sleepEnd`) or as the health app's own samples
-// (`start`/`startDate`, `end`/`endDate`, `value`), with dates like "2024-02-06 14:30:00 -0800".
-// Written from the app's documentation; not yet run against the app.
-const EXPORT_DATE = /^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) ([+-]\d{2}):?(\d{2})$/;
-const parseExportDate = (text: unknown): number | undefined => {
-  if (typeof text !== 'string') return undefined;
-  const parts = EXPORT_DATE.exec(text.trim());
-  const timeMs = Date.parse(parts ? `${parts[1]}T${parts[2]}${parts[3]}:${parts[4]}` : text);
-  return Number.isNaN(timeMs) ? undefined : timeMs;
-};
-
-type ExportRow = Record<string, unknown>;
-type HealthExport = { data?: { metrics?: { name?: string; data?: ExportRow[] }[] } };
-
-// The sleep samples in a Health Auto Export body, or undefined when it is not one
-export function readHealthExportSleep(body: unknown): SleepSample[] | undefined {
-  const metrics = (body as HealthExport | undefined)?.data?.metrics;
-  if (!Array.isArray(metrics)) return undefined;
-  const rows = metrics.filter(metric => metric.name === 'sleep_analysis').flatMap(metric => metric.data ?? []);
-  return rows.flatMap((row) => {
-    const startMs = parseExportDate(row.sleepStart ?? row.start ?? row.startDate);
-    const endMs = parseExportDate(row.sleepEnd ?? row.end ?? row.endDate);
-    if (startMs === undefined || endMs === undefined) return [];
-    return [{ startMs, endMs, value: typeof row.value === 'string' ? row.value : undefined }];
-  });
-}

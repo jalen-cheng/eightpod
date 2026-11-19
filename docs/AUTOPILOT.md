@@ -149,22 +149,30 @@ and the bed fits its numbers to it.
 **iPhone only.** Apple Watch and Whoop write sleep to Apple Health, and Fitbit devices
 (including the Fitbit Air) do through the Google Health app's Apple Health connection, which
 lists sleep sessions and stages among what it writes. Apple Health has no web address a Pod
-could ask: only something on the phone can read it.
+could ask: only something on the phone can read it. So the link is an iPhone Shortcut, run by
+an automation:
 
-- **An app, no Shortcut.** The paid iPhone app Health Auto Export posts Apple Health data on a
-  schedule. Add a REST API automation for Sleep Analysis with the address
-  `http://sevensleep.local/api/autopilot/sleepTimes`, and switch **Summarize Data** off so it
-  sends each stretch of sleep and waking, not one row a night.
-- **A Shortcut with an automation.** **Settings > Autopilot > Sleep tracker > Link** has the
-  steps. Set the automation to run when your Sleep Focus turns off, or at a set time.
+1. In **Shortcuts**, tap **+** and add **Find Health Samples**: Type is **Sleep**, Start Date is
+   in the last 1 day.
+2. Add **Repeat with Each** over the samples. Inside it add a **Text** action holding
+   `{"start":"Start Date","end":"End Date","value":"Value"}`, picking each from **Repeat Item**,
+   with the two dates set to **ISO 8601**.
+3. After the repeat, add **Combine Text** on the Repeat Results, with a comma as the separator.
+4. Add a **Text** action holding `{"source":"Apple Health","samples":[Combined Text]}`, with
+   Combined Text picked from the step before.
+5. Add **Get Contents of URL** with `http://sevensleep.local/api/autopilot/sleepTimes`, Method
+   **POST**, a header `Content-Type: application/json`, Request Body **File**, and that Text as
+   the file.
+6. In **Automation**, run it when your **Sleep Focus turns off**, or at a set time each morning.
 
-Either runs by itself once set up, with one catch: an iPhone only lets apps read health data
-while it is unlocked, and iOS decides when background work runs. So the night arrives when you
-first use the phone, not at a fixed minute. That is fine here: it is looked at after the fact.
+**Settings > Autopilot > Sleep tracker > Link** shows the same in short, with your Pod's address
+filled in. Once set up it runs by itself, with one catch: an iPhone only lets a shortcut read
+health data while it is unlocked, so the night arrives when you first use the phone, not at a
+fixed minute. That is fine here: it is looked at after the fact.
 
 **Android is not supported.** Health Connect has no route built here. Apps that post Health
 Connect data to an address exist (HC Webhook, HCGateway), but the bed does not read their
-formats; a script that sends the request below would work.
+formats. Any script that sends this request works, from any device:
 
 ```bash
 curl -X POST http://sevensleep.local/api/autopilot/sleepTimes -H 'Content-Type: application/json' \
@@ -183,7 +191,7 @@ not only when you fell asleep and woke: the bed's saved minutes are replayed und
 candidate set of numbers and scored on how many minutes they disagree with the tracker. That is
 what lets it learn about lying awake at 3 am. It needs 5 nights. A fitted set is only taken up
 if, fitted to all the nights but one and tried on that one, it does at least a tenth better
-than the default; otherwise the default stays. **Data > Nights** shows the result: "Tuned to
+than the default; otherwise the default stays. **Data > Sleep** shows the result: "Tuned to
 Apple Health: 94% match over 6 nights", or "Default, checked against…" while it is not.
 
 Naps are filed but not used for fitting, and sleep stages are not used at all. A wrist tracker
@@ -194,8 +202,7 @@ find sleep well and miss some quiet waking (Fitbit Sense and Charge 5: about 93%
 There is no direct Whoop or Fitbit link: their data is on their servers, and the phone already
 has it.
 
-Not yet run with a real tracker or phone. Health Auto Export's format was written from its
-documentation.
+Not yet run with a real tracker or phone.
 
 ## Where nights are kept
 
@@ -211,7 +218,7 @@ that, and starts a new file.
 
 <img src="screenshots/nights.png" width="260" alt="Data > Nights: a night's summary and its breathing rate">
 
-**Data > Nights** shows one day at a time, last night first, with arrows and a calendar to move:
+**Data > Sleep** shows one day at a time, last night first, with arrows and a calendar to move:
 bedtime, wake time, duration and wake-ups, then breathing rate, pressure on the bed and the
 autopilot's temperature changes against the clock. A night belongs to the morning it ended on.
 **Export** downloads the nights of the last week, two weeks, one, two or three months as one

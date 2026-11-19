@@ -12,8 +12,8 @@ type ManualOnSettingsProps = {
 
 const LENGTH_INFO = 'Applies when you turn the bed on in the app, with a shortcut, or with the buttons on the bed. '
   + 'The schedule has its own off time.';
-const OVERRIDE_INFO = 'While a side you switched on yourself is on, its schedule is skipped: no scheduled power, temperature '
-  + 'changes or warm-up. Alarms still go off. It ends when the side turns off.';
+const OVERRIDE_INFO = 'When you turn the bed on yourself, the schedule leaves it alone until it turns off: it will not '
+  + 'change the temperature, warm up for the alarm, or switch the bed off at the scheduled time. Alarms still go off.';
 
 // What happens when the bed is switched on by hand (app, shortcut or the buttons on the bed):
 // how long it stays on, and whether the schedule leaves it alone meanwhile.
@@ -37,7 +37,7 @@ export default function ManualOnSettings({ settings, updateSettings }: ManualOnS
         </TextField>
       </SettingRow>
       <SettingToggle
-        label="Ignore the schedule meanwhile"
+        label="Pause the schedule until it turns off"
         info={ OVERRIDE_INFO }
         control={
           <Switch

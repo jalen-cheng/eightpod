@@ -43,6 +43,9 @@ export default function SettingsPage() {
       <ErrorBoundary componentName="Device settings">
         <DeviceSettingsSection updateSettings={ updateSettings }/>
       </ErrorBoundary>
+      <ErrorBoundary componentName="Autopilot">
+        <AutopilotSection settings={ settings } updateSettings={ updateSettings }/>
+      </ErrorBoundary>
       <ErrorBoundary componentName="Alarm settings">
         <AlarmSection/>
       </ErrorBoundary>
@@ -60,9 +63,6 @@ export default function SettingsPage() {
       </ErrorBoundary>
       <ErrorBoundary componentName="In-bed detection">
         <PresenceSection settings={ settings } updateSettings={ updateSettings }/>
-      </ErrorBoundary>
-      <ErrorBoundary componentName="Autopilot">
-        <AutopilotSection settings={ settings } updateSettings={ updateSettings }/>
       </ErrorBoundary>
       <FeaturesSection/>
       <ErrorBoundary componentName="Device info">

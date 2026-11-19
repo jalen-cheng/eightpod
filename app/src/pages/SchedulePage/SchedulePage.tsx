@@ -8,7 +8,6 @@ import DayPicker from './DayPicker.tsx';
 import SaveDaysDialog from './SaveDaysDialog.tsx';
 import NightTimeline from './NightTimeline.tsx';
 import PageContainer from '../PageContainer.tsx';
-import SideControl from '../../components/SideControl.tsx';
 import { DayOfWeek, Schedules } from '@api/schedulesSchema.ts';
 import { postSchedules } from '@api/schedules';
 import { useAppStore } from '@state/appStore.tsx';
@@ -93,8 +92,6 @@ export default function SchedulePage() {
   return (
     <PageContainer>
       <PageHeader title="Schedules"/>
-      { /* Like the day tabs, the side waits for Save or Discard: switching would drop the edits */ }
-      <SideControl disabled={ hasEdits }/>
       <DayPicker/>
 
       { /* The night being edited, and whether its schedule runs at all */ }

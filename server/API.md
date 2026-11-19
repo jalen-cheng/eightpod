@@ -649,11 +649,18 @@ on both sides.
     "minutesAsleep": 62,
     "offsetF": -3,
     "lastChange": "12:40 AM: 77°F, heading for 3°F cooler (time of night, first sleep cycle)",
-    "learned": { "early": -0.6, "middle": 0, "late": 0 },
+    "learned": { "early": 0, "middle": 0, "late": 0 },
     "rules": { "stillMinutesToSleep": 10, "restlessSecondsToWake": 20 },
     "tracker": { "source": "Apple Health", "syncedAt": "2026-11-18T15:02:11.000Z", "nights": 6, "agreementPercent": 94, "isTuned": true }
   },
-  "right": { "stage": "out", "offsetF": -3, "learned": { "early": -0.6, "middle": 0, "late": 0 }, "rules": { "stillMinutesToSleep": 10, "restlessSecondsToWake": 20 } }
+  "right": {
+    "stage": "out",
+    "offsetF": -3,
+    "lastChange": "12:40 AM: 77°F, heading for 3°F cooler (time of night, first sleep cycle)",
+    "learned": { "early": 0, "middle": 0, "late": 0 },
+    "rules": { "stillMinutesToSleep": 10, "restlessSecondsToWake": 20 },
+    "tracker": { "source": "Apple Health", "syncedAt": "2026-11-18T15:02:11.000Z", "nights": 6, "agreementPercent": 94, "isTuned": true }
+  }
 }
 ```
 
@@ -681,32 +688,31 @@ nights have a record). Send the two times, or a health app's raw samples:
 | `source` | optional name, up to 40 characters: `"Apple Health"`, `"Whoop"` |
 | `asleepAt`, `awakeAt` | date and time with an offset, such as `2026-11-18T23:12:00-08:00` |
 | `samples` | in place of the two times: up to 2000 of `{ "start", "end", "value" }`. Samples whose value says awake or in bed are left out, and the rest are joined into sleeps (a gap over an hour starts a new one). Shorter gaps are kept as time awake, which the fitting uses |
-| `side` | optional `left` or `right`, to look only at that side's stays. May also be given in the address (`?side=left`) |
+| `side` | optional `left` or `right`, to look only at that side's stays |
 
 ```json
 { "source": "Whoop", "asleepAt": "2026-11-18T23:12:00-08:00", "awakeAt": "2026-11-19T06:48:00-08:00" }
 ```
 
-The body the iPhone app Health Auto Export posts is read as it is (`data.metrics` with a
-`sleep_analysis` entry, one row a night or sample by sample; `?source=` names it). That was
-written from the app's documentation and has not been run against the app.
-
-Sleeps in the future, older than 100 days or longer than 18 hours are dropped. The response says
-how many sleeps were read, how many saved stays they matched, and the rules now in use. 400 when
+Times must carry their zone (`-08:00` or `Z`). Sleeps in the future, older than 100 days, longer
+than 18 hours or shorter than 15 minutes are dropped. The response says how many sleeps were
+read, how many saved stays they matched, the rules now in use, and the `tracker` summary. 400 when
 the body is not valid or holds no sleep.
 
 ### `GET /api/autopilot/nights`
 
 The saved stays in bed, newest first, without their minute rows: `side`, `startedAtMs`,
 `minutesLogged`, `kind` (`nap` for a sleep under 3 hours, else `night`), the bed's `asleepAtMs`
-and `awakeAtMs`, `wakeUps` (breaks in the sleep), the middle `heartRate` and `breathingRate` of
+and `awakeAtMs`, `asleepConfirmedAtMs` (when the bed first knew), whether the autopilot `steered`
+it and under which `policy` version, `wakeUps` (breaks in the sleep), the middle `heartRate` and `breathingRate` of
 the asleep minutes, and `tracker` when times were sent. `?limit=` takes 1 to 60 (default 14).
 
 With `?date=2026-11-18&side=left` it returns that side's stays which ended on that day (in the
 Pod's time zone), longest first, each with `minutes`: one row a minute from `startedAtMs` with
 `movementSeconds` (missing when the sensor sent too little), `heartRate`, `breathingRate`,
 `breathingSpread`, `pressure` (how far the side's pressure sensors read above the empty bed),
-`stage`, `offsetF`, and three temperatures: `roomF` (air at the cover), `hubRoomF` (air at the
+`swingLow`, `swingMid` and `swingHigh` (the raw size of the movement signal), `stage`, `offsetF`,
+`targetF` and `waterF` (what the side was set to, and its measured water temperature), and three temperatures: `roomF` (air at the cover), `hubRoomF` (air at the
 hub) and `surfaceF` (the mattress). The night also says whether the autopilot `steered` it.
 
 ### `GET /api/autopilot/nights/export`

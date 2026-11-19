@@ -1,3 +1,5 @@
+/* eslint-disable react/no-multi-comp */
+import { PropsWithChildren } from 'react';
 import { Box, Typography } from '@mui/material';
 import WaterDropOutlinedIcon from '@mui/icons-material/WaterDropOutlined';
 import moment from 'moment-timezone';
@@ -8,6 +10,15 @@ import { DayOfWeek, LATE_ALARM_WINDOW_HOURS } from '@api/schedulesSchema.ts';
 import { Settings } from '@api/settingsSchema.ts';
 import { offTimeAfterAlarm } from '@api/automaticOffTime.ts';
 import { TemperatureFormat, describeTemperature, getTemperatureParts } from '@lib/temperatureConversions.ts';
+import ErrorBoundary from '@components/ErrorBoundary.tsx';
+import AlarmNotification from './AlarmNotification.tsx';
+
+const formatClock = (time: string) => moment(time, 'HH:mm').format('h:mm A');
+
+// The quiet line under the dial's figures that says when the bed next switches on or off
+const SwitchTime = ({ children }: PropsWithChildren) => (
+  <Typography variant="caption" sx={ { color: 'text.secondary', display: 'block', mt: 0.75 } }>{ children }</Typography>
+);
 
 // When a side that is on will turn off. Normally the schedule's off time; a one-time alarm
 // still to come moves it to 30 minutes after that alarm, as the server does (the server only
@@ -94,11 +105,17 @@ export default function TemperatureLabel({
       { !isOn && !settings?.[side]?.awayMode && (
         <Typography variant="body2" sx={ { color: 'text.secondary' } }>Tap to turn on</Typography>
       ) }
-      { power?.enabled && (isOn || !settings?.[side]?.awayMode) && (
-        <Typography variant="caption" sx={ { color: 'text.secondary', display: 'block', mt: 0.75 } }>
-          { isOn ? 'Turns off at' : 'Turns on at' } { moment(isOn ? offTime ?? power.off : power.on, 'HH:mm').format('h:mm A') }
-        </Typography>
+      { /* While the bed is on: the next alarm, to change or skip, with the off time beside it.
+           With no alarm to show, or while it is off, the time it next switches. */ }
+      { power?.enabled && isOn && (
+        <ErrorBoundary componentName="Alarm">
+          <AlarmNotification
+            offTimeLabel={ formatClock(offTime ?? power.off) }
+            fallback={ <SwitchTime>Turns off at { formatClock(offTime ?? power.off) }</SwitchTime> }
+          />
+        </ErrorBoundary>
       ) }
+      { power?.enabled && !isOn && !settings?.[side]?.awayMode && <SwitchTime>Turns on at { formatClock(power.on) }</SwitchTime> }
     </Box>
   );
 }

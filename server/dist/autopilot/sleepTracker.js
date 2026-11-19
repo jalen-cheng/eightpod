@@ -6,7 +6,7 @@
 // from the rest: the night plan assumes deep sleep by the clock instead.
 // Keep this file free of runtime imports so tests can load it without a Pod environment.
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="51b6ef17-9016-58ee-a321-df0acf72c973")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="28609f0d-6fad-54aa-b645-05516882487e")}catch(e){}}();
 export const DEFAULT_SLEEP_RULES = { stillMinutesToSleep: 15, restlessSecondsToWake: 12 };
 // A minute with this many moving seconds or fewer counts as lying still
 const STILL_MINUTE_MAX_MOVEMENT_SECONDS = 3;
@@ -195,31 +195,5 @@ export function readTrackerMinutes(tracker, startedAtMs, minuteCount) {
             && !(tracker.awakeIntervals ?? []).some(interval => atMs >= interval.startMs && atMs < interval.endMs);
     });
 }
-// The iPhone app Health Auto Export can post Apple Health data on its own schedule. Its sleep
-// rows come either one a night (`sleepStart`, `sleepEnd`) or as the health app's own samples
-// (`start`/`startDate`, `end`/`endDate`, `value`), with dates like "2024-02-06 14:30:00 -0800".
-// Written from the app's documentation; not yet run against the app.
-const EXPORT_DATE = /^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2}) ([+-]\d{2}):?(\d{2})$/;
-const parseExportDate = (text) => {
-    if (typeof text !== 'string')
-        return undefined;
-    const parts = EXPORT_DATE.exec(text.trim());
-    const timeMs = Date.parse(parts ? `${parts[1]}T${parts[2]}${parts[3]}:${parts[4]}` : text);
-    return Number.isNaN(timeMs) ? undefined : timeMs;
-};
-// The sleep samples in a Health Auto Export body, or undefined when it is not one
-export function readHealthExportSleep(body) {
-    const metrics = body?.data?.metrics;
-    if (!Array.isArray(metrics))
-        return undefined;
-    const rows = metrics.filter(metric => metric.name === 'sleep_analysis').flatMap(metric => metric.data ?? []);
-    return rows.flatMap((row) => {
-        const startMs = parseExportDate(row.sleepStart ?? row.start ?? row.startDate);
-        const endMs = parseExportDate(row.sleepEnd ?? row.end ?? row.endDate);
-        if (startMs === undefined || endMs === undefined)
-            return [];
-        return [{ startMs, endMs, value: typeof row.value === 'string' ? row.value : undefined }];
-    });
-}
 //# sourceMappingURL=sleepTracker.js.map
-//# debugId=51b6ef17-9016-58ee-a321-df0acf72c973
+//# debugId=28609f0d-6fad-54aa-b645-05516882487e

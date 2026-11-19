@@ -6,7 +6,9 @@ import { useDeviceStatus } from '@api/deviceStatus.ts';
 import { Version } from '@api/deviceStatusSchema.ts';
 import { Settings } from '@api/settingsSchema.ts';
 import { useAppStore } from '@state/appStore.tsx';
+import SideControl from '@components/SideControl.tsx';
 import Section from '../Section.tsx';
+import SettingRow from '../SettingRow.tsx';
 import SettingToggle from '../SettingToggle.tsx';
 import ButtonStepSetting from '../TapGesturesSection/ButtonStepSetting.tsx';
 import LedSwitch from './LedSwitch.tsx';
@@ -15,6 +17,9 @@ import TemperatureFormatSelector from './TemperatureFormatSelector.tsx';
 import TimeZoneSelector from './TimeZoneSelector.tsx';
 import { useSettings } from '@api/settings.ts';
 
+const SIDE_INFO = 'The side the Temperature and Schedules pages show and change. Left or right is remembered on this '
+  + 'device only, so each person can keep their own side on their own phone. Both makes the two sides act as one, for '
+  + 'everyone; the autopilot needs it.';
 const AWAY_MODE_INFO = 'For when nobody is home. The schedule and alarms stop on both sides until you switch this off.';
 const FLIP_SIDES_INFO = 'Swaps which side of the bed the app calls left and right, everywhere: controls, schedules, buttons '
   + 'and in-bed detection. Each side keeps its schedule and settings.';
@@ -34,8 +39,8 @@ const Group = ({ children }: PropsWithChildren) => (
 type UpdateSettingsFn = (settings: DeepPartial<Settings>) => void;
 type DeviceSettingsSectionProps = { updateSettings: UpdateSettingsFn };
 
-// Settings for the bed as a whole, in groups: temperature, the clock, the bed itself, and
-// turning on by hand
+// Settings for the bed as a whole, in groups: the side this device controls, temperature, the
+// clock, the bed itself, and turning on by hand
 export default function DeviceSettingsSection({ updateSettings }: DeviceSettingsSectionProps) {
   const { data: settings } = useSettings();
   const { data: deviceStatus } = useDeviceStatus();
@@ -44,6 +49,9 @@ export default function DeviceSettingsSection({ updateSettings }: DeviceSettings
 
   return (
     <Section title="General">
+      <Group>
+        <SettingRow label="This device controls" info={ SIDE_INFO }><SideControl/></SettingRow>
+      </Group>
       <Group>
         <TemperatureFormatSelector settings={ settings } updateSettings={ updateSettings }/>
         { hasButtons && settings && <ButtonStepSetting settings={ settings } updateSettings={ updateSettings }/> }
