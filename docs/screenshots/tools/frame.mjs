@@ -1,11 +1,13 @@
 // Renders frame.html (screenshots inside phone frames) to PNGs with a transparent background.
-// Usage: node frame.mjs <port> <output folder>
+// Usage: node frame.mjs <port> <output folder> <folder of captured screenshots>
 import { writeFileSync } from 'node:fs';
 
-const [debugPort, outputFolder] = process.argv.slice(2);
-const SHOTS = ['temperature', 'schedule', 'alarm_options', 'settings'];
+const [debugPort, outputFolder, shotsFolder] = process.argv.slice(2);
+const SHOTS = ['temperature', 'schedule', 'alarm_options', 'nights', 'settings'];
+// The four that stand for the app in the README
+const OVERVIEW_SHOTS = ['temperature', 'schedule', 'nights', 'settings'];
 const pages = [
-  { name: 'overview', query: `shots=${SHOTS.join(',')}&captions=1` },
+  { name: 'overview', query: `shots=${OVERVIEW_SHOTS.join(',')}&captions=1` },
   ...SHOTS.map(shot => ({ name: shot, query: `shots=${shot}` })),
 ];
 const pause = milliseconds => new Promise(resolve => setTimeout(resolve, milliseconds));
@@ -31,7 +33,7 @@ const send = (method, params = {}) => new Promise((resolve) => {
 await send('Emulation.setDefaultBackgroundColorOverride', { color: { r: 0, g: 0, b: 0, a: 0 } });
 for (const page of pages) {
   await send('Emulation.setDeviceMetricsOverride', { width: 2400, height: 1200, deviceScaleFactor: 2, mobile: false });
-  await send('Page.navigate', { url: `file://${import.meta.dirname}/frame.html?${page.query}` });
+  await send('Page.navigate', { url: `file://${import.meta.dirname}/frame.html?${page.query}&folder=file://${shotsFolder}` });
   await pause(1500);
   const size = await send('Runtime.evaluate', { expression: 'JSON.stringify([document.body.offsetWidth, document.body.offsetHeight])', returnByValue: true });
   const [width, height] = JSON.parse(size.result.value);

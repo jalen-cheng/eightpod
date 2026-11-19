@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Alert, Box, Button, Paper, Skeleton } from '@mui/material';
+import { Alert, Box, Button, IconButton, Paper, Skeleton } from '@mui/material';
 import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
 import AlarmDismissal from './AlarmDismissal.tsx';
 import AlarmNotification from './AlarmNotification.tsx';
@@ -62,6 +62,23 @@ export default function ControlTempPage() {
       .finally(() => setIsUpdating(false));
   };
 
+  // One button for both directions, so it keeps focus through a toggle. Its state shows in
+  // its weight, not its colour: filled while the side is on, plain while it is off.
+  const powerButton = !isPending && !isError && power.canToggle && (
+    <IconButton
+      aria-label={ isOn ? 'Turn off' : 'Turn on' }
+      disabled={ power.disabled }
+      onClick={ (event) => {
+        // The section's own press handler must not also run
+        event.stopPropagation();
+        power.setPower(!isOn);
+      } }
+      sx={ { color: isOn ? 'text.primary' : 'text.secondary', bgcolor: isOn ? 'action.selected' : 'transparent' } }
+    >
+      <PowerSettingsNewIcon sx={ { fontSize: 22 } }/>
+    </IconButton>
+  );
+
   return (
     <PageContainer
       sx={ {
@@ -71,14 +88,17 @@ export default function ControlTempPage() {
         minHeight: { xs: `calc(100dvh - ${MOBILE_NAV_SPACE_PX}px - env(safe-area-inset-bottom))`, md: 0 },
       } }
     >
-      <PageHeader title="Temperature"/>
+      <PageHeader title="Temperature">
+        { /* On a phone the power button sits in line with the heading */ }
+        <Box sx={ { display: { xs: 'flex', sm: 'none' } } }>{ powerButton }</Box>
+      </PageHeader>
       <SideControl
         showTemp
         onLinkSidesChange={ handleLinkSidesChange }
       />
       <Paper
-        // A press anywhere in the section turns an off side on. The power button under the dial
-        // does the same for the keyboard and screen readers, so the section itself is not a button.
+        // A press anywhere in the section turns an off side on. The power button does the same
+        // for the keyboard and screen readers, so the section itself is not a button.
         onClick={ isTurnOnTarget ? turnOn : undefined }
         sx={ {
           px: { xs: 0, sm: 3 }, py: { xs: 1.5, sm: 3 }, overflow: 'hidden', my: { xs: 'auto', md: 0 },
@@ -90,6 +110,8 @@ export default function ControlTempPage() {
             '@media (hover: hover)': { '&:hover': { borderColor: 'text.secondary' } },
           }),
         } }>
+        { /* On a wider screen it sits in the top right corner of the dial's card */ }
+        <Box sx={ { display: { xs: 'none', sm: 'flex' }, justifyContent: 'flex-end', mb: 0.5, minHeight: 44 } }>{ powerButton }</Box>
         { isPending ? (
           <Skeleton variant="circular" width={ 240 } height={ 240 } sx={ { mx: 'auto', my: 3 } }/>
         ) : isError ? (
@@ -102,26 +124,6 @@ export default function ControlTempPage() {
               refetch={ refetch }
               currentTemperatureF={ sideStatus?.currentTemperatureF ?? 55 }
             />
-          </Box>
-        ) }
-        { /* One button for both directions, under the dial where the hand already is, so it keeps
-             focus through a toggle */ }
-        { !isPending && !isError && power.canToggle && (
-          <Box sx={ { display: 'flex', justifyContent: 'center', mt: 2 } }>
-            <Button
-              variant="outlined"
-              color="inherit"
-              disabled={ power.disabled }
-              startIcon={ <PowerSettingsNewIcon sx={ { color: isOn ? 'success.main' : 'text.secondary' } }/> }
-              onClick={ (event) => {
-                // The section's own press handler must not also run
-                event.stopPropagation();
-                power.setPower(!isOn);
-              } }
-              sx={ { borderRadius: 999, px: 2.5, borderColor: 'divider', color: 'text.primary' } }
-            >
-              { isOn ? 'Turn off' : 'Turn on' }
-            </Button>
           </Box>
         ) }
         { isError && (

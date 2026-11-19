@@ -196,6 +196,8 @@ night is about 50 KB. The newest 180 files are kept (three months for two sides)
 of the Pod's 14 GB free. An open stay is written every 10 minutes, so a restart loses at most
 that, and starts a new file.
 
+<img src="screenshots/nights.png" width="260" alt="Data > Nights: a night's summary and its breathing rate">
+
 **Data > Nights** shows one day at a time, last night first, with arrows and a calendar to move:
 bedtime, wake time, duration and wake-ups, then breathing rate, pressure on the bed and the
 autopilot's temperature changes against the clock. A night belongs to the morning it ended on.

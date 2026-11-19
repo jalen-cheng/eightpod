@@ -1,17 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <defs>
-    <!-- The app's own near-black, a touch lighter at the top -->
-    <linearGradient id="ground" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#232323"/>
-      <stop offset="1" stop-color="#111111"/>
-    </linearGradient>
-    <mask id="crescent">
-      <rect width="512" height="512" fill="#fff"/>
-      <circle cx="420" cy="92" r="36" fill="#000"/>
-    </mask>
-  </defs>
-  <rect width="512" height="512" rx="112" fill="url(#ground)"/>
-  <!-- A seven, with a small crescent moon beside its corner -->
-  <path d="M140 164 H322 L224 400" fill="none" stroke="#f2f0ea" stroke-width="60" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="400" cy="106" r="42" fill="#f2f0ea" opacity="0.6" mask="url(#crescent)"/>
+  <rect width="512" height="512" rx="112" fill="#0e0e0e"/>
+  <!-- A plain geometric seven: one even stroke, square ends -->
+  <path d="M150 152 H362 L240 380" fill="none" stroke="#ffffff" stroke-width="38" stroke-linecap="butt" stroke-linejoin="miter"/>
 </svg>

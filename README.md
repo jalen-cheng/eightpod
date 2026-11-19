@@ -1,7 +1,7 @@
 # SevenSleep — subscription-free, open-source local control for Eight Sleep Pods
 
 <p align="center">
-  <img src="docs/screenshots/overview.png" width="900" alt="Four phone screens: the temperature dial, a night's schedule, alarm options and in-bed detection">
+  <img src="docs/screenshots/overview.png" width="900" alt="Four phone screens: the temperature dial, a night's schedule, last night's sleep, and the in-bed detection and autopilot settings">
 </p>
 
 <p align="center">

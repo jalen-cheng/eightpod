@@ -167,7 +167,12 @@ export const handlers = [
   }),
   http.post('/api/settings', async ({ request }) => {
     const body = (await request.json()) as Partial<ReturnType<typeof getSettings>>;
-    const updated = updateSettings(body);
+    let updated = updateSettings(body);
+    // As on a Pod: switching the autopilot on links the sides, and unlinking them switches it off
+    if (updated.autopilot.enabled && !updated.linkSides) {
+      const isUnlinking = body.linkSides === false && body.autopilot?.enabled !== true;
+      updated = updateSettings(isUnlinking ? { autopilot: { enabled: false } } : { linkSides: true });
+    }
     await delay(120);
     return HttpResponse.json(deepClone(updated));
   }),
