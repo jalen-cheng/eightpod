@@ -88,13 +88,17 @@ export default function ControlTempPage() {
         />
       ) }
       <Paper
-        // No card of its own: the dial sits on the page. The power button turns the side on for the
-        // keyboard and screen readers, so the page itself is not a button.
+        // Off a phone the dial is framed by an outline, with no fill of its own. The power button turns
+        // the side on for the keyboard and screen readers, so the page itself is not a button.
         sx={ {
-          px: 0, py: { xs: 1.5, sm: 3 }, overflow: 'hidden', my: { xs: 'auto', md: 0 },
-          bgcolor: 'transparent', borderWidth: 0, borderRadius: 0,
+          px: { xs: 0, sm: 3 }, py: { xs: 1.5, sm: 3 }, overflow: 'hidden', my: { xs: 'auto', md: 0 },
+          bgcolor: 'transparent', borderWidth: { xs: 0, sm: 1 }, borderRadius: { xs: 0, sm: '16px' },
+          ...(isTurnOnTarget && {
+            transition: 'border-color 120ms',
+            '@media (hover: hover)': { '&:hover': { borderColor: 'text.secondary' } },
+          }),
         } }>
-        { /* On a wider screen it sits at the top right, above the dial */ }
+        { /* On a wider screen it sits in the top right corner of the dial's frame */ }
         <Box sx={ { display: { xs: 'none', sm: 'flex' }, justifyContent: 'flex-end', mb: 0.5, minHeight: 44 } }>{ powerButton }</Box>
         { isPending ? (
           <Skeleton variant="circular" width={ 240 } height={ 240 } sx={ { mx: 'auto', my: 3 } }/>

@@ -13,7 +13,7 @@ version. Anything older is in the [git history](https://github.com/jalen-cheng/s
 - Send sleep to SevenSleep sends the last two weeks in one run, so it is tapped now and then and needs no daily automation.
 
 ### 3.24.2
-- Minor UI changes: the Temperature dial sits on the page with no card, and a press anywhere beside the navigation turns an off side on.
+- Minor UI changes: the Temperature dial is framed by an outline with no grey fill, and a press anywhere beside the navigation turns an off side on.
 
 ## 3.23
 - Wi-Fi and hardware watchdogs for the Pod, off until switched on.
