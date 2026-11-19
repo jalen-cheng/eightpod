@@ -10,7 +10,7 @@
 // Raised when the way the temperature is decided changes, and saved with each night, so nights
 // under different rules are not compared as if they were the same
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="63b459f3-79e1-514c-9135-463395aeb076")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="7afb0763-09c5-5245-8863-10ce994ddb3f")}catch(e){}}();
 export const POLICY_VERSION = 2;
 // The offset never goes further than this from the base temperature, whatever adds up
 export const MAX_OFFSET_F = 4;
@@ -100,15 +100,19 @@ export function planTemperature(input) {
     };
     // Each part in turn gets what is left of the limit, so the first ones are cut last
     let total = 0;
+    let isLimited = false;
     const allow = (partF) => {
-        const allowedTotal = clamp(total + partF, MAX_OFFSET_F);
-        const allowedF = allowedTotal - total;
-        total = allowedTotal;
+        // A part that fits is taken as it is; only one that would pass the limit is cut to it
+        if (Math.abs(total + partF) <= MAX_OFFSET_F) {
+            total += partF;
+            return partF;
+        }
+        isLimited = true;
+        const allowedF = clamp(total + partF, MAX_OFFSET_F) - total;
+        total += allowedF;
         return allowedF;
     };
     const parts = { learnedF: allow(wanted.learnedF), curveF: allow(wanted.curveF), deepF: allow(wanted.deepF), roomF: allow(wanted.roomF) };
-    const isLimited = parts.learnedF !== wanted.learnedF || parts.curveF !== wanted.curveF || parts.deepF !== wanted.deepF
-        || parts.roomF !== wanted.roomF;
     const baseF = Math.round(input.baseTemperatureF);
     const minTemperatureF = input.minTemperatureF ?? DEFAULT_MIN_TEMPERATURE_F;
     const maxTemperatureF = input.maxTemperatureF ?? DEFAULT_MAX_TEMPERATURE_F;
@@ -116,4 +120,4 @@ export function planTemperature(input) {
     return { targetTemperatureF, offsetF: targetTemperatureF - baseF, parts, isLimited };
 }
 //# sourceMappingURL=nightPlan.js.map
-//# debugId=63b459f3-79e1-514c-9135-463395aeb076
+//# debugId=7afb0763-09c5-5245-8863-10ce994ddb3f

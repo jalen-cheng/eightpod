@@ -414,6 +414,9 @@ test('the plan adds the parts up by the clock and stays within its limit', () =>
   }
   // The end of the night: a degree warm
   assert.equal(planTemperature({ ...base, progress: 1 }).targetTemperatureF, 81);
+  // Parts that are not whole numbers and fit within the limit are not reported as cut
+  const fractional = planTemperature({ ...base, progress: 0.07, learned: { early: -0.6, middle: 0, late: 0 }, roomNowF: 68.7 });
+  assert.equal(fractional.isLimited, false);
   // The bed's own range holds too
   assert.equal(planTemperature({ ...base, baseTemperatureF: 56, progress: 0.3, minutesSinceSleepOnset: 45 }).targetTemperatureF, 55);
 });

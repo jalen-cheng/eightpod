@@ -140,15 +140,19 @@ export function planTemperature(input: PlanInput): Plan {
   };
   // Each part in turn gets what is left of the limit, so the first ones are cut last
   let total = 0;
+  let isLimited = false;
   const allow = (partF: number): number => {
-    const allowedTotal = clamp(total + partF, MAX_OFFSET_F);
-    const allowedF = allowedTotal - total;
-    total = allowedTotal;
+    // A part that fits is taken as it is; only one that would pass the limit is cut to it
+    if (Math.abs(total + partF) <= MAX_OFFSET_F) {
+      total += partF;
+      return partF;
+    }
+    isLimited = true;
+    const allowedF = clamp(total + partF, MAX_OFFSET_F) - total;
+    total += allowedF;
     return allowedF;
   };
   const parts = { learnedF: allow(wanted.learnedF), curveF: allow(wanted.curveF), deepF: allow(wanted.deepF), roomF: allow(wanted.roomF) };
-  const isLimited = parts.learnedF !== wanted.learnedF || parts.curveF !== wanted.curveF || parts.deepF !== wanted.deepF
-    || parts.roomF !== wanted.roomF;
   const baseF = Math.round(input.baseTemperatureF);
   const minTemperatureF = input.minTemperatureF ?? DEFAULT_MIN_TEMPERATURE_F;
   const maxTemperatureF = input.maxTemperatureF ?? DEFAULT_MAX_TEMPERATURE_F;
