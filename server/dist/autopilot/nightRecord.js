@@ -1,6 +1,6 @@
 // Counts the times a sleeper stopped being asleep and later slept again
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="0afdef3b-efb2-5dc5-b171-7a628eec12c9")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="34b50529-5e1a-5524-a22c-116d01f74cb0")}catch(e){}}();
 export function countWakeUps(minutes) {
     let wakeUps = 0;
     let hasSlept = false;
@@ -35,4 +35,4 @@ export function pickBedStays(stays) {
     return kept;
 }
 //# sourceMappingURL=nightRecord.js.map
-//# debugId=0afdef3b-efb2-5dc5-b171-7a628eec12c9
+//# debugId=34b50529-5e1a-5524-a22c-116d01f74cb0

@@ -3,23 +3,22 @@ import PageContainer from '../PageContainer.tsx';
 import { useSettings } from '@api/settings.ts';
 import { useUpdateSettings } from '@lib/useUpdateSettings.ts';
 import DailyPriming from './DailyPriming.tsx';
-import LicenseModal from './LicenseModal.tsx';
 import PrimeControl from './PrimeControl.tsx';
 import Donate from './Donate.tsx';
-import DiscordLink from './DiscordLink.tsx';
 import Section, { FoldingSectionsContext } from './Section.tsx';
 import TapGesturesSection from './TapGesturesSection/TapGesturesSection.tsx';
 import PresenceSection from './PresenceSection.tsx';
 import AutopilotSection from './AutopilotSection.tsx';
 import AlarmSection from './AlarmSection.tsx';
-import ApiSection from './ApiSection.tsx';
+import SettingsFooter from './SettingsFooter.tsx';
 import DeviceSettingsSection from './DeviceSettingsSection/DeviceSettingsSection.tsx';
 import OtherSection from './OtherSection.tsx';
 import ErrorBoundary from '@components/ErrorBoundary.tsx';
 import PageHeader from '@components/PageHeader.tsx';
 
-// Every setting, in sections that fold down to their names; the page remembers which were
-// left open. The Pod itself (its version, updating, restarting) is on the Status page.
+// Every setting, in sections that fold down to their names: General starts open, and the page
+// remembers which were opened and closed. The Pod itself (its version, updating, restarting)
+// is on the Status page; the API guide, help and the license are in the footer.
 export default function SettingsPage() {
   const { data: settings } = useSettings();
   const updateSettings = useUpdateSettings();
@@ -56,12 +55,10 @@ export default function SettingsPage() {
           <OtherSection settings={ settings } updateSettings={ updateSettings }/>
         </ErrorBoundary>
         <ErrorBoundary componentName="Info section">
-          <ApiSection/>
-          <DiscordLink/>
           <Donate/>
-          <LicenseModal/>
         </ErrorBoundary>
       </FoldingSectionsContext.Provider>
+      <SettingsFooter/>
     </PageContainer>
   );
 }

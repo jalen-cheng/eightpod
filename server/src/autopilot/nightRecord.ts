@@ -60,6 +60,9 @@ export type NightRecord = {
   // of its rules, so nights with and without it can be told apart later
   steered?: boolean;
   policy?: number;
+  // The side's piezo level with the bed empty when the stay began (the `swingLow` of an empty
+  // minute), which a body is told from. Kept so the body check can be worked out again.
+  emptySwing?: number;
   tracker?: TrackerSleep;
 };
 

@@ -4,8 +4,8 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { useOpenSections } from './openSections.ts';
 
 // `action` is a section's live state or one control: at the right of the title line, or at the
-// top of the section when it folds
-type SectionProps = PropsWithChildren<{ title?: string; action?: ReactNode }>;
+// top of the section when it folds. `startsOpen` is for the one a folding page opens with.
+type SectionProps = PropsWithChildren<{ title?: string; action?: ReactNode; startsOpen?: boolean }>;
 
 // A page whose sections fold down to their titles wraps them in this with `true`
 export const FoldingSectionsContext = createContext(false);
@@ -14,13 +14,14 @@ const cardSx = { width: '100%', minWidth: 0, overflowWrap: 'anywhere', borderRad
 const contentSx = { p: { xs: 2, sm: 2.5 }, '&:last-child': { pb: { xs: 2, sm: 2.5 } } };
 
 // A group of settings under its name. On a page of folding sections it is a card that shows
-// only its name until pressed, and the page remembers which ones were left open. Elsewhere, or
+// only its name until pressed (unless it starts open), and the page remembers which ones were
+// opened and closed. Elsewhere, or
 // without a name, the name is plain text above a card that is always open.
-export default function Section({ title, action, children }: SectionProps) {
+export default function Section({ title, action, startsOpen = false, children }: SectionProps) {
   const titleId = useId();
   const contentId = useId();
   const isFolding = useContext(FoldingSectionsContext) && title !== undefined;
-  const { openTitles, toggle } = useOpenSections();
+  const { choices, toggle } = useOpenSections();
 
   if (!isFolding) {
     return (
@@ -38,11 +39,11 @@ export default function Section({ title, action, children }: SectionProps) {
     );
   }
 
-  const isOpen = openTitles.includes(title);
+  const isOpen = choices[title] ?? startsOpen;
   return (
     <Card component="section" aria-labelledby={ titleId } sx={ cardSx }>
       <ButtonBase
-        onClick={ () => toggle(title) }
+        onClick={ () => toggle(title, startsOpen) }
         aria-expanded={ isOpen }
         aria-controls={ contentId }
         sx={ {

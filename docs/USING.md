@@ -94,9 +94,6 @@ How the alarm vibrates is one choice for every night and both sides, in **Settin
 | **Strength** | Low, Medium or High |
 | **Length** | 10, 15, 20 or 30 minutes. It stops sooner if you dismiss it |
 
-**Test for a minute**, at the top of that section, vibrates both sides now with those settings,
-even if the bed is off. **Stop test** ends it.
-
 A scheduled alarm only vibrates if that side is on at the alarm time.
 
 ## 6. Dismiss an alarm
@@ -147,7 +144,9 @@ When the sides are linked, the buttons on either side control both. The step siz
 
 <img src="screenshots/settings.png" width="260" alt="The Settings page">
 
-Each section of the Settings page opens with a tap, and the page remembers which ones you left open.
+Each section of the Settings page opens with a tap. General starts open, and the page remembers
+which ones you opened and closed. Under the last section are the **API guide**, **Help** (this
+project's issues on GitHub) and the **License and disclaimer**.
 
 | Setting | Where | What it does |
 |---|---|---|
@@ -160,7 +159,7 @@ Each section of the Settings page opens with a tap, and the page remembers which
 | **Prime daily** | Priming | Runs the water priming cycle every day at **Prime time**, 2 PM by default. It does not check whether the bed is in use |
 | **Reboot once a day** | Status page | Restarts the Pod one hour before the priming time. A vibrating alarm or running warm-up is lost in a reboot, so keep the time in the afternoon |
 | **Status page** | The "Status" link (bottom right on a computer, beside the heading of Data and Settings on a phone) | The Pod itself (model, Wi-Fi strength, SevenSleep's version with **Update** when there is a newer one, **Reboot**), then each service. The biometrics and sleep-analysis rows are greyed and marked untested. The link reads "Update available" when a newer version is out |
-| **API** | Settings > API > **Open** | A page with the common requests and two examples with your Pod's address filled in. Tap a command to select it. The page's own address is `/api-guide` |
+| **API** | **API guide**, at the bottom of Settings | A page with the common requests and two examples with your Pod's address filled in. Tap a command to select it. The page's own address is `/api-guide` |
 | **In-bed detection** | Its own section, Pod 5 only | Two options, both off by default: **Turn on when I get into bed** and **Alarm after a long time in bed**. Detection was checked with one person on one Pod; the first option has been seen turning the bed on, the rest has not been seen working yet |
 | **Autopilot** | Its own section, Pod 5 only | **Adjust the temperature while I sleep**, off by default. Moves the bed up to 4°F around its set temperature while you sleep, one degree at a time: cooler early, warmer toward morning, and it learns from the changes you make. It treats the bed as one sleeper's, so switching it on links the sides. A temperature you set in the night is held as you set it. A nap (a sleep under 3 hours) is left alone. **Data > Sleep** shows a day at a time (bedtime, wake time, duration, wake-ups, and graphs of breathing rate, pressure and temperature changes), and **Export** downloads a week to three months. **20-minute test > Start** plays a night's plan on the bed at any hour so you can watch what it does. **Link Apple Health** opens [the steps](CONNECTIONS.md#link-apple-health) for an iPhone Shortcut that sends a watch's or band's sleep each morning, which the bed uses to tune how it judges sleep (iPhone only). The older **Biometrics** switch is in the same section. Experimental and not yet run through a real night; see [AUTOPILOT.md](AUTOPILOT.md) |
 

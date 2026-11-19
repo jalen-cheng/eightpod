@@ -1,18 +1,18 @@
 /* eslint-disable max-len */
-import React, { useState } from 'react';
-import { Modal, Box, Typography, Button } from '@mui/material';
+import { useState } from 'react';
+import { Modal, Box, Typography, Button, SxProps, Theme } from '@mui/material';
 
-const LicenseModal: React.FC = () => {
+// The license and disclaimer, behind a text button styled by whoever places it
+const LicenseModal = ({ buttonSx }: { buttonSx?: SxProps<Theme> }) => {
   const [open, setOpen] = useState(false);
 
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
 
   return (
-    <div>
-      { /* Button to Open Modal */ }
-      <Button variant="outlined" fullWidth onClick={ handleOpen }>
-        View License and Disclaimer
+    <>
+      <Button size="small" color="inherit" onClick={ handleOpen } sx={ buttonSx }>
+        License and disclaimer
       </Button>
 
       { /* Modal Component */ }
@@ -124,7 +124,7 @@ SOFTWARE.` }
           </Button>
         </Box>
       </Modal>
-    </div>
+    </>
   );
 };
 

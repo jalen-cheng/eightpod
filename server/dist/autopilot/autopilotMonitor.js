@@ -18,7 +18,7 @@
 // A rehearsal is a night's plan played in a few minutes on the bed as it is set, started by
 // hand, for watching what the autopilot does. It goes through the same steps as a night.
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="18afa103-a830-5dba-98a8-742322614382")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="195be080-036c-59ed-9d0c-55b01c45eb16")}catch(e){}}();
 import { readFileSync, renameSync, writeFileSync } from 'fs';
 import moment from 'moment-timezone';
 import config from '../config.js';
@@ -32,6 +32,7 @@ import { isManualHoldActive } from '../jobs/manualHold.js';
 import { isPreWarmActive } from '../jobs/preWarmState.js';
 import { findNightDay } from '../jobs/scheduleTiming.js';
 import { updateDeviceStatus } from '../routes/deviceStatus/updateDeviceStatus.js';
+import { addEmptyMinute, findEmptySwing, isBodyFelt } from './bodySignal.js';
 import { BREATHING_WINDOW_SECONDS, estimateBreathingRate, measureBreathingSpread } from './breathingRate.js';
 import { HEART_RATE_WINDOW_SECONDS, countMovementSeconds, estimateHeartRate, findQuietSwing, measureSwing, } from './heartRate.js';
 import { registerManualChangeListener } from './manualChanges.js';
@@ -88,6 +89,9 @@ const QUIET_SWING_MINUTES = 15;
 const QUIET_SWING_FRACTION = 0.25;
 // A stay keeps one row a minute; if the loop was held up, no more than this many are filled in
 const MAX_MISSED_MINUTES_FILLED = 120;
+// The empty bed's piezo level is written to the state file again once it has moved by this
+// fraction, not every minute it is measured
+const EMPTY_SWING_SAVE_FRACTION = 0.1;
 // Reading a sleeper's habits looks at this many of the newest saved stays
 const USUAL_SLEEP_FILES = 40;
 // What was learned from the sleeper's corrections and from a linked sleep tracker, and any
@@ -97,6 +101,9 @@ const STATE_FILE = `${config.dbFolder}autopilot_state.json`;
 let learned = { ...NO_LEARNED_OFFSETS };
 let rules = DEFAULT_SLEEP_RULES;
 let trackerLink;
+// Each side's piezo level with the bed empty (bodySignal.ts), and the level last written to the state file
+let emptySwing = {};
+let savedEmptySwing = {};
 // A night found in the saved state at start, waiting to be picked up again or undone
 let nightFromLastRun;
 const bed = {};
@@ -105,6 +112,8 @@ const newSideState = () => ({
     recentSeconds: [],
     minuteSwings: [],
     quietSwings: [],
+    emptySwings: [],
+    isThingOnBed: false,
     wasInBed: false,
     minuteHeartRates: [],
     minuteBreathingRates: [],
@@ -138,7 +147,7 @@ const nightClockMs = (night, nowMs) => (night.rehearsal ? rehearsalClockMs(night
 const nightProgress = (night, nowMs) => (Math.min(1, (nightClockMs(night, nowMs) - night.asleepSinceMs) / (night.wakeAtMs - night.asleepSinceMs)));
 const saveState = () => {
     try {
-        const state = { learned, rules, trackerLink, night: bed.night };
+        const state = { learned, rules, trackerLink, night: bed.night, emptySwing };
         // Written beside the file and then moved over it, so a crash mid-write cannot leave half a file
         writeFileSync(`${STATE_FILE}.tmp`, JSON.stringify(state));
         renameSync(`${STATE_FILE}.tmp`, STATE_FILE);
@@ -147,6 +156,25 @@ const saveState = () => {
         logger.warn(`Autopilot could not save its state: ${String(error)}`);
     }
 };
+// Takes a minute with nothing on the bed into the level a body is told from. The level is
+// written to the state file only when it has moved enough to matter.
+const learnEmptySwing = (side, quietSecond) => {
+    const state = sides[side];
+    state.emptySwings = addEmptyMinute(state.emptySwings, quietSecond);
+    const level = findEmptySwing(state.emptySwings);
+    if (level === undefined)
+        return;
+    emptySwing[side] = level;
+    const saved = savedEmptySwing[side];
+    if (saved !== undefined && Math.abs(level - saved) <= saved * EMPTY_SWING_SAVE_FRACTION)
+        return;
+    savedEmptySwing = { ...savedEmptySwing, [side]: level };
+    saveState();
+};
+// A stay in bed that begins with the minute just ended
+const newStay = (side, nowMs) => ({
+    side, startedAtMs: nowMs - MINUTE_MS, minutes: [], policy: POLICY_VERSION, emptySwing: roundTo(emptySwing[side], 0),
+});
 // Reads a heart rate from the newest seconds of signal, when it is time to and they are clean
 const estimateHeartRateNow = (state) => {
     state.secondsSinceEstimate++;
@@ -213,6 +241,7 @@ export function getAutopilotSnapshot(nowMs = Date.now()) {
         stage: sides[side].sleep.stage,
         sleepKind: sides[side].sleep.stage !== 'asleep' ? undefined
             : (bed.night && !bed.night.rehearsal) || maySteer(sides[side]) ? 'night' : 'nap',
+        thingOnBed: sides[side].isThingOnBed || undefined,
         heartRate: roundTo(sides[side].sleep.heartRate, 0),
         breathingRate: roundTo(sides[side].sleep.breathingRate, 0),
         minutesAsleep: sides[side].sleep.minutesAsleep,
@@ -439,6 +468,8 @@ export class AutopilotMonitor {
             rules = { ...DEFAULT_SLEEP_RULES, ...savedRules };
             trackerLink = saved.trackerLink;
             nightFromLastRun = saved.night;
+            emptySwing = { ...saved.emptySwing };
+            savedEmptySwing = { ...saved.emptySwing };
         }
         catch {
             // Nothing saved yet
@@ -537,18 +568,26 @@ export class AutopilotMonitor {
     // One side's minute: its sleep state, and its row in the stay being saved
     async followSide(side, nowMs, podStatus) {
         const state = sides[side];
-        const isInBed = isSomeoneInBed(side);
+        const swings = state.minuteSwings;
+        const sortedSwings = [...swings].sort((first, second) => first - second);
+        const swingAt = (fraction) => sortedSwings[Math.min(sortedSwings.length - 1, Math.floor(sortedSwings.length * fraction))];
+        const isSignalGood = swings.length >= MIN_SECONDS_HEARD_IN_MINUTE && swingAt(0.5) > 0;
+        const quietSecond = isSignalGood ? swingAt(QUIET_SWING_FRACTION) : undefined;
+        // The capacitive sensors say something is on the side; the piezo says whether it is a
+        // body. A thing left on the bed (a laptop) is not a sleeper: it gets no stay and no sleep.
+        // Where the piezo cannot say, the capacitive sensors are taken at their word, as before.
+        const isSomethingOnSide = isSomeoneInBed(side);
+        if (quietSecond !== undefined && !SIDES.some(isSomeoneInBed))
+            learnEmptySwing(side, quietSecond);
+        state.isThingOnBed = isSomethingOnSide && isBodyFelt(quietSecond, emptySwing[side]) === false;
+        const isInBed = isSomethingOnSide && !state.isThingOnBed;
         // An empty bed is far quieter than a sleeper lying still, so the quiet level starts afresh
         // when someone gets in or out
         if (isInBed !== state.wasInBed)
             state.quietSwings = [];
         state.wasInBed = isInBed;
-        const swings = state.minuteSwings;
-        const sortedSwings = [...swings].sort((first, second) => first - second);
-        const swingAt = (fraction) => sortedSwings[Math.min(sortedSwings.length - 1, Math.floor(sortedSwings.length * fraction))];
-        const isSignalGood = swings.length >= MIN_SECONDS_HEARD_IN_MINUTE && swingAt(0.5) > 0;
-        if (isSignalGood) {
-            state.quietSwings.push(swingAt(QUIET_SWING_FRACTION));
+        if (quietSecond !== undefined) {
+            state.quietSwings.push(quietSecond);
             if (state.quietSwings.length > QUIET_SWING_MINUTES)
                 state.quietSwings.shift();
         }
@@ -567,7 +606,7 @@ export class AutopilotMonitor {
         if (state.sleep.stage === 'asleep')
             await this.noteAsleep(side, nowMs);
         this.logMinute(side, minute, nowMs, {
-            swingLow: isSignalGood ? swingAt(QUIET_SWING_FRACTION) : undefined,
+            swingLow: quietSecond,
             swingMid: isSignalGood ? swingAt(0.5) : undefined,
             swingHigh: isSignalGood ? swingAt(0.9) : undefined,
             targetF: podStatus?.[side].isOn ? podStatus[side].targetTemperatureF : undefined,
@@ -634,7 +673,7 @@ export class AutopilotMonitor {
     // sleep, which decides if the autopilot steers it from the start, is judged once at its onset.
     async noteAsleep(side, nowMs) {
         const state = sides[side];
-        state.stay ??= { side, startedAtMs: nowMs - MINUTE_MS, minutes: [], policy: POLICY_VERSION };
+        state.stay ??= newStay(side, nowMs);
         const stay = state.stay;
         if (stay.asleepAtMs === undefined) {
             const asleepAtMs = Math.max(stay.startedAtMs, nowMs - (state.sleep.minutesAsleep ?? 0) * MINUTE_MS);
@@ -656,7 +695,7 @@ export class AutopilotMonitor {
     logMinute(side, minute, nowMs, readings) {
         const state = sides[side];
         if (minute.isInBed) {
-            state.stay ??= { side, startedAtMs: nowMs - MINUTE_MS, minutes: [], policy: POLICY_VERSION };
+            state.stay ??= newStay(side, nowMs);
             state.minutesOut = 0;
         }
         else if (state.stay) {
@@ -875,4 +914,4 @@ export class AutopilotMonitor {
     }
 }
 //# sourceMappingURL=autopilotMonitor.js.map
-//# debugId=18afa103-a830-5dba-98a8-742322614382
+//# debugId=195be080-036c-59ed-9d0c-55b01c45eb16

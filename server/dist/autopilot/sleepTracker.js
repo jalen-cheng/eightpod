@@ -1,15 +1,19 @@
 // Follows one sleeper through a stay in bed, a minute at a time, and says whether they are
 // awake or asleep. It goes by stillness, the way a wrist tracker's movement sensor does: asleep
-// after lying still long enough, awake again after a run of restless minutes. Steady breathing
+// after lying still long enough (one turn on the way is allowed), awake again after a run of
+// restless minutes (one turn in the night is not waking). Steady breathing
 // can be asked for as well, but only once calibration against a worn tracker has shown it
 // helps. The heart rate is carried along for showing, and decides nothing. It does not try to tell deep sleep
 // from the rest: the night plan assumes deep sleep by the clock instead.
 // Keep this file free of runtime imports so tests can load it without a Pod environment.
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="28609f0d-6fad-54aa-b645-05516882487e")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="34edb52a-c175-5efd-b037-ab4e15b50376")}catch(e){}}();
 export const DEFAULT_SLEEP_RULES = { stillMinutesToSleep: 15, restlessSecondsToWake: 12 };
 // A minute with this many moving seconds or fewer counts as lying still
 const STILL_MINUTE_MAX_MOVEMENT_SECONDS = 3;
+// While falling asleep, this many minutes of the still stretch may hold a turn: more movement
+// than lying still, less than a restless minute. People shift once as they drop off.
+const TURNS_ALLOWED_FALLING_ASLEEP = 1;
 // Awake again: this many restless minutes among the last five. One turn in bed is not waking.
 const AWAKE_RESTLESS_MINUTES = 3;
 const RECENT_MINUTES = 5;
@@ -45,8 +49,14 @@ export function createSleepTracker(getRules = () => DEFAULT_SLEEP_RULES) {
         const breathingRate = recentMiddle(recent => recent.breathingRate);
         if (asleepSinceMinute === undefined) {
             const stillStretch = lastMinutes(rules.stillMinutesToSleep);
+            const isStill = (recent) => (recent.movementSeconds !== undefined && recent.movementSeconds <= STILL_MINUTE_MAX_MOVEMENT_SECONDS);
+            const isTurn = (recent) => (recent.movementSeconds !== undefined && !isStill(recent) && recent.movementSeconds < rules.restlessSecondsToWake);
+            // The stretch has to begin and end still, so that sleep is neither dated from a turn nor
+            // declared in the middle of one
             const hasLainStill = minutesInBed >= rules.stillMinutesToSleep
-                && stillStretch.every(recent => recent.movementSeconds !== undefined && recent.movementSeconds <= STILL_MINUTE_MAX_MOVEMENT_SECONDS);
+                && isStill(stillStretch[0]) && isStill(stillStretch[stillStretch.length - 1])
+                && stillStretch.every(recent => isStill(recent) || isTurn(recent))
+                && stillStretch.filter(isTurn).length <= TURNS_ALLOWED_FALLING_ASLEEP;
             // With too few breathing readings in the stretch to judge by, stillness alone decides
             const spreads = stillStretch.flatMap(recent => (recent.breathingSpread === undefined ? [] : [recent.breathingSpread]));
             const isBreathingSteady = rules.maxBreathingSpread === undefined || spreads.length < stillStretch.length / 2
@@ -147,8 +157,17 @@ export function calibrateSleepRules(nights) {
         return untuned;
     return { rules: candidates[chosen], nights: nights.length, agreementPercent: agreementOf(heldOutDisagreements), isTuned: true };
 }
-// Health apps record a night as many short samples, some of them "awake" or "in bed"
-const NOT_ASLEEP = /awake|in ?bed/i;
+// A phone shortcut cannot easily build a list, so it may send its samples as text: one a
+// line, as start|end|value. Lines without both times are left out.
+export function parseSampleLines(text) {
+    return text.split(/\r?\n/).flatMap((line) => {
+        const [start, end, value] = line.split('|').map(part => part.trim());
+        return start && end ? [{ start, end, value: value || undefined }] : [];
+    });
+}
+// Health apps record a night as many short samples, some of them "awake" or "in bed". Apple
+// Health's own numbers for those two are 0 (in bed) and 2 (awake), in case a value arrives as one.
+const NOT_ASLEEP = /awake|in ?bed|^[02]$/i;
 // Samples closer together than this are one sleep; further apart, a night and a nap
 const SAME_SLEEP_GAP_MS = 60 * 60_000;
 // A gap between two asleep samples longer than this is time awake
@@ -196,4 +215,4 @@ export function readTrackerMinutes(tracker, startedAtMs, minuteCount) {
     });
 }
 //# sourceMappingURL=sleepTracker.js.map
-//# debugId=28609f0d-6fad-54aa-b645-05516882487e
+//# debugId=34edb52a-c175-5efd-b037-ab4e15b50376

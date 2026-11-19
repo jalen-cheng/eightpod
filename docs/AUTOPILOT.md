@@ -102,15 +102,39 @@ autopilot would be answering its own changes.
 
 ## How it tells you are asleep
 
-By stillness, the way a wrist tracker's movement sensor does. The cover's piezo sensor (500
-readings a second per side, on the firmware's sensor bus) feels movement; each minute is summed
-up as a count of seconds with movement, and two rules decide the state
-(`server/src/autopilot/sleepTracker.ts`):
+In three steps, once a minute for each side. The first two say whether a person is there at
+all; only the third is about sleep.
 
-- **Asleep:** in bed and still for 15 minutes in a row. Sleep is counted from when the
-  stillness began; the bed can only act on it once the 15 minutes are up.
-- **Awake again:** 3 minutes out of 5 with 12 or more moving seconds each. A turn in bed, or
-  two, is not waking.
+**1. Is anything on the side?** The capacitive sensors under the cover say so (in-bed
+detection, [How it works](HOW_IT_WORKS.md)). They cannot tell a person from a laptop.
+
+**2. Is it a body?** (`server/src/autopilot/bodySignal.ts`) The cover's piezo sensor (500
+readings a second per side, on the firmware's sensor bus) is knocked by every heartbeat and
+breath of someone lying on the bed, however still, and not at all by a thing. Measured on one
+Pod 5 as the swing of a quiet second: an empty bed, or one with a laptop on it, 13,000 to
+24,000; one person lying still, 1,100,000 to 2,100,000 on their own side and 225,000 to
+440,000 on the other. A minute is a body's when it reads at least 5 times the empty bed's
+level, which the Pod measures itself from the minutes with nothing on either side (the lower
+quartile of the last two hours of them, kept across restarts). Something on the sensors that
+is not a body is a thing left on the bed: it gets no stay, no sleep and no steering, and
+Settings > Autopilot says "Something is on the bed, but not a person". Until the empty level
+is known (ten empty minutes after installing), and in a minute when the piezo sent too
+little, the capacitive sensors are taken at their word.
+
+This step was added after a laptop left on the bed was logged as asleep for 77 minutes one
+afternoon and 177 that evening. Replayed through the check, both come out as nobody in bed.
+It has not yet been through a real night; what it rests on is the gap between those figures.
+
+**3. Is the body asleep?** (`server/src/autopilot/sleepTracker.ts`) By stillness, the way a
+wrist tracker's movement sensor does. Each minute is summed up as a count of seconds with
+movement: **still** is 3 or fewer, a **turn** is more than that and under 12, **restless** is
+12 or more.
+
+- **Asleep:** 15 minutes that begin and end still, with no restless minute among them and at
+  most one turn (people shift once as they drop off). Sleep is counted from when the stretch
+  began; the bed can only act on it once the 15 minutes are up.
+- **Awake again:** 3 minutes out of 5 restless. A turn in bed, or two, is not waking.
+- **Out of bed** starts it over.
 
 Movement is judged against the sleeper's own quiet level over the last quarter of an hour, so
 a whole minute of fidgeting counts as movement and not as the new normal. A minute in which the
@@ -186,6 +210,11 @@ keep still. Settings > Autopilot shows "Awake" with your breathing rate, then "A
 you have been still for 15 minutes (lying awake and still reads as asleep, as said above), and
 after 20 minutes in bed the stay is saved and shows under **Data > Sleep** as a nap.
 
+The body check takes two minutes: put a laptop on the bed where you sleep and wait. If
+Settings > In-bed detection shows that side as in bed, Settings > Autopilot should say
+"Something is on the bed, but not a person", and nothing is saved under Data > Sleep however
+long it stays. Then lie down beside it: the line changes to "Awake" within a minute.
+
 ## Linking a sleep tracker
 
 A watch or band is a better judge of when you slept than the bed's own guesses, and its record
@@ -202,7 +231,8 @@ switched on, as one file in `/persistent/free-sleep-data/autopilot_nights/`: a r
 (moving seconds and the raw size of the movement signal, heart rate, breathing rate and spread,
 pressure on the bed, state, what the bed was set to and its water temperature, the autopilot's
 offset, the air at the cover and at the hub, the mattress surface), the bed's sleep
-and wake times, whether the autopilot steered, and the tracker's record if one was sent. A
+and wake times, whether the autopilot steered, the empty bed's piezo level the body check
+went by, and the tracker's record if one was sent. A
 night is about 50 KB. The newest 180 files are kept (three months for two sides), under 10 MB
 of the Pod's 14 GB free. An open stay is written every 10 minutes, so a restart loses at most
 that, and starts a new file.
@@ -229,12 +259,13 @@ file and restart SevenSleep to forget it.
 
 ## Code
 
-`server/src/autopilot/`: `heartRate.ts` and `breathingRate.ts` (the estimates), `sleepTracker.ts`
+`server/src/autopilot/`: `heartRate.ts` and `breathingRate.ts` (the estimates), `bodySignal.ts`
+(a body or a thing), `sleepTracker.ts`
 (the sleep rules, and fitting them to a tracker), `nightPlan.ts` (curve, learning, room, limits,
 steps, the test's clock), `scheduledBase.ts` (the schedule's temperature at a time, what a
 night's offset is counted from, night or nap), `nightLog.ts`
 (the saved nights), `autopilotMonitor.ts` (state, and the only file that touches the Pod). The
-first five are pure and tested in `tests/autopilot.test.mjs`.
+first six are pure and tested in `tests/autopilot.test.mjs`.
 
 Two other open-source projects informed the rules above: Sleepypod's temperature controller
 (manual targets are absolute and held, relative changes are worked out from the schedule and
