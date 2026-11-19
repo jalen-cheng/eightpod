@@ -36,7 +36,7 @@ export default function Navbar() {
           flexDirection: 'column', borderRight: '1px solid', borderColor: 'divider', bgcolor: 'background.default', zIndex: 1100,
         } }
       >
-        <Box component={ Link } to="/" sx={ { display: 'flex', alignItems: 'center', gap: 1.25, p: 1, mb: 3, textDecoration: 'none' } }>
+        <Box component={ Link } to="/" sx={ { display: 'flex', justifyContent: 'center', p: 1, mb: 3, textDecoration: 'none' } }>
           <Box component="img" src="/sevensleep-logo.png" alt="SevenSleep" sx={ { width: 104, height: 'auto' } }/>
         </Box>
         <Box component="nav" aria-label="Main navigation" sx={ { display: 'flex', flexDirection: 'column', gap: 0.5 } }>

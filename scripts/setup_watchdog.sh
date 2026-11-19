@@ -18,6 +18,9 @@
 #   - a note is left in the data folder for the length of the trial. If it is still there at
 #     the next try, the Pod reset during the trial and this refuses to try again.
 # 30 seconds is used because the Pod 5's watchdog cannot count further than 31.
+#
+# "remove" can reset the Pod once as well: some watchdogs cannot be stopped once started, and
+# then reset the board when systemd stops feeding them. It comes back with the watchdog off.
 
 set -u
 
@@ -45,6 +48,10 @@ find_other_holder() {
   done
 }
 
+pid1_holds_device() {
+  ls -l /proc/1/fd 2>/dev/null | grep -q '/dev/watchdog'
+}
+
 turn_on_hardware() {
   [ -c /dev/watchdog ] || { echo "Hardware watchdog: this Pod has no watchdog device. Left off."; return 0; }
   current="$(runtime_setting)"
@@ -70,14 +77,14 @@ turn_on_hardware() {
   fi
   echo "Hardware watchdog: on trial for $TRIAL_SECONDS seconds. If the Pod resets now, it comes back with it off."
   sleep "$TRIAL_SECONDS"
-  case "$(runtime_setting)" in
-    0|infinity|"")
-      rm -f "$TRIAL_DIR/$DROP_IN_NAME" "$TRIAL_NOTE"
-      systemctl daemon-reexec || true
-      echo "Hardware watchdog: systemd did not take the setting. Left off."
-      return 1
-      ;;
-  esac
+  # Kept only if systemd has the setting and is the one holding the device
+  setting="$(runtime_setting)"
+  if [ -z "$setting" ] || [ "$setting" = "0" ] || [ "$setting" = "infinity" ] || ! pid1_holds_device; then
+    rm -f "$TRIAL_DIR/$DROP_IN_NAME" "$TRIAL_NOTE"
+    systemctl daemon-reexec || true
+    echo "Hardware watchdog: systemd did not take the device with this setting. Left off."
+    return 1
+  fi
   mkdir -p "$KEPT_DIR"
   cp "$TRIAL_DIR/$DROP_IN_NAME" "$KEPT_DIR/$DROP_IN_NAME"
   rm -f "$TRIAL_NOTE"
@@ -100,6 +107,7 @@ Description=SevenSleep Wi-Fi watchdog, once a minute
 
 [Timer]
 OnBootSec=3min
+OnActiveSec=1min
 OnUnitActiveSec=1min
 
 [Install]
@@ -127,6 +135,12 @@ show_status() {
   [ -f "$TRIAL_NOTE" ] && echo "Hardware watchdog: an unfinished trial is noted in $TRIAL_NOTE"
   echo "Wi-Fi watchdog: $(systemctl is-active "$WIFI_UNIT.timer" 2>/dev/null)"
 }
+
+case "${1:-}" in
+  wifi|hardware|remove)
+    [ "$(id -u)" = "0" ] || { echo "Run this as root."; exit 1; }
+    ;;
+esac
 
 case "${1:-}" in
   wifi) turn_on_wifi ;;

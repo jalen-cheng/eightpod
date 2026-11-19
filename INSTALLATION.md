@@ -633,7 +633,7 @@ Two guards against a Pod that stops answering. Both are off until you switch the
 | `sh /home/dac/free-sleep/scripts/setup_watchdog.sh wifi` | Once a minute, checks whether the Pod is on Wi-Fi. After 3 minutes off it, asks it to connect again |
 | `sh /home/dac/free-sleep/scripts/setup_watchdog.sh hardware` | Resets the Pod if its system freezes, so it is not left frozen with the bed as it was. **Not yet run on a Pod.** Switching it on can reset the Pod once; it is tried for 75 seconds first and only kept if the Pod stays up |
 | `sh /home/dac/free-sleep/scripts/setup_watchdog.sh status` | Says which are on |
-| `sh /home/dac/free-sleep/scripts/setup_watchdog.sh remove` | Takes both out |
+| `sh /home/dac/free-sleep/scripts/setup_watchdog.sh remove` | Takes both out. If the hardware one was on, this can reset the Pod once too |
 
 ## Going back to Eight Sleep
 

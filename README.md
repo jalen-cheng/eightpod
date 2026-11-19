@@ -1,10 +1,6 @@
 # SevenSleep — subscription-free, open-source local control for Eight Sleep Pods
 
 <p align="center">
-  <img src="docs/screenshots/overview.png" width="900" alt="Four phone screens: the temperature dial with the next alarm, a night's schedule, last night's sleep, and the autopilot and alarm settings">
-</p>
-
-<p align="center">
   <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fjalen-cheng%2Fsevensleep%2Fmain%2Fserver%2Fsrc%2FserverInfo.json&query=%24.version&label=version&style=flat-square" alt="Version"></a>
   <a href="https://github.com/jalen-cheng/sevensleep/actions/workflows/ci.yaml"><img src="https://img.shields.io/github/actions/workflow/status/jalen-cheng/sevensleep/ci.yaml?branch=main&label=tests&style=flat-square" alt="Tests"></a>
   <a href="LICENSE.md"><img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" alt="MIT license"></a>
@@ -24,10 +20,7 @@ to say what this software runs on.
 **No cloud, no subscription.** The server runs on the Pod itself: no account, nothing sent to
 Eight Sleep or anyone else, and the Pod is blocked from the internet. Other tools for the Pod,
 such as [eightctl](https://github.com/steipete/eightctl) and the Home Assistant integrations, are
-remote controls for Eight Sleep's cloud, so they stop when it does. When AWS went down on 20
-October 2025, Eight Sleep's cloud went with it and Pods were left stuck at their last setting,
-some of them heating ([PCWorld](https://www.pcworld.com/article/2948826/these-smart-beds-began-roasting-their-owners-during-aws-outage.html)).
-A Pod running SevenSleep has nothing upstream to go down.
+remote controls for Eight Sleep's cloud, so they stop when it does.
 
 **If sleep metrics matter to you, the real thing may suit you better.** SevenSleep controls the
 bed. Sleep stages, sleep scores and Eight Sleep's Autopilot stay with Eight Sleep. SevenSleep has an
@@ -113,8 +106,7 @@ No Pod yet? **[sevensleep.vercel.app](https://sevensleep.vercel.app)** is the ap
 - **Pod 5 side buttons:** + and - change the temperature, the middle button switches the side, any button stops an alarm.
 - **In-bed detection (Pod 5):** the bed can turn on when you get in and off after you get out, and tells a body from a thing left on it.
 - **Autopilot (Pod 5, experimental):** cooler early in the night, warmer toward morning, one degree at a time. It holds a temperature you set and learns from it. Off by default. See [docs/AUTOPILOT.md](docs/AUTOPILOT.md).
-- **A record of each night (Pod 5):** sleep and wake times, wake-ups and movement, kept on the Pod, and checked against a watch through Apple Health if you have one.
-- **Quality of life:** a phone-first app that installs to the Home Screen, `http://sevensleep.local`, alarms that keep going until dismissed, one-time alarms, linked sides, measured temperatures, and updates from the app.
+- **Quality of life:** a phone-first app that installs to the Home Screen, one-time alarms, linked sides, measured temperatures, and updates from the app.
 
 **The autopilot's limits.** Its evidence is limited: one sleeper on one Pod 5 (n=1).
 
@@ -138,6 +130,7 @@ If accurate sleep tracking is what you are after, Eight Sleep's own plan is stil
 | Pod 5 | Tested on one unit. Some newer units cannot be opened up the way the install guide needs; the guide says how to tell. |
 | Pod 4 | Same code as the original project in the hardware paths, with the differences in [docs/POD_MODELS.md](docs/POD_MODELS.md). **Not run on a Pod 4.** |
 | Pod 3 (with or without SD card) | As Pod 4: reviewed against the original, **not run**. |
+| Pod 6 | Not tried: nobody has opened one up yet. If you have one, [say so](https://github.com/jalen-cheng/sevensleep/issues?q=is%3Aissue+is%3Aopen+Pod+6). |
 | Pod 1, Pod 2 | Not compatible. |
 
 ## Status
@@ -312,10 +305,14 @@ keep the name `free-sleep`, so an existing install updates in place.
 
 Issues and pull requests are welcome, including new features, a different direction for the
 product and UI rewrites. The only fixed rules are that it stays local and leaves Eight Sleep's
-firmware alone. The most useful contribution is a report from hardware
-SevenSleep has not seen: a Pod 3 or Pod 4, or a newer Pod 5. [CONTRIBUTING.md](CONTRIBUTING.md) says how,
-and issues labelled [needs testing](https://github.com/jalen-cheng/sevensleep/issues?q=is%3Aissue+is%3Aopen+label%3A%22needs+testing%22)
-list what is waiting to be checked.
+firmware alone. [CONTRIBUTING.md](CONTRIBUTING.md) says how. Three things help most:
+
+- **The autopilot.** Its evidence is one sleeper (n=1). A few nights from your own bed, exported
+  from Data > Sleep and set beside a watch's record, are worth more than code. Open work is under
+  [autopilot](https://github.com/jalen-cheng/sevensleep/issues?q=is%3Aissue+is%3Aopen+label%3Aautopilot).
+- **Other Pods.** Nothing has been run on a Pod 3 or Pod 4, and nobody has tried a Pod 6. Issues labelled
+  [needs testing](https://github.com/jalen-cheng/sevensleep/issues?q=is%3Aissue+is%3Aopen+label%3A%22needs+testing%22) list what is waiting.
+- **A report that something works** counts as much as one that it does not.
 
 ## Credits
 
