@@ -1,5 +1,5 @@
 #!/bin/bash
-# Updates EightPod from the saved source, keeping settings and schedules. If anything fails the
+# Updates SevenSleep from the saved source, keeping settings and schedules. If anything fails the
 # previous install is put back. However the script ends, the server is enabled and started again
 # and the internet block is switched back on.
 
@@ -106,8 +106,8 @@ read_saved_update_source() {
   fi
 }
 FREE_SLEEP_REPO="${FREE_SLEEP_REPO:-$(read_saved_update_source FREE_SLEEP_REPO)}"
-# EightPod installs and updates from its own repository unless told otherwise
-FREE_SLEEP_REPO="${FREE_SLEEP_REPO:-jalen-cheng/eightpod}"
+# SevenSleep installs and updates from its own repository unless told otherwise
+FREE_SLEEP_REPO="${FREE_SLEEP_REPO:-jalen-cheng/sevensleep}"
 FREE_SLEEP_BRANCH="${FREE_SLEEP_BRANCH:-$(read_saved_update_source FREE_SLEEP_BRANCH)}"
 FREE_SLEEP_BRANCH="${FREE_SLEEP_BRANCH:-main}"
 export FREE_SLEEP_REPO FREE_SLEEP_BRANCH

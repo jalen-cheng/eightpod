@@ -1,6 +1,6 @@
 import { Box, Link, Typography } from '@mui/material';
 
-const API_REFERENCE_URL = 'https://github.com/jalen-cheng/eightpod/blob/main/server/API.md';
+const API_REFERENCE_URL = 'https://github.com/jalen-cheng/sevensleep/blob/main/server/API.md';
 
 // The requests most things need. The reference lists the rest.
 const REQUESTS = [
@@ -26,11 +26,11 @@ const getExamples = (podAddress: string) => [
 const codeSx = { fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', fontSize: 12 };
 
 // What the Pod's API is and how to start using it: the common requests, two to copy, and a link to
-// the rest. The address is the one this page was opened at (http://eightpod.local on a Pod), so
+// the rest. The address is the one this page was opened at (http://sevensleep.local on a Pod), so
 // the examples work as shown from the same network.
 export default function ApiGuide() {
   // The public demo has no Pod behind it, so it shows the address a Pod answers at
-  const podAddress = import.meta.env.VITE_ENV === 'demo' ? 'http://eightpod.local' : window.location.origin;
+  const podAddress = import.meta.env.VITE_ENV === 'demo' ? 'http://sevensleep.local' : window.location.origin;
 
   return (
     <Box sx={ { display: 'flex', flexDirection: 'column', gap: 2 } }>

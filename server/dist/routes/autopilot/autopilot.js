@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="31b3d136-3e58-5697-94a1-dabc806ba116")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="3072eae5-90a5-511d-a873-4e31f0242690")}catch(e){}}();
 import express from 'express';
 import { z } from 'zod';
 import { applyTrackerSleep, getAutopilotSnapshot, getNightSummaries, getNightsExport, getNightsOn, } from '../../autopilot/autopilotMonitor.js';
@@ -40,7 +40,7 @@ const DEFAULT_EXPORT_DAYS = 90;
 router.get('/autopilot/nights/export', (req, res) => {
     const requestedDays = Number(req.query.days);
     const days = EXPORT_DAYS.includes(requestedDays) ? requestedDays : DEFAULT_EXPORT_DAYS;
-    res.attachment(`eightpod-nights-${days}-days-${new Date().toISOString().slice(0, 10)}.json`);
+    res.attachment(`sevensleep-nights-${days}-days-${new Date().toISOString().slice(0, 10)}.json`);
     res.json(getNightsExport(days));
 });
 const isDate = (text) => !Number.isNaN(Date.parse(text));
@@ -95,4 +95,4 @@ router.post('/autopilot/sleepTimes', (req, res) => {
 });
 export default router;
 //# sourceMappingURL=autopilot.js.map
-//# debugId=31b3d136-3e58-5697-94a1-dabc806ba116
+//# debugId=3072eae5-90a5-511d-a873-4e31f0242690

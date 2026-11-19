@@ -1,4 +1,4 @@
-"""Back up or rebuild a EightPod SQLite database without changing its schema."""
+"""Back up or rebuild a SevenSleep SQLite database without changing its schema."""
 
 import argparse
 from contextlib import closing

@@ -112,7 +112,7 @@ export const handlers = [
   http.get('/api/autopilot/nights/export', async () => {
     await delay(80);
     return HttpResponse.json({ exportedAt: new Date().toISOString(), nights: [] }, {
-      headers: { 'Content-Disposition': 'attachment; filename="eightpod-nights-demo.json"' },
+      headers: { 'Content-Disposition': 'attachment; filename="sevensleep-nights-demo.json"' },
     });
   }),
   // The autopilot early in the night: the left sleeper asleep, the right side empty

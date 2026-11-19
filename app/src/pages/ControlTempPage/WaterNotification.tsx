@@ -19,7 +19,7 @@ export default function WaterNotification() {
       <Alert severity="warning">
         { `Unhandled deviceStatus.waterLevel: '${deviceStatus?.waterLevel}'` }
         <br />
-        Please create an issue and included the message above <Link href='https://github.com/jalen-cheng/eightpod/issues'>here</Link>
+        Please create an issue and included the message above <Link href='https://github.com/jalen-cheng/sevensleep/issues'>here</Link>
       </Alert>
     );
   }

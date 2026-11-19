@@ -37,8 +37,8 @@ export default function Navbar() {
         } }
       >
         <Box component={ Link } to="/" sx={ { display: 'flex', alignItems: 'center', gap: 1.25, p: 1, mb: 3, textDecoration: 'none' } }>
-          <Box component="img" src="/eightpod-icon.svg" alt="" sx={ { width: 30, height: 30, borderRadius: '8px' } }/>
-          <Typography sx={ { color: 'text.primary', fontSize: 17, fontWeight: 600, letterSpacing: '-0.02em' } }>EightPod</Typography>
+          <Box component="img" src="/sevensleep-icon.svg" alt="" sx={ { width: 30, height: 30, borderRadius: '8px' } }/>
+          <Typography sx={ { color: 'text.primary', fontSize: 17, fontWeight: 600, letterSpacing: '-0.02em' } }>SevenSleep</Typography>
         </Box>
         <Box component="nav" aria-label="Main navigation" sx={ { display: 'flex', flexDirection: 'column', gap: 0.5 } }>
           { PAGES.map(({ title, route, icon }) => (

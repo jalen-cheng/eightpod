@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="1ee3a06d-f138-5886-9501-e7ba66153f8a")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="052fa2d3-fe48-50e5-ae44-f51866c78e5e")}catch(e){}}();
 import { z } from 'zod';
 import { TIME_ZONES } from './timeZones.js';
 import { TimeSchema } from './schedulesSchema.js';
@@ -55,7 +55,7 @@ export const SettingsSchema = z.object({
     rebootDaily: z.boolean(),
     // When true, temperature and power changes made for one side (in the app or at the bed) apply to both
     linkSides: z.boolean(),
-    // When true, EightPod's left is the firmware's right and the other way round (see 8sleep/sideMapping.ts)
+    // When true, SevenSleep's left is the firmware's right and the other way round (see 8sleep/sideMapping.ts)
     swapSides: z.boolean(),
     // What happens when a side is switched on by hand (app, shortcut, or the buttons on the bed)
     manualOn: z.object({
@@ -84,4 +84,4 @@ export const SettingsSchema = z.object({
 }).strict();
 export const MANUAL_ON_HOUR_CHOICES = [3, 6, 12];
 //# sourceMappingURL=settingsSchema.js.map
-//# debugId=1ee3a06d-f138-5886-9501-e7ba66153f8a
+//# debugId=052fa2d3-fe48-50e5-ae44-f51866c78e5e

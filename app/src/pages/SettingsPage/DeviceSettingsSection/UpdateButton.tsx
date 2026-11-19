@@ -47,9 +47,9 @@ export default function UpdateButton() {
     while (true) {
       try {
         const deviceStatus = await getDeviceStatus();
-        if (deviceStatus.data.eightPod.version !== latestVersion) {
+        if (deviceStatus.data.sevenSleep.version !== latestVersion) {
           setUpdateTitle('Update failed. The previous version was put back; see the update log under Data > Logs.');
-          setUpdateMessage(`Latest version: ${latestVersion} -- Current version: ${deviceStatus.data.eightPod.version}`);
+          setUpdateMessage(`Latest version: ${latestVersion} -- Current version: ${deviceStatus.data.sevenSleep.version}`);
         } else {
           setUpdateTitle('Update completed!');
           setUpdateMessage('Refreshing page...');
@@ -91,9 +91,9 @@ export default function UpdateButton() {
             <DialogTitle>{ updateTitle }</DialogTitle>
             :
             isUpdating ?
-              <DialogTitle>Updating EightPod...</DialogTitle>
+              <DialogTitle>Updating SevenSleep...</DialogTitle>
               :
-              <DialogTitle>Update EightPod?</DialogTitle>
+              <DialogTitle>Update SevenSleep?</DialogTitle>
         }
 
         <DialogContent>

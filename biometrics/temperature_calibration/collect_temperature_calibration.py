@@ -12,7 +12,7 @@ temperatures, to check that the bed actually reaches what the firmware aims for.
 about (settle + sample) minutes per level and needs the bed empty.
 
 Before running:
-- EightPod must be running. Schedules are not paused: run it when none will fire.
+- SevenSleep must be running. Schedules are not paused: run it when none will fire.
 - For --measure: nobody in the bed, covers as you normally sleep.
 
 Usage (on the Pod):
@@ -170,7 +170,7 @@ async def check_level(connection, level: int, arguments) -> dict:
     for side in SIDES:
         target = point['firmware_target'][side]
         shown = 'no report' if target is None else f'{target["target_f"]}°F ({target["target_c"]}°C)'
-        print(f'Level {level:>4} {side:>5}: firmware aims for {shown}, EightPod shows {point["assumed_temp_f"]}°F', flush=True)
+        print(f'Level {level:>4} {side:>5}: firmware aims for {shown}, SevenSleep shows {point["assumed_temp_f"]}°F', flush=True)
 
     if arguments.measure:
         print(f'  waiting {arguments.settle_minutes:g} min to settle...', flush=True)
@@ -242,7 +242,7 @@ async def run(arguments):
             json.dump(results, output_file, indent=2)
         print(f'Saved {len(points)} levels to {arguments.output}')
         print(json.dumps(results['fit'], indent=2))
-        print('Compare the "firmware aims for" figures above with what EightPod shows: they should match.')
+        print('Compare the "firmware aims for" figures above with what SevenSleep shows: they should match.')
     finally:
         await connection.close()
 

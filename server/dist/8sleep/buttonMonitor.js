@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="342ab6d8-fb1d-5e5e-b7a2-59f2f7a7cae7")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="f8e9c6f7-5e0e-59d9-9f37-cfba83319809")}catch(e){}}();
 import { spawn } from 'child_process';
 import { createInterface } from 'readline';
 import moment from 'moment-timezone';
@@ -104,11 +104,11 @@ export class ButtonMonitor {
             // Logged once per run of failures: a server that may not read the journal fails every time
             if (!this.hasWarnedAboutLog) {
                 logger.warn(`Button monitor cannot follow the firmware log (journalctl exited with ${exitCode}). `
-                    + 'The server user needs the systemd-journal group; reinstalling EightPod sets it. Retrying quietly...');
+                    + 'The server user needs the systemd-journal group; reinstalling SevenSleep sets it. Retrying quietly...');
                 this.hasWarnedAboutLog = true;
             }
             // Shown on the Status page, so buttons that have stopped working are not a silent failure
-            this.reportStatus('failed', 'The server cannot read the firmware log, so button presses are not seen. Update or reinstall EightPod.');
+            this.reportStatus('failed', 'The server cannot read the firmware log, so button presses are not seen. Update or reinstall SevenSleep.');
             setTimeout(() => {
                 if (this.isRunning)
                     this.followFirmwareLog();
@@ -124,7 +124,7 @@ export class ButtonMonitor {
             timestamp: moment.tz().format(),
         };
     }
-    // `firmwarePress` names the side as the firmware does; it is turned into EightPod's side here
+    // `firmwarePress` names the side as the firmware does; it is turned into SevenSleep's side here
     addPress(firmwarePress) {
         const press = { ...firmwarePress, side: toFirmwareSide(firmwarePress.side) };
         logger.debug(`Button press: ${press.side} ${press.button} x${press.count}${press.heldMs === undefined ? '' : ` held ${press.heldMs}ms`}`);
@@ -182,4 +182,4 @@ export class ButtonMonitor {
     }
 }
 //# sourceMappingURL=buttonMonitor.js.map
-//# debugId=342ab6d8-fb1d-5e5e-b7a2-59f2f7a7cae7
+//# debugId=f8e9c6f7-5e0e-59d9-9f37-cfba83319809

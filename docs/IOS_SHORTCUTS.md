@@ -1,6 +1,6 @@
 # Control your Pod from iPhone with Apple Shortcuts
 
-EightPod has a local API, so the Shortcuts app can control the bed without opening a browser.
+SevenSleep has a local API, so the Shortcuts app can control the bed without opening a browser.
 You do not need an Apple developer account. Shortcuts also run from the Home Screen, the Lock
 Screen, Control Center, the Action button, Siri, and Automations (for example "when my Sleep Focus
 turns on").
@@ -11,11 +11,11 @@ Every shortcut below uses `<pod>`. Replace it with one of these, most stable fir
 
 | Use | Works | Keeps working when |
 |---|---|---|
-| `eightpod` | Anywhere, while Tailscale is connected on the phone | The Pod's address, your router or your network changes |
-| `eightpod.local` | At home | The Pod's address or your router changes. Shortcuts run by a Home automation have been reported to fail on `.local` names; if yours does, use one of the others |
+| `sevensleep` | Anywhere, while Tailscale is connected on the phone | The Pod's address, your router or your network changes |
+| `sevensleep.local` | At home | The Pod's address or your router changes. Shortcuts run by a Home automation have been reported to fail on `.local` names; if yours does, use one of the others |
 | The Pod's home address, for example `192.168.1.50` | At home; anywhere with Tailscale if you set up the one-link route | Only while that address stays the same, so reserve it in the router |
 
-`eightpod` is the name the installer gives the Pod; run `hostname` on the Pod to check yours. Setting up Tailscale, the
+`sevensleep` is the name the installer gives the Pod; run `hostname` on the Pod to check yours. Setting up Tailscale, the
 one-link route and a reserved address is in [REMOTE_ACCESS.md](REMOTE_ACCESS.md).
 
 The first run of a shortcut asks for permission to connect to devices on your local network; allow it.
@@ -30,11 +30,11 @@ Tailscale is only on when you ask for it. It needs Tailscale set up as in
 1. Open **Shortcuts** and tap **+**.
 2. Add **Get Network Details**. Leave it on **Wi-Fi** and **Network Name**.
 3. Add **If**. Set it to: **Network Name** **is** the name of your home Wi-Fi.
-4. Under **If**, add **Open URLs** with `http://eightpod.local`.
+4. Under **If**, add **Open URLs** with `http://sevensleep.local`.
 5. Under **Otherwise**, add **Choose from Menu** with the prompt "Not at home" and two options:
    "Connect Tailscale" and "Cancel".
 6. Under "Connect Tailscale", add Tailscale's **Connect** action (search for "Tailscale"), then
-   **Wait** 2 seconds, then **Open URLs** with `http://eightpod`.
+   **Wait** 2 seconds, then **Open URLs** with `http://sevensleep`.
 7. Name it "Bed", tap the share button and choose **Add to Home Screen**.
 
 To switch Tailscale off again without thinking about it, add an automation: **Automation** >
@@ -129,7 +129,7 @@ linked in the app, both sides change anyway.
 ## Troubleshooting
 
 - **The shortcut times out**: check that `http://<pod>` opens in Safari on the same phone. A Pod installed before version 3.2.0 needs `:3000` after the name until it is updated. If
-  you used `eightpod`, check Tailscale is connected.
+  you used `sevensleep`, check Tailscale is connected.
 - **The shortcut runs but nothing changes**: the Pod refused the request. Show `details` as
   described under "A refused request is silent" to read why.
 - **"Invalid request data" (HTTP 400)**: a field has the wrong type or value, or a weekly wake-up

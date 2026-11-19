@@ -103,11 +103,11 @@ export class ButtonMonitor {
       // Logged once per run of failures: a server that may not read the journal fails every time
       if (!this.hasWarnedAboutLog) {
         logger.warn(`Button monitor cannot follow the firmware log (journalctl exited with ${exitCode}). `
-          + 'The server user needs the systemd-journal group; reinstalling EightPod sets it. Retrying quietly...');
+          + 'The server user needs the systemd-journal group; reinstalling SevenSleep sets it. Retrying quietly...');
         this.hasWarnedAboutLog = true;
       }
       // Shown on the Status page, so buttons that have stopped working are not a silent failure
-      this.reportStatus('failed', 'The server cannot read the firmware log, so button presses are not seen. Update or reinstall EightPod.');
+      this.reportStatus('failed', 'The server cannot read the firmware log, so button presses are not seen. Update or reinstall SevenSleep.');
       setTimeout(() => {
         if (this.isRunning) this.followFirmwareLog();
       }, RESTART_WAIT_MS);
@@ -124,7 +124,7 @@ export class ButtonMonitor {
     };
   }
 
-  // `firmwarePress` names the side as the firmware does; it is turned into EightPod's side here
+  // `firmwarePress` names the side as the firmware does; it is turned into SevenSleep's side here
   private addPress(firmwarePress: ButtonPress) {
     const press = { ...firmwarePress, side: toFirmwareSide(firmwarePress.side) };
     logger.debug(`Button press: ${press.side} ${press.button} x${press.count}${press.heldMs === undefined ? '' : ` held ${press.heldMs}ms`}`);

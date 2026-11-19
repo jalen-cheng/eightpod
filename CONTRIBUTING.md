@@ -1,6 +1,6 @@
 # Contributing
 
-Contributions are welcome, including big ones. EightPod was built and tested on one Pod 5, so
+Contributions are welcome, including big ones. SevenSleep was built and tested on one Pod 5, so
 there is a lot of room: other Pods, new features, and different ideas about how the app should
 look and work.
 
@@ -13,7 +13,7 @@ look and work.
 
 ## 2. Test reports count as much as code
 
-Issues labelled [needs testing](https://github.com/jalen-cheng/eightpod/issues?q=is%3Aissue+is%3Aopen+label%3A%22needs+testing%22)
+Issues labelled [needs testing](https://github.com/jalen-cheng/sevensleep/issues?q=is%3Aissue+is%3Aopen+label%3A%22needs+testing%22)
 list what nobody has checked: a Pod 3 or Pod 4, taps, features not yet seen on a bed. Try one and
 comment with your Pod model, what you did and what happened. "Works" is a useful report.
 
@@ -48,5 +48,5 @@ comment with your Pod model, what you did and what happened. "Works" is a useful
 
 ## Credit
 
-EightPod builds on [Free Sleep](https://github.com/throwaway31265/free-sleep). Fixes that also
+SevenSleep builds on [Free Sleep](https://github.com/throwaway31265/free-sleep). Fixes that also
 apply there are worth offering to that project as well.

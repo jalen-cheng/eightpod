@@ -1,12 +1,12 @@
-# Installing EightPod
+# Installing SevenSleep
 
-This guide takes a Pod from sealed to a working EightPod install with the internet blocked.
+This guide takes a Pod from sealed to a working SevenSleep install with the internet blocked.
 It covers the Pod 3, Pod 4 and Pod 5.
 
-**Only a Pod 5 was tested.** EightPod was installed and run on one Pod 5. The Pod 3 and Pod 4
+**Only a Pod 5 was tested.** SevenSleep was installed and run on one Pod 5. The Pod 3 and Pod 4
 steps and photos come from the original project
 ([throwaway31265/free-sleep](https://github.com/throwaway31265/free-sleep)) and were not run with
-EightPod. [docs/POD_MODELS.md](docs/POD_MODELS.md) lists what differs on a Pod 3 or 4.
+SevenSleep. [docs/POD_MODELS.md](docs/POD_MODELS.md) lists what differs on a Pod 3 or 4.
 
 Plan for about two hours. Everything typed on the Pod itself is the same whichever computer you
 use; only reaching the serial port differs:
@@ -20,7 +20,7 @@ use; only reaching the serial port differs:
 **Already running Free Sleep?** You do not need any of this. Skip to
 [Coming from Free Sleep](#coming-from-free-sleep).
 
-If you get stuck, open an issue at https://github.com/jalen-cheng/eightpod/issues and include
+If you get stuck, open an issue at https://github.com/jalen-cheng/sevensleep/issues and include
 the output of `fs-debug` if the install got that far.
 
 ## Which Pods
@@ -28,15 +28,15 @@ the output of `fs-debug` if the install got that far.
 | Pod | Status |
 |---|---|
 | Pod 1, Pod 2 | Not compatible |
-| Pod 3 with an SD card | Different way in; see below. Not tested with EightPod |
-| Pod 3 without an SD card (FCC ID 2AYXT61100001) | Steps below. Not tested with EightPod |
-| Pod 4 | Steps below. Not tested with EightPod |
+| Pod 3 with an SD card | Different way in; see below. Not tested with SevenSleep |
+| Pod 3 without an SD card (FCC ID 2AYXT61100001) | Steps below. Not tested with SevenSleep |
+| Pod 4 | Steps below. Not tested with SevenSleep |
 | Pod 5 | Steps below. Tested on one Pod |
 
 The FCC ID is on the back of the Pod, where the water tubes plug in.
 
 **Pod 3 with an SD card.** Root access is gained through the SD card, not the serial cable. The
-original project recommends doing it from Linux and gives two routes; neither was tried with EightPod:
+original project recommends doing it from Linux and gives two routes; neither was tried with SevenSleep:
 
 - Follow https://blopker.com/writing/04-zerosleep-1/ to get root, then start this guide at
   [step 9](#9-disable-eight-sleeps-updates) and skip [step 10](#10-wi-fi). Run step 9 as soon as
@@ -342,17 +342,17 @@ is wrong.
    systemctl restart systemd-timesyncd
    ```
 
-## 12. Install EightPod
+## 12. Install SevenSleep
 
 ```
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/jalen-cheng/eightpod/main/scripts/install.sh)"
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/jalen-cheng/sevensleep/main/scripts/install.sh)"
 ```
 
 It takes several minutes, with long stretches where nothing is printed. Do not unplug the Pod or
 close the terminal. It is finished when it prints `Installation complete!`.
 
-This installs EightPod (`jalen-cheng/eightpod`) and sets up a service that starts it at every
-boot. Later updates come from EightPod too. The source is saved here:
+This installs SevenSleep (`jalen-cheng/sevensleep`) and sets up a service that starts it at every
+boot. Later updates come from SevenSleep too. The source is saved here:
 
 ```
 cat /etc/free-sleep/update_source.conf
@@ -360,7 +360,7 @@ cat /etc/free-sleep/update_source.conf
 
 To install the original project or another fork instead, set the source first. It is saved to the
 same file and reused by every later update. The app's "update available" notice always compares
-with EightPod's own repository, so on an install from another source it is not meaningful:
+with SevenSleep's own repository, so on an install from another source it is not meaningful:
 
 ```
 export FREE_SLEEP_REPO=throwaway31265/free-sleep FREE_SLEEP_BRANCH=main
@@ -380,13 +380,13 @@ export FREE_SLEEP_REPO=throwaway31265/free-sleep FREE_SLEEP_BRANCH=main
 <img src="docs/screenshots/temperature.png" width="260" alt="The Temperature page">
 
 **Opening it by name.** Where the Pod's system runs `systemd-resolved`, the installer also makes
-the Pod answer by name. A Pod that still has Eight Sleep's name (`eight-pod`) is renamed `eightpod`, so
-the address is `http://eightpod.local`. No port is needed; `:3000` keeps working. For another name:
+the Pod answer by name. A Pod that still has Eight Sleep's name (`eight-pod`) is renamed `sevensleep`, so
+the address is `http://sevensleep.local`. No port is needed; `:3000` keeps working. For another name:
 `sh /home/dac/free-sleep/scripts/setup_local_name.sh name <name>`. The name keeps
 working when the router gives the Pod a new address. Whether a Pod 3 or 4 has `systemd-resolved`
 is not known; if the installer printed `systemd-resolved is not running on this Pod`, use the IP address.
 An iPhone, a Mac and Windows 10 or later look up `.local` names. Android and some Linux computers
-may not: if `http://eightpod.local` does not load, use `http://<pod-ip>:3000` and reserve that address
+may not: if `http://sevensleep.local` does not load, use `http://<pod-ip>:3000` and reserve that address
 in your router ([docs/REMOTE_ACCESS.md](docs/REMOTE_ACCESS.md)).
 To switch the name off: `sh /home/dac/free-sleep/scripts/setup_local_name.sh disable`.
 
@@ -444,7 +444,7 @@ outside your home network.
    masked, and the script leaves those alone. What it adds is entries in `/etc/hosts` that point
    Eight Sleep's cloud hosts (`raw-api-upload.8slp.net`, `update-api.8slp.net`,
    `device-api.8slp.net`) at `0.0.0.0`, so they stay unreachable even while the block is briefly
-   lifted for a EightPod update. Warnings that a unit was "not found" are harmless; the unit names
+   lifted for a SevenSleep update. Warnings that a unit was "not found" are harmless; the unit names
    were only confirmed on a Pod 3.
    ```
    sh /home/dac/free-sleep/scripts/updater_lockout.sh enable
@@ -553,7 +553,7 @@ grep -i "button" /persistent/free-sleep-data/logs/*.log | tail -20
 
 - Pod 5: do not install it. It does not work on the tested Pod 5, whose firmware publishes sensor
   data where the analysis does not read it.
-- Pod 3 and Pod 4: the code is unchanged from the original project and untested in EightPod. To
+- Pod 3 and Pod 4: the code is unchanged from the original project and untested in SevenSleep. To
   try it, run `sh /home/dac/free-sleep/scripts/enable_biometrics.sh` over SSH. It lifts the
   internet block while it downloads and switches it on when it finishes.
 
@@ -570,11 +570,11 @@ session you installed from does not have them:
 
 | Command | What it does |
 |---|---|
-| `fs-update` | Updates EightPod from the saved source, keeping settings and schedules. Takes about four minutes and ends with the internet block on |
-| `fs-debug` | Prints a debug report for the Pod and EightPod. Include it in issues |
-| `fs-restart` | Restarts the EightPod services |
+| `fs-update` | Updates SevenSleep from the saved source, keeping settings and schedules. Takes about four minutes and ends with the internet block on |
+| `fs-debug` | Prints a debug report for the Pod and SevenSleep. Include it in issues |
+| `fs-restart` | Restarts the SevenSleep services |
 | `fs-reset-db` | Deletes the sleep-data database and recreates it. Asks for confirmation |
-| `fs-reset` | Deletes all EightPod data (settings, schedules, sleep data) and reinstalls. Asks for confirmation |
+| `fs-reset` | Deletes all SevenSleep data (settings, schedules, sleep data) and reinstalls. Asks for confirmation |
 | `fs-dev-server` | For developers: stops the service and runs the server with hot reload |
 
 **Going back to the original project.** This switches the saved source, so later updates come
@@ -584,7 +584,7 @@ from there too:
 FREE_SLEEP_REPO=throwaway31265/free-sleep sh /home/dac/free-sleep/scripts/update.sh
 ```
 
-Two limits. The app's "update available" notice always compares with EightPod's own repository,
+Two limits. The app's "update available" notice always compares with SevenSleep's own repository,
 so after going back it is not meaningful. The original project's installer does not keep the
 saved-source file, so after going back its own update script decides where updates come from.
 
@@ -599,10 +599,10 @@ the hub stays closed. Settings, schedules and sleep data are kept. Read
    ```
    sh /home/dac/free-sleep/scripts/unblock_internet_access.sh
    ```
-3. Run EightPod's installer over the existing install. It takes several minutes and ends with
+3. Run SevenSleep's installer over the existing install. It takes several minutes and ends with
    `Installation complete!`:
    ```
-   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/jalen-cheng/eightpod/main/scripts/install.sh)"
+   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/jalen-cheng/sevensleep/main/scripts/install.sh)"
    ```
 4. Block the internet again:
    ```
@@ -613,7 +613,7 @@ the hub stays closed. Settings, schedules and sleep data are kept. Read
 
 The folder, the services and the `fs-` commands keep the name `free-sleep`, which is what makes
 this a switch in place. Going back is one command; see "Going back to the original project" above.
-Every EightPod update runs this installer over an existing install, and that is tested on a Pod
+Every SevenSleep update runs this installer over an existing install, and that is tested on a Pod
 5. Starting from the original Free Sleep itself has not been tested, on any Pod.
 
 ## Going back to Eight Sleep
@@ -629,13 +629,13 @@ Every EightPod update runs this installer over an existing install, and that is 
 so the way back is in software.
 
 **Without a reset (any Pod).** This is steps 9, 12 and 16 in reverse: it switches Eight Sleep's
-services back on and leaves EightPod's files in place, switched off. The one test Pod is still in
+services back on and leaves SevenSleep's files in place, switched off. The one test Pod is still in
 use, so these have not been run yet. One thing to know first: once Eight Sleep's updater is back
 on, it may install newer firmware, and some newer Pod 5 firmware does not show the boot prompt
-this guide uses (see "Newer Pod 5 units" at the top), so installing EightPod again later may not
+this guide uses (see "Newer Pod 5 units" at the top), so installing SevenSleep again later may not
 be possible.
 
-1. Stop EightPod and keep it from starting:
+1. Stop SevenSleep and keep it from starting:
    ```
    systemctl disable --now free-sleep free-sleep-stream free-sleep-firewall
    ```

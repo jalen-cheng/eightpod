@@ -14,7 +14,7 @@ read_saved_update_source() {
 }
 FREE_SLEEP_REPO="${FREE_SLEEP_REPO:-$(read_saved_update_source FREE_SLEEP_REPO)}"
 # This fork installs and updates from itself unless told otherwise
-FREE_SLEEP_REPO="${FREE_SLEEP_REPO:-jalen-cheng/eightpod}"
+FREE_SLEEP_REPO="${FREE_SLEEP_REPO:-jalen-cheng/sevensleep}"
 FREE_SLEEP_BRANCH="${FREE_SLEEP_BRANCH:-$(read_saved_update_source FREE_SLEEP_BRANCH)}"
 FREE_SLEEP_BRANCH="${FREE_SLEEP_BRANCH:-main}"
 for source_value in "$FREE_SLEEP_REPO" "$FREE_SLEEP_BRANCH"; do
@@ -245,7 +245,7 @@ fi
 
 cat > "$SERVICE_FILE" <<EOF
 [Unit]
-Description=EightPod Server
+Description=SevenSleep Server
 After=network.target
 
 [Service]
@@ -289,7 +289,7 @@ echo "Creating systemd service file at $UPDATE_SERVICE_FILE..."
 
 cat > "$UPDATE_SERVICE_FILE" <<EOF
 [Unit]
-Description=EightPod Updater
+Description=SevenSleep Updater
 After=free-sleep.service
 
 [Service]
@@ -384,7 +384,7 @@ sh /home/dac/free-sleep/scripts/setup_tailscale.sh sync-scripts || echo "WARNING
 echo "This is your dac.sock path (if it doesn't end in dac.sock, contact support):"
 cat /persistent/free-sleep-data/dac_sock_path.txt 2>/dev/null || echo "No dac.sock path found."
 
-echo -e "\033[0;32mInstallation complete! The EightPod server is running and will start automatically on boot.\033[0m"
+echo -e "\033[0;32mInstallation complete! The SevenSleep server is running and will start automatically on boot.\033[0m"
 echo -e "\033[0;32mSee logs with: journalctl -u free-sleep --no-pager --output=cat\033[0m"
 
 if [ "$migration_failed" = "true" ]; then
