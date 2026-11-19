@@ -44,7 +44,7 @@ export default function DeviceSettingsSection({ updateSettings }: DeviceSettings
   const hasButtons = deviceStatus?.coverVersion === Version.Pod5;
 
   return (
-    <Section title="General">
+    <Section title="General" startsOpen>
       <Group>
         <SettingRow label="This device controls" info={ SIDE_INFO }><SideControl/></SettingRow>
       </Group>

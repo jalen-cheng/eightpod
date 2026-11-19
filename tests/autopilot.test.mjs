@@ -17,8 +17,9 @@ import {
 } from '../server/src/autopilot/breathingRate.ts';
 import {
   DEFAULT_SLEEP_RULES, calibrateSleepRules, countDisagreements, createSleepTracker, detectSleepTimes, findSleepPeriods,
-  mergeSleepPeriods, readTrackerMinutes, replaySleep,
+  mergeSleepPeriods, parseSampleLines, readTrackerMinutes, replaySleep,
 } from '../server/src/autopilot/sleepTracker.ts';
+import { BODY_SWING_RATIO, addEmptyMinute, findEmptySwing, isBodyFelt } from '../server/src/autopilot/bodySignal.ts';
 
 // A made-up piezo signal: a short 7 Hz knock at every heartbeat, over slow breathing and noise
 const makeHeartbeatSignal = (beatsPerMinute, seconds = HEART_RATE_WINDOW_SECONDS) => {
@@ -216,6 +217,9 @@ test('a health app\'s samples are joined into sleeps, leaving out awake and in-b
     { startMs: at(6, 20), endMs: at(8), value: 'Core' },
     { startMs: at(8), endMs: at(8, 10), value: 'Awake' },
     { startMs: at(8, 10), endMs: at(13, 40), value: 'REM' },
+    // Apple Health's numbers for in bed and awake are left out like the words
+    { startMs: at(6), endMs: at(14), value: '0' },
+    { startMs: at(8), endMs: at(8, 10), value: '2' },
     // A nap that afternoon, and a blip too short to count
     { startMs: at(21), endMs: at(21, 40), value: 'Asleep' },
     { startMs: at(23, 30), endMs: at(23, 35) },
@@ -523,4 +527,74 @@ test('one sleeper seen by both sides is one sleep: the side with the most sleep 
   const napLater = stay('right', nightStartMs + 14 * 60 * 60_000, 40, 5);
   const picked = pickBedStays([rightSameHours, napLater, left]);
   assert.deepEqual(picked.map(night => [night.side, night.minutes.length]), [['left', 430], ['right', 45]]);
+});
+
+test('one turn on the way to sleep is allowed; two, or a restless minute, start the wait over', () => {
+  const still = { isInBed: true, movementSeconds: 1 };
+  const turn = { isInBed: true, movementSeconds: 7 };
+  const restless = { isInBed: true, movementSeconds: 20 };
+  const stageAfter = (minutes) => {
+    const tracker = createSleepTracker();
+    let state;
+    for (const minute of minutes) state = tracker.addMinute(minute);
+    return state;
+  };
+  const fill = (count, minute) => new Array(count).fill(minute);
+
+  // Fifteen minutes with one turn in the middle: asleep, counted from the start of the stretch
+  const withOneTurn = stageAfter([...fill(6, still), turn, ...fill(8, still)]);
+  assert.equal(withOneTurn.stage, 'asleep');
+  assert.equal(withOneTurn.minutesAsleep, 15);
+  // Two turns in the stretch, or one restless minute, and it is not sleep yet
+  assert.equal(stageAfter([...fill(5, still), turn, ...fill(3, still), turn, ...fill(5, still)]).stage, 'awake');
+  assert.equal(stageAfter([...fill(6, still), restless, ...fill(8, still)]).stage, 'awake');
+  // Sleep is not dated from a turn, nor declared during one: the stretch begins and ends still
+  assert.equal(stageAfter([turn, ...fill(14, still)]).stage, 'awake');
+  assert.equal(stageAfter([turn, ...fill(15, still)]).stage, 'asleep');
+  assert.equal(stageAfter([...fill(14, still), turn]).stage, 'awake');
+});
+
+test('a body is told from a thing on the bed by how hard the piezo is shaken', () => {
+  // Figures from one Pod 5: the empty bed's quiet second, a laptop left on it, one person
+  // lying still on this side, and the same person felt from the other side
+  const emptyBedSwing = 21000;
+  assert.equal(isBodyFelt(23400, emptyBedSwing), false);
+  assert.equal(isBodyFelt(1150000, emptyBedSwing), true);
+  assert.equal(isBodyFelt(225000, emptyBedSwing), true);
+  assert.equal(isBodyFelt(emptyBedSwing * BODY_SWING_RATIO, emptyBedSwing), true);
+  // Without a reading, or before the empty bed has been measured, it cannot be said
+  assert.equal(isBodyFelt(undefined, emptyBedSwing), undefined);
+  assert.equal(isBodyFelt(1150000, undefined), undefined);
+  assert.equal(isBodyFelt(1150000, 0), undefined);
+});
+
+test('the empty bed\'s level needs ten empty minutes and is not raised by a few loud ones', () => {
+  let quietSwings = [];
+  for (let minute = 0; minute < 9; minute++) quietSwings = addEmptyMinute(quietSwings, 20000 + minute * 100);
+  assert.equal(findEmptySwing(quietSwings), undefined);
+  quietSwings = addEmptyMinute(quietSwings, 20900);
+  assert.equal(findEmptySwing(quietSwings), 20200);
+  // Someone sits on the edge for twenty minutes without lying down: the level stays the bed's
+  for (let minute = 0; minute < 20; minute++) quietSwings = addEmptyMinute(quietSwings, 600000);
+  assert.ok(findEmptySwing(quietSwings) < 21000);
+  // Only the newest two hours are kept
+  for (let minute = 0; minute < 300; minute++) quietSwings = addEmptyMinute(quietSwings, 15000);
+  assert.equal(quietSwings.length, 120);
+  assert.equal(findEmptySwing(quietSwings), 15000);
+});
+
+test('samples sent as text are read one a line, leaving out lines without both times', () => {
+  const lines = [
+    '2026-11-18T23:12:00-08:00|2026-11-19T01:40:00-08:00|Core',
+    ' 2026-11-19T01:40:00-08:00 | 2026-11-19T01:48:00-08:00 | Awake ',
+    '',
+    '2026-11-19T01:48:00-08:00|2026-11-19T06:30:00-08:00',
+    'not a sample',
+  ].join('\r\n');
+  assert.deepEqual(parseSampleLines(lines), [
+    { start: '2026-11-18T23:12:00-08:00', end: '2026-11-19T01:40:00-08:00', value: 'Core' },
+    { start: '2026-11-19T01:40:00-08:00', end: '2026-11-19T01:48:00-08:00', value: 'Awake' },
+    { start: '2026-11-19T01:48:00-08:00', end: '2026-11-19T06:30:00-08:00', value: undefined },
+  ]);
+  assert.deepEqual(parseSampleLines(''), []);
 });

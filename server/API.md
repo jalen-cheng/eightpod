@@ -671,6 +671,7 @@ on both sides.
 | `room` | The air at the cover. Read as hundredths of a degree; not checked against a thermometer, and not acted on |
 | `rehearsal` | Present only while a 20-minute test is running, with the minutes it has left |
 | `stage` | `out`, `awake` or `asleep` |
+| `thingOnBed` | `true` while the side's sensors feel something on it that does not shake the piezo sensor as a body does (a laptop, a bag). The stage stays `out` |
 | `sleepKind` | While asleep: `night` when the autopilot is treating it as the night's sleep, `nap` when it is leaving it alone (it began at an hour that looks like a nap and has not yet lasted 3 hours) |
 | `heartRate`, `breathingRate` | Over the last 5 minutes; missing when no reading could be trusted. Shown only |
 | `offsetF` | How far the plan is from the schedule's temperature |
@@ -699,7 +700,7 @@ nights have a record). Send the two times, or a health app's raw samples:
 | --- | --- |
 | `source` | optional name, up to 40 characters: `"Apple Health"`, `"Whoop"` |
 | `asleepAt`, `awakeAt` | date and time with an offset, such as `2026-11-18T23:12:00-08:00` |
-| `samples` | in place of the two times: up to 2000 of `{ "start", "end", "value" }`. Samples whose value says awake or in bed are left out, and the rest are joined into sleeps (a gap over an hour starts a new one). Shorter gaps are kept as time awake, which the fitting uses |
+| `samples` | in place of the two times: up to 2000 of `{ "start", "end", "value" }`, or the same as text with one sample a line, `start\|end\|value` (what a phone shortcut can send). Samples whose value says awake or in bed are left out, and the rest are joined into sleeps (a gap over an hour starts a new one). Shorter gaps are kept as time awake, which the fitting uses |
 | `side` | optional `left` or `right`, to look only at that side's stays |
 
 ```json
@@ -709,14 +710,15 @@ nights have a record). Send the two times, or a health app's raw samples:
 Times must carry their zone (`-08:00` or `Z`). Sleeps in the future, older than 100 days, longer
 than 18 hours or shorter than 15 minutes are dropped. The response says how many sleeps were
 read, how many saved stays they matched, the rules now in use, and the `tracker` summary. 400 when
-the body is not valid or holds no sleep.
+the body is not valid or holds no sleep. Either way it carries a `message` in words ("1 sleep
+received from Apple Health. Matched 1 stay in bed."), for a shortcut to show as it is.
 
 ### `GET /api/autopilot/nights`
 
 The saved stays in bed, newest first, without their minute rows: `side`, `startedAtMs`,
 `minutesLogged`, `kind` (`nap` for a sleep under 3 hours, else `night`), the bed's `asleepAtMs`
 and `awakeAtMs`, `asleepConfirmedAtMs` (when the bed first knew), whether the autopilot `steered`
-it and under which `policy` version, `wakeUps` (breaks in the sleep), the middle `heartRate` and `breathingRate` of
+it and under which `policy` version, `emptySwing` (the empty bed's piezo level that a body was told from), `wakeUps` (breaks in the sleep), the middle `heartRate` and `breathingRate` of
 the asleep minutes, and `tracker` when times were sent. `?limit=` takes 1 to 60 (default 14).
 
 With `?date=2026-11-18` it returns the stays which ended on that day (in the Pod's time zone),

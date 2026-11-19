@@ -4,7 +4,7 @@ import {
   applyTrackerSleep, getAutopilotSnapshot, getNightSummaries, getNightsExport, getNightsOn, startRehearsal, stopRehearsal,
 } from '../../autopilot/autopilotMonitor.js';
 import { REHEARSAL_MINUTES } from '../../autopilot/nightPlan.js';
-import { SleepPeriod, findSleepPeriods } from '../../autopilot/sleepTracker.js';
+import { SleepPeriod, findSleepPeriods, parseSampleLines } from '../../autopilot/sleepTracker.js';
 
 const router = express.Router();
 
@@ -74,25 +74,42 @@ router.get('/autopilot/nights/export', (req: Request, res: Response) => {
 const isDate = (text: string) => !Number.isNaN(Date.parse(text)) && /(Z|[+-]\d{2}:?\d{2})$/.test(text.trim());
 const DateText = z.string().refine(isDate, 'Not a date and time with its zone, such as 2026-11-18T23:12:00-08:00');
 
-// A worn tracker's account of a sleep: either the two times, or the health app's raw samples.
+const SampleSchema = z.object({ start: DateText, end: DateText, value: z.string().max(40).optional() });
+const MAX_SAMPLES = 2000;
+// Samples as they may arrive: a list of objects, text with one sample a line, or a list of such lines
+const readSamples = (sent: unknown): unknown => {
+  if (typeof sent === 'string') return parseSampleLines(sent);
+  if (Array.isArray(sent)) return sent.flatMap((item: unknown) => (typeof item === 'string' ? parseSampleLines(item) : [item]));
+  return sent;
+};
+
+// A worn tracker's account of a sleep: either the two times, or the health app's raw samples
+// (as a list, or as text with one sample a line, which is what a phone shortcut can send).
 // `side` narrows it to one side's stays; without it the stays of both sides are looked at.
 const TrackerSleepSchema = z.object({
   side: SideSchema.optional(),
   source: z.string().trim().min(1).max(40).default('Sleep tracker'),
   asleepAt: DateText.optional(),
   awakeAt: DateText.optional(),
-  samples: z.array(z.object({ start: DateText, end: DateText, value: z.string().max(40).optional() })).max(2000).optional(),
+  samples: z.preprocess(readSamples, z.array(SampleSchema).max(MAX_SAMPLES)).optional(),
 }).refine(
   body => body.samples !== undefined || (body.asleepAt !== undefined && body.awakeAt !== undefined),
   'Send asleepAt and awakeAt, or samples',
 );
 
+const countOf = (count: number, noun: string) => `${count} ${noun}${count === 1 ? '' : 's'}`;
+
 // Takes sleep and wake times from a watch or band (by way of a phone shortcut or a script),
-// files them with the stays in bed they overlap, and fits the bed's own sleep rules to them
+// files them with the stays in bed they overlap, and fits the bed's own sleep rules to them.
+// Every answer carries a `message` in words, for a shortcut to show as it is.
 router.post('/autopilot/sleepTimes', (req: Request, res: Response) => {
   const validationResult = TrackerSleepSchema.safeParse(req.body);
   if (!validationResult.success) {
-    res.status(400).json({ error: 'Invalid request', details: validationResult.error.format() });
+    res.status(400).json({
+      error: 'Invalid request',
+      message: 'SevenSleep could not read what was sent: each sleep needs a start and an end time that say their zone.',
+      details: validationResult.error.format(),
+    });
     return;
   }
   const { side, source, asleepAt, awakeAt, samples } = validationResult.data;
@@ -105,12 +122,24 @@ router.post('/autopilot/sleepTimes', (req: Request, res: Response) => {
   periods = periods.filter(period => period.awakeAtMs > period.asleepAtMs && period.awakeAtMs - period.asleepAtMs <= LONGEST_SLEEP_MS
     && period.awakeAtMs <= nowMs + CLOCK_SLACK_MS && period.asleepAtMs >= nowMs - OLDEST_SLEEP_MS);
   if (periods.length === 0) {
-    res.status(400).json({ error: 'No sleep found in what was sent' });
+    res.status(400).json({
+      error: 'No sleep found in what was sent',
+      message: `No sleep found in what ${source} sent. If your tracker's app is not writing sleep there, there is nothing to send.`,
+    });
     return;
   }
   const matchedNights = applyTrackerSleep(source, periods, side);
   const snapshot = getAutopilotSnapshot().left;
-  res.json({ sleeps: periods.length, matchedNights, rules: snapshot.rules, tracker: snapshot.tracker });
+  const matched = matchedNights > 0
+    ? `Matched ${countOf(matchedNights, 'stay')} in bed.`
+    : 'No stay in bed saved on the Pod overlaps it.';
+  res.json({
+    message: `${countOf(periods.length, 'sleep')} received from ${source}. ${matched}`,
+    sleeps: periods.length,
+    matchedNights,
+    rules: snapshot.rules,
+    tracker: snapshot.tracker,
+  });
 });
 
 export default router;

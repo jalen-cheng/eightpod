@@ -13,29 +13,55 @@ lists sleep sessions and stages among what it writes. Apple Health has no web ad
 could ask: only something on the phone can read it. So the link is an iPhone Shortcut, run by
 an automation each morning.
 
-1. In **Shortcuts**, tap **+** and add **Find Health Samples**: Type is **Sleep**, Start Date is
-   in the last 1 day.
-2. Add **Repeat with Each** over the samples. Inside it add a **Text** action holding
-   `{"start":"Start Date","end":"End Date","value":"Value"}`, picking each from **Repeat Item**,
-   with the two dates set to **ISO 8601**.
-3. After the repeat, add **Combine Text** on the Repeat Results, with a comma as the separator.
-4. Add a **Text** action holding `{"source":"Apple Health","samples":[Combined Text]}`, with
-   Combined Text picked from the step before.
-5. Add **Get Contents of URL** with `http://sevensleep.local/api/autopilot/sleepTimes`, Method
-   **POST**, a header `Content-Type: application/json`, Request Body **File**, and that Text as
-   the file. If your Pod has another name or you use its IP address, put that in place of
-   `sevensleep.local`: it is the address the app opens at.
-6. In **Automation**, run it when your **Sleep Focus turns off**, or at a set time each morning.
+### Add the ready-made Shortcut
 
-Run it once by hand to check it: the Shortcut's result shows how many sleeps were read and how
-many saved stays in bed they matched, and **Settings > Autopilot** then shows "Apple Health,
-last received" with today's date.
+1. On the iPhone, open **[Send sleep to SevenSleep](https://github.com/jalen-cheng/sevensleep/raw/main/docs/shortcuts/Send%20sleep%20to%20SevenSleep.shortcut)**, tap the download in
+   Safari, and tap **Add Shortcut**.
+2. It asks for your Pod's address. Leave `http://sevensleep.local` unless your Pod has another
+   name or you use its IP address: it is the address the app opens at.
+3. Tap the Shortcut once to run it. The first run asks to read Sleep from Health and to reach
+   the Pod on your network: allow both.
+4. A notification from SevenSleep says what happened, for example "1 sleep received from Apple
+   Health. Matched 1 stay in bed." **Settings > Autopilot** then shows "Apple Health, last
+   received" with today's date.
+5. In **Automation**, run it when your **Sleep Focus turns off**, or at a set time each
+   morning, with **Run Immediately**.
+
+It reads the Sleep samples that began in the last two days and sends each one's start, end and
+stage. Sending a night twice changes nothing.
+
+| What you see | What it means |
+|---|---|
+| "No sleep found in what Apple Health sent" | The Shortcut reached the Pod, and Health has no sleep for the last two days. Look in **Health > Browse > Sleep**: if last night is not there, your tracker's app is not writing sleep to Apple Health |
+| "Could not connect to the server", or the address not found | The phone cannot reach the Pod. Be on the same Wi-Fi, allow Shortcuts under **Settings > Privacy & Security > Local Network**, or put the Pod's IP address in the Shortcut's first action |
+| "…received… No stay in bed saved on the Pod overlaps it" | The sleep arrived, but the Pod has no saved stay for those hours. It saves stays of 20 minutes or more, and only while a person is on the bed |
+| Nothing at all | Notifications for Shortcuts are off: **Settings > Notifications > Shortcuts** |
+
+The file is made by `scripts/build_apple_health_shortcut.py`, with every action written the
+way working exported shortcuts write it, and signed with `shortcuts sign` on a Mac. **It has
+not yet been run on a phone here**, and neither has the by-hand version below.
 
 Once set up it runs by itself, with one catch: an iPhone only lets a shortcut read health data
 while it is unlocked, so the night arrives when you first use the phone, not at a fixed minute.
 That is fine here: it is looked at after the fact.
 
-Not yet run with a real tracker or phone.
+### Or build it by hand
+
+The same thirteen actions, in order:
+
+1. **Text**: `http://sevensleep.local` (or your Pod's address).
+2. **Find Health Samples** where **Type** is **Sleep** and **Start Date** is in the last 2 days.
+3. **Repeat with Each** over the Health Samples. Inside it:
+   - **Get Details of Health Sample**: **Start Date** of Repeat Item, then **Format Date** on
+     it with **ISO 8601** and **Include ISO 8601 Time** on.
+   - The same two actions for **End Date**.
+   - **Get Details of Health Sample**: **Value** of Repeat Item.
+   - **Text**: the first Formatted Date, `|`, the second Formatted Date, `|`, the Value.
+4. After **End Repeat**, **Get Contents of URL**: the Text from step 1 followed by
+   `/api/autopilot/sleepTimes`, Method **POST**, Request Body **JSON** with two text fields,
+   `source` = `Apple Health` and `samples` = **Repeat Results**.
+5. **Get Dictionary Value** for `message` in the Contents of URL, and **Show Notification**
+   with it.
 
 ## Other trackers, Android and scripts
 
