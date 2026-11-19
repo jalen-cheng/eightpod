@@ -299,7 +299,7 @@ Stored in `settingsDB.json`. The values below are the defaults, except `id` (a r
 | `manualOn.hours` | `3`, `6` or `12`: how long a side switched on by hand stays on. |
 | `manualOn.overridesSchedule` | When true, the schedule leaves a side switched on by hand alone until it turns off. Alarms still go off. |
 | `autopilot.enabled` | Lets the bed adjust a sleeping side's temperature (Pod 5, experimental). See [Autopilot](#autopilot). |
-| `autopilot.baseTemperatureF` | The temperature the autopilot's changes are counted from, 50 to 110. `null` (the default) follows the schedule. With a temperature set, scheduled temperature changes are skipped while a night is being steered |
+| `autopilot.baseTemperatureF` | The temperature the autopilot's changes are counted from, 50 to 110. `null` (the default) uses whatever the bed is set to when the sleeper falls asleep. Either way, scheduled temperature changes are skipped while a night is being steered |
 | `presence.sensitivity` | `low`, `medium` or `high` |
 | `presence.wakeAfterHours` | `enabled`, `hours` (integer 1-14): vibrate the alarm after this long in bed in one stay. |
 | `presence.turnOnWhenInBed` | `enabled`, `temperatureF` (50-110), `stayOn` (integer hours 1-12, or `"untilOutOfBed"`) |
@@ -676,13 +676,12 @@ on both sides.
 | `holdingF` | A temperature set by hand that the autopilot is holding and not adjusting |
 | `learned` | What your changes have taught it for each third of the night, in °F |
 | `rules` | The sleep rules in use: still minutes before "asleep", moving seconds that make a minute restless, and `maxBreathingSpread` when calibration has found that asking for steady breathing helps |
-| `tracker` | The last sleep tracker to report, the share of minutes the bed agrees with it on, and whether the rules have been fitted to it |
+| `tracker` | The last sleep tracker to report, the share of minutes the bed agrees with it on, whether the rules have been fitted to it, `nightsNeeded` (7) before they are, and the record received last: `lastSleeps` (each `asleepAtMs` and `awakeAtMs`) and `lastMatchedStays`, how many saved stays it was filed with |
 
 ### `POST /api/autopilot/sleepTimes`
 
 A sleep tracker's record of a night, sent by a phone shortcut, an app or a script. Each sleep is
-filed with every saved stay in bed it overlaps, and the sleep `rules` are fitted again (once 5
-nights have a record). Send the two times, or a health app's raw samples:
+filed with every saved stay in bed it overlaps, and the sleep `rules` are fitted again (once 7 nights have a record). Send the two times, or a health app's raw samples:
 
 | Field | Type |
 | --- | --- |
@@ -705,7 +704,7 @@ received from Apple Health. Matched 1 stay in bed."), for a shortcut to show as 
 
 The saved stays in bed, newest first, without their minute rows: `side`, `startedAtMs`,
 `minutesLogged`, `kind` (`nap` for a sleep under 3 hours, else `night`), the bed's `asleepAtMs`
-and `awakeAtMs`, `asleepConfirmedAtMs` (when the bed first knew), whether the autopilot `steered`
+and `awakeAtMs`, `stillSinceMs` (when the stillness that showed the sleep began: a night's `asleepAtMs`, while a nap's is `asleepConfirmedAtMs`), `asleepConfirmedAtMs` (when the bed first knew), whether the autopilot `steered`
 it and under which `policy` version, `emptySwing` (the empty bed's piezo level that a body was told from), `wakeUps` (breaks in the sleep), the middle `heartRate` and `breathingRate` of
 the asleep minutes, and `tracker` when times were sent. `?limit=` takes 1 to 60 (default 14).
 

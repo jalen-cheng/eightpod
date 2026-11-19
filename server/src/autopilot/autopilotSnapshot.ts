@@ -14,6 +14,12 @@ export type TrackerLink = {
   agreementPercent: number;
   // True once the bed's sleep rules have been changed from the default to fit the tracker
   isTuned: boolean;
+  // How many nights with a record the rules need before they are fitted
+  nightsNeeded: number;
+  // The sleeps in the record received last, and how many saved stays they were filed with.
+  // Kept so it can be seen what arrived, also when no stay matched.
+  lastSleeps?: { asleepAtMs: number; awakeAtMs: number }[];
+  lastMatchedStays?: number;
 };
 
 export type AutopilotSideSnapshot = {

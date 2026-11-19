@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="8ff738cc-9ee7-5eba-b03d-b31d32b2c1c0")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="eac47f8a-bc46-5f55-9071-e15af8d418b5")}catch(e){}}();
 import { SequentialQueue } from './sequentialQueue.js';
 import { MessageReadTimeoutError, MessageStream } from './messageStream.js';
 import { frankenCommands } from './deviceApi.js';
@@ -25,6 +25,8 @@ class FrankenConnectionFailedError extends Error {
         this.name = 'FrankenConnectionFailedError';
     }
 }
+// How much of the firmware's answer to a command is written to the log
+const FIRMWARE_ANSWER_LOGGED_CHARS = 200;
 export class Franken {
     socket;
     messageStream;
@@ -87,7 +89,10 @@ export class Franken {
         const cleanedArg = this.tryStripNewlines(arg);
         logger.debug(`commandNumber: ${commandNumber}`);
         logger.debug(`cleanedArg: ${cleanedArg}`);
-        await this.sendMessage(`${commandNumber}\n${cleanedArg}`);
+        const answer = await this.sendMessage(`${commandNumber}\n${cleanedArg}`);
+        // Nothing acts on the answer yet. It is logged so that what the firmware says to a value it
+        // refuses or rounds can be learned from the log.
+        logger.debug(`Firmware answered ${command}: ${JSON.stringify(answer.trim().slice(0, FIRMWARE_ANSWER_LOGGED_CHARS))}`);
     }
     async getDeviceStatus(getGestures = false, quiet = false) {
         const command = 'DEVICE_STATUS';
@@ -225,4 +230,4 @@ export async function disconnectFranken() {
     await shutdownFrankenServer();
 }
 //# sourceMappingURL=frankenServer.js.map
-//# debugId=8ff738cc-9ee7-5eba-b03d-b31d32b2c1c0
+//# debugId=eac47f8a-bc46-5f55-9071-e15af8d418b5

@@ -10,7 +10,7 @@ import { DailySchedule, Time } from '@api/schedulesSchema.ts';
 import { useAppStore } from '@state/appStore.tsx';
 import InfoTip from '@components/InfoTip.tsx';
 import { useScheduleStore } from './scheduleStore.tsx';
-import { TemperatureSelect, TimeField } from './ScheduleFields.tsx';
+import { NARROW_PHONE_QUERY, TemperatureSelect, TimeField } from './ScheduleFields.tsx';
 import AlarmOptionsDialog from './AlarmOptionsDialog.tsx';
 import { OFF_AFTER_ALARM_MINUTES, offTimeAfterAlarm } from '@api/automaticOffTime.ts';
 import { getTemperatureColor } from '@lib/temperatureConversions.ts';
@@ -61,7 +61,10 @@ const NightRow = ({ label, info, error, dotColor, isMainEvent, children }: Night
         />
       ) }
       <Box sx={ { display: 'flex', alignItems: 'center', gap: 0.75, minHeight: 40 } }>
-        <Typography variant="body2" sx={ { width: ROW_LABEL_WIDTH_PX, flexShrink: 0, color: 'text.secondary', whiteSpace: 'nowrap' } }>
+        <Typography
+          variant="body2"
+          sx={ { width: ROW_LABEL_WIDTH_PX, flexShrink: 0, color: 'text.secondary', whiteSpace: 'nowrap', [NARROW_PHONE_QUERY]: { width: 44 } } }
+        >
           { label }
         </Typography>
         <Box sx={ { display: 'flex', alignItems: 'center', gap: 0.75, flex: 1, minWidth: 0 } }>

@@ -32,6 +32,9 @@ class FrankenConnectionFailedError extends Error {
   }
 }
 
+// How much of the firmware's answer to a command is written to the log
+const FIRMWARE_ANSWER_LOGGED_CHARS = 200;
+
 export class Franken {
   private static readonly responseDelayMs = 10;
   private static readonly unsolicitedPreviewLength = 300;
@@ -96,7 +99,10 @@ export class Franken {
     const cleanedArg = this.tryStripNewlines(arg);
     logger.debug(`commandNumber: ${commandNumber}`);
     logger.debug(`cleanedArg: ${cleanedArg}`);
-    await this.sendMessage(`${commandNumber}\n${cleanedArg}`);
+    const answer = await this.sendMessage(`${commandNumber}\n${cleanedArg}`);
+    // Nothing acts on the answer yet. It is logged so that what the firmware says to a value it
+    // refuses or rounds can be learned from the log.
+    logger.debug(`Firmware answered ${command}: ${JSON.stringify(answer.trim().slice(0, FIRMWARE_ANSWER_LOGGED_CHARS))}`);
   }
 
   public async getDeviceStatus(getGestures=false, quiet=false): Promise<DeviceStatus> {

@@ -145,8 +145,8 @@ export type Calibration = {
   isTuned: boolean;
 };
 
-// Fewer nights than this and the rules are left alone
-export const MIN_NIGHTS_TO_CALIBRATE = 5;
+// Fewer nights than this and the rules are left alone: a week covers a working week and a weekend
+export const MIN_NIGHTS_TO_CALIBRATE = 7;
 // Fitted rules are only taken up if, tried on each night after being fitted to the others, they
 // disagree with the tracker on fewer than this fraction of the minutes the default rules do. A
 // fit that only looks good on the nights it was made from is not taken.

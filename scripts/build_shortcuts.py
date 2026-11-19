@@ -7,9 +7,10 @@ sign each on a Mac, into docs/shortcuts under the Shortcut's own name:
     python3 scripts/build_shortcuts.py unsigned/
     shortcuts sign --mode anyone --input "unsigned/Bed off.shortcut" --output "docs/shortcuts/Bed off.shortcut"
 
-There are two sets. The home set talks to the Pod at its home address and needs nothing else.
-The "via Tailscale" set connects Tailscale first, so it works anywhere. "Send sleep to
-SevenSleep" only runs on the home Wi-Fi, where an automation can run it every day.
+Two of them do what the app cannot: "Send sleep to SevenSleep" reads Apple Health (and only
+runs on the home Wi-Fi, where an automation can run it every day), and "Open SevenSleep"
+opens the app from anywhere, connecting Tailscale first when away from home. The other four
+are optional, for Siri and automations: they talk to the Pod at its home address.
 
 Every Shortcut begins with Text actions holding what differs from one home to the next (the
 Pod's address, the home Wi-Fi's name). They are asked for when the Shortcut is added, so nobody
@@ -25,7 +26,6 @@ import uuid
 
 HOME_ADDRESS = 'http://sevensleep.local'
 TAILSCALE_ADDRESS = 'http://sevensleep:3000'
-TAILSCALE_SUFFIX = ' via Tailscale'
 ADDRESS_OUTPUT_NAME = 'Pod address'
 AWAY_ADDRESS_OUTPUT_NAME = 'Pod address away'
 WIFI_OUTPUT_NAME = 'Home Wi-Fi'
@@ -272,19 +272,17 @@ def send_sleep_actions():
     ]
 
 
-def with_address(is_via_tailscale, build_rest):
-    """A Shortcut that begins with the Pod's address, connects Tailscale first when it is the
-    Tailscale kind, and then does what `build_rest(address_uuid)` returns."""
+def with_address(build_rest):
+    """A Shortcut that begins with the Pod's address at home and then does what
+    `build_rest(address_uuid)` returns."""
     address = new_uuid()
-    default = TAILSCALE_ADDRESS if is_via_tailscale else HOME_ADDRESS
-    connect = tailscale_connect() if is_via_tailscale else []
-    return [asked_text(ADDRESS_OUTPUT_NAME, default, address), *connect, *build_rest(address)]
+    return [asked_text(ADDRESS_OUTPUT_NAME, HOME_ADDRESS, address), *build_rest(address)]
 
 
-def bed_temperature_actions(is_via_tailscale):
+def bed_temperature_actions():
     """Asks for a number from -10 to 10, turns the bed on and sets it."""
     asked = new_uuid()
-    return with_address(is_via_tailscale, lambda address: [
+    return with_address(lambda address: [
         action('ask', {
             'WFAskActionPrompt': 'Bed temperature, -10 to 10',
             'WFInputType': 'Number',
@@ -296,36 +294,29 @@ def bed_temperature_actions(is_via_tailscale):
     ])
 
 
-def bed_alarm_actions(is_via_tailscale):
+def bed_alarm_actions():
     """Asks for a time and sets a one-time alarm for the next time the clock shows it."""
     asked = new_uuid()
-    return with_address(is_via_tailscale, lambda address: [
+    return with_address(lambda address: [
         action('ask', {'WFAskActionPrompt': 'Alarm time', 'WFInputType': 'Time', 'UUID': asked}),
         request(address, '/api/alarm/time', new_uuid(), [text_field('time', [output_of(asked, 'Provided Input')])]),
     ])
 
 
-def bed_status_actions(is_via_tailscale):
+def bed_status_actions():
     """Shows what the bed is set to and what it has reached, as a sentence."""
     response, summary = new_uuid(), new_uuid()
-    return with_address(is_via_tailscale, lambda address: [
+    return with_address(lambda address: [
         request(address, '/api/deviceStatus/dial', response),
         answer_value(response, 'summary', summary),
         action('showresult', {'Text': text_with([output_of(summary, 'Dictionary Value')])}),
     ])
 
 
-def bed_off_actions(is_via_tailscale):
+def bed_off_actions():
     """Turns both sides off."""
-    return with_address(is_via_tailscale, lambda address: [
+    return with_address(lambda address: [
         request(address, '/api/deviceStatus', new_uuid(), both_sides('isOn', False)),
-    ])
-
-
-def away_mode_actions(is_via_tailscale, is_away):
-    """Switches away mode on or off for both sides: the schedule and alarms stop, or start again."""
-    return with_address(is_via_tailscale, lambda address: [
-        request(address, '/api/settings', new_uuid(), both_sides('awayMode', is_away)),
     ])
 
 
@@ -346,22 +337,14 @@ def open_app_actions():
     ]
 
 
-# The Shortcuts that come in both kinds, by name, each built for home or for Tailscale
-TWO_KINDS = {
-    'Bed temperature': bed_temperature_actions,
-    'Bed alarm': bed_alarm_actions,
-    'Bed status': bed_status_actions,
-    'Bed off': bed_off_actions,
-    'Away mode on': lambda is_via_tailscale: away_mode_actions(is_via_tailscale, True),
-    'Away mode off': lambda is_via_tailscale: away_mode_actions(is_via_tailscale, False),
-}
-
 # Every Shortcut by the name it is added under
 SHORTCUTS = {
     'Send sleep to SevenSleep': send_sleep_actions,
     'Open SevenSleep': open_app_actions,
-    **{name: (lambda build=build: build(False)) for name, build in TWO_KINDS.items()},
-    **{f'{name}{TAILSCALE_SUFFIX}': (lambda build=build: build(True)) for name, build in TWO_KINDS.items()},
+    'Bed temperature': bed_temperature_actions,
+    'Bed alarm': bed_alarm_actions,
+    'Bed status': bed_status_actions,
+    'Bed off': bed_off_actions,
 }
 
 # What is asked when a Shortcut is added, by the name of the Text action that holds the answer
@@ -380,13 +363,12 @@ def build_shortcut(name):
         output_name = parameters.get('CustomOutputName')
         if output_name not in QUESTIONS:
             continue
-        is_tailscale_address = output_name == ADDRESS_OUTPUT_NAME and parameters['WFTextActionText'] == TAILSCALE_ADDRESS
         questions.append({
             'ActionIndex': index,
             'Category': 'Parameter',
             'DefaultValue': parameters['WFTextActionText'],
             'ParameterKey': 'WFTextActionText',
-            'Text': TAILSCALE_ADDRESS_QUESTION if is_tailscale_address else QUESTIONS[output_name],
+            'Text': QUESTIONS[output_name],
         })
     return {
         'WFWorkflowClientVersion': '4607',
