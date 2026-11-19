@@ -133,6 +133,22 @@ Issues and pull requests go to https://github.com/jalen-cheng/sevensleep.
   - No abbreviated variable names of two characters or fewer.
   - No one-off hacks. Put new files and code where they belong.
 
+## Docs site
+
+The documentation website at https://jalen-cheng.github.io/sevensleep/ is built with [VitePress](https://vitepress.dev) from the Markdown files in this repository, so edit those files, not the site. `site/` holds only the config, the theme, the Getting started page (`site/pages/`) and the sync script.
+
+`npm run build` first runs `site/scripts/syncDocs.mjs`. It copies each page listed in `site/scripts/docsManifest.mjs` into `site/content/` (not committed) with a title, rewrites links between pages and to image paths, copies only the images the pages embed, and turns links to other repository files into GitHub links. It stops if a link points at a file that does not exist. To add a page, add it to the manifest, which also sets the sidebar.
+
+```bash
+cd site
+npm install
+npm run dev       # local server with reload; re-run it after editing a source Markdown file
+npm run build     # the same build GitHub Actions runs
+npm run preview   # serve the build at http://localhost:4173/sevensleep/
+```
+
+`.github/workflows/docs.yaml` builds and publishes the site to GitHub Pages when a docs source or `site/` changes on `main`. Pages must be set to deploy from GitHub Actions in the repository settings.
+
 ## Demo and screenshots
 
 The demo at [sevensleep.vercel.app](https://sevensleep.vercel.app) is the app built with made-up data
