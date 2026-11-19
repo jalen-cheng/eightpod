@@ -128,14 +128,17 @@ export const handlers = [
       left: {
         stage: 'asleep', minutesAsleep: 62, offsetF: -3,
         lastChange: '81°F, heading for 3°F cooler (time of night, first sleep cycle)', learned: { early: -0.5, middle: 0, late: 0 },
-        sleepKind: 'night', rules: { stillMinutesToSleep: 10, restlessSecondsToWake: 20 },
+        sleepKind: 'night', rules: { stillMinutesToSleep: 10, restlessSecondsToWake: 20, calmMinutesToResume: 5 },
         tracker: {
           source: 'Apple Health', syncedAt: new Date().toISOString(), nights: 8, agreementPercent: 94, isTuned: true, nightsNeeded: 7,
           lastSleeps: [{ asleepAtMs: new Date().setHours(0, 0, 0, 0) - 65 * MINUTE_MS, awakeAtMs: new Date().setHours(6, 32, 0, 0) }],
           lastMatchedStays: 1,
         },
       },
-      right: { stage: 'out', learned: { early: 0, middle: 0, late: 0 }, rules: { stillMinutesToSleep: 15, restlessSecondsToWake: 12 } },
+      right: {
+        stage: 'out', learned: { early: 0, middle: 0, late: 0 },
+        rules: { stillMinutesToSleep: 15, restlessSecondsToWake: 12, calmMinutesToResume: 5 },
+      },
     });
   }),
   // The bed's presence sensors: someone on the left, nobody on the right

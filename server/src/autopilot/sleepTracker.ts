@@ -1,7 +1,8 @@
 // Follows one sleeper through a stay in bed, a minute at a time, and says whether they are
 // awake or asleep. It goes by stillness, the way a wrist tracker's movement sensor does: asleep
 // after lying still long enough (one turn on the way is allowed), awake again after a run of
-// restless minutes (one turn in the night is not waking). Steady breathing
+// restless minutes (one turn in the night is not waking), and asleep again once the
+// restlessness has been over for a few minutes. Steady breathing
 // can be asked for as well, but only once calibration against a worn tracker has shown it
 // helps. The heart rate is carried along for showing, and decides nothing. It does not try to tell deep sleep
 // from the rest: the night plan assumes deep sleep by the clock instead.
@@ -37,11 +38,17 @@ export type SleepRules = {
   stillMinutesToSleep: number;
   // A minute with at least this many moving seconds is a restless one
   restlessSecondsToWake: number;
+  // After waking in the night, asleep again after this many minutes in a row with no restless
+  // one. Rules saved before this was a rule do without it and get the default.
+  calmMinutesToResume?: number;
   // When set, lying still only counts as asleep if breathing was this steady over the stretch
   // (the middle spread of its minutes, in breaths a minute). Unset by default.
   maxBreathingSpread?: number;
 };
-export const DEFAULT_SLEEP_RULES: SleepRules = { stillMinutesToSleep: 15, restlessSecondsToWake: 12 };
+export const DEFAULT_CALM_MINUTES_TO_RESUME = 5;
+export const DEFAULT_SLEEP_RULES: SleepRules = {
+  stillMinutesToSleep: 15, restlessSecondsToWake: 12, calmMinutesToResume: DEFAULT_CALM_MINUTES_TO_RESUME,
+};
 
 // A minute with this many moving seconds or fewer counts as lying still
 const STILL_MINUTE_MAX_MOVEMENT_SECONDS = 3;
@@ -63,10 +70,13 @@ const median = (values: number[]): number | undefined => {
 export function createSleepTracker(getRules: () => SleepRules = () => DEFAULT_SLEEP_RULES) {
   let minutes: MinuteSummary[] = [];
   let asleepSinceMinute: number | undefined;
+  // Whether the sleeper has been asleep at all since getting into bed
+  let hasSlept = false;
 
   const reset = () => {
     minutes = [];
     asleepSinceMinute = undefined;
+    hasSlept = false;
   };
 
   const lastMinutes = (count: number) => minutes.slice(-count);
@@ -102,12 +112,25 @@ export function createSleepTracker(getRules: () => SleepRules = () => DEFAULT_SL
         && isStill(stillStretch[0]) && isStill(stillStretch[stillStretch.length - 1])
         && stillStretch.every(recent => isStill(recent) || isTurn(recent))
         && stillStretch.filter(isTurn).length <= TURNS_ALLOWED_FALLING_ASLEEP;
-      // With too few breathing readings in the stretch to judge by, stillness alone decides
-      const spreads = stillStretch.flatMap(recent => (recent.breathingSpread === undefined ? [] : [recent.breathingSpread]));
-      const isBreathingSteady = rules.maxBreathingSpread === undefined || spreads.length < stillStretch.length / 2
-        || (median(spreads) ?? 0) <= rules.maxBreathingSpread;
+      // With too few breathing readings in a stretch to judge by, stillness alone decides
+      const isBreathingSteadyOver = (stretch: MinuteSummary[]) => {
+        const spreads = stretch.flatMap(recent => (recent.breathingSpread === undefined ? [] : [recent.breathingSpread]));
+        return rules.maxBreathingSpread === undefined || spreads.length < stretch.length / 2
+          || (median(spreads) ?? 0) <= rules.maxBreathingSpread;
+      };
+      // Falling asleep has to be shown; going back to sleep does not. A sleeper who stirred is
+      // asleep again once the restlessness has been over for a few minutes, turns and all:
+      // people shift every few minutes in light sleep, and 15 unbroken still minutes may not
+      // come again before morning. A minute the sensor could not read shows nothing.
+      const calmMinutes = Math.min(rules.calmMinutesToResume ?? DEFAULT_CALM_MINUTES_TO_RESUME, rules.stillMinutesToSleep);
+      const calmStretch = lastMinutes(calmMinutes);
+      const hasCalmedDown = hasSlept && calmStretch.length >= calmMinutes && calmStretch.every(recent => (
+        recent.movementSeconds !== undefined && recent.movementSeconds < rules.restlessSecondsToWake
+      ));
       // Sleep began when the stillness did, not when it had lasted long enough to be believed
-      if (hasLainStill && isBreathingSteady) asleepSinceMinute = minutesInBed - rules.stillMinutesToSleep;
+      if (hasCalmedDown && isBreathingSteadyOver(calmStretch)) asleepSinceMinute = minutesInBed - calmMinutes;
+      else if (hasLainStill && isBreathingSteadyOver(stillStretch)) asleepSinceMinute = minutesInBed - rules.stillMinutesToSleep;
+      if (asleepSinceMinute !== undefined) hasSlept = true;
     } else {
       const restlessMinutes = lastMinutes(RECENT_MINUTES)
         .filter(recent => (recent.movementSeconds ?? 0) >= rules.restlessSecondsToWake).length;
@@ -153,6 +176,7 @@ export const MIN_NIGHTS_TO_CALIBRATE = 7;
 const HELD_OUT_SHARE_TO_BEAT = 0.9;
 const STILL_MINUTES_CANDIDATES = [5, 8, 10, 15, 20, 30];
 const RESTLESS_SECONDS_CANDIDATES = [8, 12, 20, 30];
+const CALM_MINUTES_CANDIDATES = [3, 5, 10];
 const BREATHING_SPREAD_CANDIDATES = [undefined, 2, 4];
 
 // For each minute of a saved stay, whether the bed's rules would have called the sleeper
@@ -207,8 +231,10 @@ export function calibrateSleepRules(nights: CalibrationNight[]): Calibration {
   const candidates: SleepRules[] = [DEFAULT_SLEEP_RULES];
   for (const stillMinutesToSleep of STILL_MINUTES_CANDIDATES) {
     for (const restlessSecondsToWake of RESTLESS_SECONDS_CANDIDATES) {
-      for (const maxBreathingSpread of BREATHING_SPREAD_CANDIDATES) {
-        candidates.push({ stillMinutesToSleep, restlessSecondsToWake, maxBreathingSpread });
+      for (const calmMinutesToResume of CALM_MINUTES_CANDIDATES) {
+        for (const maxBreathingSpread of BREATHING_SPREAD_CANDIDATES) {
+          candidates.push({ stillMinutesToSleep, restlessSecondsToWake, calmMinutesToResume, maxBreathingSpread });
+        }
       }
     }
   }

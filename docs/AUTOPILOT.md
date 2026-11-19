@@ -144,6 +144,13 @@ movement: **still** is 3 or fewer, a **turn** is more than that and under 12, **
   was first taken for sleep and no earlier: 15 minutes of lying still are not added to it
   after the fact.
 - **Awake again:** 3 minutes out of 5 restless. A turn in bed, or two, is not waking.
+- **Asleep again:** 5 minutes in a row with no restless one, turns and all. Falling asleep has
+  to be shown; going back to sleep does not. Until 3.20.1 this took the same 15 still minutes
+  as falling asleep, and on the first night checked against a watch (19 Nov 2026) the sleeper
+  shifted every 5 to 15 minutes from 5 am on, so the bed called most of the morning awake: it
+  agreed with the watch on 41% of the night's minutes. With this rule the same night replays
+  at 73%, and both times the watch or the sleeper said awake are still seen. One night is not
+  a proof, and the number of minutes is one of the things a tracker's record tunes.
 - **Out of bed** starts it over.
 
 <img src="diagrams/stillness-rule.svg" width="560" alt="Flowchart: the minute's moving seconds, then the check for falling asleep or for waking">
