@@ -46,7 +46,7 @@ numbered commands one at a time and waits up to 10 seconds for each answer
 |---|---|
 | `DEVICE_STATUS` | Read both sides' levels, time left, water, priming, settings |
 | `TEMP_LEVEL_LEFT` / `RIGHT` | Set a side's level, -100 to 100 |
-| `LEFT` / `RIGHT_TEMP_DURATION` | Seconds a side stays on. 43200 (12 hours) switches it on, 0 switches it off |
+| `LEFT` / `RIGHT_TEMP_DURATION` | Seconds a side stays on. The schedule asks for the night's length and 30 minutes, so the bed turns itself off if the server has stopped; 0 switches it off |
 | `ALARM_LEFT` / `RIGHT` | Vibrate a side: strength, seconds, pattern |
 | `ALARM_CLEAR` | Stop vibrating. The firmware stops **both** sides |
 | `PRIME` | Run the water priming cycle |
@@ -502,8 +502,8 @@ Listed so nothing here is a surprise. [CHANGELOG.md](../CHANGELOG.md) keeps the 
 - **Two saves in quick succession** can leave the jobs built from the first; any later save fixes it.
 - **Priming does not check whether the bed is in use.** Keep its time in the afternoon. The daily reboot is skipped
   while a side is on or an alarm is going, but not for someone lying in a bed that is off.
-- **A night longer than 11.5 hours asks the bed for more than 12 hours on.** The firmware's longest on-time is taken to
-  be 12 hours, and its answers are not read, so whether it cuts such a night short is not known.
+- **A night longer than 11.5 hours asks the bed for more than 12 hours on.** Whether the firmware cuts such a night
+  short is not known; its answer to the request is in the log.
 - **Nothing acts on the bed's answers.** What the firmware says to each command is written to the log ("Firmware
   answered …"), so a value it refuses or rounds can be found there, but the server does not check it.
 - **Jobs missed while SevenSleep is stopped are not caught up**: an update, a reboot, a restart. (Timers that

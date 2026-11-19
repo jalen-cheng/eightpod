@@ -134,12 +134,12 @@ No Pod yet? **[sevensleep.vercel.app](https://sevensleep.vercel.app)** is the ap
 
 The rest, and the full comparison with Free Sleep, is in [CHANGELOG.md](CHANGELOG.md#compared-with-free-sleep).
 
-**What the autopilot cannot do.** It is one person's work, checked on one Pod 5 and a handful of nights.
+**What the autopilot cannot do.** It is one person's work and its evidence is limited: one sleeper on one Pod 5 (n=1).
 
-- **Sleep is judged by stillness alone.** On the one night compared with a watch, the bed fell asleep at the same minute but agreed with the watch on 73% of the night's minutes; it called restless light sleep "awake". Lying awake and still reads as asleep.
+- **Sleep is judged by stillness alone.** Compared with a watch (n=1), the bed fell asleep at the same minute but agreed with the watch on 73% of the night's minutes; it called restless light sleep "awake". Lying awake and still reads as asleep.
 - **No sleep stages, heart rate or breathing.** The estimates were not reliable on a Pod 5 and are switched off. Deep sleep is assumed by the clock, not detected.
 - **The temperature curve is a starting guess.** No study tested this curve or these sizes; your own changes are what shape it.
-- **The room is not acted on yet,** and the bed is treated as one sleeper's: switching the autopilot on links the two sides.
+- **The room is acted on cautiously** (only once it has moved 2°F, and by half as much), and the bed is treated as one sleeper's: switching the autopilot on links the two sides.
 - **Calibration has not yet run on real nights.** It needs 7 with a record.
 
 If accurate sleep tracking is what you are after, Eight Sleep's own plan is still the way to get it.
@@ -165,8 +165,7 @@ On the test Pod 5: install and update, temperature and power, the measured tempe
 schedules, alarms with the stepped ramp, one-time alarms and the bed staying on for them, buttons,
 linked sides, shortcuts, the internet block, the `.local` name, Tailscale on the Pod (from a phone
 on cellular), in-bed detection and the bed turning on when someone gets in, the body check, and a night's sleep
-recorded and compared with a watch. The autopilot has been switched on for real nights only since
-19 Nov 2026.
+recorded and compared with a watch. The autopilot's evidence is one sleeper (n=1).
 
 Not yet seen working on a Pod: the bed turning off after someone gets out, the long-stay alarm,
 "ignore the schedule" after turning on by hand, and flipping left and right. Nothing has been run

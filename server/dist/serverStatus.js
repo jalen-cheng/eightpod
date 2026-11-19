@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="d328a8ca-176d-5106-a415-4ef0bc39212a")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="a7b4ad45-b42b-5c64-a0ce-52a1f50aefde")}catch(e){}}();
 import { isSystemDateValid } from './jobs/isSystemDateValid.js';
 import servicesDB from './db/services.js';
 import { prisma } from './db/prisma.js';
@@ -131,11 +131,13 @@ class ServerStatus {
             this.status.biometricsCalibrationLeft = servicesDB.data.biometrics.jobs.calibrateLeft;
             this.status.biometricsCalibrationRight = servicesDB.data.biometrics.jobs.calibrateRight;
             const time = moment(servicesDB.data.biometrics.jobs.stream.timestamp);
-            if (moment().diff(time, 'minutes') >= 5) {
+            // Saved only when it changes: this runs every few seconds, and writing the same file each
+            // time wears the Pod's flash for nothing
+            if (moment().diff(time, 'minutes') >= 5 && servicesDB.data.biometrics.jobs.stream.status !== 'failed') {
                 servicesDB.data.biometrics.jobs.stream.status = 'failed';
                 servicesDB.data.biometrics.jobs.stream.message = 'Biometrics stream died! Run `systemctl restart free-sleep-stream`';
+                await servicesDB.write();
             }
-            await servicesDB.write();
             this.status.biometricsStream = servicesDB.data.biometrics.jobs.stream;
         }
         else {
@@ -156,4 +158,4 @@ class ServerStatus {
 }
 export default ServerStatus.getInstance();
 //# sourceMappingURL=serverStatus.js.map
-//# debugId=d328a8ca-176d-5106-a415-4ef0bc39212a
+//# debugId=a7b4ad45-b42b-5c64-a0ce-52a1f50aefde

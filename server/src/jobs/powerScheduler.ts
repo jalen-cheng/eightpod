@@ -50,7 +50,7 @@ export const schedulePowerOn = (settingsData: Settings, side: Side, day: DayOfWe
           isOn: true,
           targetTemperatureF: power.onTemperature
         }
-      }, { onSeconds: getScheduledOnSeconds(power.on, power.off) });
+      }, { onSeconds: getScheduledOnSeconds(power.on, power.off, moment.tz(settingsData.timeZone as string)) });
       serverStatus.status.powerSchedule.status = 'healthy';
       serverStatus.status.powerSchedule.message = '';
     } catch (error: unknown) {

@@ -83,7 +83,7 @@ The same actions, in order:
 
 ## Without a tracker
 
-**Data > Sleep > Set when you slept** takes the time you fell asleep and the time you woke for
+**Data > Sleep > Manual override** takes the time you fell asleep and the time you woke for
 the stay shown. It is filed the way a tracker's record is, under "You", and counts toward the
 same 7 nights. A tracker that reports the same night later replaces it.
 

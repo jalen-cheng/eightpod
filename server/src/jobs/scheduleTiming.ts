@@ -51,16 +51,24 @@ export function findNightDay(at: moment.Moment, sideSchedule?: SideSchedule): Da
   return at.clone().subtract(12, 'hours').format('dddd').toLowerCase() as DayOfWeek;
 }
 
-const DEFAULT_ON_MINUTES = 12 * 60;
 // Kept on a little past the off time, so the Pod's own timer never beats the off job
 const ON_MARGIN_MINUTES = 30;
 
-// How long the Pod is told to stay on when the schedule turns a side on. The Pod switches itself
-// off when this runs out, so it must outlast the night: 12 hours, or longer for a longer night.
-export function getScheduledOnSeconds(onTime: string, offTime: string): number {
+// How long the Pod is told to stay on when the schedule turns a side on: until the night's off
+// time and a little over. The Pod switches itself off when this runs out, so if the server
+// has stopped by morning the bed still turns off, half an hour late, and not twelve hours on.
+// Given the moment it is asked, the length is counted on the clock of that time zone, so a
+// night the clocks change in is as long as it really is.
+export function getScheduledOnSeconds(onTime: string, offTime: string, now?: moment.Moment): number {
   const toMinutes = (time: string) => Number(time.slice(0, 2)) * 60 + Number(time.slice(3, 5));
-  const nightMinutes = (toMinutes(offTime) - toMinutes(onTime) + MINUTES_PER_DAY) % MINUTES_PER_DAY;
-  return Math.max(DEFAULT_ON_MINUTES, nightMinutes + ON_MARGIN_MINUTES) * 60;
+  if (now) {
+    const offAt = now.clone().startOf('day').add(toMinutes(offTime), 'minutes');
+    if (!offAt.isAfter(now)) offAt.add(1, 'day');
+    return offAt.diff(now, 'seconds') + ON_MARGIN_MINUTES * 60;
+  }
+  // An off time equal to the on time is a whole day, not no time at all
+  const nightMinutes = ((toMinutes(offTime) - toMinutes(onTime) + MINUTES_PER_DAY - 1) % MINUTES_PER_DAY) + 1;
+  return (nightMinutes + ON_MARGIN_MINUTES) * 60;
 }
 
 // The scheduled alarm a one-off alarm stands in for: the side's next scheduled alarm, when the

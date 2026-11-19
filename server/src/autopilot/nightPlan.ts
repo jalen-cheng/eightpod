@@ -91,14 +91,18 @@ export function learnFromCorrection(learned: LearnedOffsets, part: NightPart, co
 // makes the same bed setting feel warmer, so the bed goes the other way. The mattress surface
 // is not used: it follows the water, so the autopilot would be answering its own changes.
 // ---------------------------------------------------------------------------------------------
-// Half a degree of bed for each degree of room
+// Half a degree of bed for each degree of room, and nothing until the room has moved this far
+// from where it was at sleep onset: a reading that wanders a degree is not a room that changed
 const ROOM_GAIN = 0.5;
 const MAX_ROOM_OFFSET_F = 2;
+export const ROOM_SWING_TO_ACT_F = 2;
 
 export function roomOffsetF(roomAtSleepOnsetF: number | undefined, roomNowF: number | undefined): number {
   if (roomAtSleepOnsetF === undefined || roomNowF === undefined) return 0;
+  const swingF = roomNowF - roomAtSleepOnsetF;
+  if (Math.abs(swingF) < ROOM_SWING_TO_ACT_F) return 0;
   // `|| 0` turns -0 into 0
-  return clamp(-(roomNowF - roomAtSleepOnsetF) * ROOM_GAIN, MAX_ROOM_OFFSET_F) || 0;
+  return clamp(-swingF * ROOM_GAIN, MAX_ROOM_OFFSET_F) || 0;
 }
 
 // ---------------------------------------------------------------------------------------------
