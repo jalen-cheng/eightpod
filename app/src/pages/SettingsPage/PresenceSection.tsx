@@ -7,10 +7,9 @@ import _ from 'lodash';
 import { Settings } from '@api/settingsSchema.ts';
 import { postBedIsEmpty, usePresenceSensors } from '@api/presence.ts';
 import { useAppStore } from '@state/appStore.tsx';
-import InfoTip from '@components/InfoTip.tsx';
 import Section from './Section.tsx';
 import SettingToggle from './SettingToggle.tsx';
-import { CONTROL_WIDTH_PX } from './SettingRow.tsx';
+import SettingRow, { CONTROL_WIDTH_PX } from './SettingRow.tsx';
 import { TemperatureSelect } from '../SchedulePage/ScheduleFields.tsx';
 
 type PresenceSectionProps = {
@@ -31,6 +30,7 @@ const TURN_ON_INFO = 'When someone gets into a bed that is off, it turns on at t
   + 'the hours chosen, or 15 minutes after they get out.';
 const EMPTY_INFO = 'Press with nobody and nothing extra on the bed if a side shows "in bed" when it is empty, or never does. '
   + 'Detection starts over from the bed as it is now.';
+const NOW_INFO = 'What the sensors under the cover say at this moment, for each side.';
 const UNTIL_OUT_OF_BED = 'untilOutOfBed';
 
 // The picked "stay on" choice as it is saved: a number of hours, or until out of bed
@@ -77,20 +77,20 @@ export default function PresenceSection({ settings, updateSettings }: PresenceSe
   const updatePresence = (changes: DeepPartial<Settings['presence']>) => updateSettings({ presence: changes });
 
   return (
-    <Section
-      title="In-bed detection"
-      // What the sensors say right now, beside the title
-      action={ (['left', 'right'] as const).map(side => (
-        <StatusTag
-          key={ side }
-          tone={ sensors[side]?.present ? 'good' : 'neutral' }
-          label={ `${side === 'left' ? 'Left' : 'Right'} ${sensors[side]?.present ? 'in bed' : 'empty'}` }
-        />
-      )) }
-    >
-      <Box sx={ { display: 'flex', flexDirection: 'column', gap: 2 } }>
-        <Box sx={ { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2 } }>
-          <Typography sx={ { fontSize: 14, fontWeight: 500 } }>Sensitivity <InfoTip text={ SENSITIVITY_INFO }/></Typography>
+    <Section title="In-bed detection">
+      <Box sx={ { display: 'flex', flexDirection: 'column', gap: 1.5 } }>
+        <SettingRow label="Right now" info={ NOW_INFO }>
+          <Box sx={ { display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-end', columnGap: 1.5 } } role="status">
+            { (['left', 'right'] as const).map(side => (
+              <StatusTag
+                key={ side }
+                tone={ sensors[side]?.present ? 'good' : 'neutral' }
+                label={ `${side === 'left' ? 'Left' : 'Right'} ${sensors[side]?.present ? 'in bed' : 'empty'}` }
+              />
+            )) }
+          </Box>
+        </SettingRow>
+        <SettingRow label="Sensitivity" info={ SENSITIVITY_INFO }>
           <TextField
             select
             size="small"
@@ -102,19 +102,18 @@ export default function PresenceSection({ settings, updateSettings }: PresenceSe
           >
             { Object.entries(SENSITIVITY_NAMES).map(([value, name]) => <MenuItem key={ value } value={ value }>{ name }</MenuItem>) }
           </TextField>
-        </Box>
-
-        <Box sx={ { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2 } }>
-          <Typography sx={ { fontSize: 14, fontWeight: 500 } }>Wrong reading? <InfoTip text={ EMPTY_INFO }/></Typography>
+        </SettingRow>
+        <SettingRow label="Wrong reading?" info={ EMPTY_INFO }>
           <Button
             size="small"
             variant="outlined"
             disabled={ isUpdating }
             onClick={ () => void postBedIsEmpty().then(() => refetchSensors()).catch(error => console.error(error)) }
+            sx={ { width: CONTROL_WIDTH_PX, whiteSpace: 'nowrap' } }
           >
             Bed is empty now
           </Button>
-        </Box>
+        </SettingRow>
 
         <Divider/>
 

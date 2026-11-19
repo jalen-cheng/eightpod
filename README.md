@@ -87,7 +87,8 @@ Read [what changes](docs/POD_MODELS.md#things-to-know-before-updating-from-the-o
 
 1. Open `http://sevensleep.local` on a phone on the same Wi-Fi. The installer names the Pod `sevensleep`. If it
    does not load (some Android phones and Linux computers do not look up `.local` names), use
-   `http://<pod-ip>:3000`.
+   `http://<pod-ip>:3000`. To keep it as an app icon, tap Share > **Add to Home Screen** in Safari
+   ([all devices](docs/USING.md#install-it-as-an-app)).
 2. In **Settings**, set your time zone. Until you do, every scheduled time is off by hours.
 3. In **Schedules**, set when the bed turns on, the temperatures through the night and when you wake.
 4. Block the Pod from the internet (step 16 of the install guide), then close the hub.

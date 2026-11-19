@@ -1,11 +1,10 @@
-import { PropsWithChildren, ReactNode, createContext, useContext, useId } from 'react';
+import { PropsWithChildren, createContext, useContext, useId } from 'react';
 import { Box, ButtonBase, Card, CardContent, Collapse, Typography } from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { useOpenSections } from './openSections.ts';
 
-// `action` is a section's live state or one control: at the right of the title line, or at the
-// top of the section when it folds. `startsOpen` is for the one a folding page opens with.
-type SectionProps = PropsWithChildren<{ title?: string; action?: ReactNode; startsOpen?: boolean }>;
+// `startsOpen` is for the one section a folding page opens with
+type SectionProps = PropsWithChildren<{ title?: string; startsOpen?: boolean }>;
 
 // A page whose sections fold down to their titles wraps them in this with `true`
 export const FoldingSectionsContext = createContext(false);
@@ -17,7 +16,7 @@ const contentSx = { p: { xs: 2, sm: 2.5 }, '&:last-child': { pb: { xs: 2, sm: 2.
 // only its name until pressed (unless it starts open), and the page remembers which ones were
 // opened and closed. Elsewhere, or
 // without a name, the name is plain text above a card that is always open.
-export default function Section({ title, action, startsOpen = false, children }: SectionProps) {
+export default function Section({ title, startsOpen = false, children }: SectionProps) {
   const titleId = useId();
   const contentId = useId();
   const isFolding = useContext(FoldingSectionsContext) && title !== undefined;
@@ -27,9 +26,8 @@ export default function Section({ title, action, startsOpen = false, children }:
     return (
       <Box component="section" aria-labelledby={ title ? titleId : undefined } sx={ { width: '100%', minWidth: 0 } }>
         { title && (
-          <Box sx={ { display: 'flex', alignItems: 'center', gap: 1.5, minHeight: 32, mb: 1, px: 0.5 } }>
+          <Box sx={ { display: 'flex', alignItems: 'center', minHeight: 32, mb: 1, px: 0.5 } }>
             <Typography id={ titleId } component="h2" variant="h6" sx={ { fontSize: 15 } }>{ title }</Typography>
-            { action && <Box sx={ { ml: 'auto', display: 'flex', alignItems: 'center', gap: 1.5 } }>{ action }</Box> }
           </Box>
         ) }
         <Card sx={ cardSx }>
@@ -60,7 +58,6 @@ export default function Section({ title, action, startsOpen = false, children }:
       </ButtonBase>
       <Collapse in={ isOpen } id={ contentId } unmountOnExit>
         <CardContent sx={ { ...contentSx, pt: { xs: 0.5, sm: 0.5 } } }>
-          { action && <Box sx={ { display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 1.5, mb: 1.5 } }>{ action }</Box> }
           { children }
         </CardContent>
       </Collapse>
