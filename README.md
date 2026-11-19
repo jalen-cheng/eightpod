@@ -1,6 +1,10 @@
 # SevenSleep — subscription-free, open-source local control for Eight Sleep Pods
 
 <p align="center">
+  <img src="docs/screenshots/overview.png" width="900" alt="Four phone screens: the temperature dial with the next alarm, a night's schedule, last night's sleep, and the autopilot and alarm settings">
+</p>
+
+<p align="center">
   <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fjalen-cheng%2Fsevensleep%2Fmain%2Fserver%2Fsrc%2FserverInfo.json&query=%24.version&label=version&style=flat-square" alt="Version"></a>
   <a href="https://github.com/jalen-cheng/sevensleep/actions/workflows/ci.yaml"><img src="https://img.shields.io/github/actions/workflow/status/jalen-cheng/sevensleep/ci.yaml?branch=main&label=tests&style=flat-square" alt="Tests"></a>
   <a href="LICENSE.md"><img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" alt="MIT license"></a>
@@ -33,11 +37,11 @@ It started as a fork of [Free Sleep](https://github.com/throwaway31265/free-slee
 <table>
   <tr>
     <td align="center" width="130"><a href="https://sevensleep.vercel.app">Demo</a></td>
-    <td align="center" width="130"><a href="INSTALLATION.md">Install</a></td>
-    <td align="center" width="130"><a href="docs/USING.md">Usage</a></td>
+    <td align="center" width="130"><a href="https://jalen-cheng.github.io/sevensleep/install">Install</a></td>
+    <td align="center" width="130"><a href="https://jalen-cheng.github.io/sevensleep/using">Usage</a></td>
     <td align="center" width="130"><a href="https://jalen-cheng.github.io/sevensleep/">Docs</a></td>
-    <td align="center" width="130"><a href="docs/IOS_SHORTCUTS.md">Shortcuts</a></td>
-    <td align="center" width="130"><a href="server/API.md">API</a></td>
+    <td align="center" width="130"><a href="https://jalen-cheng.github.io/sevensleep/ios-shortcuts">Shortcuts</a></td>
+    <td align="center" width="130"><a href="https://jalen-cheng.github.io/sevensleep/api">API</a></td>
     <td align="center" width="130"><a href="#faq">FAQ</a></td>
     <td align="center" width="130"><a href="CHANGELOG.md">Changelog</a></td>
   </tr>
@@ -48,7 +52,7 @@ It started as a fork of [Free Sleep](https://github.com/throwaway31265/free-slee
 You need a Pod 3, 4 or 5, about two hours, and $20 to $70 of parts: a USB serial adapter, plus
 either a tag-connect cable or three soldered wires. Adhesive strips are optional, for sticking the
 hub's rubber feet back on afterwards. The one hands-on step is opening the Pod's hub
-and attaching the adapter to get a root shell; the [install guide](INSTALLATION.md) has photos for
+and attaching the adapter to get a root shell; the [install guide](https://jalen-cheng.github.io/sevensleep/install) has photos for
 each Pod. Then, on the Pod:
 
 ```bash
@@ -73,15 +77,15 @@ sh /home/dac/free-sleep/scripts/unblock_internet_access.sh
 sh /home/dac/free-sleep/scripts/block_internet_access.sh
 ```
 
-Read [what changes](docs/POD_MODELS.md#things-to-know-before-updating-from-the-original) first; the
-[install guide](INSTALLATION.md#coming-from-free-sleep) has the same steps with checks.
+Read [what changes](https://jalen-cheng.github.io/sevensleep/pod-models#things-to-know-before-updating-from-the-original) first; the
+[install guide](https://jalen-cheng.github.io/sevensleep/install#coming-from-free-sleep) has the same steps with checks.
 
 ## Quick start
 
 1. Open `http://sevensleep.local` on a phone on the same Wi-Fi. The installer names the Pod `sevensleep`. If it
    does not load (some Android phones and Linux computers do not look up `.local` names), use
    `http://<pod-ip>:3000`. To keep it as an app icon, tap Share > **Add to Home Screen** in Safari
-   ([all devices](docs/USING.md#install-it-as-an-app)).
+   ([all devices](https://jalen-cheng.github.io/sevensleep/using#install-it-as-an-app)).
 2. In **Settings**, set your time zone. Until you do, every scheduled time is off by hours.
 3. In **Schedules**, set when the bed turns on, the temperatures through the night and when you wake.
 4. Block the Pod from the internet (step 16 of the install guide), then close the hub.
@@ -93,19 +97,19 @@ No Pod yet? **[sevensleep.vercel.app](https://sevensleep.vercel.app)** is the ap
 - The **firmware** is Eight Sleep's own program. It runs the pumps, heaters and vibration motors, and is left as it is.
 - The **server** (`server/`) takes the place of Eight Sleep's cloud: it tells the firmware what to do, runs the schedule and alarms, and reads the buttons and the bed's sensors.
 - The **app** (`app/`) is a web page the server serves. Add it to your phone's home screen and it behaves like an app.
-- **Shortcuts and automations** use the same [local API](server/API.md) the app does.
-- Away from home, optional **[Tailscale on the Pod](docs/REMOTE_ACCESS.md)** reaches it privately, with the internet block still on.
+- **Shortcuts and automations** use the same [local API](https://jalen-cheng.github.io/sevensleep/api) the app does.
+- Away from home, optional **[Tailscale on the Pod](https://jalen-cheng.github.io/sevensleep/remote-access)** reaches it privately, with the internet block still on.
 
-[HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md) explains every part and how they interact.
+[How it works](https://jalen-cheng.github.io/sevensleep/how-it-works) explains every part and how they interact.
 
 ## What it does
 
 - **The Eight Sleep app's controls, on your own network:** temperature for each side, a schedule for every night, vibration alarms, wake-up heat, priming and away mode.
-- **A local API:** every control is a documented request to the Pod, so Shortcuts, Home Assistant, scripts and AI assistants can drive the bed with the internet down. See [server/API.md](server/API.md).
+- **A local API:** every control is a documented request to the Pod, so Shortcuts, Home Assistant, scripts and AI assistants can drive the bed with the internet down. See [API reference](https://jalen-cheng.github.io/sevensleep/api).
 - **Access away from home:** optional Tailscale on the Pod, with the Pod still blocked from the internet.
-- **Pod 5 side buttons:** + and - change the temperature, the middle button switches the side, any button stops an alarm.
 - **In-bed detection (Pod 5):** the bed can turn on when you get in and off after you get out, and tells a body from a thing left on it.
-- **Autopilot (Pod 5, experimental):** cooler early in the night, warmer toward morning, one degree at a time. It holds a temperature you set and learns from it. Off by default. See [docs/AUTOPILOT.md](docs/AUTOPILOT.md).
+- **Autopilot (Pod 5, experimental):** cooler early in the night, warmer toward morning, one degree at a time. It holds a temperature you set and learns from it. Off by default. See [Autopilot guide](https://jalen-cheng.github.io/sevensleep/autopilot).
+- **Pod 5 side buttons:** + and - change the temperature, the middle button switches the side, any button stops an alarm.
 - **Quality of life:** a phone-first app that installs to the Home Screen, one-time alarms, linked sides, measured temperatures, and updates from the app.
 
 **The autopilot's limits.** Its evidence is limited: one sleeper on one Pod 5 (n=1).
@@ -119,7 +123,7 @@ If accurate sleep tracking is what you are after, Eight Sleep's own plan is stil
 
 ## Security
 
-- **The app has no login.** Anyone on your home network can open it. Never put it on the open internet; use [Tailscale](docs/REMOTE_ACCESS.md) to reach it from elsewhere.
+- **The app has no login.** Anyone on your home network can open it. Never put it on the open internet; use [Tailscale](https://jalen-cheng.github.io/sevensleep/remote-access) to reach it from elsewhere.
 - **The internet block** stops the Pod reaching Eight Sleep or anything else, and is restored at every boot. SevenSleep has no error-reporting destination built in.
 - **You need root on the Pod once**, through a serial adapter. It is not supported by Eight Sleep. The install can be undone; see the [FAQ](#faq).
 
@@ -128,7 +132,7 @@ If accurate sleep tracking is what you are after, Eight Sleep's own plan is stil
 | Pod | Status |
 |---|---|
 | Pod 5 | Tested on one unit. Some newer units cannot be opened up the way the install guide needs; the guide says how to tell. |
-| Pod 4 | Same code as the original project in the hardware paths, with the differences in [docs/POD_MODELS.md](docs/POD_MODELS.md). **Not run on a Pod 4.** |
+| Pod 4 | Same code as the original project in the hardware paths, with the differences in [Compatibility guide](https://jalen-cheng.github.io/sevensleep/pod-models). **Not run on a Pod 4.** |
 | Pod 3 (with or without SD card) | As Pod 4: reviewed against the original, **not run**. |
 | Pod 6 | Not tried: nobody has opened one up yet. If you have one, [say so](https://github.com/jalen-cheng/sevensleep/issues?q=is%3Aissue+is%3Aopen+Pod+6). |
 | Pod 1, Pod 2 | Not compatible. |
@@ -162,7 +166,7 @@ Yes. The install leaves Eight Sleep's firmware in place and only switches its cl
 off, so going back means switching them on again.
 
 - **Pod 3 and Pod 4:** a firmware reset puts the Pod back as it left the factory.
-- **Pod 5:** [six commands over SSH](INSTALLATION.md#going-back-to-eight-sleep) switch Eight
+- **Pod 5:** [six commands over SSH](https://jalen-cheng.github.io/sevensleep/install#going-back-to-eight-sleep) switch Eight
   Sleep's services back on and remove the internet block. They are the install steps in reverse.
   The one test Pod is still in use, so they have not been run yet; if you try them, please say how
   it went.
@@ -223,7 +227,7 @@ is lifted for the download and put back afterwards.
 <summary><b>Can I control it away from home?</b></summary>
 <br>
 
-Yes, with [Tailscale on the Pod](docs/REMOTE_ACCESS.md). It is optional, takes one script, and
+Yes, with [Tailscale on the Pod](https://jalen-cheng.github.io/sevensleep/remote-access). It is optional, takes one script, and
 keeps the internet block on. A shortcut can open the app at home and offer Tailscale when you are
 away.
 
@@ -271,7 +275,7 @@ Yes: its own temperature, schedule and alarm. Or link the sides and control the 
 <br>
 
 Yes. One command over SSH reinstalls it and keeps your schedules; see
-[docs/POD_MODELS.md](docs/POD_MODELS.md).
+[Compatibility guide](https://jalen-cheng.github.io/sevensleep/pod-models).
 
 </details>
 
@@ -280,13 +284,13 @@ Yes. One command over SSH reinstalls it and keeps your schedules; see
 | Goal | Start here |
 |---|---|
 | Read all of this as a website | [jalen-cheng.github.io/sevensleep](https://jalen-cheng.github.io/sevensleep/) |
-| Install it on a Pod | [INSTALLATION.md](INSTALLATION.md) |
-| Usage: a night, alarms, settings | [docs/USING.md](docs/USING.md) |
-| Know what works on a Pod 3 or Pod 4 | [docs/POD_MODELS.md](docs/POD_MODELS.md) |
-| Keep the address stable, or reach the Pod away from home | [docs/REMOTE_ACCESS.md](docs/REMOTE_ACCESS.md) |
-| Control the bed from iPhone Shortcuts | [docs/IOS_SHORTCUTS.md](docs/IOS_SHORTCUTS.md) |
-| Understand every part and how they interact | [docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md) |
-| Use the API | [server/API.md](server/API.md) |
+| Install it on a Pod | [Install guide](https://jalen-cheng.github.io/sevensleep/install) |
+| Usage: a night, alarms, settings | [Using the app](https://jalen-cheng.github.io/sevensleep/using) |
+| Know what works on a Pod 3 or Pod 4 | [Compatibility guide](https://jalen-cheng.github.io/sevensleep/pod-models) |
+| Keep the address stable, or reach the Pod away from home | [Remote access guide](https://jalen-cheng.github.io/sevensleep/remote-access) |
+| Control the bed from iPhone Shortcuts | [iPhone Shortcuts guide](https://jalen-cheng.github.io/sevensleep/ios-shortcuts) |
+| Understand every part and how they interact | [How it works](https://jalen-cheng.github.io/sevensleep/how-it-works) |
+| Use the API | [API reference](https://jalen-cheng.github.io/sevensleep/api) |
 | See what changed in each version | [CHANGELOG.md](CHANGELOG.md) |
 | Help test or contribute | [CONTRIBUTING.md](CONTRIBUTING.md) |
 
