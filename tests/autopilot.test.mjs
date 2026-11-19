@@ -19,7 +19,9 @@ import {
   DEFAULT_SLEEP_RULES, calibrateSleepRules, countDisagreements, createSleepTracker, detectSleepTimes, findSleepPeriods,
   mergeSleepPeriods, parseSampleLines, readTrackerMinutes, replaySleep,
 } from '../server/src/autopilot/sleepTracker.ts';
-import { BODY_SWING_RATIO, addEmptyMinute, findEmptySwing, isBodyFelt } from '../server/src/autopilot/bodySignal.ts';
+import {
+  BODY_SWING_RATIO, MAX_EMPTY_SWING, MIN_EMPTY_SWING, addEmptyMinute, findEmptySwing, isBodyFelt,
+} from '../server/src/autopilot/bodySignal.ts';
 
 // A made-up piezo signal: a short 7 Hz knock at every heartbeat, over slow breathing and noise
 const makeHeartbeatSignal = (beatsPerMinute, seconds = HEART_RATE_WINDOW_SECONDS) => {
@@ -581,6 +583,10 @@ test('the empty bed\'s level needs ten empty minutes and is not raised by a few 
   for (let minute = 0; minute < 300; minute++) quietSwings = addEmptyMinute(quietSwings, 15000);
   assert.equal(quietSwings.length, 120);
   assert.equal(findEmptySwing(quietSwings), 15000);
+  // A level no empty bed reads is not taken: a dead sensor, or a bed that was not empty
+  assert.equal(findEmptySwing(new Array(20).fill(MIN_EMPTY_SWING - 1)), undefined);
+  assert.equal(findEmptySwing(new Array(20).fill(300000)), undefined);
+  assert.equal(findEmptySwing(new Array(20).fill(MAX_EMPTY_SWING)), MAX_EMPTY_SWING);
 });
 
 test('samples sent as text are read one a line, leaving out lines without both times', () => {

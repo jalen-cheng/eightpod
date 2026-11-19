@@ -18,7 +18,7 @@
 // A rehearsal is a night's plan played in a few minutes on the bed as it is set, started by
 // hand, for watching what the autopilot does. It goes through the same steps as a night.
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="195be080-036c-59ed-9d0c-55b01c45eb16")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="d1f3ee5a-d16e-522c-8724-d8e04e5f2aa4")}catch(e){}}();
 import { readFileSync, renameSync, writeFileSync } from 'fs';
 import moment from 'moment-timezone';
 import config from '../config.js';
@@ -89,9 +89,11 @@ const QUIET_SWING_MINUTES = 15;
 const QUIET_SWING_FRACTION = 0.25;
 // A stay keeps one row a minute; if the loop was held up, no more than this many are filled in
 const MAX_MISSED_MINUTES_FILLED = 120;
-// The empty bed's piezo level is written to the state file again once it has moved by this
-// fraction, not every minute it is measured
-const EMPTY_SWING_SAVE_FRACTION = 0.1;
+// Heart rate and breathing are not worked out for now. The breathing estimate reads a rate
+// from an empty bed's hum as readily as from a sleeper, and the heart rate comes through in
+// too few minutes to use; neither decided anything. The estimators stay (heartRate.ts,
+// breathingRate.ts) to be made trustworthy and switched back on here.
+const USES_HEART_AND_BREATHING = false;
 // Reading a sleeper's habits looks at this many of the newest saved stays
 const USUAL_SLEEP_FILES = 40;
 // What was learned from the sleeper's corrections and from a linked sleep tracker, and any
@@ -101,9 +103,9 @@ const STATE_FILE = `${config.dbFolder}autopilot_state.json`;
 let learned = { ...NO_LEARNED_OFFSETS };
 let rules = DEFAULT_SLEEP_RULES;
 let trackerLink;
-// Each side's piezo level with the bed empty (bodySignal.ts), and the level last written to the state file
+// Each side's piezo level with the bed empty (bodySignal.ts). Measured once, when the Pod is
+// set up, and kept in the state file; measured again only when the bed is marked empty by hand.
 let emptySwing = {};
-let savedEmptySwing = {};
 // A night found in the saved state at start, waiting to be picked up again or undone
 let nightFromLastRun;
 const bed = {};
@@ -113,7 +115,6 @@ const newSideState = () => ({
     minuteSwings: [],
     quietSwings: [],
     emptySwings: [],
-    isThingOnBed: false,
     wasInBed: false,
     minuteHeartRates: [],
     minuteBreathingRates: [],
@@ -156,21 +157,29 @@ const saveState = () => {
         logger.warn(`Autopilot could not save its state: ${String(error)}`);
     }
 };
-// Takes a minute with nothing on the bed into the level a body is told from. The level is
-// written to the state file only when it has moved enough to matter.
-const learnEmptySwing = (side, quietSecond) => {
+// Until a side has its empty level, takes each minute with nothing on the bed toward it. Once
+// enough minutes agree on a level an empty bed can read, it is set and kept.
+const measureEmptySwing = (side, quietSecond) => {
+    if (emptySwing[side] !== undefined)
+        return;
     const state = sides[side];
     state.emptySwings = addEmptyMinute(state.emptySwings, quietSecond);
     const level = findEmptySwing(state.emptySwings);
     if (level === undefined)
         return;
     emptySwing[side] = level;
-    const saved = savedEmptySwing[side];
-    if (saved !== undefined && Math.abs(level - saved) <= saved * EMPTY_SWING_SAVE_FRACTION)
-        return;
-    savedEmptySwing = { ...savedEmptySwing, [side]: level };
+    state.emptySwings = [];
+    logger.info(`Autopilot: ${side} side's empty-bed piezo level set to ${Math.round(level)}`);
     saveState();
 };
+// The bed has been marked empty by hand (Settings > In-bed detection): the piezo level of the
+// empty bed is measured afresh, as the capacitive baseline is
+export function forgetEmptySwing() {
+    emptySwing = {};
+    for (const side of SIDES)
+        sides[side].emptySwings = [];
+    saveState();
+}
 // A stay in bed that begins with the minute just ended
 const newStay = (side, nowMs) => ({
     side, startedAtMs: nowMs - MINUTE_MS, minutes: [], policy: POLICY_VERSION, emptySwing: roundTo(emptySwing[side], 0),
@@ -209,6 +218,8 @@ export function recordPiezoSecond(side, samples) {
     if (state.recentSeconds.length > BREATHING_WINDOW_SECONDS)
         state.recentSeconds.shift();
     state.minuteSwings.push(measureSwing(samples));
+    if (!USES_HEART_AND_BREATHING)
+        return;
     estimateHeartRateNow(state);
     estimateBreathingRateNow(state);
 }
@@ -241,7 +252,6 @@ export function getAutopilotSnapshot(nowMs = Date.now()) {
         stage: sides[side].sleep.stage,
         sleepKind: sides[side].sleep.stage !== 'asleep' ? undefined
             : (bed.night && !bed.night.rehearsal) || maySteer(sides[side]) ? 'night' : 'nap',
-        thingOnBed: sides[side].isThingOnBed || undefined,
         heartRate: roundTo(sides[side].sleep.heartRate, 0),
         breathingRate: roundTo(sides[side].sleep.breathingRate, 0),
         minutesAsleep: sides[side].sleep.minutesAsleep,
@@ -341,7 +351,10 @@ const recalibrate = (source, nowMs) => {
         .slice(0, CALIBRATION_NIGHTS)
         .flatMap(night => (night.tracker ? [{
             minutes: night.minutes.map(minute => ({
-                isInBed: minute.stage !== 'out', movementSeconds: minute.movementSeconds, breathingSpread: minute.breathingSpread,
+                isInBed: minute.stage !== 'out',
+                movementSeconds: minute.movementSeconds,
+                // Left out while breathing is switched off, so no rule is fitted to readings not to be trusted
+                breathingSpread: USES_HEART_AND_BREATHING ? minute.breathingSpread : undefined,
             })),
             trackerAsleep: readTrackerMinutes(night.tracker, night.startedAtMs, night.minutes.length),
         }] : []));
@@ -469,7 +482,6 @@ export class AutopilotMonitor {
             trackerLink = saved.trackerLink;
             nightFromLastRun = saved.night;
             emptySwing = { ...saved.emptySwing };
-            savedEmptySwing = { ...saved.emptySwing };
         }
         catch {
             // Nothing saved yet
@@ -574,13 +586,11 @@ export class AutopilotMonitor {
         const isSignalGood = swings.length >= MIN_SECONDS_HEARD_IN_MINUTE && swingAt(0.5) > 0;
         const quietSecond = isSignalGood ? swingAt(QUIET_SWING_FRACTION) : undefined;
         // The capacitive sensors say something is on the side; the piezo says whether it is a
-        // body. A thing left on the bed (a laptop) is not a sleeper: it gets no stay and no sleep.
-        // Where the piezo cannot say, the capacitive sensors are taken at their word, as before.
-        const isSomethingOnSide = isSomeoneInBed(side);
+        // body. A side with a thing on it (a laptop) is an empty side: no stay, no sleep. Where the
+        // piezo cannot say, the capacitive sensors are taken at their word, as before.
         if (quietSecond !== undefined && !SIDES.some(isSomeoneInBed))
-            learnEmptySwing(side, quietSecond);
-        state.isThingOnBed = isSomethingOnSide && isBodyFelt(quietSecond, emptySwing[side]) === false;
-        const isInBed = isSomethingOnSide && !state.isThingOnBed;
+            measureEmptySwing(side, quietSecond);
+        const isInBed = isSomeoneInBed(side) && isBodyFelt(quietSecond, emptySwing[side]) !== false;
         // An empty bed is far quieter than a sleeper lying still, so the quiet level starts afresh
         // when someone gets in or out
         if (isInBed !== state.wasInBed)
@@ -914,4 +924,4 @@ export class AutopilotMonitor {
     }
 }
 //# sourceMappingURL=autopilotMonitor.js.map
-//# debugId=195be080-036c-59ed-9d0c-55b01c45eb16
+//# debugId=d1f3ee5a-d16e-522c-8724-d8e04e5f2aa4

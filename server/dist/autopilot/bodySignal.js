@@ -8,9 +8,14 @@
 // A minute has a body in it when its quiet second swings at least this many times the empty
 // bed's. Far above anything an empty bed showed, far below a person on either side.
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="aa8f4a1c-9f15-5bc6-9e02-87a31cd2d09a")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="b4a472de-e4e8-50d3-a737-c0de7ad35a2c")}catch(e){}}();
 export const BODY_SWING_RATIO = 5;
-// The empty bed's level comes from this many of the newest minutes with nothing on either side
+// The empty bed's level is measured once per Pod, when it is set up, and has to fall in this
+// range to be believed: a few times either way of what an empty bed read on the test Pod. A
+// level under it is a sensor sending next to nothing; one over it is a bed that was not empty.
+export const MIN_EMPTY_SWING = 5_000;
+export const MAX_EMPTY_SWING = 50_000;
+// It comes from this many of the newest minutes with nothing on either side
 const EMPTY_MINUTES_KEPT = 120;
 // It is not trusted before this many have been seen
 const MIN_EMPTY_MINUTES = 10;
@@ -21,12 +26,15 @@ const EMPTY_LEVEL_FRACTION = 0.25;
 export function addEmptyMinute(quietSwings, quietSwing) {
     return [...quietSwings, quietSwing].slice(-EMPTY_MINUTES_KEPT);
 }
-// The swing of a quiet second on the empty bed, once enough empty minutes have been seen
+// The swing of a quiet second on the empty bed, once enough empty minutes have been seen.
+// Undefined while there are too few, and when what they add up to is outside the range an
+// empty bed can read: the measuring then goes on until it is not.
 export function findEmptySwing(quietSwings) {
     if (quietSwings.length < MIN_EMPTY_MINUTES)
         return undefined;
     const sorted = [...quietSwings].sort((first, second) => first - second);
-    return sorted[Math.floor(sorted.length * EMPTY_LEVEL_FRACTION)];
+    const level = sorted[Math.floor(sorted.length * EMPTY_LEVEL_FRACTION)];
+    return level >= MIN_EMPTY_SWING && level <= MAX_EMPTY_SWING ? level : undefined;
 }
 // Whether a minute's quiet second shows a body on the bed. Undefined when that cannot be said:
 // the sensor sent too little that minute, or the empty bed's level is not known yet.
@@ -36,4 +44,4 @@ export function isBodyFelt(quietSwing, emptySwing) {
     return quietSwing >= emptySwing * BODY_SWING_RATIO;
 }
 //# sourceMappingURL=bodySignal.js.map
-//# debugId=aa8f4a1c-9f15-5bc6-9e02-87a31cd2d09a
+//# debugId=b4a472de-e4e8-50d3-a737-c0de7ad35a2c
