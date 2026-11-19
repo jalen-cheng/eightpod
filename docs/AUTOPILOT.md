@@ -54,6 +54,7 @@ whatever the sensors say.
 | Your changes | How far a temperature you set was from what the autopilot wanted is partly remembered for that third of the night | 0.3 of it each time, up to ±3°F |
 | Night curve | Cooler from falling asleep through the first half of the night, back to the set temperature by about 85% of the way to the wake time, then a little warm | -2°F, then 0, then +1°F |
 | First sleep cycle | A little cooler from 20 to 90 minutes after falling asleep. Deep sleep itself is not detected | -1°F |
+| The room | Once the room is 2°F from where it was at sleep onset, the bed goes half as far the other way | up to ±2°F |
 
 When these add up to more than 4°F, they are cut from the bottom of the table up, so what you
 taught it is the last to go.
@@ -63,18 +64,14 @@ taught it is the last to go.
 The chart is the curve and the first sleep cycle with nothing learned yet. What you teach it
 moves a third of the night up or down by up to 3°F.
 
-**The room is not acted on yet.** The code can cool the bed as the room warms: half a degree
-for each degree the room has warmed since you fell asleep, and the other way as it cools, never
-more than 2°F (`roomOffsetF` in `nightPlan.ts`). It is left out of the offset because the only
-air reading is at the cover, which might warm with the sleeper as much as with the room, and
-acting on that would cool the bed every night for no reason. The reading is saved with every
-minute so that logged nights can show what it follows.
-
-The first logged night (19 Nov 2026) answers half of it. The reading stayed between 70.0 and
-70.7°F for eight hours while the surface under the sleeper went from 74 to 92°F as the bed
-warmed for the alarm, so it does not follow the sleeper or the bed. The room itself barely
-changed that night, so what the reading does when the room warms or cools is still unseen, and
-the part stays off until a night shows it.
+**The room** counts once it has moved 2°F from where it was when you fell asleep: the bed then
+goes half as far the other way (a room 2°F warmer makes the bed 1°F cooler), never more than
+2°F (`roomOffsetF` in `nightPlan.ts`). Under 2°F nothing happens, so a reading that wanders is
+not taken for a room that changed. The reading is the air sensor at the cover. With a sleeper
+in bed it held within 0.7°F for eight hours while the surface under them went from 74 to 92°F
+(n=1), so it does not follow the sleeper or the bed. What it does through a real swing of the
+room has not been seen yet, which is why the part is this cautious. A reading older than a few
+minutes counts for nothing.
 
 **Learning.** At 0.3, a one-degree change takes two nights that agree before it shows. A change
 is counted once per hold, not once per button press, and for no more than 4°F however large it
@@ -159,11 +156,11 @@ movement: **still** is 3 or fewer, a **turn** is more than that and under 12, **
 - **Awake again:** 3 minutes out of 5 restless. A turn in bed, or two, is not waking.
 - **Asleep again:** 5 minutes in a row with no restless one, turns and all. Falling asleep has
   to be shown; going back to sleep does not. Until 3.20.1 this took the same 15 still minutes
-  as falling asleep, and on the first night checked against a watch (19 Nov 2026) the sleeper
-  shifted every 5 to 15 minutes from 5 am on, so the bed called most of the morning awake: it
-  agreed with the watch on 41% of the night's minutes. With this rule the same night replays
-  at 73%, and both times the watch or the sleeper said awake are still seen. One night is not
-  a proof, and the number of minutes is one of the things a tracker's record tunes.
+  as falling asleep. Checked against a watch (n=1), a sleeper who shifted every 5 to 15 minutes
+  toward morning was called awake for most of it: the bed agreed with the watch on 41% of the
+  minutes. With this rule the same record replays at 73%, and the times the watch or the sleeper
+  said awake are still seen. That is limited data, and the number of minutes is one of the
+  things a tracker's record tunes.
 - **Out of bed** starts it over.
 
 <img src="diagrams/stillness-rule.svg" width="560" alt="Flowchart: the minute's moving seconds, then the check for falling asleep or for waking">
@@ -243,7 +240,7 @@ There is no separate control for either: the ordinary ones are the manual ones.
   buttons, a Shortcut or the API. During a steered night the autopilot holds what you set until
   the end of that third of the night, then carries on from there, and remembers part of the
   difference for that third on later nights ("Your changes" in the table above).
-- **When you slept.** **Data > Sleep**, pick the night, then **Set when you slept** under its
+- **When you slept.** **Data > Sleep**, pick the night, then **Manual override** under its
   Summary. The two times are filed as that night's record, as a tracker's would be, and count
   toward the 7 nights the sleep rules are fitted to.
 - **The base.** **Settings > Autopilot > Base temperature**.

@@ -81,7 +81,7 @@ const NightSummary = ({ night, onCorrected }: { night: NightDetail; onCorrected:
         onClick={ () => setIsCorrecting(true) }
         sx={ { alignSelf: 'flex-start', mt: 0.5 } }
       >
-        Set when you slept
+        Manual override
       </Button>
       { isCorrecting && (
         <SleepTimesDialog

@@ -1,7 +1,8 @@
 export const TIME_ZONES = [
   'UTC', // Coordinated Universal Time
   'America/Anchorage', // Alaska
-  'America/Los_Angeles', // Pacific Time (US & Canada)
+  'America/Los_Angeles', // Pacific Time (US)
+  'America/Vancouver', // Pacific Time (British Columbia, UTC-7 all year from November 2026)
   'Pacific/Honolulu', // Hawaii
   'America/Denver', // Mountain Time (US & Canada)
   'America/Chicago', // Central Time (US & Canada)

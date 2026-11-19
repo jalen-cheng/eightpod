@@ -138,11 +138,13 @@ class ServerStatus {
       this.status.biometricsCalibrationRight = servicesDB.data.biometrics.jobs.calibrateRight;
 
       const time = moment(servicesDB.data.biometrics.jobs.stream.timestamp);
-      if (moment().diff(time, 'minutes') >= 5) {
+      // Saved only when it changes: this runs every few seconds, and writing the same file each
+      // time wears the Pod's flash for nothing
+      if (moment().diff(time, 'minutes') >= 5 && servicesDB.data.biometrics.jobs.stream.status !== 'failed') {
         servicesDB.data.biometrics.jobs.stream.status = 'failed';
         servicesDB.data.biometrics.jobs.stream.message = 'Biometrics stream died! Run `systemctl restart free-sleep-stream`';
+        await servicesDB.write();
       }
-      await servicesDB.write();
       this.status.biometricsStream = servicesDB.data.biometrics.jobs.stream;
     } else {
       // Delete keys from server status

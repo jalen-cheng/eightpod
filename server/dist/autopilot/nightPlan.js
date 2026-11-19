@@ -10,7 +10,7 @@
 // Raised when the way the temperature is decided changes, and saved with each night, so nights
 // under different rules are not compared as if they were the same
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="7889b60e-085b-553a-b287-402053f7da7d")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="4a9d10aa-5c6f-58e6-9c86-7bbf0680fed0")}catch(e){}}();
 export const POLICY_VERSION = 3;
 // The offset never goes further than this from the base temperature, whatever adds up
 export const MAX_OFFSET_F = 4;
@@ -79,14 +79,19 @@ export function learnFromCorrection(learned, part, correctionF) {
 // makes the same bed setting feel warmer, so the bed goes the other way. The mattress surface
 // is not used: it follows the water, so the autopilot would be answering its own changes.
 // ---------------------------------------------------------------------------------------------
-// Half a degree of bed for each degree of room
+// Half a degree of bed for each degree of room, and nothing until the room has moved this far
+// from where it was at sleep onset: a reading that wanders a degree is not a room that changed
 const ROOM_GAIN = 0.5;
 const MAX_ROOM_OFFSET_F = 2;
+export const ROOM_SWING_TO_ACT_F = 2;
 export function roomOffsetF(roomAtSleepOnsetF, roomNowF) {
     if (roomAtSleepOnsetF === undefined || roomNowF === undefined)
         return 0;
+    const swingF = roomNowF - roomAtSleepOnsetF;
+    if (Math.abs(swingF) < ROOM_SWING_TO_ACT_F)
+        return 0;
     // `|| 0` turns -0 into 0
-    return clamp(-(roomNowF - roomAtSleepOnsetF) * ROOM_GAIN, MAX_ROOM_OFFSET_F) || 0;
+    return clamp(-swingF * ROOM_GAIN, MAX_ROOM_OFFSET_F) || 0;
 }
 // The temperature the autopilot wants at this point of a night under way. Once a night has
 // begun it runs by the clock: a restless few minutes does not send the bed back to the base
@@ -120,4 +125,4 @@ export function planTemperature(input) {
     return { targetTemperatureF, offsetF: targetTemperatureF - baseF, parts, isLimited };
 }
 //# sourceMappingURL=nightPlan.js.map
-//# debugId=7889b60e-085b-553a-b287-402053f7da7d
+//# debugId=4a9d10aa-5c6f-58e6-9c86-7bbf0680fed0

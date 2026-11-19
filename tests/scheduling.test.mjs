@@ -259,12 +259,20 @@ test('a morning alarm belongs to the night before, unless that night began after
   assert.equal(findNightDay(mondayMorning, disabled), 'sunday');
 });
 
-test('the Pod is told to stay on for longer than the night', () => {
+test('the Pod is told to stay on until the night\'s off time and half an hour over, so it turns itself off if the server has stopped', () => {
   const HOUR = 3600;
-  assert.equal(getScheduledOnSeconds('22:00', '07:30'), 12 * HOUR);
-  // Exactly 12 hours would race the off job
+  assert.equal(getScheduledOnSeconds('22:00', '07:30'), 10 * HOUR);
   assert.equal(getScheduledOnSeconds('19:00', '07:00'), 12.5 * HOUR);
   assert.equal(getScheduledOnSeconds('21:00', '11:30'), 15 * HOUR);
+  assert.equal(getScheduledOnSeconds('23:00', '00:00'), 1.5 * HOUR);
+  // Asked at a known moment, it is counted from that moment on the zone's own clock
+  const moment = createRequire(new URL('../server/package.json', import.meta.url))('moment-timezone');
+  const evening = moment.tz('2026-06-10 22:00', 'America/Los_Angeles');
+  assert.equal(getScheduledOnSeconds('22:00', '07:30', evening), 10 * HOUR);
+  assert.equal(getScheduledOnSeconds('22:00', '07:30', evening.clone().add(20, 'minutes')), 10 * HOUR - 20 * 60);
+  // The night the clocks go back is an hour longer than its clock times say
+  const clocksGoBack = moment.tz('2026-10-31 22:00', 'America/Los_Angeles');
+  assert.equal(getScheduledOnSeconds('22:00', '07:30', clocksGoBack), 11 * HOUR);
 });
 
 test('a one-off alarm keeps a skipped alarm skipped', () => {

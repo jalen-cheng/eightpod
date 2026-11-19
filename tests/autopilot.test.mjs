@@ -444,10 +444,14 @@ test('a correction is partly remembered for its part of the night, within a limi
   assert.ok(Math.abs(learnFromCorrection(learned, 'late', -1).late + 0.3) < 1e-9);
 });
 
-test('a warmer room cools the bed, by half as much and never more than two degrees', () => {
+test('a room that has moved two degrees moves the bed half as far the other way, never more than two', () => {
   assert.equal(roomOffsetF(68, 70), -1);
   assert.equal(roomOffsetF(68, 66), 1);
   assert.equal(roomOffsetF(68, 68), 0);
+  // A reading that wanders less than two degrees is not acted on
+  assert.equal(roomOffsetF(68, 69.9), 0);
+  assert.equal(roomOffsetF(68, 66.1), 0);
+  assert.equal(roomOffsetF(68, 71), -1.5);
   assert.equal(roomOffsetF(60, 80), -2);
   // Nothing without a reading to compare
   assert.equal(roomOffsetF(undefined, 80), 0);

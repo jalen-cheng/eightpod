@@ -911,14 +911,16 @@ export class AutopilotMonitor {
 
     const baseTemperatureF = this.findNightBase(night);
     const progress = nightProgress(night, nowMs);
-    // The room's part is left out. The air reading at the cover is saved with every minute, but
-    // until a logged night shows that it follows the room and not the sleeper's own warmth, the
-    // bed is not moved on its word.
+    // The room counts once it has moved 2°F from where it was at sleep onset. The air reading at
+    // the cover held within a degree through a logged night while the bed under it went from 74
+    // to 92°F, so it is not the sleeper or the bed that it follows. A stale reading counts for nothing.
     const plan = planTemperature({
       baseTemperatureF,
       progress,
       minutesSinceSleepOnset: (nowMs - night.asleepSinceMs) / MINUTE_MS,
       learned,
+      roomAtSleepOnsetF: night.roomAtOnsetF,
+      roomNowF: readRoomF(nowMs),
       minTemperatureF: MIN_TEMPERATURE_F,
       maxTemperatureF: MAX_TEMPERATURE_F,
     });
