@@ -7,12 +7,13 @@ import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import PageContainer from '../PageContainer.tsx';
 import PageHeader from '@components/PageHeader.tsx';
 import { useServices } from '@api/services.ts';
+import { BIOMETRICS_LABEL } from '@lib/biometricsLabel.ts';
 
 // Sleep is the bed's own record of each night. Biometrics is the older page fed by the
 // biometrics service: listed once that service is installed, and saying how to switch it on
 // while it has nothing to show.
 const SLEEP_PAGE = { title: 'Sleep', route: '/data/nights', icon: <BedOutlinedIcon/> };
-const BIOMETRICS_PAGE = { title: 'Biometrics', route: '/data/sleep', icon: <MonitorHeartOutlinedIcon/> };
+const BIOMETRICS_PAGE = { title: BIOMETRICS_LABEL, route: '/data/sleep', icon: <MonitorHeartOutlinedIcon/> };
 const LOGS_PAGE = { title: 'Logs', route: '/data/logs', icon: <ArticleOutlinedIcon/> };
 
 export default function DataPage() {

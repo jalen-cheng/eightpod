@@ -57,6 +57,9 @@ and alarms run in this time zone, and it starts as UTC.
   report it shows "Currently at", the firmware's own estimate.
 - **The next alarm**, across the open bottom of the dial while the bed is on. Tap it to change the next alarm
   or skip it (section 7). With no alarm tonight it reads "Turns off at"; while the bed is off, "Turns on at".
+- **With the autopilot on** (section 10), a line under the dial says what it is doing. Setting the temperature here
+  is how you adjust it by hand: during a night it is steering, it holds what you set until that third of the night
+  ends, then carries on and remembers part of the difference for later nights.
 
 A side you turn on by hand turns itself off after 12 hours unless you change that (section 10).
 
@@ -168,7 +171,7 @@ When the sides are linked, the buttons on either side control both. The step siz
 
 Each section of the Settings page opens with a tap. General starts open, and the page remembers
 which ones you opened and closed. Under the last section are **Documentation** (this site),
-the **License** (with the disclaimer) and **Help** (this project's issues on GitHub).
+the **License** (with the disclaimer, on GitHub) and **Help** (this project's issues on GitHub). All three open outside the app.
 
 | Setting | Where | What it does |
 |---|---|---|
@@ -181,7 +184,7 @@ the **License** (with the disclaimer) and **Help** (this project's issues on Git
 | **Prime daily** | Priming | Runs the water priming cycle every day at **Prime time**, 2 PM by default. It does not check whether the bed is in use |
 | **Reboot once a day** | Status page | Restarts the Pod one hour before the priming time. A vibrating alarm or running warm-up is lost in a reboot, so keep the time in the afternoon |
 | **Status page** | The "Status" link (bottom right on a wide screen; beside the heading of Data and Settings on a phone or in a narrow window) | The Pod itself (model, Wi-Fi strength, SevenSleep's version with **Update** when there is a newer one, **Reboot**), then each service. The biometrics and sleep-analysis rows are greyed and marked untested. The link reads "Update available" when a newer version is out |
-| **Biometrics** | Other | The older sleep analysis, which has to be installed on the Pod first: while it is not, the command that installs it is shown under the switch. It cannot read a Pod 5's sensors |
+| **Biometrics (legacy)** | Other | The original project's sleep analysis, from before the autopilot. It is a separate service that has to be installed on the Pod first: while it is not, the command that installs it is shown under the switch. The autopilot and Data > Sleep do not use it, and it cannot read a Pod 5's sensors |
 | **In-bed detection** | Its own section, Pod 5 only | Two options, both off by default: **Turn on when I get into bed** and **Alarm after a long time in bed**. Detection was checked with one person on one Pod; the first option has been seen turning the bed on, the rest has not been seen working yet |
 | **Autopilot** | Its own section, Pod 5 only | **Adjust the temperature while I sleep**, off by default. While you sleep the temperature is the autopilot's: it moves the bed up to 4°F around a base temperature, one degree at a time, cooler early and warmer toward morning, and the schedule's temperature changes wait until the night is over (bed on, bed off and the alarm still follow the schedule). It learns from the changes you make. It treats the bed as one sleeper's, so switching it on links the sides. A temperature you set in the night is held as you set it. A nap (a sleep under 3 hours) is left alone. **Data > Sleep** shows a day at a time (bedtime, wake time, duration, wake-ups, and graphs of movement, pressure and temperature changes), and **Export** downloads a week to three months. **Base temperature** is what its changes are counted from: the bed's setting when you fall asleep, or a temperature you pick. **Calibrate with sleep tracker > Set up** opens [the steps](CONNECTIONS.md#link-apple-health) for an iPhone Shortcut that sends a watch's or band's sleep each morning, which the bed uses to tune how it judges sleep (iPhone only; at least 7 nights are recommended, and without a tracker you can set your own times under Data > Sleep). Experimental and not yet run through a real night; see [AUTOPILOT.md](AUTOPILOT.md) |
 

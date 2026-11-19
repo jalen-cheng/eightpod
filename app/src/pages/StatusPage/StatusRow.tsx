@@ -17,11 +17,12 @@ type StatusRowProps = {
   job: ServerStatusKey,
 }
 
-// Sleep analysis and its jobs are the original project's and untested here, so their rows are greyed
-const UNTESTED_JOB_PATTERN = /^(biometrics|analyzeSleep)/;
+// The biometrics service and its jobs are the original project's sleep analysis, from before the
+// autopilot and untested here, so their rows are greyed and say so
+const LEGACY_JOB_PATTERN = /^(biometrics|analyzeSleep)/;
 
 export default function StatusRow({ job, statusInfo }: StatusRowProps) {
-  const isUntested = UNTESTED_JOB_PATTERN.test(job);
+  const isLegacy = LEGACY_JOB_PATTERN.test(job);
   const timestamp = statusInfo.timestamp && moment(statusInfo.timestamp).format('YYYY-MM-DD HH:mm:ss z');
   let isRunnable = false;
   // @ts-expect-error
@@ -45,17 +46,18 @@ export default function StatusRow({ job, statusInfo }: StatusRowProps) {
       sx={ {
         py: 2.5, borderBottom: '1px solid', borderColor: 'divider',
         display: 'flex', flexDirection: 'column', gap: 1, minWidth: 0,
-        opacity: isUntested ? 0.45 : 1,
+        // Set back, but still readable: the rows' Run buttons work
+        opacity: isLegacy ? 0.8 : 1,
       } }
     >
       <Box sx={ { display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) auto', alignItems: 'start', gap: 1.5 } }>
         <Typography component="h2" variant="body1" sx={ { fontWeight: 600, overflowWrap: 'anywhere' } }>
-          { statusInfo.name }
+          { statusInfo.name }{ isLegacy ? ' (legacy)' : '' }
         </Typography>
         <StatusChip info={ statusInfo }/>
       </Box>
       <Typography variant="body2" sx={ { color: 'text.secondary', whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' } }>
-        { statusInfo.description }{ isUntested ? ' · Untested in this version' : '' }
+        { statusInfo.description }{ isLegacy ? ' · Untested in this version' : '' }
       </Typography>
       { /* A message is only an error when the service has failed; otherwise it is a note */ }
       { statusInfo.message && (

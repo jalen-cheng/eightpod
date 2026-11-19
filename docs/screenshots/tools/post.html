@@ -1,0 +1,116 @@
+<!doctype html>
+<!-- Pictures for a post, built from the framed screenshots beside this folder.
+     ?card=hero | phones | autopilot | api. Rendered at 1600x900:
+     CAPTURE_WIDTH=1600 CAPTURE_HEIGHT=900 node capture.mjs <port> ../../demo/post '<one entry a card>' -->
+<meta charset="utf-8">
+<style>
+  html, body { margin: 0; width: 1600px; height: 900px; overflow: hidden; color: #f2f2f2;
+    font-family: -apple-system, 'SF Pro Display', 'Helvetica Neue', sans-serif; }
+  body { background:
+      radial-gradient(55% 70% at 12% 15%, rgba(59, 76, 202, 0.55) 0%, transparent 60%),
+      radial-gradient(50% 65% at 92% 20%, rgba(194, 65, 12, 0.50) 0%, transparent 62%),
+      radial-gradient(70% 70% at 60% 105%, rgba(15, 118, 110, 0.50) 0%, transparent 60%),
+      #0d0f14; }
+  .card { display: none; width: 100%; height: 100%; box-sizing: border-box; }
+  .brand { display: flex; align-items: center; gap: 14px; font-size: 26px; font-weight: 600; color: #c9c9c9; }
+  .brand img { width: 44px; height: 44px; border-radius: 12px; }
+  h1 { font-size: 76px; line-height: 1.04; letter-spacing: -0.035em; font-weight: 650; margin: 34px 0 26px; }
+  p.sub { font-size: 30px; line-height: 1.35; color: #b9bcc4; margin: 0; }
+  ul { list-style: none; padding: 0; margin: 38px 0 0; display: grid; gap: 16px; font-size: 27px; color: #e4e4e4; }
+  li { display: grid; grid-template-columns: 25px 1fr; align-items: baseline; }
+  li::before { content: ''; width: 9px; height: 9px; border-radius: 50%; background: #6ee7b7; transform: translateY(-3px); }
+  .phone { filter: drop-shadow(0 40px 70px rgba(0, 0, 0, 0.6)); }
+
+  #hero, #api { padding: 0 110px; align-items: center; justify-content: space-between; gap: 60px; }
+  #hero .words { max-width: 800px; }
+  #hero .phone { height: 800px; }
+
+  #phones { flex-direction: column; align-items: center; justify-content: center; gap: 34px; }
+  #phones .row { display: flex; gap: 46px; }
+  #phones .phone { height: 600px; }
+  #phones h1 { font-size: 54px; margin: 0; text-align: center; }
+  #phones .brand { justify-content: center; }
+
+  #autopilot { padding: 0 100px; align-items: center; justify-content: space-between; gap: 50px; }
+  #autopilot .words { max-width: 700px; }
+  #autopilot h1 { font-size: 58px; }
+  #autopilot .pair { display: flex; gap: 36px; }
+  #autopilot .phone { height: 720px; }
+
+  #api .words { max-width: 760px; }
+  #api h1 { font-size: 66px; }
+  .terminal { margin-top: 40px; border-radius: 14px; overflow: hidden; background: #0b0d10;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.14), 0 30px 80px rgba(0, 0, 0, 0.6); }
+  .terminal header { height: 36px; display: flex; align-items: center; gap: 8px; padding: 0 14px; background: #16191e; }
+  .terminal header i { width: 12px; height: 12px; border-radius: 50%; background: #333a44; }
+  .terminal pre { margin: 0; padding: 22px 24px 24px; font: 21px/1.6 'SF Mono', ui-monospace, Menlo, monospace; color: #e6edf3; white-space: pre-wrap; }
+  .terminal .prompt { color: #3fb950; } .terminal .reply { color: #8b949e; }
+  #api .phone { height: 760px; }
+</style>
+<body>
+  <div class="card" id="hero">
+    <div class="words">
+      <div class="brand"><img src="../../../app/public/sevensleep-icon.svg" alt="">SevenSleep</div>
+      <h1>Your Eight Sleep Pod, without the cloud.</h1>
+      <p class="sub">Open source. Runs on the bed itself. No account, no subscription.</p>
+      <ul>
+        <li>Temperature, schedules and alarms from your own Wi-Fi</li>
+        <li>An autopilot that cools and warms the bed through the night</li>
+        <li>Knows when you are in bed, from the bed's own sensors</li>
+        <li>A local API for Shortcuts, Home Assistant and AI</li>
+      </ul>
+    </div>
+    <img class="phone" src="../temperature.png" alt="">
+  </div>
+
+  <div class="card" id="phones">
+    <div class="brand"><img src="../../../app/public/sevensleep-icon.svg" alt="">SevenSleep</div>
+    <h1>Local control for Eight Sleep Pods. No cloud, no subscription.</h1>
+    <div class="row">
+      <img class="phone" src="../temperature.png" alt="">
+      <img class="phone" src="../schedule.png" alt="">
+      <img class="phone" src="../nights.png" alt="">
+      <img class="phone" src="../settings.png" alt="">
+    </div>
+  </div>
+
+  <div class="card" id="autopilot">
+    <div class="words">
+      <div class="brand"><img src="../../../app/public/sevensleep-icon.svg" alt="">SevenSleep</div>
+      <h1>An autopilot for your bed.</h1>
+      <p class="sub">Cooler early in the night, warmer toward morning, one degree at a time.</p>
+      <ul>
+        <li>Follows your sleep with the bed's own sensors</li>
+        <li>Set the temperature and it holds it, then learns</li>
+        <li>Checks itself against your watch via Apple Health</li>
+        <li>Experimental. Your sleep data never leaves the bed</li>
+      </ul>
+    </div>
+    <div class="pair">
+      <img class="phone" src="../nights.png" alt="">
+      <img class="phone" src="../autopilot.png" alt="">
+    </div>
+  </div>
+
+  <div class="card" id="api">
+    <div class="words">
+      <div class="brand"><img src="../../../app/public/sevensleep-icon.svg" alt="">SevenSleep</div>
+      <h1>Your bed has a local API now.</h1>
+      <p class="sub">Works with the internet down. Nothing leaves your home.</p>
+      <div class="terminal">
+        <header><i></i><i></i><i></i></header>
+        <pre><span class="prompt">$ </span>curl -X POST sevensleep.local/api/deviceStatus \
+    -d '{"left": {"targetTemperatureF": 70}}'
+<span class="reply">HTTP 204</span>
+
+<span class="prompt">$ </span>curl sevensleep.local/api/deviceStatus/dial
+<span class="reply">"Both sides set to -1, now at -1."</span></pre>
+      </div>
+    </div>
+    <img class="phone" src="../temperature.png" alt="">
+  </div>
+<script>
+  const card = new URLSearchParams(location.search).get('card') ?? 'hero';
+  document.getElementById(card).style.display = 'flex';
+</script>
+</body>

@@ -46,7 +46,7 @@ const App = () => {
         <LocalizationProvider dateAdapter={ AdapterMoment }>
 
           <AppStoreProvider>
-            <CssBaseline/>
+            <CssBaseline enableColorScheme/>
             <GlobalStyles
               styles={ {
                 'html, body': {

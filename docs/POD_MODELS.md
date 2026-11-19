@@ -24,7 +24,7 @@ saved-source file, so its own update script then decides where updates come from
 | Taps (Pod 4) / buttons (Pod 5) | None: a Pod 3 has no tap sensors | Double and triple tap: cooler and warmer. Four taps: changed (below) | -, + and middle buttons |
 | Linked sides, one-time alarm, warm-up, shortcuts | Not model-specific | Not model-specific | Tested |
 | In-bed detection and its actions | Not available: needs sensor data only a Pod 5 was seen to publish. The section is hidden | Same | Detects one person on the test Pod; the actions have not fired there yet |
-| Sleep tracking (Biometrics) | Code unchanged from the original | Code unchanged from the original | Does not work: this firmware publishes sensor data elsewhere |
+| The original sleep tracking (Biometrics (legacy)) | Code unchanged from the original | Code unchanged from the original | Does not work: this firmware publishes sensor data elsewhere |
 | Internet block, updater lock-out | Not tested on this model | Not tested on this model | Tested |
 | `.local` name, Tailscale on the Pod | Not tested; both need parts of the system a Pod 3 or 4 may lack | Same | Tested |
 

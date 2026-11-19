@@ -88,13 +88,15 @@ export default function PresenceSection({ settings, updateSettings }: PresenceSe
               sx={ { display: 'inline-flex', flexWrap: 'wrap', alignItems: 'center', columnGap: 1.5, verticalAlign: 'middle' } }
             >
               { (['left', 'right'] as const).map(side => (
-                <StatusTag
-                  key={ side }
-                  tone={ sensors[side]?.present ? 'good' : 'neutral' }
-                  label={ `${side === 'left' ? 'Left' : 'Right'} ${sensors[side]?.present ? 'in bed' : 'empty'}` }
-                />
+                // The "i" goes with the last reading, so it never wraps onto a line of its own
+                <Box key={ side } component="span" sx={ { display: 'inline-flex', alignItems: 'center', gap: 0.75, whiteSpace: 'nowrap' } }>
+                  <StatusTag
+                    tone={ sensors[side]?.present ? 'good' : 'neutral' }
+                    label={ `${side === 'left' ? 'Left' : 'Right'} ${sensors[side]?.present ? 'in bed' : 'empty'}` }
+                  />
+                  { side === 'right' && <InfoTip text={ EMPTY_INFO }/> }
+                </Box>
               )) }
-              <InfoTip text={ EMPTY_INFO }/>
             </Box>
           ) }
         >

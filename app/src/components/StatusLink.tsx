@@ -1,3 +1,4 @@
+import { widePressTarget } from '@lib/pressTarget.ts';
 import { ButtonBase } from '@mui/material';
 import { Link } from 'react-router-dom';
 import { useDeviceStatus } from '@api/deviceStatus.ts';
@@ -47,6 +48,7 @@ export default function StatusLink() {
         transition: 'border-color 150ms ease',
         '@media (hover: hover)': { '&:hover': { borderColor: 'text.secondary' } },
         '&:focus-visible': { outline: '2px solid', outlineColor: 'text.primary', outlineOffset: 2 },
+        ...widePressTarget(5),
       } }
     >
       <StatusTag tone={ tone } label={ label }/>

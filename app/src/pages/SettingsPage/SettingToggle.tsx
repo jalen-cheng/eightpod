@@ -15,6 +15,8 @@ export default function SettingToggle({ label, control, info, children }: Settin
     <Box sx={ { minWidth: 0 } }>
       <FormControlLabel
         label={ <SettingLabel label={ label } info={ info }/> }
+        // A name that wraps is split evenly, not left with one word on its own line
+        slotProps={ { typography: { sx: { textWrap: 'balance' } } } }
         labelPlacement="start"
         control={ control }
         sx={ {

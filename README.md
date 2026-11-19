@@ -153,8 +153,9 @@ Not yet seen working on a Pod: the bed turning off after someone gets out, the l
 "ignore the schedule" after turning on by hand, and flipping left and right. Nothing has been run
 on a Pod 3 or Pod 4. [CHANGELOG.md](CHANGELOG.md) keeps the full list.
 
-**Biometrics are untested.** Sleep tracking, heart rate and the other measurements on the Data
-page are Free Sleep's code, unchanged, and off unless you enable them. They produced nothing on
+**Biometrics (legacy) is untested.** The sleep tracking, heart rate and other measurements on
+the Data page's Biometrics (legacy) tab are Free Sleep's code, unchanged, and off unless you
+enable them. They are a separate system from the autopilot and Data > Sleep. They produced nothing on
 the test Pod 5 and were not looked into further.
 
 ## FAQ
@@ -191,8 +192,8 @@ do not improvise. A Pod 3 with an SD card is the riskiest, because the card itse
 <summary><b>Will it void my warranty?</b></summary>
 <br>
 
-SevenSleep is not supported by Eight Sleep, and their warranty terms are theirs to apply. Nothing
-is soldered or cut: the hub is opened with a screwdriver and closed again, and the software
+SevenSleep is not supported by Eight Sleep, and their warranty terms are theirs to apply. With
+the tag-connect cable nothing is soldered or cut: the hub is opened with a screwdriver and closed again, and the software
 change can be undone (see "Is it reversible?").
 
 </details>
@@ -301,7 +302,7 @@ Yes. One command over SSH reinstalls it and keeps your schedules; see
 
 ```bash
 git clone https://github.com/jalen-cheng/sevensleep.git
-cd free-sleep/app && npm install && VITE_ENV=demo VITE_USE_MSW=true npx vite
+cd sevensleep/app && npm install && VITE_ENV=demo VITE_USE_MSW=true npx vite
 ```
 
 That runs the app on made-up data, with no Pod. Running against a Pod, the checks and how
@@ -312,8 +313,8 @@ keep the name `free-sleep`, so an existing install updates in place.
 
 Issues and pull requests are welcome, including new features, a different direction for the
 product and UI rewrites. The only fixed rules are that it stays local and leaves Eight Sleep's
-firmware alone. The most useful contribution is a report from hardware Free
-Pod has not seen: a Pod 3 or Pod 4, or a newer Pod 5. [CONTRIBUTING.md](CONTRIBUTING.md) says how,
+firmware alone. The most useful contribution is a report from hardware
+SevenSleep has not seen: a Pod 3 or Pod 4, or a newer Pod 5. [CONTRIBUTING.md](CONTRIBUTING.md) says how,
 and issues labelled [needs testing](https://github.com/jalen-cheng/sevensleep/issues?q=is%3Aissue+is%3Aopen+label%3A%22needs+testing%22)
 list what is waiting to be checked.
 

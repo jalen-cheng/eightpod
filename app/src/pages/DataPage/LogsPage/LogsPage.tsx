@@ -63,9 +63,9 @@ export default function LogsPage() {
 
   // Auto-scroll only if user is at the bottom
   useEffect(() => {
-    if (isUserAtBottom.current) {
-      logsEndRef.current?.scrollIntoView({ behavior: 'auto' });
-    }
+    // The list is scrolled, not the page: scrolling the last line into view moved the page as well
+    const container = logsContainerRef.current;
+    if (isUserAtBottom.current && container) container.scrollTop = container.scrollHeight;
   }, [logs]);
 
   return (

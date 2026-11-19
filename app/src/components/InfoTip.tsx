@@ -1,5 +1,6 @@
 import { IconButton, Tooltip } from '@mui/material';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import { widePressTarget } from '@lib/pressTarget.ts';
 
 type InfoTipProps = {
   // The extra detail, shown in a small bubble
@@ -15,7 +16,7 @@ export default function InfoTip({ text }: InfoTipProps) {
         size="small"
         aria-label="More information"
         // Small on purpose: it sits inside lines of text and rows of controls
-        sx={ { p: 0.5, minWidth: 0, minHeight: 0, color: 'text.secondary', verticalAlign: 'middle' } }
+        sx={ { p: 0.5, minWidth: 0, minHeight: 0, color: 'text.secondary', verticalAlign: 'middle', ...widePressTarget(8) } }
       >
         <InfoOutlinedIcon sx={ { fontSize: 16 } }/>
       </IconButton>

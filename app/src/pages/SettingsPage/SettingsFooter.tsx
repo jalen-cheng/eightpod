@@ -1,45 +1,35 @@
 import ArrowOutwardIcon from '@mui/icons-material/ArrowOutward';
 import { Box, Button } from '@mui/material';
-import { DOCS_URL } from '@lib/docsLinks.ts';
-import LicenseModal from './LicenseModal.tsx';
+import { DOCS_URL, ISSUES_URL, LICENSE_URL } from '@lib/docsLinks.ts';
 
-// Where problems with this fork are reported. (The original project's Discord supports the
-// original, whose behaviour differs from this fork's.)
-const ISSUES_LINK = 'https://github.com/jalen-cheng/sevensleep/issues';
+// The things that are looked up, not set, under the last section. Each opens outside the app:
+// the documentation site (the guides and the API), the license on GitHub, and where to report
+// a problem.
+const FOOTER_LINKS = [
+  { label: 'Documentation', href: DOCS_URL },
+  { label: 'License', href: LICENSE_URL },
+  { label: 'Help', href: ISSUES_URL },
+];
 
-// Quiet enough to read as a footer, tall enough to press on a phone
-const linkSx = { color: 'text.secondary', fontWeight: 400, minHeight: 44, px: 1.25 };
-
-// The things that are looked up, not set, under the last section: the documentation site (the
-// guides and the API), the license, and where to report a problem
 export default function SettingsFooter() {
   return (
     <Box component="footer" sx={ { display: 'flex', flexWrap: 'wrap', justifyContent: 'center', columnGap: 0.5 } }>
-      <Button
-        size="small"
-        color="inherit"
-        component="a"
-        href={ DOCS_URL }
-        target="_blank"
-        rel="noopener noreferrer"
-        endIcon={ <ArrowOutwardIcon/> }
-        sx={ linkSx }
-      >
-        Documentation
-      </Button>
-      <LicenseModal buttonSx={ linkSx }/>
-      <Button
-        size="small"
-        color="inherit"
-        component="a"
-        href={ ISSUES_LINK }
-        target="_blank"
-        rel="noopener noreferrer"
-        endIcon={ <ArrowOutwardIcon/> }
-        sx={ linkSx }
-      >
-        Help
-      </Button>
+      { FOOTER_LINKS.map(({ label, href }) => (
+        <Button
+          key={ label }
+          size="small"
+          color="inherit"
+          component="a"
+          href={ href }
+          target="_blank"
+          rel="noopener noreferrer"
+          endIcon={ <ArrowOutwardIcon/> }
+          // Quiet enough to read as a footer, tall enough to press on a phone
+          sx={ { color: 'text.secondary', fontWeight: 400, minHeight: 44, px: 1.25 } }
+        >
+          { label }
+        </Button>
+      )) }
     </Box>
   );
 }

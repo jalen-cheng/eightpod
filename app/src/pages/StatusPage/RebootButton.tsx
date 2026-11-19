@@ -35,6 +35,7 @@ export default function RebootButton() {
       .catch(error => {
         console.error(error);
       });
+    handleClose();
   };
 
   return (

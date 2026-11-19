@@ -58,7 +58,8 @@ the Pod, which step 10 relies on.
 Tools:
 
 - [TC2070-IDC tag-connect cable](https://www.tag-connect.com/product/tc2070-idc) (about $50). You
-  can solder three wires to the header instead.
+  can solder three wires (ground, transmit and receive) to the header instead;
+  [docs/jtag/pinout.jpeg](docs/jtag/pinout.jpeg) shows which pads.
 - [FTDI FT232RL USB serial adapter](https://www.amazon.com/gp/product/B07TXVRQ7V/) (about $13)
 - [Dupont wires](https://www.amazon.com/Elegoo-EL-CP-004-Multicolored-Breadboard-arduino/dp/B01EV70C78) (about $7)
 - A Torx screwdriver set and a towel to work on
@@ -70,7 +71,7 @@ On your computer:
 
    | Computer | Terminal |
    |---|---|
-   | Mac | `brew install minicom` |
+   | Mac | `brew install minicom` (needs [Homebrew](https://brew.sh)) |
    | Linux | `sudo apt install minicom` (Fedora: `sudo dnf install minicom`, Arch: `sudo pacman -S minicom`) |
    | Windows | [PuTTY](https://www.putty.org/). Do not use WSL for the serial steps; it does not see the USB adapter without extra setup |
 
@@ -111,7 +112,7 @@ On your computer:
 Only three wires are used: ground, transmit and receive.
 
 1. Connect the tag-connect cable to the FTDI adapter with Dupont wires, following the photos in
-   [docs/jtag](docs/jtag).
+   [docs/jtag](docs/jtag), in their numbered order. [pinout.jpeg](docs/jtag/pinout.jpeg) names each pad.
 2. Find the header on the board. It is a small grid of bare gold pads with alignment holes beside it.
    - Pod 3: [photo](docs/pod_3_teardown/7_pod_3_board_connection.jpeg)
    - Pod 4: [photo](docs/pod_4_teardown/2_circuit_board.png)
@@ -132,9 +133,10 @@ Only three wires are used: ground, transmit and receive.
    | Linux | `ls /dev/ttyUSB*` | `/dev/ttyUSB0` |
    | Windows | Device Manager > Ports (COM & LPT) | `USB Serial Port (COM3)` |
 
-2. Mac and Linux: start minicom at 921600 baud with the name you saw:
+2. Mac and Linux: start minicom at 921600 baud, with the name you saw in place of `ADAPTER_NAME`
+   (for example `/dev/tty.usbserial-B0010NHK` or `/dev/ttyUSB0`):
    ```
-   minicom -b 921600 -o -D /dev/tty.usbserial-B0010NHK
+   minicom -b 921600 -o -D ADAPTER_NAME
    ```
    Quit minicom with Ctrl+A, then X.
 
@@ -182,9 +184,10 @@ first letter just needs typing again.
    ```
    printenv current_slot
    ```
-   It must print `current_slot=a`. If it prints anything else, stop. Reset the firmware (see
-   [Going back to Eight Sleep](#going-back-to-eight-sleep)) and start again. If it is still not
-   `a`, open an issue.
+   It must print `current_slot=a`. If it prints anything else, stop. On a Pod 3 or Pod 4, reset
+   the firmware (see [Going back to Eight Sleep](#going-back-to-eight-sleep)) and start again.
+   A Pod 5 has no documented reset, so do not go on: type `run bootcmd` to start it as it was,
+   which changes nothing, and [open an issue](https://github.com/jalen-cheng/sevensleep/issues) with what it printed.
 2. Set the boot arguments:
    ```
    setenv bootargs "root=PARTLABEL=rootfs_a rootwait init=/bin/bash"
@@ -261,7 +264,7 @@ was not loaded or does not exist. That is expected.
 
 1. Stop and disable the services:
    ```
-   systemctl disable --now swupdate-progress swupdate defibrillator eight-kernel telegraf vector frankenfirmware dac swupdate.socket
+   for unit in swupdate-progress swupdate defibrillator eight-kernel telegraf vector frankenfirmware dac swupdate.socket; do systemctl disable --now "$unit"; done
    ```
 2. Mask them so they stay off after a restart:
    ```
@@ -286,9 +289,11 @@ test Pod the saved profile was called `customer-wifi`).
 
 Only if no address was printed, add your network:
 
-1. Replace `WIFI_NAME` (it appears twice) and `PASSWORD` with your own:
+1. Replace `WIFI_NAME` (it appears twice) and `PASSWORD` with your own, keeping the single
+   quotes: they carry a name or password with spaces or symbols through as typed. (A password
+   with a `'` in it needs that one character written as `'\''`.)
    ```
-   nmcli connection add type wifi con-name WIFI_NAME ifname wlan0 ssid WIFI_NAME wifi-sec.key-mgmt wpa-psk wifi-sec.psk "PASSWORD" ipv4.method auto ipv6.method auto
+   nmcli connection add type wifi con-name 'WIFI_NAME' ifname wlan0 ssid 'WIFI_NAME' wifi-sec.key-mgmt wpa-psk wifi-sec.psk 'PASSWORD' ipv4.method auto ipv6.method auto
    ```
 2. Optional, Pod 3 and Pod 4 only, from the original guide: this takes the Pod out of its "waiting
    to be set up" state, which lets you turn off the blinking blue LED. Never run it on a Pod 5.
@@ -333,7 +338,8 @@ is wrong.
    nmcli -g ip4.address device show wlan0
    ```
    If there is none after a minute, go back to step 10.
-2. Check the date and time are right:
+2. Check the date and time are right (the Pod's clock prints UTC, so it is the day and the
+   minutes that should match yours):
    ```
    date
    ```
@@ -549,7 +555,8 @@ happens, look for the word "button" in the logs:
 grep -i "button" /persistent/free-sleep-data/logs/*.log | tail -20
 ```
 
-**Sleep tracking (Biometrics) is optional and not part of this install.**
+**The original sleep tracking (Biometrics (legacy) in the app) is optional and not part of this
+install.** The autopilot and Data > Sleep do not need it.
 
 - Pod 5: do not install it. It does not work on the tested Pod 5, whose firmware publishes sensor
   data where the analysis does not read it.
@@ -608,8 +615,9 @@ the hub stays closed. Settings, schedules and sleep data are kept. Read
    ```
    sh /home/dac/free-sleep/scripts/block_internet_access.sh
    ```
-5. Open `http://<pod-ip>:3000` and check **Settings > Pod** shows the new version. From here
-   the app's own **Update** button keeps it current.
+5. Open `http://<pod-ip>:3000` and check the **Status** page (the Status link beside the
+   Settings heading) shows the new version under Pod. From here the app's own **Update** button
+   keeps it current.
 
 The folder, the services and the `fs-` commands keep the name `free-sleep`, which is what makes
 this a switch in place. Going back is one command; see "Going back to the original project" above.
@@ -637,7 +645,7 @@ be possible.
 
 1. Stop SevenSleep and keep it from starting:
    ```
-   systemctl disable --now free-sleep free-sleep-stream free-sleep-firewall
+   for unit in free-sleep free-sleep-stream free-sleep-firewall; do systemctl disable --now "$unit"; done
    ```
    If you set up Tailscale on the Pod, remove it too:
    `sh /home/dac/free-sleep/scripts/setup_tailscale.sh remove`.
@@ -650,15 +658,22 @@ be possible.
    ```
    sh /home/dac/free-sleep/scripts/updater_lockout.sh disable
    ```
-3. Give the services from step 9 back. Lines about units that do not exist are expected:
+3. Give the services from step 9 back, one at a time, so that a service your Pod does not have
+   cannot stop the others from coming back. Lines about units that do not exist are expected:
    ```
-   systemctl unmask swupdate-progress swupdate defibrillator eight-kernel telegraf vector frankenfirmware dac swupdate.socket
+   for unit in swupdate-progress swupdate defibrillator eight-kernel telegraf vector frankenfirmware dac swupdate.socket; do systemctl unmask "$unit"; done
    ```
    ```
-   systemctl enable --now swupdate.socket swupdate defibrillator eight-kernel telegraf vector frankenfirmware dac
+   for unit in swupdate.socket swupdate-progress swupdate defibrillator eight-kernel telegraf vector frankenfirmware dac; do systemctl enable --now "$unit"; done
    ```
+   Then look before going on: `systemctl is-active frankenfirmware dac` should print `active` for
+   both, the two that run the bed. (These steps have not been run on a Pod yet; if it prints
+   something else, run the line above again and read what it says.)
 4. If the installer renamed the Pod, give it its old name back: `sh /home/dac/free-sleep/scripts/setup_local_name.sh name eight-pod`.
 5. Reboot. The Pod should reach Eight Sleep again and may update its firmware, after which the
    way back into it may be closed.
+
+These steps leave SSH as the installer set it: port 8822, signing in as root with the password
+you chose. A firmware update from Eight Sleep may or may not undo that.
 
 If you try either on a Pod 5, please [say what happened](CONTRIBUTING.md).

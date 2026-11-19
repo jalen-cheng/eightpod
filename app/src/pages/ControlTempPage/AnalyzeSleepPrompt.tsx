@@ -34,7 +34,7 @@ export default function AnalyzeSleepPrompt({ isOffered }: AnalyzeSleepPromptProp
     <Box sx={ { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 } }>
       { showButton && (
         <Button size="small" disabled={ isUpdating } onClick={ handleAnalyzeSleep } startIcon={ <SearchIcon sx={ { fontSize: 18 } }/> }>
-          Analyze sleep
+          Analyze sleep (legacy)
         </Button>
       ) }
       { isAnalyzing && <AnalyzeSleepNotification/> }

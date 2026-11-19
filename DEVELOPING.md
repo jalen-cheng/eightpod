@@ -162,5 +162,10 @@ phone frames by the scripts in `docs/screenshots/tools/`:
 2. Start Chrome with `--headless=new --remote-debugging-port=9333`.
 3. In `docs/screenshots/tools/`, run `CAPTURE_HEIGHT=800 node capture.mjs 9333 raw '<list of pages>'`
    (the list format is at the top of the script; name the pages `temperature`, `schedule`,
-   `alarm_options` and `settings`), then `node frame.mjs 9333 ..`.
+   `alarm_options`, `nights`, `settings` and `autopilot` (Settings with only its Autopilot section
+   open)), then `node frame.mjs 9333 ..`.
+4. The pictures for a post in `docs/demo/post/` are `post.html` in the same folder, one card a
+   picture, built from the framed screenshots: `CAPTURE_WIDTH=1600 CAPTURE_HEIGHT=900 node
+   capture.mjs 9333 ../../demo/post '<one entry a card>'`, each entry's `url` being the file's
+   address with `?card=hero`, `phones`, `autopilot` or `api`.
 

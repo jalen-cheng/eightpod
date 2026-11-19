@@ -39,7 +39,12 @@ export default function Donate() {
             py: 1, borderBottom: '1px solid', borderColor: 'divider',
           } }
         >
-          <Link href="https://paypal.me/realfreesleep" target="_blank" sx={ { display: 'flex', alignItems: 'center', minHeight: 44 } }>
+          <Link
+            href="https://paypal.me/realfreesleep"
+            target="_blank"
+            // The mark is dark blue on nothing, so it gets a light ground to be read on
+            sx={ { display: 'flex', alignItems: 'center', minHeight: 44, px: 1, borderRadius: '8px', bgcolor: '#f5f5f5' } }
+          >
             <img src={ paypalIcon } alt="Donate via PayPal" width={ 135 } height={ 36 }/>
           </Link>
           <Link href="https://paypal.me/realfreesleep" target="_blank" sx={ { fontSize: 12, py: 1.5 } }>
