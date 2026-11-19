@@ -3,7 +3,7 @@ import { z } from 'zod';
 import {
   applyTrackerSleep, getAutopilotSnapshot, getNightSummaries, getNightsExport, getNightsOn,
 } from '../../autopilot/autopilotMonitor.js';
-import { SleepPeriod, findSleepPeriods, readHealthExportSleep } from '../../autopilot/sleepTracker.js';
+import { SleepPeriod, findSleepPeriods } from '../../autopilot/sleepTracker.js';
 
 const router = express.Router();
 
@@ -68,31 +68,18 @@ const TrackerSleepSchema = z.object({
   'Send asleepAt and awakeAt, or samples',
 );
 
-// Takes sleep and wake times from a watch or band (by way of a phone shortcut, an app that
-// posts Apple Health data, or a script), files them with the stays in bed they overlap, and
-// fits the bed's own sleep rules to them
+// Takes sleep and wake times from a watch or band (by way of a phone shortcut or a script),
+// files them with the stays in bed they overlap, and fits the bed's own sleep rules to them
 router.post('/autopilot/sleepTimes', (req: Request, res: Response) => {
-  const exportedSamples = readHealthExportSleep(req.body);
-  const sideInAddress = SideSchema.optional().safeParse(req.query.side);
-  let side = sideInAddress.success ? sideInAddress.data : undefined;
-  let source: string;
-  let periods: SleepPeriod[];
-  if (exportedSamples) {
-    source = typeof req.query.source === 'string' ? req.query.source.slice(0, 40) : 'Apple Health';
-    periods = findSleepPeriods(exportedSamples);
-  } else {
-    const validationResult = TrackerSleepSchema.safeParse(req.body);
-    if (!validationResult.success) {
-      res.status(400).json({ error: 'Invalid request', details: validationResult.error.format() });
-      return;
-    }
-    const { asleepAt, awakeAt, samples } = validationResult.data;
-    side = validationResult.data.side ?? side;
-    ({ source } = validationResult.data);
-    periods = samples
-      ? findSleepPeriods(samples.map(sample => ({ startMs: Date.parse(sample.start), endMs: Date.parse(sample.end), value: sample.value })))
-      : [{ asleepAtMs: Date.parse(asleepAt ?? ''), awakeAtMs: Date.parse(awakeAt ?? ''), awakeIntervals: [] }];
+  const validationResult = TrackerSleepSchema.safeParse(req.body);
+  if (!validationResult.success) {
+    res.status(400).json({ error: 'Invalid request', details: validationResult.error.format() });
+    return;
   }
+  const { side, source, asleepAt, awakeAt, samples } = validationResult.data;
+  let periods: SleepPeriod[] = samples
+    ? findSleepPeriods(samples.map(sample => ({ startMs: Date.parse(sample.start), endMs: Date.parse(sample.end), value: sample.value })))
+    : [{ asleepAtMs: Date.parse(asleepAt ?? ''), awakeAtMs: Date.parse(awakeAt ?? ''), awakeIntervals: [] }];
   // Only sleeps that could be real are taken: not in the future, not older than what is kept,
   // not longer than anyone sleeps. The request needs no password, so it is not taken on trust.
   const nowMs = Date.now();

@@ -80,7 +80,7 @@ CI (`.github/workflows/ci.yaml`) runs on pull requests:
 - `npm run build:pr` for both, which includes the TypeScript compile, then fails if the working tree changed (see the next section).
 - All of `biometrics/tests` and `scripts/tests`, on Python 3.9 and 3.10.
 
-CI does not run the Node tests in `tests/`. Run them yourself.
+CI also runs the Node tests in `tests/`.
 
 ## Build output is committed
 

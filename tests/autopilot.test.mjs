@@ -16,7 +16,7 @@ import {
 } from '../server/src/autopilot/breathingRate.ts';
 import {
   DEFAULT_SLEEP_RULES, calibrateSleepRules, countDisagreements, createSleepTracker, detectSleepTimes, findSleepPeriods,
-  mergeSleepPeriods, readHealthExportSleep, readTrackerMinutes, replaySleep,
+  mergeSleepPeriods, readTrackerMinutes, replaySleep,
 } from '../server/src/autopilot/sleepTracker.ts';
 
 // A made-up piezo signal: a short 7 Hz knock at every heartbeat, over slow breathing and noise
@@ -362,24 +362,6 @@ test('a minute the sensor said too little in counts neither as still nor as rest
   assert.equal(addMinutes(tracker, 1, { isInBed: true, movementSeconds: 0 }).stage, 'asleep');
   // And silence does not wake a sleeper either
   assert.equal(addMinutes(tracker, 10, { isInBed: true }).stage, 'asleep');
-});
-
-test('an Apple Health export app\'s body is read, one row a night or sample by sample', () => {
-  const nightly = readHealthExportSleep({ data: { metrics: [
-    { name: 'heart_rate', data: [{ date: '2026-11-18 00:00:00 -0800', qty: 60 }] },
-    { name: 'sleep_analysis', data: [{ sleepStart: '2026-11-17 23:00:00 -0800', sleepEnd: '2026-11-18 06:30:00 -0800', source: 'Whoop' }] },
-  ] } });
-  assert.deepEqual(nightly, [{ startMs: Date.UTC(2026, 10, 18, 7), endMs: Date.UTC(2026, 10, 18, 14, 30), value: undefined }]);
-  const samples = readHealthExportSleep({ data: { metrics: [{ name: 'sleep_analysis', data: [
-    { start: '2026-11-17 23:00:00 -0800', end: '2026-11-17 23:30:00 -0800', value: 'Core' },
-    { startDate: '2026-11-17 23:30:00 -0800', endDate: '2026-11-17 23:40:00 -0800', value: 'Awake' },
-    { start: 'nonsense', end: '2026-11-17 23:30:00 -0800', value: 'Core' },
-  ] }] } });
-  assert.equal(samples.length, 2);
-  assert.equal(findSleepPeriods(samples).length, 1);
-  // Anything else is not such a body
-  assert.equal(readHealthExportSleep({ side: 'left', asleepAt: '2026-11-17T23:00:00-08:00' }), undefined);
-  assert.equal(readHealthExportSleep(undefined), undefined);
 });
 
 test('the night curve cools early, returns by late night and ends a degree warm', () => {

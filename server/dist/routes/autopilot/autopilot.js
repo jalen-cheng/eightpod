@@ -1,9 +1,9 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="2974d726-4ae6-5210-afaa-2aa2e44ae2db")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="e58b9441-811f-592a-bf91-23a8d3f7a745")}catch(e){}}();
 import express from 'express';
 import { z } from 'zod';
 import { applyTrackerSleep, getAutopilotSnapshot, getNightSummaries, getNightsExport, getNightsOn, } from '../../autopilot/autopilotMonitor.js';
-import { findSleepPeriods, readHealthExportSleep } from '../../autopilot/sleepTracker.js';
+import { findSleepPeriods } from '../../autopilot/sleepTracker.js';
 const router = express.Router();
 // What the autopilot sees and has done: each side's sleep state, heart rate and current offset,
 // the room, and what it has learned from corrections and from a linked sleep tracker
@@ -56,32 +56,18 @@ const TrackerSleepSchema = z.object({
     awakeAt: DateText.optional(),
     samples: z.array(z.object({ start: DateText, end: DateText, value: z.string().max(40).optional() })).max(2000).optional(),
 }).refine(body => body.samples !== undefined || (body.asleepAt !== undefined && body.awakeAt !== undefined), 'Send asleepAt and awakeAt, or samples');
-// Takes sleep and wake times from a watch or band (by way of a phone shortcut, an app that
-// posts Apple Health data, or a script), files them with the stays in bed they overlap, and
-// fits the bed's own sleep rules to them
+// Takes sleep and wake times from a watch or band (by way of a phone shortcut or a script),
+// files them with the stays in bed they overlap, and fits the bed's own sleep rules to them
 router.post('/autopilot/sleepTimes', (req, res) => {
-    const exportedSamples = readHealthExportSleep(req.body);
-    const sideInAddress = SideSchema.optional().safeParse(req.query.side);
-    let side = sideInAddress.success ? sideInAddress.data : undefined;
-    let source;
-    let periods;
-    if (exportedSamples) {
-        source = typeof req.query.source === 'string' ? req.query.source.slice(0, 40) : 'Apple Health';
-        periods = findSleepPeriods(exportedSamples);
+    const validationResult = TrackerSleepSchema.safeParse(req.body);
+    if (!validationResult.success) {
+        res.status(400).json({ error: 'Invalid request', details: validationResult.error.format() });
+        return;
     }
-    else {
-        const validationResult = TrackerSleepSchema.safeParse(req.body);
-        if (!validationResult.success) {
-            res.status(400).json({ error: 'Invalid request', details: validationResult.error.format() });
-            return;
-        }
-        const { asleepAt, awakeAt, samples } = validationResult.data;
-        side = validationResult.data.side ?? side;
-        ({ source } = validationResult.data);
-        periods = samples
-            ? findSleepPeriods(samples.map(sample => ({ startMs: Date.parse(sample.start), endMs: Date.parse(sample.end), value: sample.value })))
-            : [{ asleepAtMs: Date.parse(asleepAt ?? ''), awakeAtMs: Date.parse(awakeAt ?? ''), awakeIntervals: [] }];
-    }
+    const { side, source, asleepAt, awakeAt, samples } = validationResult.data;
+    let periods = samples
+        ? findSleepPeriods(samples.map(sample => ({ startMs: Date.parse(sample.start), endMs: Date.parse(sample.end), value: sample.value })))
+        : [{ asleepAtMs: Date.parse(asleepAt ?? ''), awakeAtMs: Date.parse(awakeAt ?? ''), awakeIntervals: [] }];
     // Only sleeps that could be real are taken: not in the future, not older than what is kept,
     // not longer than anyone sleeps. The request needs no password, so it is not taken on trust.
     const nowMs = Date.now();
@@ -97,4 +83,4 @@ router.post('/autopilot/sleepTimes', (req, res) => {
 });
 export default router;
 //# sourceMappingURL=autopilot.js.map
-//# debugId=2974d726-4ae6-5210-afaa-2aa2e44ae2db
+//# debugId=e58b9441-811f-592a-bf91-23a8d3f7a745

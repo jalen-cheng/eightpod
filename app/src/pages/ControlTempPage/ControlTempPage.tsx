@@ -2,25 +2,18 @@ import { useEffect } from 'react';
 import { Alert, Box, Button, IconButton, Paper, Skeleton } from '@mui/material';
 import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
 import AlarmDismissal from './AlarmDismissal.tsx';
-import AlarmNotification from './AlarmNotification.tsx';
 import AwayNotification from './AwayNotification.tsx';
-import ErrorBoundary from '@components/ErrorBoundary.tsx';
 import PageContainer from '../PageContainer.tsx';
 import PageHeader from '@components/PageHeader.tsx';
 import AnalyzeSleepPrompt from './AnalyzeSleepPrompt.tsx';
 import PrimingNotification from './PrimingNotification.tsx';
-import SideControl from '@components/SideControl.tsx';
 import Slider from './Slider.tsx';
 import WaterNotification from './WaterNotification.tsx';
 import { useAppStore } from '@state/appStore.tsx';
 import { useControlTempStore } from './controlTempStore.tsx';
 import { usePowerToggle } from './usePowerToggle.ts';
-import { postDeviceStatus, useDeviceStatus } from '@api/deviceStatus';
-import { getOtherSide } from '@lib/sides.ts';
+import { useDeviceStatus } from '@api/deviceStatus';
 import { useSettings } from '@api/settings.ts';
-
-// The Pod takes a moment to report a change back
-const STATUS_SETTLE_MS = 1_000;
 
 // The room the layout keeps free at the bottom of a phone screen for the navigation bar
 const MOBILE_NAV_SPACE_PX = 88;
@@ -29,7 +22,7 @@ export default function ControlTempPage() {
   const { isError, isPending, refetch, data: deviceStatus } = useDeviceStatus();
   const setDeviceStatus = useControlTempStore(state => state.setDeviceStatus);
   const { data: settings } = useSettings();
-  const { isUpdating, setIsUpdating, side } = useAppStore();
+  const { isUpdating, side } = useAppStore();
   const sideStatus = deviceStatus?.[side];
   // While a press is being sent, show what was asked for instead of waiting for the Pod's reply
   const requestedIsOn = useControlTempStore(state => state.deviceStatus?.[side]?.isOn);
@@ -46,21 +39,6 @@ export default function ControlTempPage() {
   useEffect(() => {
     if (deviceStatus && !hasPendingEdit) setDeviceStatus(deviceStatus);
   }, [deviceStatus, hasPendingEdit, setDeviceStatus]);
-
-  // Linking brings the other side in line with this one straight away, so both start from the same state
-  const handleLinkSidesChange = (linkSides: boolean) => {
-    if (!linkSides || !sideStatus) return;
-    // The temperature is only sent to a side that is on, so a side that is off stays off
-    const matchingStatus = sideStatus.isOn
-      ? { isOn: true, targetTemperatureF: sideStatus.targetTemperatureF }
-      : { isOn: false };
-    setIsUpdating(true);
-    postDeviceStatus({ [getOtherSide(side)]: matchingStatus })
-      .then(() => new Promise(resolve => setTimeout(resolve, STATUS_SETTLE_MS)))
-      .then(() => refetch())
-      .catch(error => console.error(error))
-      .finally(() => setIsUpdating(false));
-  };
 
   // One button for both directions, so it keeps focus through a toggle. Its state shows in
   // its weight, not its colour: filled while the side is on, plain while it is off.
@@ -92,10 +70,6 @@ export default function ControlTempPage() {
         { /* On a phone the power button sits in line with the heading */ }
         <Box sx={ { display: { xs: 'flex', sm: 'none' } } }>{ powerButton }</Box>
       </PageHeader>
-      <SideControl
-        showTemp
-        onLinkSidesChange={ handleLinkSidesChange }
-      />
       <Paper
         // A press anywhere in the section turns an off side on. The power button does the same
         // for the keyboard and screen readers, so the section itself is not a button.
@@ -133,7 +107,6 @@ export default function ControlTempPage() {
       <AnalyzeSleepPrompt isOffered={ power.isAnalyzeOffered }/>
       <Box sx={ { display: 'flex', flexDirection: 'column', gap: 1.5 } }>
         { deviceStatus?.isPriming && <PrimingNotification/> }
-        <ErrorBoundary componentName="Alarm notification"><AlarmNotification/></ErrorBoundary>
         <AwayNotification settings={ settings }/>
         <WaterNotification/>
       </Box>

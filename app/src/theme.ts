@@ -86,21 +86,38 @@ const buildComponents = (colors: typeof DARK_COLORS): ThemeOptions['components']
   },
   MuiDialog: {
     styleOverrides: {
-      // A dialog lifts off the page: the page behind is dimmed and blurred, and the dialog has
-      // an edge and a soft shadow of its own
-      root: { '& .MuiBackdrop-root': { backgroundColor: 'rgba(0, 0, 0, 0.6)', backdropFilter: 'blur(8px)' } },
+      // A dialog lifts off the page: the page behind is dimmed and softened, and the dialog has
+      // a faint edge and a shadow of its own
+      root: { '& .MuiBackdrop-root': { backgroundColor: 'rgba(0, 0, 0, 0.55)', backdropFilter: 'blur(6px)' } },
       paper: ({ theme }) => ({
         borderRadius: 20,
         backgroundColor: colors.surface,
+        backgroundImage: 'none',
         border: `1px solid ${theme.palette.divider}`,
-        boxShadow: '0 24px 64px rgba(0, 0, 0, 0.55), 0 2px 8px rgba(0, 0, 0, 0.4)',
+        boxShadow: '0 20px 48px rgba(0, 0, 0, 0.5)',
+        // On a phone a dialog uses the width there is
+        [theme.breakpoints.down('sm')]: { margin: 16, width: 'calc(100% - 32px)', maxWidth: 'calc(100% - 32px) !important' },
       }),
       // On a computer the navigation column takes the left of the window, so a dialog is
       // centred over the page beside it, where the thing that opened it is
       container: ({ theme }) => ({ [theme.breakpoints.up('md')]: { paddingLeft: SIDEBAR_WIDTH_PX } }),
     },
   },
-  MuiDialogTitle: { styleOverrides: { root: { fontSize: 17, fontWeight: 600, letterSpacing: '-0.01em' } } },
+  // Every dialog has the same three bands with the same edges: a title, its content, and a row
+  // of buttons that share the width equally
+  MuiDialogTitle: { styleOverrides: { root: { fontSize: 17, fontWeight: 600, letterSpacing: '-0.01em', padding: '20px 20px 8px' } } },
+  MuiDialogContent: { styleOverrides: { root: { padding: '8px 20px 12px' } } },
+  MuiDialogActions: {
+    styleOverrides: {
+      root: ({ theme }) => ({
+        padding: '8px 20px 20px',
+        gap: 8,
+        '& > .MuiButton-root': { flex: 1, minHeight: 42, margin: 0, borderRadius: 12 },
+        // The quiet choice (Close, Cancel) is a soft button, so the pair reads as a pair
+        '& > .MuiButton-text': { backgroundColor: theme.palette.action.hover },
+      }),
+    },
+  },
   MuiCardContent: { styleOverrides: { root: { padding: 20, '&:last-child': { paddingBottom: 20 } } } },
   // A small square switch: a dark slot that turns to the accent, with a square knob
   MuiSwitch: {

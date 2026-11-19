@@ -64,7 +64,7 @@ export default function AlarmOverride({
           />
         </Box>
       </DialogContent>
-      <DialogActions sx={ { px: 3, pb: 2 } }>
+      <DialogActions>
         <Button onClick={ close } disabled={ isSaving } sx={ { mr: 'auto' } }>Cancel</Button>
         <Button
           variant="contained"

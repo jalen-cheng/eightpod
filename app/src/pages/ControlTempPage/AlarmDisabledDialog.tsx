@@ -74,7 +74,7 @@ export default function AlarmDisabledDialog({
   return (
     <Dialog open={ open } onClose={ handleCancel } fullWidth maxWidth="xs">
       <DialogTitle>{ alarmDisabled ? 'Turn the next alarm back on?' : 'Skip the next alarm?' }</DialogTitle>
-      <DialogActions sx={ { px: 3, pb: 2 } }>
+      <DialogActions>
         <Button onClick={ handleCancel } disabled={ isSaving } sx={ { mr: 'auto' } }>Cancel</Button>
         <Button variant="contained" onClick={ handleSave } disabled={ isSaving }>
           { alarmDisabled ? 'Turn on' : 'Skip' }

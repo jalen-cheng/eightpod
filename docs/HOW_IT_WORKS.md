@@ -65,6 +65,8 @@ Everything SevenSleep keeps lives in `/persistent/free-sleep-data/` on the Pod.
 | `free-sleep.db` | Sleep, heart and movement records (SQLite) | Only filled when biometrics works |
 | `logs/` | Server log, update log, calibration logs | |
 | `temperature_scale_version.txt` | Marks that saved temperatures were converted to the measured scale | See section 3 |
+| `autopilot_nights/` | One file for each stay in bed: a row a minute, and the sleep and wake times (Pod 5) | The newest 180 are kept. See [AUTOPILOT.md](AUTOPILOT.md) |
+| `autopilot_state.json` | What the autopilot has learned, its sleep rules, and a night under way | Delete it to start over |
 
 **Any write to the settings or schedules file rebuilds every scheduled job.** The server watches the
 folder and, on a change, cancels all jobs and creates them again from the files
@@ -250,8 +252,8 @@ installer. A **Pod 4** reports double, triple and quadruple taps as counters, re
 
 ## 7. Linked sides and away mode
 
-**Linked sides** (the chain button beside the side picker) make the bed behave as one. While linked, the
-side picker is one "Both sides" button and the chain button reads "Unlink":
+**Linked sides** (Both, under Settings > General > This device controls) make the bed behave as one, from every
+device. Left or Right unlinks them, and which of the two a device shows is remembered on that device:
 
 | What | When linked |
 |---|---|
@@ -324,8 +326,8 @@ sensitivity. `GET /api/metrics/presence/sensors` returns the live signal and emp
 **Seen on the Pod:** "Turn on when I get into bed" turned both linked sides on when someone got in. Not yet
 seen: it turning off after they got out, and the long-stay alarm.
 
-**Autopilot.** The same sensor bus carries the piezo signal and the room temperature. With Settings > Autopilot on, SevenSleep reads a heart rate from it, judges sleep, and
-moves a sleeping side a few degrees around its set temperature. It is experimental; [AUTOPILOT.md](AUTOPILOT.md) has the rules, the evidence and the limits.
+**Autopilot.** The same sensor bus carries the piezo signal and the room temperature. SevenSleep follows movement and breathing from it and saves each stay in bed, whether or not the autopilot is on. With Settings > Autopilot on, it judges sleep from stillness and
+moves the whole bed a few degrees around the schedule's temperature for one sleeper. It is experimental; [AUTOPILOT.md](AUTOPILOT.md) has the rules, the evidence and the limits.
 
 ## 9. Daily housekeeping: priming, reboot, calibration
 
@@ -344,12 +346,12 @@ back by themselves. Anything held in memory (a vibrating alarm, a running warm-u
 
 The app refreshes the bed's state every 5 seconds.
 
-**Temperature.** The side picker (Left, Right or Both); the dial with the target, the current reading and
-"Turns off at"; + and -; the power mark at the top right, which turns the side off (a side that is
-off turns on with a tap anywhere in the section); and a row for the next alarm. On that row the time
-opens "Change next alarm only (overrides schedule)" (a one-time alarm), and **Skip** turns off tonight's alarm (the button
-then reads **Turn on**). While an alarm vibrates, a dialog
-offers to dismiss it.
+**Temperature.** The side this device controls (set in Settings); the dial with the target and the current reading;
++ and -; the power button, in line with the heading on a phone and at the top right of the dial's section on a
+wider screen, which turns the side off (a side that is off turns on with a tap anywhere in the section). While the
+bed is on, the next alarm's time sits inside the dial with the bed's off time beside it; tapping it offers
+"Change the next alarm" (a one-time alarm) and "Skip the next alarm". With no alarm it reads "Turns off at". While
+an alarm vibrates, a dialog offers to dismiss it.
 
 **Schedules.**
 - A tab per day, Monday first. It opens on tonight (before noon, that is yesterday's entry,
@@ -363,11 +365,11 @@ offers to dismiss it.
   alarms, and no off time.
 - Editing anything shows **Discard** and **Save** under the night. A temperature change must
   come after Bed on and before Wake (the row says it must be earlier than the wake time), or Save stays off. Other day tabs
-  and the side picker are locked until you save or discard. The copy button beside the night's
+  are locked until you save or discard. The copy button beside the night's
   name copies a saved night to any other days.
 - Saving always writes the whole night shown, to each chosen day, on both sides when linked.
 
-**Data.** Sleep records and logs. Sleep needs biometrics. Nights lists every stay in bed the autopilot has saved (Pod 5), with the bed's sleep and wake times beside a linked tracker's, the tuning in use, and an Export button.
+**Data.** Sleep and logs. Sleep shows one day at a time from the bed's own record of each stay in bed (Pod 5): bedtime, wake time, duration and wake-ups, graphs of breathing rate, pressure and the autopilot's temperature changes, the tuning in use, and an Export button. Where the biometrics service is switched on, its older page is listed as Biometrics.
 
 **Status** (opened from the "Status: Healthy" link, bottom right on a computer and beside the heading of Data and Settings on a phone; it has no tab). Wi-Fi strength and whether SevenSleep is up to date, then each internal service with
 its state. Services that are jobs have a Run button. The biometrics and sleep-analysis rows are greyed and
@@ -376,9 +378,9 @@ marked "Untested in this version".
 **Settings.** General: the temperature units and a Pod 5's − and + button step; the time zone
 (set this first, the schedule runs in it); away mode for both sides, flip left and right, and
 the light on the hub; how long the bed stays on when turned on by hand and whether the schedule
-is ignored meanwhile. Then Alarm (one setting for every night and both sides: vibration,
+is paused meanwhile. Then Autopilot (Pod 5), Alarm (one setting for every night and both sides: vibration,
 length, strength, a test), Tap gestures (Pod 4), Priming, In-bed detection (its state shows
-beside the heading), Autopilot (Pod 5), Sleep tracking (biometrics), Pod (the model, Wi-Fi, version and Update,
+beside the heading), Sleep tracking (biometrics), Pod (the model, Wi-Fi, version and Update,
 reboot), and API, which opens a page of the common requests (`/api-guide`).
 
 ## 11. The API and phone shortcuts
@@ -471,7 +473,7 @@ The cases where one feature changes what another does:
 | One side is in away mode | The other side's changes are mirrored to it; its own schedule and alarm do not run |
 | Daily priming is switched off | The daily reboot still runs, at the same time |
 | The Pod reboots or SevenSleep restarts during an alarm | The alarm is forgotten: the current stretch (up to three minutes) finishes and nothing follows |
-| A side is switched on by hand with "Ignore the schedule until it turns off" set | The schedule skips that side until it turns off: no scheduled power on or off, temperature changes or warm-up. Alarms still go off. A restart of SevenSleep ends it early |
+| A side is switched on by hand with "Pause the schedule until it turns off" set | The schedule skips that side until it turns off: no scheduled power on or off, temperature changes or warm-up. Alarms still go off. A restart of SevenSleep ends it early |
 | Someone gets into a bed that is off, with "Turn on when I get into bed" set | The bed turns on as if by hand, so the manual-on settings apply, but for the hours chosen for this setting |
 | An update is running | Nothing scheduled fires for about four minutes |
 | Tailscale is down | Only remote access is affected |

@@ -64,7 +64,7 @@ export default function SaveDaysDialog({ open, openDay, onClose, onSave }: SaveD
           { areAllPicked ? 'Clear' : 'Every day' }
         </Button>
       </DialogContent>
-      <DialogActions sx={ { px: 3, pb: 2 } }>
+      <DialogActions>
         <Button onClick={ onClose } sx={ { mr: 'auto' } }>Cancel</Button>
         <Button variant="contained" disabled={ days.length === 0 } onClick={ () => onSave(days) }>
           Copy

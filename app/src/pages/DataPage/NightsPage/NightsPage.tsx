@@ -1,9 +1,9 @@
 /* eslint-disable react/no-multi-comp */
 import { ReactNode, useState } from 'react';
 import moment, { Moment } from 'moment-timezone';
-import { Box, IconButton, Paper, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
+import { Alert, Box, IconButton, Paper, Skeleton, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import NightsStayOutlinedIcon from '@mui/icons-material/NightsStayOutlined';
+import BedOutlinedIcon from '@mui/icons-material/BedOutlined';
 import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import BedtimeOutlinedIcon from '@mui/icons-material/BedtimeOutlined';
@@ -22,6 +22,8 @@ import TuningCard from './TuningCard.tsx';
 
 const DATE_FORMAT = 'YYYY-MM-DD';
 const SIDES = ['left', 'right'] as const;
+// A night still being recorded gains a row a minute
+const TODAY_REFRESH_MS = 60_000;
 
 const formatClock = (timeMs: number) => moment(timeMs).format('h:mm A');
 const formatLength = (minutes: number) => `${Math.floor(minutes / 60)}h ${String(Math.round(minutes % 60)).padStart(2, '0')}m`;
@@ -70,26 +72,38 @@ const NightSummary = ({ night }: { night: NightDetail }) => {
 };
 
 // One day at a time: last night by default, with arrows and a calendar to move to another.
-// A night belongs to the morning it ended on. These come from the autopilot's own log, so
-// they are here whether or not biometrics is on.
+// A night belongs to the morning it ended on. These come from the bed's own log, so they are
+// here whether or not biometrics is on. The side shown is the one this device controls; with
+// the sides linked there is a choice, as each side's sensors keep their own log.
 export default function NightsPage() {
-  const { side, setSide } = useAppStore();
-  const [day, setDay] = useState<Moment>(moment().startOf('day'));
+  const { side, linkSides } = useAppStore();
+  const [pickedSide, setPickedSide] = useState(side);
+  const shownSide = linkSides ? pickedSide : side;
+  // Until a day is picked the page shows today, worked out afresh each time it draws: the app
+  // keeps the clock in the Pod's time zone, and a page left open overnight moves on with it
+  const [pickedDay, setPickedDay] = useState<Moment | undefined>(undefined);
+  const today = moment().startOf('day');
+  const day = pickedDay ?? today;
+  const isToday = day.isSameOrAfter(today, 'day');
   const [stayIndex, setStayIndex] = useState(0);
-  const { data: nights } = useNightsOn(day.format(DATE_FORMAT), side);
+  const { data: nights, isPending, isError } = useNightsOn(day.format(DATE_FORMAT), shownSide, isToday ? TODAY_REFRESH_MS : undefined);
   const { data: autopilot } = useAutopilot();
-  const isToday = day.isSameOrAfter(moment(), 'day');
   const night = nights?.[Math.min(stayIndex, nights.length - 1)];
 
   const showDay = (nextDay: Moment) => {
-    setDay(nextDay.clone().startOf('day'));
+    // Going back to today lets the page follow the clock again
+    setPickedDay(nextDay.isSameOrAfter(today, 'day') ? undefined : nextDay.clone().startOf('day'));
+    setStayIndex(0);
+  };
+  const showSide = (nextSide: typeof side) => {
+    setPickedSide(nextSide);
     setStayIndex(0);
   };
 
   return (
     <PageContainer sx={ { mb: 15, mt: 2 } }>
       <Box sx={ { display: 'flex', alignItems: 'flex-start', gap: 1, width: '100%' } }>
-        <Header title="Nights" icon={ <NightsStayOutlinedIcon/> }/>
+        <Header title="Sleep" icon={ <BedOutlinedIcon/> }/>
         <ExportMenu/>
       </Box>
       <Box sx={ { display: 'flex', flexDirection: 'column', gap: 2, width: '100%' } }>
@@ -100,7 +114,7 @@ export default function NightsPage() {
           <DatePicker
             value={ day }
             onChange={ (picked) => picked?.isValid() && showDay(picked) }
-            disableFuture
+            maxDate={ today }
             format="ddd D MMM YYYY"
             slotProps={ { textField: { size: 'small', sx: { width: 190 }, 'aria-label': 'Day shown' } } }
           />
@@ -108,32 +122,40 @@ export default function NightsPage() {
             <NavigateNextIcon/>
           </IconButton>
         </Box>
-        <Box sx={ { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 1, flexWrap: 'wrap' } }>
-          <ToggleButtonGroup
-            exclusive
-            size="small"
-            value={ side }
-            onChange={ (_event, picked: typeof side | null) => picked && setSide(picked) }
-          >
-            { SIDES.map(option => (
-              <ToggleButton key={ option } value={ option } sx={ { px: 2 } }>{ option === 'left' ? 'Left' : 'Right' }</ToggleButton>
-            )) }
-          </ToggleButtonGroup>
-          { nights && nights.length > 1 && (
-            <ToggleButtonGroup
-              exclusive
-              size="small"
-              value={ stayIndex }
-              onChange={ (_event, picked: number | null) => picked !== null && setStayIndex(picked) }
-            >
-              { nights.map((stay, index) => (
-                <ToggleButton key={ stay.startedAtMs } value={ index } sx={ { px: 1.5 } }>
-                  { stay.kind === 'nap' ? 'Nap' : 'Night' } { formatClock(stay.asleepAtMs ?? stay.startedAtMs) }
-                </ToggleButton>
-              )) }
-            </ToggleButtonGroup>
-          ) }
-        </Box>
+        { (linkSides || (nights && nights.length > 1)) && (
+          <Box sx={ { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 1, flexWrap: 'wrap' } }>
+            { linkSides && (
+              <ToggleButtonGroup
+                exclusive
+                size="small"
+                value={ shownSide }
+                onChange={ (_event, picked: typeof side | null) => picked && showSide(picked) }
+                aria-label="Side of the bed"
+              >
+                { SIDES.map(option => (
+                  <ToggleButton key={ option } value={ option } sx={ { px: 2 } }>{ option === 'left' ? 'Left' : 'Right' }</ToggleButton>
+                )) }
+              </ToggleButtonGroup>
+            ) }
+            { nights && nights.length > 1 && (
+              <ToggleButtonGroup
+                exclusive
+                size="small"
+                value={ Math.min(stayIndex, nights.length - 1) }
+                onChange={ (_event, picked: number | null) => picked !== null && setStayIndex(picked) }
+                aria-label="Which sleep of the day"
+              >
+                { nights.map((stay, index) => (
+                  <ToggleButton key={ stay.startedAtMs } value={ index } sx={ { px: 1.5 } }>
+                    { stay.kind === 'nap' ? 'Nap' : 'Night' } { formatClock(stay.asleepAtMs ?? stay.startedAtMs) }
+                  </ToggleButton>
+                )) }
+              </ToggleButtonGroup>
+            ) }
+          </Box>
+        ) }
+        { isPending && <Skeleton variant="rounded" height={ 180 }/> }
+        { isError && <Alert severity="error">Unable to load this day from your Pod.</Alert> }
         { nights?.length === 0 && (
           <Typography sx={ { color: 'text.secondary', textAlign: 'center', py: 3 } }>Nothing saved for this day.</Typography>
         ) }
@@ -143,7 +165,7 @@ export default function NightsPage() {
             <NightChart night={ night }/>
           </>
         ) }
-        { autopilot?.available && <TuningCard tuning={ autopilot[side] }/> }
+        { autopilot?.available && <TuningCard tuning={ autopilot[shownSide] }/> }
       </Box>
     </PageContainer>
   );

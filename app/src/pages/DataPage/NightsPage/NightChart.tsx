@@ -49,11 +49,21 @@ export default function NightChart({ night }: { night: NightDetail }) {
   const theme = useTheme();
 
   const { times, series } = useMemo(() => {
+    // The night is cut into stretches of a few minutes, one point each: the average of the
+    // readings in it, so a short spike still shows
     const step = Math.max(1, Math.ceil(night.minutes.length / (width / PIXELS_PER_POINT)));
-    const kept = night.minutes.map((minute, index) => ({ minute, index })).filter(({ index }) => index % step === 0);
-    const read = (pick: (minute: NightDetail['minutes'][number]) => number | undefined) => kept.map(({ minute }) => pick(minute) ?? null);
+    const stretches: NightDetail['minutes'][] = [];
+    for (let start = 0; start < night.minutes.length; start += step) stretches.push(night.minutes.slice(start, start + step));
+    const read = (pick: (minute: NightDetail['minutes'][number]) => number | undefined) => stretches.map((stretch) => {
+      const readings = stretch.flatMap((minute) => {
+        const reading = pick(minute);
+        return reading === undefined ? [] : [reading];
+      });
+      if (readings.length === 0) return null;
+      return Math.round(readings.reduce((sum, reading) => sum + reading, 0) / readings.length * 10) / 10;
+    });
     return {
-      times: kept.map(({ index }) => new Date(night.startedAtMs + index * MINUTE_MS)),
+      times: stretches.map((_stretch, index) => new Date(night.startedAtMs + index * step * MINUTE_MS)),
       series: [
         { label: 'Breathing rate', unit: 'breaths/min', color: theme.palette.primary.main, values: read(minute => minute.breathingRate) },
         { label: 'Pressure', unit: '', color: theme.palette.text.secondary, values: read(minute => minute.pressure) },

@@ -30,12 +30,13 @@ export const useAutopilotNights = (limit: number) => {
 };
 
 // One side's stays in bed that ended on a day (YYYY-MM-DD), in full, longest first
-export const useNightsOn = (date: string, side: 'left' | 'right') => {
+export const useNightsOn = (date: string, side: 'left' | 'right', refetchInterval?: number) => {
   return useQuery<NightDetail[]>({
     queryKey: ['useNightsOn', date, side],
     queryFn: async () => {
       const response = await axios.get<NightDetail[]>('/autopilot/nights', { params: { date, side } });
       return response.data;
     },
+    refetchInterval,
   });
 };

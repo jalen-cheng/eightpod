@@ -1,7 +1,7 @@
 # SevenSleep — subscription-free, open-source local control for Eight Sleep Pods
 
 <p align="center">
-  <img src="docs/screenshots/overview.png" width="900" alt="Four phone screens: the temperature dial, a night's schedule, last night's sleep, and the in-bed detection and autopilot settings">
+  <img src="docs/screenshots/overview.png" width="900" alt="Four phone screens: the temperature dial with the next alarm, a night's schedule, last night's sleep, and the autopilot and alarm settings">
 </p>
 
 <p align="center">
@@ -30,8 +30,9 @@ some of them heating ([PCWorld](https://www.pcworld.com/article/2948826/these-sm
 A Pod running SevenSleep has nothing upstream to go down.
 
 **If sleep metrics matter to you, the real thing may suit you better.** SevenSleep controls the
-bed. Sleep stages, heart rate and Autopilot are Eight Sleep's, and SevenSleep's own sleep tracking
-does not work on a Pod 5. If you want those, Eight Sleep's app and plan (from $199 a year) are
+bed. Sleep stages, sleep scores and Eight Sleep's Autopilot stay with Eight Sleep. SevenSleep has an
+experimental autopilot of its own and saves each night's sleep and wake times on a Pod 5, but
+neither is a match for theirs. If you want those, Eight Sleep's app and plan (from $199 a year) are
 the way to get them.
 
 It started as a fork of [Free Sleep](https://github.com/throwaway31265/free-sleep) and was developed and tested on one Pod 5.
@@ -105,7 +106,7 @@ No Pod yet? **[sevensleep.vercel.app](https://sevensleep.vercel.app)** is the ap
 
 ## What it does
 
-- **The Eight Sleep app's controls, on your own network:** temperature for each side, a schedule for every night, vibration alarms, wake-up heat, priming and away mode. Sleep tracking and Autopilot are not part of it.
+- **The Eight Sleep app's controls, on your own network:** temperature for each side, a schedule for every night, vibration alarms, wake-up heat, priming and away mode. Eight Sleep's sleep tracking and Autopilot are not part of it.
 - **A local API:** every control is a documented request to the Pod itself, so it keeps working when your internet or Eight Sleep's servers are down, which tools built on the cloud cannot do. Anything that sends a web request can drive the bed: iPhone Shortcuts, Home Assistant, a script, or an AI assistant. See [server/API.md](server/API.md).
 - **A private tunnel for access away from home:** optional Tailscale on the Pod opens the same app from anywhere, with the Pod still blocked from the internet.
 - **Pod 5 side buttons enabled:** + and - change the temperature, holding the middle button switches the side on or off, and any button stops an alarm.
