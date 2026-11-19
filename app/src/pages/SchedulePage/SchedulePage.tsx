@@ -126,7 +126,17 @@ export default function SchedulePage() {
       { /* Unsaved changes: Discard and Save directly under the night they belong to, in the flow
            of the page. Other days are reached by saving, then copying the night. */ }
       { changesPresent && (
-        <Box role="region" aria-label="Unsaved changes" sx={ { display: 'flex', alignItems: 'center', gap: 1, width: '100%' } }>
+        <Box
+          role="region"
+          aria-label="Unsaved changes"
+          sx={ {
+            display: 'flex', alignItems: 'center', gap: 1, width: '100%',
+            // Off a phone the page can be taller than the window, so the row keeps to the window's foot
+            position: { sm: 'sticky' }, bottom: { sm: 16 }, zIndex: 1,
+            bgcolor: { sm: 'background.paper' }, border: { sm: '1px solid' }, borderColor: { sm: 'divider' },
+            borderRadius: { sm: '12px' }, px: { sm: 2 }, py: { sm: 1 },
+          } }
+        >
           <Typography variant="body2" sx={ { color: 'text.secondary', mr: 'auto' } }>Unsaved changes</Typography>
           { hasEdits && <Button color="inherit" onClick={ reloadScheduleData } disabled={ isUpdating }>Discard</Button> }
           <Button

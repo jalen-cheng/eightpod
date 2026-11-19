@@ -20,12 +20,14 @@ import { useVitalsRecords } from '@api/vitals.ts';
 import { useMovementRecords } from '@api/movement.ts';
 import MovementChart from '@components/MovementChart.tsx';
 import ErrorBoundary from '@components/ErrorBoundary.tsx';
+import { BIOMETRICS_LABEL } from '@lib/biometricsLabel.ts';
 
 
 const NoData = () => {
   return (
     <Alert severity="info">
-      No data for these days. To collect it, switch Biometrics on under Settings &gt; Other.
+      No data for these days. To collect it, switch { BIOMETRICS_LABEL } on under Settings &gt; Other. This page is the
+      sleep analysis from before the autopilot; the bed&apos;s own record is Data &gt; Sleep.
     </Alert>
   );
 };
@@ -91,7 +93,7 @@ export default function SleepPage() {
   return (
     <ErrorBoundary componentName="Sleep page">
       <PageContainer containerProps={ { ref } } sx={ { mb: 15, gap: 1, mt: 0 } }>
-        <Header title="Biometrics" icon={ <MonitorHeartOutlinedIcon/> }/>
+        <Header title={ BIOMETRICS_LABEL } icon={ <MonitorHeartOutlinedIcon/> }/>
         <Box sx={ { display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', color: theme.palette.grey[500] } }>
           <IconButton aria-label="Previous week" onClick={ handlePrevWeek }><NavigateBeforeIcon/></IconButton>
           <Typography>

@@ -18,7 +18,9 @@ affiliated with Eight Sleep.
 1. Open the Pod's hub and attach the serial adapter to get a root shell.
 2. Connect the Pod to Wi-Fi.
 3. Run the installer on the Pod.
-4. Open `http://sevensleep.local` on a phone on the same Wi-Fi and set your time zone.
+4. Open `http://sevensleep.local` on a phone on the same Wi-Fi and set your time zone. If the name
+   does not load, use the Pod's address with the port: `http://192.168.1.50:3000`, with your Pod's
+   address in place of the example.
 5. Block the Pod from the internet, then close the hub.
 
 The [install guide](./install) has photos and the exact commands for each step. If the Pod already runs Free Sleep, you can skip the hardware steps; see [Coming from Free Sleep](./install#coming-from-free-sleep).

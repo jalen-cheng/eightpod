@@ -58,10 +58,23 @@ whatever the sensors say.
 When these add up to more than 4°F, they are cut from the bottom of the table up, so what you
 taught it is the last to go.
 
-**The room is not acted on yet.** The code can cool the bed as the room warms (half a degree
-per degree, ±2°F), but the only air reading is at the cover, which may warm with the sleeper
-as much as with the room. Acting on it could cool the bed every night for no reason, so it is
-saved with each minute and left out of the offset until logged nights show what it follows.
+<img src="diagrams/night-curve.svg" width="680" alt="Chart: degrees from the base temperature through a night of 8 hours. At the base on falling asleep, 2°F cooler through the first half, 3°F cooler during the first sleep cycle, back at the base late in the night and 1°F warm at wake time, never more than 4°F from the base">
+
+The chart is the curve and the first sleep cycle with nothing learned yet. What you teach it
+moves a third of the night up or down by up to 3°F.
+
+**The room is not acted on yet.** The code can cool the bed as the room warms: half a degree
+for each degree the room has warmed since you fell asleep, and the other way as it cools, never
+more than 2°F (`roomOffsetF` in `nightPlan.ts`). It is left out of the offset because the only
+air reading is at the cover, which might warm with the sleeper as much as with the room, and
+acting on that would cool the bed every night for no reason. The reading is saved with every
+minute so that logged nights can show what it follows.
+
+The first logged night (19 Nov 2026) answers half of it. The reading stayed between 70.0 and
+70.7°F for eight hours while the surface under the sleeper went from 74 to 92°F as the bed
+warmed for the alarm, so it does not follow the sleeper or the bed. The room itself barely
+changed that night, so what the reading does when the room warms or cools is still unseen, and
+the part stays off until a night shows it.
 
 **Learning.** At 0.3, a one-degree change takes two nights that agree before it shows. A change
 is counted once per hold, not once per button press, and for no more than 4°F however large it
@@ -222,6 +235,19 @@ The body check takes two minutes: put a laptop on the bed where you sleep and wa
 Settings > In-bed detection shows that side as in bed, nothing is saved under Data > Sleep
 however long it stays. Then lie down beside it for 20 minutes: that stay is saved.
 
+## Changing things by hand
+
+There is no separate control for either: the ordinary ones are the manual ones.
+
+- **The temperature.** Set it as on any other night: the **Temperature** page, the Pod's side
+  buttons, a Shortcut or the API. During a steered night the autopilot holds what you set until
+  the end of that third of the night, then carries on from there, and remembers part of the
+  difference for that third on later nights ("Your changes" in the table above).
+- **When you slept.** **Data > Sleep**, pick the night, then **Set when you slept** under its
+  Summary. The two times are filed as that night's record, as a tracker's would be, and count
+  toward the 7 nights the sleep rules are fitted to.
+- **The base.** **Settings > Autopilot > Base temperature**.
+
 ## Linking a sleep tracker
 
 A watch or band is a better judge of when you slept than the bed's own guesses, and its record
@@ -262,8 +288,9 @@ With the sides linked the bed is shown as one sleeper's, whichever side they lay
 sides saw the same hours, the one with the most sleep); otherwise the side this device controls.
 **Export** downloads the nights of the last week, two weeks, one, two or three months as one
 JSON file. `GET /api/autopilot/nights` and `GET /api/autopilot/nights/export` return the same.
-The biometrics service keeps its own sleep records in its database; these files are separate
-and do not need it.
+**Biometrics (legacy)** is a different system: the original project's sleep analysis, a separate
+service with its own database and its own page under Data. The autopilot and Data > Sleep do
+not use it and do not need it installed.
 
 ## Seeing what it does
 

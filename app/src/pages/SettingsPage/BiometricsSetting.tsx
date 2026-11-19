@@ -1,10 +1,12 @@
 import { Box, Switch } from '@mui/material';
+import { BIOMETRICS_LABEL } from '@lib/biometricsLabel.ts';
 import { useAppStore } from '@state/appStore.tsx';
 import SettingToggle from './SettingToggle.tsx';
 import { useUpdateServices } from './useUpdateServices.ts';
 
-const BIOMETRICS_INFO = 'The older sleep analysis: heart rate, breathing and sleep stages worked out by a separate service '
-  + 'and shown under Data > Biometrics. It cannot read a Pod 5\'s sensors; on a Pod 5 the bed\'s own record is Data > Sleep.';
+const BIOMETRICS_INFO = 'The sleep analysis from before the autopilot: heart rate, breathing and sleep stages worked out by a '
+  + 'separate service and shown under Data > Biometrics (legacy). The autopilot and Data > Sleep do not use it. It cannot '
+  + 'read a Pod 5\'s sensors.';
 const INSTALL_COMMAND = 'sh /home/dac/free-sleep/scripts/enable_biometrics.sh';
 
 // The switch for the biometrics service. Until the service is installed on the Pod the switch
@@ -17,7 +19,7 @@ export default function BiometricsSetting() {
 
   return (
     <SettingToggle
-      label="Biometrics"
+      label={ BIOMETRICS_LABEL }
       info={ BIOMETRICS_INFO }
       control={
         <Switch

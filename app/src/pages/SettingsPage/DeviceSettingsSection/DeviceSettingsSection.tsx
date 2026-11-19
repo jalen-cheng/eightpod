@@ -1,4 +1,5 @@
 /* eslint-disable react/no-multi-comp */
+import { Typography } from '@mui/material';
 import { PropsWithChildren } from 'react';
 import { DeepPartial } from 'ts-essentials';
 import { Box, Switch } from '@mui/material';
@@ -47,6 +48,11 @@ export default function DeviceSettingsSection({ updateSettings }: DeviceSettings
     <Section title="General" startsOpen>
       <Group>
         <SettingRow label="This device controls" info={ SIDE_INFO }><SideControl/></SettingRow>
+        { settings?.autopilot.enabled && (
+          <Typography variant="caption" sx={ { display: 'block', mt: 0.5, color: 'text.secondary' } }>
+            The autopilot is on and needs Both. Picking Left or Right switches it off.
+          </Typography>
+        ) }
       </Group>
       <Group>
         <TemperatureFormatSelector settings={ settings } updateSettings={ updateSettings }/>

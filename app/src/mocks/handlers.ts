@@ -307,9 +307,14 @@ export const handlers = [
     const interval = setInterval(() => {
       const latest = listLogs()[filename] ?? [];
       if (latest.length > lastIndex) {
-        latest.slice(lastIndex).forEach((entry) => {
-          client.send({ data: JSON.stringify({ message: entry }) });
-        });
+        try {
+          latest.slice(lastIndex).forEach((entry) => {
+            client.send({ data: JSON.stringify({ message: entry }) });
+          });
+        } catch {
+          // The page that was reading has closed the stream
+          clearInterval(interval);
+        }
         lastIndex = latest.length;
       }
     }, 2000);

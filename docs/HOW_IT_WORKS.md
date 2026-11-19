@@ -34,7 +34,7 @@ stop a change, and how sleep is followed. [Open it full size](diagrams/system-lo
 | **Firmware** ("frank") | Eight Sleep's own program. It drives the pumps, heaters and vibration motors and is the only thing that touches hardware. | Already on the Pod |
 | **SevenSleep server** | A Node program on ports 3000 and 80. It tells the firmware what to do, runs the schedule, and serves the app. | `server/` |
 | **The app** | The web page you open. It only talks to the server. | `app/`, built into `server/public` |
-| **Biometrics** | Python that turns sensor data into sleep and heart data. **Off on a Pod 5**: its firmware publishes that data where the analysis does not read. | `biometrics/` |
+| **Biometrics (legacy)** | The original project's sleep analysis, from before the autopilot: Python that turns sensor data into sleep and heart data. The autopilot does not use it. **Off on a Pod 5**: its firmware publishes that data where the analysis does not read. | `biometrics/` |
 | **Scripts** | Install, update, the internet block, the `.local` name, Tailscale. | `scripts/` |
 
 How the server reaches the firmware: SevenSleep opens a socket file (`dac.sock`) and the firmware

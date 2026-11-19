@@ -6,6 +6,7 @@ import AwayNotification from './AwayNotification.tsx';
 import PageContainer from '../PageContainer.tsx';
 import PageHeader from '@components/PageHeader.tsx';
 import AnalyzeSleepPrompt from './AnalyzeSleepPrompt.tsx';
+import AutopilotNotice from './AutopilotNotice.tsx';
 import PrimingNotification from './PrimingNotification.tsx';
 import Slider from './Slider.tsx';
 import WaterNotification from './WaterNotification.tsx';
@@ -103,6 +104,7 @@ export default function ControlTempPage() {
         { isError && (
           <Button fullWidth variant="contained" onClick={ () => refetch() } disabled={ isUpdating }>Reconnect</Button>
         ) }
+        { !isPending && !isError && <AutopilotNotice/> }
       </Paper>
       <AnalyzeSleepPrompt isOffered={ power.isAnalyzeOffered }/>
       <Box sx={ { display: 'flex', flexDirection: 'column', gap: 1.5 } }>

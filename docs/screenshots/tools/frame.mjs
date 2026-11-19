@@ -3,7 +3,7 @@
 import { writeFileSync } from 'node:fs';
 
 const [debugPort, outputFolder, shotsFolder] = process.argv.slice(2);
-const SHOTS = ['temperature', 'schedule', 'alarm_options', 'nights', 'settings'];
+const SHOTS = ['temperature', 'schedule', 'alarm_options', 'nights', 'settings', 'autopilot'];
 // The four that stand for the app in the README
 const OVERVIEW_SHOTS = ['temperature', 'schedule', 'nights', 'settings'];
 const pages = [

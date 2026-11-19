@@ -22,7 +22,7 @@ export default function SettingRow({ label, info, children }: SettingRowProps) {
         columnGap: 2, rowGap: 0.75, minHeight: 40,
       } }
     >
-      <Typography sx={ { fontSize: 14, fontWeight: 500, flex: '1 1 0', minWidth: 'min-content', overflowWrap: 'normal' } }>
+      <Typography sx={ { fontSize: 14, fontWeight: 500, flex: '1 1 0', minWidth: 'min-content', overflowWrap: 'normal', textWrap: 'balance' } }>
         <SettingLabel label={ label } info={ info }/>
       </Typography>
       <Box sx={ { display: 'flex', alignItems: 'center', gap: 0.75, flexShrink: 0, ml: 'auto' } }>{ children }</Box>

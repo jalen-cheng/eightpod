@@ -188,7 +188,7 @@ const buildComponents = (colors: typeof DARK_COLORS): ThemeOptions['components']
         '&.Mui-error .MuiOutlinedInput-notchedOutline': { borderColor: theme.palette.error.main },
         '&.Mui-disabled': { opacity: 0.55 },
         // 40px tall with the text's own line: small enough for a row, large enough for a finger
-        '& .MuiInputBase-inputSizeSmall': { paddingTop: 10.5, paddingBottom: 10.5 },
+        '&.MuiInputBase-sizeSmall .MuiInputBase-input': { paddingTop: 10, paddingBottom: 10 },
       }),
     },
   },
@@ -231,7 +231,13 @@ const buildComponents = (colors: typeof DARK_COLORS): ThemeOptions['components']
       colorSecondary: ({ theme }) => getChipStyles(theme, 'secondary'),
     },
   },
-  MuiTooltip: { styleOverrides: { tooltip: { fontSize: 12, borderRadius: 8 } } },
+  // Solid, so the page's own text does not show through a tip lying over it
+  MuiTooltip: {
+    styleOverrides: {
+      tooltip: { fontSize: 12, borderRadius: 8, backgroundColor: colors.track, color: colors.text },
+      arrow: { color: colors.track },
+    },
+  },
 });
 
 export const buildTheme = (mode: PaletteMode = 'dark') => {

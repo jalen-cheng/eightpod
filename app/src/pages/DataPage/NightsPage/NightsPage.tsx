@@ -20,6 +20,7 @@ import PageContainer from '../../PageContainer.tsx';
 import Header from '../Header.tsx';
 import ExportMenu from './ExportMenu.tsx';
 import NightChart from './NightChart.tsx';
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import SleepTimesDialog from './SleepTimesDialog.tsx';
 import TuningCard from './TuningCard.tsx';
 
@@ -73,7 +74,13 @@ const NightSummary = ({ night, onCorrected }: { night: NightDetail; onCorrected:
           value={ `${formatClock(tracker.asleepAtMs)} to ${formatClock(tracker.awakeAtMs)}` }
         />
       ) }
-      <Button size="small" onClick={ () => setIsCorrecting(true) } sx={ { alignSelf: 'flex-start', ml: -0.5 } }>
+      <Button
+        size="small"
+        variant="outlined"
+        startIcon={ <EditOutlinedIcon/> }
+        onClick={ () => setIsCorrecting(true) }
+        sx={ { alignSelf: 'flex-start', mt: 0.5 } }
+      >
         Set when you slept
       </Button>
       { isCorrecting && (

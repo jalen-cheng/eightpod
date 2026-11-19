@@ -20,7 +20,8 @@ const describeLastRecord = ({ tracker }: AutopilotSnapshot['left']): string | un
     (second.awakeAtMs - second.asleepAtMs) - (first.awakeAtMs - first.asleepAtMs)
   ))[0];
   if (!tracker || !longest) return undefined;
-  const times = `${moment(longest.asleepAtMs).format('ddd h:mm A')} to ${moment(longest.awakeAtMs).format('h:mm A')}`;
+  // A time and its AM or PM stay on one line
+  const times = `${moment(longest.asleepAtMs).format('ddd h:mm[\u00A0]A')} to ${moment(longest.awakeAtMs).format('h:mm[\u00A0]A')}`;
   return `${tracker.source}, ${times}. ${tracker.lastMatchedStays ? 'Filed with a stay in bed.' : 'No stay in bed matched it.'}`;
 };
 

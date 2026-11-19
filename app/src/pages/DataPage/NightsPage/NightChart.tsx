@@ -8,6 +8,12 @@ import { useResizeDetector } from 'react-resize-detector';
 import { NightDetail } from '@api/autopilot.ts';
 import { COOLING_COLOR } from '@lib/temperatureConversions.ts';
 
+// Along the axis a whole hour is written short ("6 AM"), so the last label fits on a narrow phone;
+// the tooltip keeps the minutes
+const formatAxisTime = (time: Date, context: { location: string }) => (
+  moment(time).format(context.location === 'tick' && time.getMinutes() === 0 ? 'h A' : 'h:mm A')
+);
+
 const MINUTE_MS = 60_000;
 const CHART_HEIGHT_PX = 150;
 // About one point for every few pixels: more than that only slows the page
@@ -26,9 +32,9 @@ const SeriesChart = ({ times, series, width }: SeriesChartProps) => {
         <LineChart
           width={ width }
           height={ CHART_HEIGHT_PX }
-          margin={ { top: 8, right: 8, bottom: 4, left: 0 } }
+          margin={ { top: 8, right: 16, bottom: 4, left: 0 } }
           hideLegend
-          xAxis={ [{ data: times, scaleType: 'time', valueFormatter: (time: Date) => moment(time).format('h:mm A') }] }
+          xAxis={ [{ data: times, scaleType: 'time', valueFormatter: formatAxisTime }] }
           yAxis={ [{ width: 44, valueFormatter: (value: number) => String(value) }] }
           series={ [{
             data: series.values, color: series.color, showMark: false, connectNulls: false, curve: 'linear',

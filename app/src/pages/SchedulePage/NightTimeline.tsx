@@ -10,6 +10,7 @@ import { DailySchedule, Time } from '@api/schedulesSchema.ts';
 import { useAppStore } from '@state/appStore.tsx';
 import InfoTip from '@components/InfoTip.tsx';
 import { useScheduleStore } from './scheduleStore.tsx';
+import { widePressTarget } from '@lib/pressTarget.ts';
 import { NARROW_PHONE_QUERY, TemperatureSelect, TimeField } from './ScheduleFields.tsx';
 import AlarmOptionsDialog from './AlarmOptionsDialog.tsx';
 import { OFF_AFTER_ALARM_MINUTES, offTimeAfterAlarm } from '@api/automaticOffTime.ts';
@@ -60,14 +61,14 @@ const NightRow = ({ label, info, error, dotColor, isMainEvent, children }: Night
           } }
         />
       ) }
-      <Box sx={ { display: 'flex', alignItems: 'center', gap: 0.75, minHeight: 40 } }>
+      <Box sx={ { display: 'flex', alignItems: 'center', gap: 0.75, minHeight: 40, [NARROW_PHONE_QUERY]: { gap: 0.5 } } }>
         <Typography
           variant="body2"
           sx={ { width: ROW_LABEL_WIDTH_PX, flexShrink: 0, color: 'text.secondary', whiteSpace: 'nowrap', [NARROW_PHONE_QUERY]: { width: 44 } } }
         >
           { label }
         </Typography>
-        <Box sx={ { display: 'flex', alignItems: 'center', gap: 0.75, flex: 1, minWidth: 0 } }>
+        <Box sx={ { display: 'flex', alignItems: 'center', gap: 0.75, flex: 1, minWidth: 0, [NARROW_PHONE_QUERY]: { gap: 0.5 } } }>
           { children }
           { info && <InfoTip text={ info }/> }
         </Box>
@@ -188,7 +189,7 @@ export default function NightTimeline({ onSave }: NightTimelineProps) {
               onClick={ () => removeChange(time) }
               disabled={ disabled }
               aria-label="Remove this change"
-              sx={ { ...rowButtonSx, color: 'text.secondary' } }
+              sx={ { ...rowButtonSx, color: 'text.secondary', ...widePressTarget(4), [NARROW_PHONE_QUERY]: { mr: -0.75 } } }
             >
               <CloseIcon sx={ { fontSize: 18 } }/>
             </IconButton>
@@ -228,7 +229,11 @@ export default function NightTimeline({ onSave }: NightTimelineProps) {
             disabled={ disabled }
             aria-label="Alarm options"
             startIcon={ alarm.enabled ? <AlarmIcon sx={ { color: 'warning.main' } }/> : <AlarmOffIcon/> }
-            sx={ { whiteSpace: 'nowrap', color: alarm.enabled ? 'text.primary' : 'text.secondary' } }
+            sx={ {
+              whiteSpace: 'nowrap', flexShrink: 0, color: alarm.enabled ? 'text.primary' : 'text.secondary',
+              // Too narrow for the bell and the words: the words stay
+              [NARROW_PHONE_QUERY]: { px: 1, minWidth: 0, '& .MuiButton-startIcon': { display: 'none' } },
+            } }
           >
             { alarm.enabled ? 'Alarm on' : 'Alarm off' }
           </Button>

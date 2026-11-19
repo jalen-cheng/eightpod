@@ -2,7 +2,7 @@ import { useState } from 'react';
 import _ from 'lodash';
 import moment from 'moment-timezone';
 import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField, Typography } from '@mui/material';
-import { NightDetail, postSleepTimes } from '@api/autopilot.ts';
+import { MIN_NIGHTS_TO_CALIBRATE, NightDetail, postSleepTimes } from '@api/autopilot.ts';
 
 const CLOCK_FORMAT = 'HH:mm';
 const MINUTE_MS = 60_000;
@@ -71,7 +71,7 @@ export default function SleepTimesDialog({ night, onClose, onSaved }: SleepTimes
             </Box>
           )) }
           <Typography variant="caption" sx={ { color: 'text.secondary' } }>
-            Kept beside what the bed saw, like a tracker&apos;s record. Once 5 nights have one, the bed fits how it
+            Kept beside what the bed saw, like a tracker&apos;s record. Once { MIN_NIGHTS_TO_CALIBRATE } nights have one, the bed fits how it
             judges sleep to them. A tracker that reports this night later replaces what you enter here.
           </Typography>
           { problem && <Typography variant="caption" color="error" role="alert">{ problem }</Typography> }

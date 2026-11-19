@@ -33,7 +33,7 @@ export function TimeField({ label, value, onChange, disabled, error, isLarge }: 
       sx={ {
         // Wider off a phone: some browsers write "a.m." in full and keep their own picker icon
         width: isLarge ? { xs: 168, sm: 208 } : { xs: 104, sm: 148 }, flexShrink: 0,
-        ...(isLarge ? {} : { [NARROW_PHONE_QUERY]: { width: 92 } }),
+        ...(isLarge ? {} : { [NARROW_PHONE_QUERY]: { width: 86 } }),
         '& input': { fontWeight: 500, textAlign: 'center', px: 1, ...(isLarge ? { fontSize: 22, py: 1.5 } : {}) },
         '& input::-webkit-calendar-picker-indicator': { display: 'none' },
       } }
@@ -74,7 +74,11 @@ export function TemperatureSelect({ label, value, onChange, disabled }: Temperat
       value={ value }
       onChange={ (event) => onChange(Number(event.target.value)) }
       disabled={ disabled }
-      sx={ { width: 92, flexShrink: 0, [NARROW_PHONE_QUERY]: { width: 84 }, '& .MuiSelect-select': { fontWeight: 500 } } }
+      sx={ {
+        width: 92, flexShrink: 0, '& .MuiSelect-select': { fontWeight: 500 },
+        // Less padding beside the number, so three digits still fit in the narrower field
+        [NARROW_PHONE_QUERY]: { width: 78, '& .MuiSelect-select': { fontWeight: 500, pl: 1, pr: '26px !important' } },
+      } }
       slotProps={ { htmlInput: { 'aria-label': label } } }
     >
       { temperatureOptions.map(temperatureF => (

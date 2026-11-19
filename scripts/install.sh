@@ -387,7 +387,7 @@ fi
 
 echo ""
 
-sh /home/dac/free-sleep/scripts/add_shortcuts.sh
+bash /home/dac/free-sleep/scripts/add_shortcuts.sh
 
 # Give the Pod a name on the home network (http://<hostname>.local:3000), so bookmarks and
 # shortcuts survive a change of address. Skipped if it was switched off with "disable".
@@ -398,7 +398,7 @@ sh /home/dac/free-sleep/scripts/setup_tailscale.sh sync-scripts || echo "WARNING
 
 # --------------------------------------------------------------------------------
 # Finish
-echo "This is your dac.sock path (if it doesn't end in dac.sock, contact support):"
+echo "This is your dac.sock path (if it doesn't end in dac.sock, open an issue at https://github.com/jalen-cheng/sevensleep/issues):"
 cat /persistent/free-sleep-data/dac_sock_path.txt 2>/dev/null || echo "No dac.sock path found."
 
 echo -e "\033[0;32mInstallation complete! The SevenSleep server is running and will start automatically on boot.\033[0m"
