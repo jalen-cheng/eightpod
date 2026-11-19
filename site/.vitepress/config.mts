@@ -10,6 +10,10 @@ const slugifyLikeGitHub = (heading: string): string => heading
   .replace(/[^\p{L}\p{N}\s_-]/gu, '')
   .replace(/\s/g, '-');
 
+// Where the site is served from on GitHub Pages, and the page its address opens
+const BASE_PATH = '/sevensleep/';
+const FIRST_PAGE = 'getting-started';
+
 // The sidebar follows the groups in scripts/docsManifest.mjs.
 const sidebar = sidebarGroups.map((group) => ({
   text: group.text,
@@ -20,7 +24,7 @@ export default defineConfig({
   title: 'SevenSleep',
   description: 'Documentation for SevenSleep, subscription-free local control for Eight Sleep Pods.',
   srcDir: 'content',
-  base: '/sevensleep/',
+  base: BASE_PATH,
   cleanUrls: true,
   appearance: 'force-dark',
   markdown: {
@@ -28,11 +32,19 @@ export default defineConfig({
     headers: { slugify: slugifyLikeGitHub },
     toc: { slugify: slugifyLikeGitHub },
   },
-  head: [['link', { rel: 'icon', type: 'image/svg+xml', href: '/sevensleep/logo.svg' }]],
+  head: [['link', { rel: 'icon', type: 'image/svg+xml', href: `${BASE_PATH}logo.svg` }]],
+  // There is no landing page: the root address sends the browser on to the first page
+  transformPageData(pageData) {
+    if (pageData.relativePath !== 'index.md') return;
+    pageData.frontmatter.head ??= [];
+    pageData.frontmatter.head.push(['meta', { 'http-equiv': 'refresh', content: `0; url=${BASE_PATH}${FIRST_PAGE}` }]);
+  },
   themeConfig: {
     logo: '/logo.svg',
+    // Unlike the links below, VitePress uses this one as written, so it carries the base path
+    logoLink: `${BASE_PATH}${FIRST_PAGE}`,
     nav: [
-      { text: 'Getting started', link: '/getting-started' },
+      { text: 'Getting started', link: `/${FIRST_PAGE}` },
       { text: 'Demo', link: 'https://sevensleep.vercel.app' },
     ],
     sidebar,

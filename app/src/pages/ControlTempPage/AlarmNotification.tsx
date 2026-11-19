@@ -18,7 +18,7 @@ type AlarmNotificationProps = {
   fallback?: ReactNode;
 };
 
-// The next alarm, inside the dial: its time as a small button that opens the two things one can
+// The next alarm, under the dial's figures: its time as a small button that opens the two things one can
 // do about it (change it for this once, or skip it), with the bed's off time beside it
 export default function AlarmNotification({ offTimeLabel, fallback = null }: AlarmNotificationProps) {
   const { side } = useAppStore();
@@ -75,7 +75,7 @@ export default function AlarmNotification({ offTimeLabel, fallback = null }: Ala
 
   return (
     // The dial's label lets presses through to the dial; this row takes its own
-    <Box sx={ { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mt: 0.75, pointerEvents: 'auto' } }>
+    <Box sx={ { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, pointerEvents: 'auto' } }>
       <AlarmOverride
         open={ overrideOpen }
         setOverrideOpen={ setOverrideOpen }

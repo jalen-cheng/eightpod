@@ -1,9 +1,10 @@
+import { KeyboardEvent } from 'react';
 import { CircularSliderWithChildren } from 'react-circular-slider-svg';
-import { Typography } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import { useAppStore } from '@state/appStore';
 import styles from './Slider.module.scss';
 import TemperatureLabel from './TemperatureLabel.tsx';
-import TemperatureButtons from './TemperatureButtons.tsx';
+import NextSwitch from './NextSwitch.tsx';
 import { useControlTempStore } from './controlTempStore.tsx';
 import { useTargetTemperature } from './useTargetTemperature.ts';
 import { useTheme } from '@mui/material/styles';
@@ -11,7 +12,7 @@ import { useResizeDetector } from 'react-resize-detector';
 import { useSettings } from '@api/settings.ts';
 import { useTemperatureFormat } from '@lib/useTemperatureFormat.ts';
 import {
-  MAX_TEMP_F, MIN_TEMP_F, formatTemperature, getDirectionColor,
+  MAX_TEMP_F, MIN_TEMP_F, describeTemperature, formatTemperature, getDirectionColor,
 } from '@lib/temperatureConversions.ts';
 
 type SliderProps = {
@@ -21,9 +22,12 @@ type SliderProps = {
   refetch: () => Promise<unknown>;
 }
 
-// Labels for the two ends of the dial. They sit below where the arc stops, clear of the handle
-// when the target is at either limit.
-const rangeLabelSx = { position: 'absolute', top: '79%', color: 'text.secondary', pointerEvents: 'none' };
+// The row across the open bottom of the dial, below where the arc stops: the labels for the two
+// ends of the dial at its sides, and what the bed does next between them
+const FOOT_ROW = { position: 'absolute', top: '79%', height: 30, pointerEvents: 'none' } as const;
+const rangeLabelSx = { ...FOOT_ROW, lineHeight: `${FOOT_ROW.height}px`, color: 'text.secondary' };
+// How far each arrow key moves the target, in steps of the display unit
+const KEY_STEPS: Record<string, number> = { ArrowUp: 1, ArrowRight: 1, ArrowDown: -1, ArrowLeft: -1 };
 
 export default function Slider({ isOn, currentTargetTemp, refetch, currentTemperatureF }: SliderProps) {
   const deviceStatus = useControlTempStore(state => state.deviceStatus);
@@ -32,7 +36,7 @@ export default function Slider({ isOn, currentTargetTemp, refetch, currentTemper
   const temperatureFormat = useTemperatureFormat();
   const { previewTargetTemperature, commitTargetTemperature, stepTargetTemperature } = useTargetTemperature(refetch);
   const isInAwayMode = settings?.[side]?.awayMode;
-  const disabled = isUpdating || isInAwayMode || !isOn;
+  const disabled = Boolean(isUpdating || isInAwayMode || !isOn);
   const { width, ref } = useResizeDetector();
   const theme = useTheme();
   const sideStatus = deviceStatus?.[side];
@@ -50,6 +54,14 @@ export default function Slider({ isOn, currentTargetTemp, refetch, currentTemper
     if (!disabled) previewTargetTemperature(value);
   };
 
+  // The dial is dragged; the arrow keys step it for keyboards and screen readers
+  const handleKey = (event: KeyboardEvent<HTMLDivElement>) => {
+    const steps = KEY_STEPS[event.key];
+    if (steps === undefined || disabled) return;
+    event.preventDefault();
+    stepTargetTemperature(steps);
+  };
+
   return (
     <div
       ref={ ref }
@@ -59,10 +71,21 @@ export default function Slider({ isOn, currentTargetTemp, refetch, currentTemper
         ['--dial-color' as string]: sliderColor, ['--dial-knob-fill' as string]: theme.palette.background.default,
       } }
     >
-      { /* The dial is square, and its labels and buttons are placed over the open bottom of the arc */ }
+      { /* The dial is square, and its foot row is placed over the open bottom of the arc */ }
       <div style={ { position: 'relative' } }>
         { /* Circular Slider */ }
-        <div className={ `${styles.Slider} ${disabled && styles.Disabled} ${isHeating && styles.Heating}` }>
+        <div
+          className={ `${styles.Slider} ${disabled && styles.Disabled} ${isHeating && styles.Heating}` }
+          role="slider"
+          tabIndex={ disabled ? -1 : 0 }
+          aria-label="Target temperature"
+          aria-disabled={ disabled }
+          aria-valuemin={ MIN_TEMP_F }
+          aria-valuemax={ MAX_TEMP_F }
+          aria-valuenow={ targetTemperatureF }
+          aria-valuetext={ describeTemperature(targetTemperatureF, temperatureFormat) }
+          onKeyDown={ handleKey }
+        >
           <CircularSliderWithChildren
             disabled={ disabled }
             onControlFinished={ () => void commitTargetTemperature() }
@@ -103,14 +126,9 @@ export default function Slider({ isOn, currentTargetTemp, refetch, currentTemper
             </Typography>
           </>
         ) }
-        { isOn && !isInAwayMode && (
-          <TemperatureButtons
-            targetTemperatureF={ targetTemperatureF }
-            temperatureFormat={ temperatureFormat }
-            disabled={ isUpdating }
-            onStep={ stepTargetTemperature }
-          />
-        ) }
+        <Box sx={ { ...FOOT_ROW, left: 0, right: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' } }>
+          <NextSwitch isOn={ isOn }/>
+        </Box>
       </div>
     </div>
   );
