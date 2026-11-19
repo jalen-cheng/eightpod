@@ -5,13 +5,32 @@ You do not need an Apple developer account. Shortcuts also run from the Home Scr
 Screen, Control Center, the Action button, Siri, and Automations (for example "when my Sleep Focus
 turns on").
 
+## Ready-made Shortcuts
+
+Open a link on the iPhone, tap the download in Safari, then **Add Shortcut**. Each asks once
+for the Pod's address: `http://sevensleep.local` at home, or `http://sevensleep:3000` if the
+phone reaches the Pod over Tailscale (see the next section).
+
+| Shortcut | What it does |
+|---|---|
+| [Bed temperature](https://github.com/jalen-cheng/sevensleep/raw/main/docs/shortcuts/Bed%20temperature.shortcut) | Asks for a number from -10 to 10, turns the bed on and sets it (section 1) |
+| [Bed alarm](https://github.com/jalen-cheng/sevensleep/raw/main/docs/shortcuts/Bed%20alarm.shortcut) | Asks for a time and sets a one-time alarm (section 2) |
+| [Bed status](https://github.com/jalen-cheng/sevensleep/raw/main/docs/shortcuts/Bed%20status.shortcut) | Shows what the bed is set to and has reached (section 3) |
+| [Bed off](https://github.com/jalen-cheng/sevensleep/raw/main/docs/shortcuts/Bed%20off.shortcut) | Turns both sides off |
+| [Send sleep to SevenSleep](https://github.com/jalen-cheng/sevensleep/raw/main/docs/shortcuts/Send%20sleep%20to%20SevenSleep.shortcut) | Sends last night's sleep from Apple Health, for the autopilot ([Connections](CONNECTIONS.md#link-apple-health)) |
+
+They are made by `scripts/build_shortcuts.py` and signed with `shortcuts sign` on a Mac. Each
+was added and run in Xcode's iPhone simulator (iOS 27.2) against a stand-in for the Pod, and
+sent the request it should; none has been run on a real phone against a real Pod yet. The
+sections below build the same things by hand.
+
 ## Which address to put in a shortcut
 
 Every shortcut below uses `<pod>`. Replace it with one of these, most stable first:
 
 | Use | Works | Keeps working when |
 |---|---|---|
-| `sevensleep` | Anywhere, while Tailscale is connected on the phone | The Pod's address, your router or your network changes |
+| `sevensleep:3000` | Anywhere, while Tailscale is connected on the phone. Over Tailscale the port is needed | The Pod's address, your router or your network changes |
 | `sevensleep.local` | At home | The Pod's address or your router changes. Shortcuts run by a Home automation have been reported to fail on `.local` names; if yours does, use one of the others |
 | The Pod's home address, for example `192.168.1.50` | At home; anywhere with Tailscale if you set up the one-link route | Only while that address stays the same, so reserve it in the router |
 
@@ -34,7 +53,7 @@ Tailscale is only on when you ask for it. It needs Tailscale set up as in
 5. Under **Otherwise**, add **Choose from Menu** with the prompt "Not at home" and two options:
    "Connect Tailscale" and "Cancel".
 6. Under "Connect Tailscale", add Tailscale's **Connect** action (search for "Tailscale"), then
-   **Wait** 2 seconds, then **Open URLs** with `http://sevensleep`.
+   **Wait** 2 seconds, then **Open URLs** with `http://sevensleep:3000`.
 7. Name it "Bed", tap the share button and choose **Add to Home Screen**.
 
 To switch Tailscale off again without thinking about it, add an automation: **Automation** >
@@ -129,7 +148,7 @@ linked in the app, both sides change anyway.
 ## Troubleshooting
 
 - **The shortcut times out**: check that `http://<pod>` opens in Safari on the same phone. A Pod installed before version 3.2.0 needs `:3000` after the name until it is updated. If
-  you used `sevensleep`, check Tailscale is connected.
+  you used `sevensleep:3000`, check Tailscale is connected.
 - **The shortcut runs but nothing changes**: the Pod refused the request. Show `details` as
   described under "A refused request is silent" to read why.
 - **"Invalid request data" (HTTP 400)**: a field has the wrong type or value, or a weekly wake-up

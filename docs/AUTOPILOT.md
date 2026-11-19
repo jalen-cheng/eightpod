@@ -125,6 +125,8 @@ This step was added after a laptop left on the bed was logged as asleep for 77 m
 afternoon and 177 that evening. Replayed through the check, both come out as nobody in bed.
 It has not yet been through a real night; what it rests on is the gap between those figures.
 
+<img src="diagrams/person-check.svg" width="560" alt="Flowchart: anything on the side, then is it a body, then a person is in bed">
+
 **3. Is the body asleep?** (`server/src/autopilot/sleepTracker.ts`) By stillness, the way a
 wrist tracker's movement sensor does. Each minute is summed up as a count of seconds with
 movement: **still** is 3 or fewer, a **turn** is more than that and under 12, **restless** is
@@ -135,6 +137,8 @@ movement: **still** is 3 or fewer, a **turn** is more than that and under 12, **
   began; the bed can only act on it once the 15 minutes are up.
 - **Awake again:** 3 minutes out of 5 restless. A turn in bed, or two, is not waking.
 - **Out of bed** starts it over.
+
+<img src="diagrams/stillness-rule.svg" width="560" alt="Flowchart: the minute's moving seconds, then the check for falling asleep or for waking">
 
 Movement is judged against the sleeper's own quiet level over the last quarter of an hour, so
 a whole minute of fidgeting counts as movement and not as the new normal. A minute in which the
@@ -222,7 +226,16 @@ can be sent each morning so the bed fits its sleep rules to it: 5 nights, and on
 does better on nights it was not fitted to is taken up. The link is an iPhone Shortcut that
 reads Apple Health (Apple Watch, Whoop and Fitbit all write there).
 [Connections](CONNECTIONS.md#link-apple-health) has the steps, and what is done with what is
-sent.
+sent. Without a tracker you can say when you slept yourself: **Data > Sleep > Set when you
+slept** files your own times with that stay, and they are used in the same way.
+
+<img src="diagrams/tracker-tuning.svg" width="560" alt="Flowchart: a night's record is filed with its stay, and from five nights rule sets are replayed and only taken up if they do better on a night left out">
+
+What made a night different (a drink, a late coffee, a cold) does not have to be known or
+entered. The bed is not predicting sleep from causes: the record says when you slept, and the
+rules are fitted to that. What such a night can do is sit badly with the others, since one set
+of rules is fitted to all of them; a rule set that only suits the odd night fails the check
+on the nights left out and is not taken.
 
 ## Where nights are kept
 

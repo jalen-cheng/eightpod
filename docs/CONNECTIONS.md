@@ -17,10 +17,12 @@ an automation each morning.
 
 1. On the iPhone, open **[Send sleep to SevenSleep](https://github.com/jalen-cheng/sevensleep/raw/main/docs/shortcuts/Send%20sleep%20to%20SevenSleep.shortcut)**, tap the download in
    Safari, and tap **Add Shortcut**.
-2. It asks for your Pod's address. Leave `http://sevensleep.local` unless your Pod has another
-   name or you use its IP address: it is the address the app opens at.
-3. Tap the Shortcut once to run it. The first run asks to read Sleep from Health and to reach
-   the Pod on your network: allow both.
+2. It asks for your Pod's address: `http://sevensleep.local` at home, or
+   `http://sevensleep:3000` if the phone reaches the Pod over Tailscale. Use your Pod's own
+   name if it has another.
+3. Tap the Shortcut once to run it. The first run asks to read Sleep from Health, to send the
+   health samples to your Pod, and to show notifications: allow each (**Always Allow** for
+   the samples, or it asks every morning).
 4. A notification from SevenSleep says what happened, for example "1 sleep received from Apple
    Health. Matched 1 stay in bed." **Settings > Autopilot** then shows "Apple Health, last
    received" with today's date.
@@ -37,9 +39,11 @@ stage. Sending a night twice changes nothing.
 | "…received… No stay in bed saved on the Pod overlaps it" | The sleep arrived, but the Pod has no saved stay for those hours. It saves stays of 20 minutes or more, and only while a person is on the bed |
 | Nothing at all | Notifications for Shortcuts are off: **Settings > Notifications > Shortcuts** |
 
-The file is made by `scripts/build_apple_health_shortcut.py`, with every action written the
-way working exported shortcuts write it, and signed with `shortcuts sign` on a Mac. **It has
-not yet been run on a phone here**, and neither has the by-hand version below.
+The file is made by `scripts/build_shortcuts.py`, with every action written the
+way working exported shortcuts write it, and signed with `shortcuts sign` on a Mac. It was run
+in Xcode's iPhone simulator (iOS 27.2) with two sleep entries added in Health: every action
+came in complete, and it sent what the Pod expects. **It has not yet been run on a real phone
+with a tracker's data**, and the by-hand version below has not been run at all.
 
 Once set up it runs by itself, with one catch: an iPhone only lets a shortcut read health data
 while it is unlocked, so the night arrives when you first use the phone, not at a fixed minute.
@@ -62,6 +66,18 @@ The same thirteen actions, in order:
    `source` = `Apple Health` and `samples` = **Repeat Results**.
 5. **Get Dictionary Value** for `message` in the Contents of URL, and **Show Notification**
    with it.
+
+## Without a tracker
+
+**Data > Sleep > Set when you slept** takes the time you fell asleep and the time you woke for
+the stay shown. It is filed the way a tracker's record is, under "You", and counts toward the
+same 5 nights. A tracker that reports the same night later replaces it.
+
+## Other Shortcuts
+
+Ready-made, each asking for the Pod's address when added: [Bed temperature](https://github.com/jalen-cheng/sevensleep/raw/main/docs/shortcuts/Bed%20temperature.shortcut),
+[Bed alarm](https://github.com/jalen-cheng/sevensleep/raw/main/docs/shortcuts/Bed%20alarm.shortcut), [Bed status](https://github.com/jalen-cheng/sevensleep/raw/main/docs/shortcuts/Bed%20status.shortcut) and [Bed off](https://github.com/jalen-cheng/sevensleep/raw/main/docs/shortcuts/Bed%20off.shortcut). What each does is in
+[iPhone Shortcuts](IOS_SHORTCUTS.md#ready-made-shortcuts).
 
 ## Other trackers, Android and scripts
 

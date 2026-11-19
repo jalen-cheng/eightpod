@@ -12,11 +12,12 @@ const ISSUES_LINK = 'https://github.com/jalen-cheng/sevensleep/issues';
 const linkSx = { color: 'text.secondary', fontWeight: 400, minHeight: 44, px: 1.25 };
 
 // The things that are looked up, not set, under the last section: the API guide (which has
-// no tab of its own), where to report a problem, and the license
+// no tab of its own), the license, and where to report a problem
 export default function SettingsFooter() {
   return (
     <Box component="footer" sx={ { display: 'flex', flexWrap: 'wrap', justifyContent: 'center', columnGap: 0.5 } }>
       <Button size="small" color="inherit" component={ Link } to={ API_GUIDE_ROUTE } sx={ linkSx }>API guide</Button>
+      <LicenseModal buttonSx={ linkSx }/>
       <Button
         size="small"
         color="inherit"
@@ -29,7 +30,6 @@ export default function SettingsFooter() {
       >
         Help
       </Button>
-      <LicenseModal buttonSx={ linkSx }/>
     </Box>
   );
 }
