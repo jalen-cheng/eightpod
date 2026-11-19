@@ -217,7 +217,7 @@ home Wi-Fi to reach the app from your phone, and the side buttons and schedule w
 <summary><b>How do I update?</b></summary>
 <br>
 
-The app shows when a newer version is out. **Settings > Pod > Update** takes about four
+The app shows when a newer version is out. **Update** on the **Status** page takes about four
 minutes, keeps your settings, and puts the old version back if anything fails. The internet block
 is lifted for the download and put back afterwards.
 

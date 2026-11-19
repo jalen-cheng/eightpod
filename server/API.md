@@ -641,6 +641,7 @@ on both sides.
   "available": true,
   "enabled": true,
   "room": { "temperatureF": 68, "humidityPercent": 46 },
+  "rehearsal": { "minutesLeft": 14 },
   "left": {
     "stage": "asleep",
     "sleepKind": "night",
@@ -667,7 +668,8 @@ on both sides.
 | Field | Meaning |
 |---|---|
 | `available` | `false` when the piezo sensor has sent nothing in the last 2 minutes (other Pods) |
-| `room` | The air at the cover. Read as hundredths of a degree; not checked against a thermometer |
+| `room` | The air at the cover. Read as hundredths of a degree; not checked against a thermometer, and not acted on |
+| `rehearsal` | Present only while a 20-minute test is running, with the minutes it has left |
 | `stage` | `out`, `awake` or `asleep` |
 | `sleepKind` | While asleep: `night` when the autopilot is treating it as the night's sleep, `nap` when it is leaving it alone (it began at an hour that looks like a nap and has not yet lasted 3 hours) |
 | `heartRate`, `breathingRate` | Over the last 5 minutes; missing when no reading could be trusted. Shown only |
@@ -676,6 +678,16 @@ on both sides.
 | `learned` | What your changes have taught it for each third of the night, in °F |
 | `rules` | The sleep rules in use: still minutes before "asleep", moving seconds that make a minute restless, and `maxBreathingSpread` when calibration has found that asking for steady breathing helps |
 | `tracker` | The last sleep tracker to report, the share of minutes the bed agrees with it on, and whether the rules have been fitted to it |
+
+### `POST /api/autopilot/rehearsal`
+
+Starts the 20-minute test: a whole night's plan played on the bed from the temperature it is
+set to now, a degree at a time, ending back where it began. No body. Returns `{ "minutes": 20 }`,
+or 409 with `{ "error": "…" }` saying why not: the autopilot is off, the bed is off or away, the
+bed is warming for the alarm, a night is being steered, or a test is already running.
+`DELETE /api/autopilot/rehearsal` stops it (`{ "stopped": true }`) and the bed returns to where
+it began within a minute. [docs/AUTOPILOT.md](../docs/AUTOPILOT.md#trying-it-without-a-night)
+says what to look for.
 
 ### `POST /api/autopilot/sleepTimes`
 
@@ -707,8 +719,9 @@ and `awakeAtMs`, `asleepConfirmedAtMs` (when the bed first knew), whether the au
 it and under which `policy` version, `wakeUps` (breaks in the sleep), the middle `heartRate` and `breathingRate` of
 the asleep minutes, and `tracker` when times were sent. `?limit=` takes 1 to 60 (default 14).
 
-With `?date=2026-11-18&side=left` it returns that side's stays which ended on that day (in the
-Pod's time zone), longest first, each with `minutes`: one row a minute from `startedAtMs` with
+With `?date=2026-11-18` it returns the stays which ended on that day (in the Pod's time zone),
+longest first: one side's own with `&side=left`, or without `side` the bed's as one sleeper's
+(where both sides saw the same hours, the side with the most sleep). Each has `minutes`: one row a minute from `startedAtMs` with
 `movementSeconds` (missing when the sensor sent too little), `heartRate`, `breathingRate`,
 `breathingSpread`, `pressure` (how far the side's pressure sensors read above the empty bed),
 `swingLow`, `swingMid` and `swingHigh` (the raw size of the movement signal), `stage`, `offsetF`,

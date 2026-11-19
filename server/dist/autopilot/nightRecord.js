@@ -1,6 +1,6 @@
 // Counts the times a sleeper stopped being asleep and later slept again
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="c493e23f-2ea0-52f4-b19e-a87ef86ffa63")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="0afdef3b-efb2-5dc5-b171-7a628eec12c9")}catch(e){}}();
 export function countWakeUps(minutes) {
     let wakeUps = 0;
     let hasSlept = false;
@@ -18,5 +18,21 @@ export function countWakeUps(minutes) {
     }
     return wakeUps;
 }
+const MINUTE_MS = 60_000;
+// The stays of a bed that one person sleeps in. Each side keeps its own record, so a sleeper who
+// lies across the middle, or moves over in the night, leaves two for the same hours. Of stays
+// that share time, the one with the most sleep is kept. Most sleep first.
+export function pickBedStays(stays) {
+    const asleepMinutes = (stay) => stay.minutes.filter(minute => minute.stage === 'asleep').length;
+    const endMs = (stay) => stay.startedAtMs + stay.minutes.length * MINUTE_MS;
+    const sharesTime = (first, second) => first.startedAtMs < endMs(second) && second.startedAtMs < endMs(first);
+    const kept = [];
+    const bySleep = [...stays].sort((first, second) => (asleepMinutes(second) - asleepMinutes(first) || second.minutes.length - first.minutes.length));
+    for (const stay of bySleep) {
+        if (!kept.some(keptStay => sharesTime(keptStay, stay)))
+            kept.push(stay);
+    }
+    return kept;
+}
 //# sourceMappingURL=nightRecord.js.map
-//# debugId=c493e23f-2ea0-52f4-b19e-a87ef86ffa63
+//# debugId=0afdef3b-efb2-5dc5-b171-7a628eec12c9

@@ -4,7 +4,7 @@
 // Keep this file free of runtime imports so tests can load it without a Pod environment.
 import type { Side } from '../db/schedulesSchema.js';
 
-type ManualChangeListener = (side: Side, temperatureF: number) => void;
+type ManualChangeListener = (side: Side, temperatureF: number, isPersonsOwn: boolean) => void;
 
 let registeredListener: ManualChangeListener | undefined;
 
@@ -12,7 +12,9 @@ export function registerManualChangeListener(listener: ManualChangeListener | un
   registeredListener = listener;
 }
 
-// Call when a person, not the schedule or the autopilot, set a side's temperature
-export function noteManualTemperature(side: Side, temperatureF: number) {
-  registeredListener?.(side, temperatureF);
+// Call when a person, not the schedule or the autopilot, set a side's temperature.
+// `isPersonsOwn` is false when a rule they set up did it for them (being in bed turns the bed
+// on): that temperature stands like any other, but says nothing new about their taste.
+export function noteManualTemperature(side: Side, temperatureF: number, isPersonsOwn = true) {
+  registeredListener?.(side, temperatureF, isPersonsOwn);
 }

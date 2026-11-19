@@ -60,10 +60,13 @@ export type UpdateOptions = {
   // How long a side switched on by this change stays on, in place of the length in settings.
   // Used when being in bed turns the bed on for a length of its own.
   onSeconds?: number;
+  // True when a rule the person set up asked for the change (being in bed turns the bed on),
+  // not the person just now. The autopilot leaves the temperature alone but does not learn from it.
+  isRuleDriven?: boolean;
 };
 
 const updateSide = async (side: 'left' | 'right', sideStatus: DeepPartial<SideStatus>, options: UpdateOptions) => {
-  const { isManual = false, onSeconds: requestedOnSeconds } = options;
+  const { isManual = false, onSeconds: requestedOnSeconds, isRuleDriven = false } = options;
   await settingsDB.read();
   const settings = settingsDB.data;
   if (side === 'left') {
@@ -103,7 +106,7 @@ const updateSide = async (side: 'left' | 'right', sideStatus: DeepPartial<SideSt
   }
 
   if (targetTemperatureF) {
-    if (isManual) updatedSides.forEach(updatedSide => noteManualTemperature(updatedSide, targetTemperatureF));
+    if (isManual) updatedSides.forEach(updatedSide => noteManualTemperature(updatedSide, targetTemperatureF, !isRuleDriven));
     const level = calculateLevelFromF(targetTemperatureF);
     if (updateLeft) await executeFunction('TEMP_LEVEL_LEFT', level);
     if (updateRight) await executeFunction('TEMP_LEVEL_RIGHT', level);

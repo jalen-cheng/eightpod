@@ -33,9 +33,8 @@ and alarms run in this time zone, and it starts as UTC.
   wider screen, turns the side off. While the side is off, tap anywhere in that section to turn it on.
 - **Bed at**: the water temperature the Pod measures, shown under the target. A Pod that does not
   report it shows "Currently at", the firmware's own estimate.
-- **The next alarm**, across the open bottom of the dial while the bed is on: its time, with "Off at" and the time the bed turns
-  off beside it. Tap it to change the next alarm or skip it (section 7). With no alarm tonight it reads
-  "Turns off at"; while the bed is off, "Turns on at".
+- **The next alarm**, across the open bottom of the dial while the bed is on. Tap it to change the next alarm
+  or skip it (section 7). With no alarm tonight it reads "Turns off at"; while the bed is off, "Turns on at".
 
 A side you turn on by hand turns itself off after 12 hours unless you change that (section 10).
 
@@ -148,20 +147,22 @@ When the sides are linked, the buttons on either side control both. The step siz
 
 <img src="screenshots/settings.png" width="260" alt="The Settings page">
 
+Each section of the Settings page opens with a tap, and the page remembers which ones you left open.
+
 | Setting | Where | What it does |
 |---|---|---|
-| **Auto-off after** | General | 3, 6 or 12 hours. Applies when you turn the bed on from the app, a shortcut or the buttons |
+| **Auto-off after** | Other | 3, 6 or 12 hours. Applies when you turn the bed on from the app, a shortcut or the buttons |
 | **This device controls** | General | Left, Right or Both: the side the Temperature and Schedules pages show and change. Left or right is remembered on the device; Both links the sides for everyone |
-| **Pause the schedule until it turns off** | General | When you turn the bed on yourself, the schedule leaves it alone until it turns off: no temperature changes, warm-up or scheduled off time. Alarms still go off |
+| **Pause the schedule until it turns off** | Other | When you turn the bed on yourself, the schedule leaves it alone until it turns off: no temperature changes, warm-up or scheduled off time. Alarms still go off |
 | **Away mode** | General | For when nobody is home. The schedule and alarms stop on both sides until you switch it off |
-| **Flip left and right** | General | Swaps which physical side the app calls left and right. Each side keeps its schedule and settings |
-| **Light on the hub** | General | The hub's light, on or off |
+| **Flip left and right** | Other | Swaps which physical side the app calls left and right. Each side keeps its schedule and settings |
+| **Light on the hub** | Other | The hub's light, on or off |
 | **Prime daily** | Priming | Runs the water priming cycle every day at **Prime time**, 2 PM by default. It does not check whether the bed is in use |
-| **Reboot once a day** | Pod | Restarts the Pod one hour before the priming time. A vibrating alarm or running warm-up is lost in a reboot, so keep the time in the afternoon |
-| **Status page** | The "Status" link (bottom right on a computer, beside the heading of Data and Settings on a phone) | Shows Wi-Fi strength, whether SevenSleep is up to date, and each service. The biometrics and sleep-analysis rows are greyed and marked untested |
+| **Reboot once a day** | Status page | Restarts the Pod one hour before the priming time. A vibrating alarm or running warm-up is lost in a reboot, so keep the time in the afternoon |
+| **Status page** | The "Status" link (bottom right on a computer, beside the heading of Data and Settings on a phone) | The Pod itself (model, Wi-Fi strength, SevenSleep's version with **Update** when there is a newer one, **Reboot**), then each service. The biometrics and sleep-analysis rows are greyed and marked untested. The link reads "Update available" when a newer version is out |
 | **API** | Settings > API > **Open** | A page with the common requests and two examples with your Pod's address filled in. Tap a command to select it. The page's own address is `/api-guide` |
 | **In-bed detection** | Its own section, Pod 5 only | Two options, both off by default: **Turn on when I get into bed** and **Alarm after a long time in bed**. Detection was checked with one person on one Pod; the first option has been seen turning the bed on, the rest has not been seen working yet |
-| **Autopilot** | Its own section, Pod 5 only | **Adjust the temperature while I sleep**, off by default. Moves a sleeping side up to 4°F around its set temperature: cooler early, warmer toward morning, against a room that warms or cools, and it learns from the changes you make. It treats the bed as one sleeper's, so switching it on links the sides. A temperature you set in the night is held as you set it. A nap (a sleep under 3 hours) is left alone. **Data > Sleep** shows a day at a time (bedtime, wake time, duration, wake-ups, and graphs of breathing rate, pressure and temperature changes), and **Export** downloads a week to three months. Sleep tracker sync is iPhone only. **Sleep tracker > Link** opens the steps for an iPhone Shortcut that sends a watch's or band's sleep each morning, which the bed uses to tune how it judges sleep. Experimental and not yet run through a night; see [AUTOPILOT.md](AUTOPILOT.md) |
+| **Autopilot** | Its own section, Pod 5 only | **Adjust the temperature while I sleep**, off by default. Moves the bed up to 4°F around its set temperature while you sleep, one degree at a time: cooler early, warmer toward morning, and it learns from the changes you make. It treats the bed as one sleeper's, so switching it on links the sides. A temperature you set in the night is held as you set it. A nap (a sleep under 3 hours) is left alone. **Data > Sleep** shows a day at a time (bedtime, wake time, duration, wake-ups, and graphs of breathing rate, pressure and temperature changes), and **Export** downloads a week to three months. **20-minute test > Start** plays a night's plan on the bed at any hour so you can watch what it does. **Link Apple Health** opens [the steps](CONNECTIONS.md#link-apple-health) for an iPhone Shortcut that sends a watch's or band's sleep each morning, which the bed uses to tune how it judges sleep (iPhone only). The older **Biometrics** switch is in the same section. Experimental and not yet run through a real night; see [AUTOPILOT.md](AUTOPILOT.md) |
 
 ## 11. Updating
 
@@ -172,7 +173,7 @@ during the update.
   ```
   fs-update
   ```
-- Or, when the app knows of a newer version, tap **Update** next to the SevenSleep version in **Settings > Pod**.
+- Or, when the app knows of a newer version, tap **Update** next to the SevenSleep version on the **Status** page.
   The button only shows then; `fs-update` works at any time.
 
 **An update always ends with the internet block switched on**, even if you had turned it off.

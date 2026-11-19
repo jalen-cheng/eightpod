@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="f4ceec4f-fce5-5e9b-b49e-ada76fa9b1b2")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="296e6c8b-4155-5f44-ad27-ea7add8df4f1")}catch(e){}}();
 import { noteManualTemperature } from '../../autopilot/manualChanges.js';
 import _ from 'lodash';
 import cbor from 'cbor';
@@ -48,7 +48,7 @@ const SECONDS_PER_HOUR = 3_600;
 // How long the schedule switches a side on for. Its own off time ends the night long before this.
 const SCHEDULED_ON_SECONDS = 12 * SECONDS_PER_HOUR;
 const updateSide = async (side, sideStatus, options) => {
-    const { isManual = false, onSeconds: requestedOnSeconds } = options;
+    const { isManual = false, onSeconds: requestedOnSeconds, isRuleDriven = false } = options;
     await settingsDB.read();
     const settings = settingsDB.data;
     if (side === 'left') {
@@ -88,7 +88,7 @@ const updateSide = async (side, sideStatus, options) => {
     }
     if (targetTemperatureF) {
         if (isManual)
-            updatedSides.forEach(updatedSide => noteManualTemperature(updatedSide, targetTemperatureF));
+            updatedSides.forEach(updatedSide => noteManualTemperature(updatedSide, targetTemperatureF, !isRuleDriven));
         const level = calculateLevelFromF(targetTemperatureF);
         if (updateLeft)
             await executeFunction('TEMP_LEVEL_LEFT', level);
@@ -138,4 +138,4 @@ export const updateDeviceStatus = async (deviceStatus, options = {}) => {
     logger.info('Finished updating device status');
 };
 //# sourceMappingURL=updateDeviceStatus.js.map
-//# debugId=f4ceec4f-fce5-5e9b-b49e-ada76fa9b1b2
+//# debugId=296e6c8b-4155-5f44-ad27-ea7add8df4f1

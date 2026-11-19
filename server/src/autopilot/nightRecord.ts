@@ -91,3 +91,22 @@ export function countWakeUps(minutes: Pick<NightMinute, 'stage'>[]): number {
   }
   return wakeUps;
 }
+
+const MINUTE_MS = 60_000;
+
+// The stays of a bed that one person sleeps in. Each side keeps its own record, so a sleeper who
+// lies across the middle, or moves over in the night, leaves two for the same hours. Of stays
+// that share time, the one with the most sleep is kept. Most sleep first.
+export function pickBedStays<Stay extends Pick<NightRecord, 'startedAtMs' | 'minutes'>>(stays: Stay[]): Stay[] {
+  const asleepMinutes = (stay: Stay) => stay.minutes.filter(minute => minute.stage === 'asleep').length;
+  const endMs = (stay: Stay) => stay.startedAtMs + stay.minutes.length * MINUTE_MS;
+  const sharesTime = (first: Stay, second: Stay) => first.startedAtMs < endMs(second) && second.startedAtMs < endMs(first);
+  const kept: Stay[] = [];
+  const bySleep = [...stays].sort((first, second) => (
+    asleepMinutes(second) - asleepMinutes(first) || second.minutes.length - first.minutes.length
+  ));
+  for (const stay of bySleep) {
+    if (!kept.some(keptStay => sharesTime(keptStay, stay))) kept.push(stay);
+  }
+  return kept;
+}

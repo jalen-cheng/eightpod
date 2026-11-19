@@ -43,6 +43,8 @@ export type AutopilotSnapshot = {
   available: boolean;
   enabled: boolean;
   room?: { temperatureF: number; humidityPercent?: number };
+  // Present while a rehearsal is running: how many minutes it has left
+  rehearsal?: { minutesLeft: number };
   left: AutopilotSideSnapshot;
   right: AutopilotSideSnapshot;
 };

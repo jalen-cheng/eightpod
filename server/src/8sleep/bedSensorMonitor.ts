@@ -313,6 +313,6 @@ export class BedSensorMonitor {
     // and not for the length set for turning on by hand
     const onSeconds = (stayOn === UNTIL_OUT_OF_BED ? MAX_ON_HOURS : stayOn) * SECONDS_PER_HOUR;
     const update = Object.fromEntries(sides.map(side => [side, { isOn: true, targetTemperatureF: temperatureF }]));
-    await updateDeviceStatus(update, { isManual: true, onSeconds });
+    await updateDeviceStatus(update, { isManual: true, onSeconds, isRuleDriven: true });
   }
 }

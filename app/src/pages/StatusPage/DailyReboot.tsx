@@ -2,7 +2,7 @@ import { Switch } from '@mui/material';
 import { DeepPartial } from 'ts-essentials';
 import { Settings } from '@api/settingsSchema.ts';
 import { useAppStore } from '@state/appStore.tsx';
-import SettingToggle from '../SettingToggle.tsx';
+import SettingToggle from '../SettingsPage/SettingToggle.tsx';
 
 type DailyRebootProps = {
   settings?: Settings;

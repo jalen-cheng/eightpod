@@ -1,8 +1,9 @@
 import express, { Request, Response } from 'express';
 import { z } from 'zod';
 import {
-  applyTrackerSleep, getAutopilotSnapshot, getNightSummaries, getNightsExport, getNightsOn,
+  applyTrackerSleep, getAutopilotSnapshot, getNightSummaries, getNightsExport, getNightsOn, startRehearsal, stopRehearsal,
 } from '../../autopilot/autopilotMonitor.js';
+import { REHEARSAL_MINUTES } from '../../autopilot/nightPlan.js';
 import { SleepPeriod, findSleepPeriods } from '../../autopilot/sleepTracker.js';
 
 const router = express.Router();
@@ -19,15 +20,17 @@ const HOUR_MS = 60 * 60_000;
 const LONGEST_SLEEP_MS = 18 * HOUR_MS;
 const OLDEST_SLEEP_MS = 100 * 24 * HOUR_MS;
 const CLOCK_SLACK_MS = HOUR_MS;
-const DayQuerySchema = z.object({ date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), side: SideSchema });
+const DayQuerySchema = z.object({ date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), side: SideSchema.optional() });
 
-// The saved stays in bed. With `date` and `side`: that side's stays which ended on that day, in
-// full, minute rows included. Otherwise the newest of both sides, without their minute rows.
+// The saved stays in bed. With `date`: the stays which ended on that day, in full, minute rows
+// included: one side's with `side`, or without it the bed's as one sleeper's (where both sides
+// saw the same hours, the side with the most sleep). Otherwise the newest of both sides,
+// without their minute rows.
 router.get('/autopilot/nights', (req: Request, res: Response) => {
   if (req.query.date !== undefined) {
     const dayQuery = DayQuerySchema.safeParse(req.query);
     if (!dayQuery.success) {
-      res.status(400).json({ error: 'Give date as YYYY-MM-DD and side as left or right' });
+      res.status(400).json({ error: 'Give date as YYYY-MM-DD; side, if given, as left or right' });
       return;
     }
     res.json(getNightsOn(dayQuery.data.date, dayQuery.data.side));
@@ -35,6 +38,22 @@ router.get('/autopilot/nights', (req: Request, res: Response) => {
   }
   const limit = Math.min(MAX_NIGHTS_LISTED, Math.max(1, Number(req.query.limit) || 14));
   res.json(getNightSummaries(limit));
+});
+
+// Plays a whole night's plan on the bed in a few minutes, from the temperature it is set to now,
+// so what the autopilot does can be watched. Refused with the reason when it cannot start.
+router.post('/autopilot/rehearsal', async (_req: Request, res: Response) => {
+  const refusal = await startRehearsal();
+  if (refusal) {
+    res.status(409).json({ error: refusal });
+    return;
+  }
+  res.json({ minutes: REHEARSAL_MINUTES });
+});
+
+// Ends a rehearsal early; the bed returns to where it began within a minute
+router.delete('/autopilot/rehearsal', (_req: Request, res: Response) => {
+  res.json({ stopped: stopRehearsal() });
 });
 
 // The lengths of time an export can cover, in days

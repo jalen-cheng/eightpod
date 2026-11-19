@@ -11,8 +11,6 @@ import Section from '../Section.tsx';
 import SettingRow from '../SettingRow.tsx';
 import SettingToggle from '../SettingToggle.tsx';
 import ButtonStepSetting from '../TapGesturesSection/ButtonStepSetting.tsx';
-import LedSwitch from './LedSwitch.tsx';
-import ManualOnSettings from './ManualOnSettings.tsx';
 import TemperatureFormatSelector from './TemperatureFormatSelector.tsx';
 import TimeZoneSelector from './TimeZoneSelector.tsx';
 import { useSettings } from '@api/settings.ts';
@@ -21,8 +19,6 @@ const SIDE_INFO = 'The side the Temperature and Schedules pages show and change.
   + 'device only, so each person can keep their own side on their own phone. Both makes the two sides act as one, for '
   + 'everyone; the autopilot needs it.';
 const AWAY_MODE_INFO = 'For when nobody is home. The schedule and alarms stop on both sides until you switch this off.';
-const FLIP_SIDES_INFO = 'Swaps which side of the bed the app calls left and right, everywhere: controls, schedules, buttons '
-  + 'and in-bed detection. Each side keeps its schedule and settings.';
 
 // A few settings that belong together, with a line above every group but the first
 const Group = ({ children }: PropsWithChildren) => (
@@ -39,8 +35,8 @@ const Group = ({ children }: PropsWithChildren) => (
 type UpdateSettingsFn = (settings: DeepPartial<Settings>) => void;
 type DeviceSettingsSectionProps = { updateSettings: UpdateSettingsFn };
 
-// Settings for the bed as a whole, in groups: the side this device controls, temperature, the
-// clock, the bed itself, and turning on by hand
+// The settings that get used, in groups: the side this device controls, temperature, the clock
+// and away mode. The set-once ones are in OtherSection.
 export default function DeviceSettingsSection({ updateSettings }: DeviceSettingsSectionProps) {
   const { data: settings } = useSettings();
   const { data: deviceStatus } = useDeviceStatus();
@@ -73,21 +69,6 @@ export default function DeviceSettingsSection({ updateSettings }: DeviceSettings
             />
           }
         />
-        <SettingToggle
-          label="Flip left and right"
-          info={ FLIP_SIDES_INFO }
-          control={
-            <Switch
-              disabled={ isUpdating }
-              checked={ settings?.swapSides || false }
-              onChange={ (event) => updateSettings({ swapSides: event.target.checked }) }
-            />
-          }
-        />
-        <LedSwitch/>
-      </Group>
-      <Group>
-        <ManualOnSettings settings={ settings } updateSettings={ updateSettings }/>
       </Group>
     </Section>
   );
