@@ -18,7 +18,7 @@
 // A rehearsal is a night's plan played in a few minutes on the bed as it is set, started by
 // hand, for watching what the autopilot does. It goes through the same steps as a night.
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="bca7390d-f703-5ff9-ab5e-cec44b7d7500")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="18afa103-a830-5dba-98a8-742322614382")}catch(e){}}();
 import { readFileSync, renameSync, writeFileSync } from 'fs';
 import moment from 'moment-timezone';
 import config from '../config.js';
@@ -263,8 +263,12 @@ export function getNightsOn(date, side) {
         .tz(night.startedAtMs + night.minutes.length * MINUTE_MS, settingsDB.data.timeZone)
         .format('YYYY-MM-DD');
     // A stay that ended on this day began no earlier than its longest length before the day did
+    // A stay is saved when the server stops, however brief, so that a restart loses little. The
+    // short pieces that leaves behind are not stays anyone would look for; one still under way is.
+    const isUnderWay = (night) => SIDES.some(openSide => sides[openSide].stay === night);
+    const isWorthShowing = (night) => night.minutes.length >= MIN_STAY_MINUTES || isUnderWay(night);
     const stays = readAllNights(side, { startedFromMs: dayStartMs - (MAX_STAY_MINUTES + 60) * MINUTE_MS, startedUntilMs: dayStartMs + DAY_MS })
-        .filter(night => endDate(night) === date);
+        .filter(night => endDate(night) === date && isWorthShowing(night));
     return (side ? stays : pickBedStays(stays))
         .sort((first, second) => second.minutes.length - first.minutes.length)
         .map(night => ({ ...summarise(night), minutes: night.minutes }));
@@ -871,4 +875,4 @@ export class AutopilotMonitor {
     }
 }
 //# sourceMappingURL=autopilotMonitor.js.map
-//# debugId=bca7390d-f703-5ff9-ab5e-cec44b7d7500
+//# debugId=18afa103-a830-5dba-98a8-742322614382

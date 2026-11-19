@@ -21,6 +21,8 @@ import NightChart from './NightChart.tsx';
 import TuningCard from './TuningCard.tsx';
 
 const DATE_FORMAT = 'YYYY-MM-DD';
+// What a stay in bed is called where the day has several: by its sleep, or "In bed" when none was seen
+const STAY_NAMES = { night: 'Night', nap: 'Nap', none: 'In bed' } as const;
 // A night still being recorded gains a row a minute
 const TODAY_REFRESH_MS = 60_000;
 
@@ -127,7 +129,7 @@ export default function NightsPage() {
           >
             { nights.map((stay, index) => (
               <ToggleButton key={ `${stay.side}-${stay.startedAtMs}` } value={ index } sx={ { px: 1.5 } }>
-                { stay.kind === 'nap' ? 'Nap' : 'Night' } { formatClock(stay.asleepAtMs ?? stay.startedAtMs) }
+                { STAY_NAMES[stay.kind ?? 'none'] } { formatClock(stay.asleepAtMs ?? stay.startedAtMs) }
               </ToggleButton>
             )) }
           </ToggleButtonGroup>
