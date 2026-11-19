@@ -41,7 +41,7 @@ It started as a fork of [Free Sleep](https://github.com/throwaway31265/free-slee
     <td align="center" width="130"><a href="https://sevensleep.vercel.app">Demo</a></td>
     <td align="center" width="130"><a href="INSTALLATION.md">Install</a></td>
     <td align="center" width="130"><a href="docs/USING.md">Usage</a></td>
-    <td align="center" width="130"><a href="docs/HOW_IT_WORKS.md">Implementation</a></td>
+    <td align="center" width="130"><a href="https://jalen-cheng.github.io/sevensleep/">Docs</a></td>
     <td align="center" width="130"><a href="docs/IOS_SHORTCUTS.md">Shortcuts</a></td>
     <td align="center" width="130"><a href="server/API.md">API</a></td>
     <td align="center" width="130"><a href="#faq">FAQ</a></td>
@@ -284,6 +284,7 @@ Yes. One command over SSH reinstalls it and keeps your schedules; see
 
 | Goal | Start here |
 |---|---|
+| Read all of this as a website | [jalen-cheng.github.io/sevensleep](https://jalen-cheng.github.io/sevensleep/) |
 | Install it on a Pod | [INSTALLATION.md](INSTALLATION.md) |
 | Usage: a night, alarms, settings | [docs/USING.md](docs/USING.md) |
 | Know what works on a Pod 3 or Pod 4 | [docs/POD_MODELS.md](docs/POD_MODELS.md) |
