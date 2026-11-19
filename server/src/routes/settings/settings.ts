@@ -34,6 +34,13 @@ router.post('/settings', async (req: Request, res: Response) => {
   delete body.id;
   await settingsDB.read();
   _.mergeWith(settingsDB.data, body, replaceTapConfig);
+  // The autopilot takes the bed to be one sleeper's. Switching it on links the sides, and
+  // unlinking them switches it off.
+  if (settingsDB.data.autopilot.enabled && !settingsDB.data.linkSides) {
+    const isUnlinking = body.linkSides === false && body.autopilot?.enabled !== true;
+    if (isUnlinking) settingsDB.data.autopilot.enabled = false;
+    else settingsDB.data.linkSides = true;
+  }
   await settingsDB.write();
   res.status(200).json(settingsDB.data);
 });

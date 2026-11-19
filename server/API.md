@@ -625,13 +625,16 @@ A body with neither `left` nor `right` gets 400 `{"error": "At least one side (l
 
 ## Autopilot
 
-Pod 5 only, experimental. Switch it on with `POST /api/settings` and `{ "autopilot": { "enabled": true } }`.
+Pod 5 only, experimental. Switch it on with `POST /api/settings` and `{ "autopilot": { "enabled": true } }`,
+which also links the sides (`linkSides`); unlinking them switches it off.
 [docs/AUTOPILOT.md](../docs/AUTOPILOT.md) says what it does.
 
 ### `GET /api/autopilot`
 
-What the autopilot reads and has done. Sleep is followed whether or not it is switched on; the
-temperature is only changed when it is.
+What the bed senses on each side, and what the autopilot is doing. Sleep is followed whether or
+not it is switched on; the temperature is only changed when it is. The autopilot steers the
+whole bed, so `offsetF`, `holdingF`, `lastChange`, `learned`, `rules` and `tracker` are the same
+on both sides.
 
 ```json
 {
@@ -640,16 +643,17 @@ temperature is only changed when it is.
   "room": { "temperatureF": 68, "humidityPercent": 46 },
   "left": {
     "stage": "asleep",
+    "sleepKind": "night",
     "heartRate": 54,
+    "breathingRate": 14,
     "minutesAsleep": 62,
     "offsetF": -3,
-    "lastChange": "12:40 AM: 3°F cooler (time of night, first sleep cycle)",
-    "sleepKind": "night",
-    "learned": { "early": -0.5, "middle": 0, "late": 0 },
+    "lastChange": "12:40 AM: 77°F, heading for 3°F cooler (time of night, first sleep cycle)",
+    "learned": { "early": -0.6, "middle": 0, "late": 0 },
     "rules": { "stillMinutesToSleep": 10, "restlessSecondsToWake": 20 },
-    "tracker": { "source": "Apple Health", "syncedAt": "2026-11-18T15:02:11.000Z", "nights": 6, "onsetErrorMinutes": 7, "wakeErrorMinutes": 4 }
+    "tracker": { "source": "Apple Health", "syncedAt": "2026-11-18T15:02:11.000Z", "nights": 6, "agreementPercent": 94, "isTuned": true }
   },
-  "right": { "stage": "out", "learned": { "early": 0, "middle": 0, "late": 0 }, "rules": { "stillMinutesToSleep": 15, "restlessSecondsToWake": 12 } }
+  "right": { "stage": "out", "offsetF": -3, "learned": { "early": -0.6, "middle": 0, "late": 0 }, "rules": { "stillMinutesToSleep": 10, "restlessSecondsToWake": 20 } }
 }
 ```
 
@@ -659,37 +663,37 @@ temperature is only changed when it is.
 | `room` | The air at the cover. Read as hundredths of a degree; not checked against a thermometer |
 | `stage` | `out`, `awake` or `asleep` |
 | `sleepKind` | While asleep: `night` when the autopilot is treating it as the night's sleep, `nap` when it is leaving it alone (it began at an hour that looks like a nap and has not yet lasted 3 hours) |
-| `breathingRate` | Breaths a minute over the last 5 minutes; missing when no reading could be trusted |
-| `heartRate` | Beats a minute over the last 5 minutes; missing when no reading could be trusted. Shown only: sleep is judged from stillness |
-| `rules` | The sleep rules in use: still minutes before "asleep", moving seconds that make a minute restless, and `maxBreathingSpread` when calibration has found that asking for steady breathing helps |
-| `tracker` | The last sleep tracker to report on this side, and how far the bed's sleep and wake times are from its, in minutes |
-| `offsetF` | How far the side is from its set temperature because of the autopilot |
+| `heartRate`, `breathingRate` | Over the last 5 minutes; missing when no reading could be trusted. Shown only |
+| `offsetF` | How far the plan is from the schedule's temperature |
+| `holdingF` | A temperature set by hand that the autopilot is holding and not adjusting |
 | `learned` | What your changes have taught it for each third of the night, in °F |
+| `rules` | The sleep rules in use: still minutes before "asleep", moving seconds that make a minute restless, and `maxBreathingSpread` when calibration has found that asking for steady breathing helps |
+| `tracker` | The last sleep tracker to report, the share of minutes the bed agrees with it on, and whether the rules have been fitted to it |
 
 ### `POST /api/autopilot/sleepTimes`
 
-Sleep and wake times from a watch or band, sent by a phone shortcut or a script. Each sleep is
-filed with the saved stay in bed it overlaps, and the side's `rules` are fitted again (once 3
-nights have tracker times). Send the two times, or a health app's raw samples:
+A sleep tracker's record of a night, sent by a phone shortcut, an app or a script. Each sleep is
+filed with every saved stay in bed it overlaps, and the sleep `rules` are fitted again (once 5
+nights have a record). Send the two times, or a health app's raw samples:
 
 | Field | Type |
 | --- | --- |
-| `side` | `left` or `right` (required) |
 | `source` | optional name, up to 40 characters: `"Apple Health"`, `"Whoop"` |
 | `asleepAt`, `awakeAt` | date and time with an offset, such as `2026-11-18T23:12:00-08:00` |
-| `samples` | in place of the two times: up to 2000 of `{ "start", "end", "value" }`. Samples whose value says awake or in bed are left out, and the rest are joined into sleeps (a gap over an hour starts a new one) |
+| `samples` | in place of the two times: up to 2000 of `{ "start", "end", "value" }`. Samples whose value says awake or in bed are left out, and the rest are joined into sleeps (a gap over an hour starts a new one). Shorter gaps are kept as time awake, which the fitting uses |
+| `side` | optional `left` or `right`, to look only at that side's stays. May also be given in the address (`?side=left`) |
 
 ```json
-{ "side": "left", "source": "Whoop", "asleepAt": "2026-11-18T23:12:00-08:00", "awakeAt": "2026-11-19T06:48:00-08:00" }
+{ "source": "Whoop", "asleepAt": "2026-11-18T23:12:00-08:00", "awakeAt": "2026-11-19T06:48:00-08:00" }
 ```
 
-`side` and `source` may be given in the address instead (`?side=left`), for an app that cannot
-shape its own request. The body the iPhone app Health Auto Export posts is read as it is
-(`data.metrics` with a `sleep_analysis` entry, one row a night or sample by sample); that was
+The body the iPhone app Health Auto Export posts is read as it is (`data.metrics` with a
+`sleep_analysis` entry, one row a night or sample by sample; `?source=` names it). That was
 written from the app's documentation and has not been run against the app.
 
-The response says how many sleeps were read, how many matched a saved stay, and the rules now in
-use. 400 when the body is not valid or holds no sleep.
+Sleeps in the future, older than 100 days or longer than 18 hours are dropped. The response says
+how many sleeps were read, how many saved stays they matched, and the rules now in use. 400 when
+the body is not valid or holds no sleep.
 
 ### `GET /api/autopilot/nights`
 
@@ -700,8 +704,10 @@ the asleep minutes, and `tracker` when times were sent. `?limit=` takes 1 to 60 
 
 With `?date=2026-11-18&side=left` it returns that side's stays which ended on that day (in the
 Pod's time zone), longest first, each with `minutes`: one row a minute from `startedAtMs` with
-`movementSeconds`, `heartRate`, `breathingRate`, `breathingSpread`, `pressure` (how far the
-side's pressure sensors read above the empty bed), `stage`, `offsetF` and `roomF`.
+`movementSeconds` (missing when the sensor sent too little), `heartRate`, `breathingRate`,
+`breathingSpread`, `pressure` (how far the side's pressure sensors read above the empty bed),
+`stage`, `offsetF`, and three temperatures: `roomF` (air at the cover), `hubRoomF` (air at the
+hub) and `surfaceF` (the mattress). The night also says whether the autopilot `steered` it.
 
 ### `GET /api/autopilot/nights/export`
 

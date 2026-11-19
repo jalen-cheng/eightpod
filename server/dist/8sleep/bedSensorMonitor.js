@@ -7,8 +7,8 @@
 // without those subjects, simply never produces a reading: presence stays "not available", no
 // measured temperature is shown, and nothing else is affected.
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="a330650c-62b3-5818-a8c5-e2b3a6e36a10")}catch(e){}}();
-import { recordPiezoSecond, recordPressure, recordSurroundings } from '../autopilot/autopilotMonitor.js';
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="91922c6c-c082-501c-bd23-b3a2495f1964")}catch(e){}}();
+import { recordHubRoom, recordPiezoSecond, recordPressure, recordSurroundings } from '../autopilot/autopilotMonitor.js';
 import { readFileSync, writeFileSync } from 'fs';
 import { registerInBedCheck } from '../jobs/inBedCheck.js';
 import cbor from 'cbor';
@@ -22,7 +22,7 @@ import { PRESENCE_DELTAS, createPresenceDetector, isNeighbourSpillOver, } from '
 import { UNTIL_OUT_OF_BED, createBedSession, takeDueActions, trackBedSession, } from '../jobs/presenceActions.js';
 import { executeAlarm, getOneOffAlarmSettings } from '../jobs/alarmScheduler.js';
 import { updateDeviceStatus } from '../routes/deviceStatus/updateDeviceStatus.js';
-import { recordWaterReading } from './measuredWater.js';
+import { recordWaterReading, reportedWaterToF } from './measuredWater.js';
 import { toFirmwareSide } from './sideMapping.js';
 const NATS_SERVER = process.env.NATS_SERVER || '127.0.0.1:4222';
 const CAPACITIVE_SUBJECT = 'rawmem.sens.capsense';
@@ -152,6 +152,10 @@ export class BedSensorMonitor {
                     if (typeof reportedValue === 'number')
                         recordWaterReading(side, reportedValue);
                 }
+                // The same message carries the air temperature at the hub, in the same units
+                const hubAmbient = message.amb;
+                if (typeof hubAmbient === 'number')
+                    recordHubRoom(reportedWaterToF(hubAmbient));
             });
             this.subscribe(PIEZO_SUBJECT, (message) => {
                 for (const side of SIDES) {
@@ -296,4 +300,4 @@ export class BedSensorMonitor {
     }
 }
 //# sourceMappingURL=bedSensorMonitor.js.map
-//# debugId=a330650c-62b3-5818-a8c5-e2b3a6e36a10
+//# debugId=91922c6c-c082-501c-bd23-b3a2495f1964

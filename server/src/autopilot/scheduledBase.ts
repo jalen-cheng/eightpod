@@ -9,6 +9,11 @@ const toMinutes = (time: Time) => Number(time.slice(0, 2)) * 60 + Number(time.sl
 // Minutes from bedtime to a time later that night (past midnight counts as later)
 const minutesAfterBedtime = (time: Time, bedtime: Time) => (toMinutes(time) - toMinutes(bedtime) + MINUTES_PER_DAY) % MINUTES_PER_DAY;
 
+// Whether a time falls between a night's bed-on and bed-off times
+export function isWithinScheduledNight(night: Pick<DailySchedule, 'power'>, clock: Time): boolean {
+  return minutesAfterBedtime(clock, night.power.on) < minutesAfterBedtime(night.power.off, night.power.on);
+}
+
 export function findScheduledTemperatureF(night: Pick<DailySchedule, 'power' | 'temperatures'>, clock: Time): number {
   const minutesIntoNight = minutesAfterBedtime(clock, night.power.on);
   let latestMinutes = -1;

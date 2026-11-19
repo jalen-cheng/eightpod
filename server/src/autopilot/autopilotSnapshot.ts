@@ -8,10 +8,12 @@ import type { SleepRules, SleepStage } from './sleepTracker.js';
 export type TrackerLink = {
   source: string;
   syncedAt: string;
-  // How many tracker-reported nights the figures below come from
+  // How many tracker-reported nights the figure below comes from
   nights: number;
-  onsetErrorMinutes: number;
-  wakeErrorMinutes: number;
+  // The share of minutes on which the bed and the tracker agree about asleep or awake
+  agreementPercent: number;
+  // True once the bed's sleep rules have been changed from the default to fit the tracker
+  isTuned: boolean;
 };
 
 export type AutopilotSideSnapshot = {
@@ -25,6 +27,8 @@ export type AutopilotSideSnapshot = {
   minutesAsleep?: number;
   // How far the autopilot has the side from its set temperature right now, °F
   offsetF?: number;
+  // A temperature set by hand that the autopilot is holding and not adjusting, °F
+  holdingF?: number;
   // The last change it made, in words
   lastChange?: string;
   // What it has learned from corrections, per part of the night, °F

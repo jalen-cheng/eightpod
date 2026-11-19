@@ -126,7 +126,7 @@ export const handlers = [
         stage: 'asleep', heartRate: 54, breathingRate: 14, minutesAsleep: 62, offsetF: -3,
         lastChange: '3°F cooler (time of night, first sleep cycle)', learned: { early: -0.5, middle: 0, late: 0 },
         sleepKind: 'night', rules: { stillMinutesToSleep: 10, restlessSecondsToWake: 20 },
-        tracker: { source: 'Apple Health', syncedAt: new Date().toISOString(), nights: 6, onsetErrorMinutes: 7, wakeErrorMinutes: 4 },
+        tracker: { source: 'Apple Health', syncedAt: new Date().toISOString(), nights: 6, agreementPercent: 94, isTuned: true },
       },
       right: { stage: 'out', learned: { early: 0, middle: 0, late: 0 }, rules: { stillMinutesToSleep: 15, restlessSecondsToWake: 12 } },
     });

@@ -1,9 +1,13 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="77fe63b6-9cb2-5f29-a4f4-0b859b2b252d")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="a1ee3de9-39fc-5bf0-b776-eb28e5d33cb5")}catch(e){}}();
 const MINUTES_PER_DAY = 24 * 60;
 const toMinutes = (time) => Number(time.slice(0, 2)) * 60 + Number(time.slice(3, 5));
 // Minutes from bedtime to a time later that night (past midnight counts as later)
 const minutesAfterBedtime = (time, bedtime) => (toMinutes(time) - toMinutes(bedtime) + MINUTES_PER_DAY) % MINUTES_PER_DAY;
+// Whether a time falls between a night's bed-on and bed-off times
+export function isWithinScheduledNight(night, clock) {
+    return minutesAfterBedtime(clock, night.power.on) < minutesAfterBedtime(night.power.off, night.power.on);
+}
 export function findScheduledTemperatureF(night, clock) {
     const minutesIntoNight = minutesAfterBedtime(clock, night.power.on);
     let latestMinutes = -1;
@@ -59,4 +63,4 @@ export function isNightExpected(onsetClock, usual, night) {
     return hour < NAP_HOURS_WITH_NOTHING_TO_GO_BY.from || hour >= NAP_HOURS_WITH_NOTHING_TO_GO_BY.until;
 }
 //# sourceMappingURL=scheduledBase.js.map
-//# debugId=77fe63b6-9cb2-5f29-a4f4-0b859b2b252d
+//# debugId=a1ee3de9-39fc-5bf0-b776-eb28e5d33cb5
