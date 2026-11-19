@@ -1,7 +1,9 @@
 /* eslint-disable react/no-multi-comp */
 import { ReactNode, useState } from 'react';
 import moment, { Moment } from 'moment-timezone';
-import { Alert, Box, IconButton, Paper, Skeleton, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
+import {
+  Alert, Box, Button, IconButton, Paper, Skeleton, ToggleButton, ToggleButtonGroup, Typography,
+} from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import BedOutlinedIcon from '@mui/icons-material/BedOutlined';
 import NavigateBeforeIcon from '@mui/icons-material/NavigateBefore';
@@ -18,6 +20,7 @@ import PageContainer from '../../PageContainer.tsx';
 import Header from '../Header.tsx';
 import ExportMenu from './ExportMenu.tsx';
 import NightChart from './NightChart.tsx';
+import SleepTimesDialog from './SleepTimesDialog.tsx';
 import TuningCard from './TuningCard.tsx';
 
 const DATE_FORMAT = 'YYYY-MM-DD';
@@ -40,9 +43,11 @@ const SummaryRow = ({ icon, label, value }: SummaryRowProps) => (
   </Box>
 );
 
-// When the sleeper went to sleep and woke, for how long, and how often sleep was broken
-const NightSummary = ({ night }: { night: NightDetail }) => {
+// When the sleeper went to sleep and woke, for how long, and how often sleep was broken, with
+// a way to say when they really slept
+const NightSummary = ({ night, onCorrected }: { night: NightDetail; onCorrected: () => void }) => {
   const { asleepAtMs, awakeAtMs, tracker } = night;
+  const [isCorrecting, setIsCorrecting] = useState(false);
   const hasSleep = asleepAtMs !== undefined && awakeAtMs !== undefined;
   return (
     <Paper sx={ { p: 2, display: 'flex', flexDirection: 'column', gap: 1.25 } }>
@@ -68,6 +73,19 @@ const NightSummary = ({ night }: { night: NightDetail }) => {
           value={ `${formatClock(tracker.asleepAtMs)} to ${formatClock(tracker.awakeAtMs)}` }
         />
       ) }
+      <Button size="small" onClick={ () => setIsCorrecting(true) } sx={ { alignSelf: 'flex-start', ml: -0.5 } }>
+        Set when you slept
+      </Button>
+      { isCorrecting && (
+        <SleepTimesDialog
+          night={ night }
+          onClose={ () => setIsCorrecting(false) }
+          onSaved={ () => {
+            setIsCorrecting(false);
+            onCorrected();
+          } }
+        />
+      ) }
     </Paper>
   );
 };
@@ -86,8 +104,15 @@ export default function NightsPage() {
   const day = pickedDay ?? today;
   const isToday = day.isSameOrAfter(today, 'day');
   const [stayIndex, setStayIndex] = useState(0);
-  const { data: nights, isPending, isError } = useNightsOn(day.format(DATE_FORMAT), shownSide, isToday ? TODAY_REFRESH_MS : undefined);
-  const { data: autopilot } = useAutopilot();
+  const {
+    data: nights, isPending, isError, refetch: refetchNights,
+  } = useNightsOn(day.format(DATE_FORMAT), shownSide, isToday ? TODAY_REFRESH_MS : undefined);
+  const { data: autopilot, refetch: refetchAutopilot } = useAutopilot();
+  // Times set by hand change the night shown and how the bed's detection stands against them
+  const reloadAfterCorrection = () => {
+    void refetchNights();
+    void refetchAutopilot();
+  };
   const night = nights?.[Math.min(stayIndex, nights.length - 1)];
 
   const showDay = (nextDay: Moment) => {
@@ -141,7 +166,7 @@ export default function NightsPage() {
         ) }
         { night && (
           <>
-            <NightSummary night={ night }/>
+            <NightSummary key={ `${night.side}-${night.startedAtMs}` } night={ night } onCorrected={ reloadAfterCorrection }/>
             <NightChart night={ night }/>
           </>
         ) }

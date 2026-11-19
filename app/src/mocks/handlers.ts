@@ -114,6 +114,7 @@ export const handlers = [
     const nap = daysAgo === 1 ? [buildDemoNight(dayStartMs + 15 * 60 * MINUTE_MS, 45, 3)] : [];
     return HttpResponse.json([night, ...nap]);
   }),
+  http.post('/api/autopilot/sleepTimes', async () => HttpResponse.json({ message: '1 sleep received from You. Matched 1 stay in bed.' })),
   http.get('/api/autopilot/nights/export', async () => {
     await delay(80);
     return HttpResponse.json({ exportedAt: new Date().toISOString(), nights: [] }, {

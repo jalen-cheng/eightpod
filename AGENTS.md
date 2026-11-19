@@ -9,7 +9,7 @@
 - `app/`: Vite React frontend using MUI, Zustand, React Query, and Axios.
 - `server/`: Express TypeScript backend, LowDB JSON settings/schedules, Prisma SQLite metrics, node-schedule jobs, and Franken socket control.
 - `biometrics/`: Python stream processing, sleep detection, vitals calculation, and SQLite writes for biometrics.
-- `scripts/`: Pod install/update/reset/service helper scripts.
+- `scripts/`: Pod install/update/reset/service helper scripts, and `build_shortcuts.py`, which writes the iPhone Shortcuts in `docs/shortcuts/` (sign each with `shortcuts sign` on a Mac).
 - `docs/`: user guides, screenshots and hardware teardown photos. `DEVELOPING.md` covers setup, checks and releases.
 - `tests/`: Node tests (`node --test tests/*.test.mjs`) that import the TypeScript sources directly, so the modules they load must have no runtime imports.
 - `server/dist` and `server/public` are committed build output: the Pod runs them as downloaded, so every source change ships with a rebuild.

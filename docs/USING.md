@@ -145,8 +145,8 @@ When the sides are linked, the buttons on either side control both. The step siz
 <img src="screenshots/settings.png" width="260" alt="The Settings page">
 
 Each section of the Settings page opens with a tap. General starts open, and the page remembers
-which ones you opened and closed. Under the last section are the **API guide**, **Help** (this
-project's issues on GitHub) and the **License and disclaimer**.
+which ones you opened and closed. Under the last section are the **API guide**, the **License
+and disclaimer** and **Help** (this project's issues on GitHub).
 
 | Setting | Where | What it does |
 |---|---|---|

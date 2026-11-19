@@ -66,3 +66,18 @@ export const useNightsOn = (date: string, side: 'left' | 'right' | undefined, re
     refetchInterval,
   });
 };
+
+type SleepTimes = { source: string; asleepAt: string; awakeAt: string };
+
+// Files when the sleeper slept (their own account, or a tracker's) with the stays in bed it
+// overlaps. Resolves to the Pod's reason when it refuses the times, or nothing once saved.
+export const postSleepTimes = async (sleepTimes: SleepTimes): Promise<string | undefined> => {
+  try {
+    await axios.post('/autopilot/sleepTimes', sleepTimes);
+    return undefined;
+  } catch (error: unknown) {
+    const refusal = isAxiosError<{ message?: string }>(error) ? error.response?.data?.message : undefined;
+    if (refusal) return refusal;
+    throw error;
+  }
+};
