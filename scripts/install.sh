@@ -15,6 +15,10 @@ read_saved_update_source() {
 FREE_SLEEP_REPO="${FREE_SLEEP_REPO:-$(read_saved_update_source FREE_SLEEP_REPO)}"
 # This fork installs and updates from itself unless told otherwise
 FREE_SLEEP_REPO="${FREE_SLEEP_REPO:-jalen-cheng/sevensleep}"
+# The repository has been renamed twice; a Pod that saved an old name moves to the present one
+case "$FREE_SLEEP_REPO" in
+  jalen-cheng/eightpod|jalen-cheng/free-sleep) FREE_SLEEP_REPO="jalen-cheng/sevensleep" ;;
+esac
 FREE_SLEEP_BRANCH="${FREE_SLEEP_BRANCH:-$(read_saved_update_source FREE_SLEEP_BRANCH)}"
 FREE_SLEEP_BRANCH="${FREE_SLEEP_BRANCH:-main}"
 for source_value in "$FREE_SLEEP_REPO" "$FREE_SLEEP_BRANCH"; do
@@ -24,8 +28,9 @@ for source_value in "$FREE_SLEEP_REPO" "$FREE_SLEEP_BRANCH"; do
   fi
 done
 REPO_URL="https://github.com/$FREE_SLEEP_REPO/archive/refs/heads/$FREE_SLEEP_BRANCH.zip"
-# GitHub names the zip's top folder <repo>-<branch>, with slashes in the branch turned into dashes
-EXTRACTED_DIR="${FREE_SLEEP_REPO##*/}-$(echo "$FREE_SLEEP_BRANCH" | tr / -)"
+# The zip is unpacked into a folder of its own, and the one folder inside it is the code. Its
+# name is not guessed: GitHub serves a renamed repository from its old address under its new name.
+UNPACK_DIR="free-sleep-unpacked"
 ZIP_FILE="free-sleep.zip"
 REPO_DIR="/home/dac/free-sleep"
 SERVER_DIR="$REPO_DIR/server"
@@ -53,14 +58,26 @@ curl -fL --connect-timeout 20 --max-time 600 -o "$ZIP_FILE" "$REPO_URL"
 
 echo ""
 echo "Unzipping the repository..."
-unzip -o -q "$ZIP_FILE"
+rm -rf "$UNPACK_DIR"
+mkdir "$UNPACK_DIR"
+unzip -o -q "$ZIP_FILE" -d "$UNPACK_DIR"
 echo "Removing the zip file..."
 rm -f "$ZIP_FILE"
+EXTRACTED_DIR=""
+for unpacked_entry in "$UNPACK_DIR"/*/; do
+  EXTRACTED_DIR="${unpacked_entry%/}"
+  break
+done
+if [ ! -d "$EXTRACTED_DIR/server" ]; then
+  echo "The download did not unpack to the code it should hold." >&2
+  exit 1
+fi
 
 # Clean up existing directory and move new code into place
 echo "Setting up the installation directory..."
 rm -rf "$REPO_DIR"
 mv "$EXTRACTED_DIR" "$REPO_DIR"
+rm -rf "$UNPACK_DIR"
 
 mkdir -p "$(dirname "$UPDATE_SOURCE_CONFIG")"
 printf 'FREE_SLEEP_REPO=%s\nFREE_SLEEP_BRANCH=%s\n' "$FREE_SLEEP_REPO" "$FREE_SLEEP_BRANCH" > "$UPDATE_SOURCE_CONFIG"

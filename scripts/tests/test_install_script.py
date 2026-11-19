@@ -16,5 +16,14 @@ class InstallScriptTest(unittest.TestCase):
         self.assertIn('SupplementaryGroups=systemd-journal', script)
 
 
+    def test_downloaded_folder_name_is_not_guessed(self):
+        """GitHub serves a renamed repository from its old address under its new name, so a
+        folder name built from the saved repository name does not exist and the update fails."""
+        script = INSTALL_SCRIPT.read_text()
+        self.assertNotIn('EXTRACTED_DIR="${FREE_SLEEP_REPO##*/}', script)
+        self.assertIn('unzip -o -q "$ZIP_FILE" -d "$UNPACK_DIR"', script)
+        self.assertIn('jalen-cheng/eightpod|jalen-cheng/free-sleep) FREE_SLEEP_REPO="jalen-cheng/sevensleep"', script)
+
+
 if __name__ == '__main__':
     unittest.main()

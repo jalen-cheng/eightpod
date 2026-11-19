@@ -1,5 +1,5 @@
 // Saves each stay in bed as a small file on the Pod and reads them back. A night is a few
-// hundred short rows (about 30 KB), and only the newest are kept, so the folder stays in the
+// hundred short rows (about 50 KB), and only the newest are kept, so the folder stays in the
 // low megabytes. Kept beside the settings folder, not in it, so writing a night does not make
 // the job scheduler rebuild every job.
 import { mkdirSync, readFileSync, readdirSync, unlinkSync, writeFileSync } from 'fs';
@@ -43,9 +43,29 @@ export function deleteNight(record: Pick<NightRecord, 'side' | 'startedAtMs'>) {
   }
 }
 
-// Saved nights, newest first, for one side or both
-export function listNights(side?: Side, limit: number = MAX_FILES_KEPT): NightRecord[] {
-  const names = listFileNames().filter(name => !side || name.endsWith(`_${side}.json`)).reverse().slice(0, limit);
+// When a file's stay began, read from its name
+const startTimeOf = (name: string): number => Date.UTC(
+  Number(name.slice(0, 4)), Number(name.slice(4, 6)) - 1, Number(name.slice(6, 8)), Number(name.slice(9, 11)), Number(name.slice(11, 13)),
+);
+
+type NightFilter = {
+  side?: Side;
+  // The most files to read
+  limit?: number;
+  // Only stays that began in this stretch of time
+  startedFromMs?: number;
+  startedUntilMs?: number;
+};
+
+// Saved nights, newest first. Each is a file to read and parse, so the filter is applied to
+// the file names first and only the files that are wanted are opened.
+export function listNights(filter: NightFilter = {}): NightRecord[] {
+  const { side, limit = MAX_FILES_KEPT, startedFromMs = -Infinity, startedUntilMs = Infinity } = filter;
+  const names = listFileNames()
+    .filter(name => !side || name.endsWith(`_${side}.json`))
+    .filter(name => startTimeOf(name) >= startedFromMs && startTimeOf(name) <= startedUntilMs)
+    .reverse()
+    .slice(0, limit);
   return names.flatMap((name) => {
     try {
       return [JSON.parse(readFileSync(`${NIGHTS_FOLDER}${name}`, 'utf8')) as NightRecord];

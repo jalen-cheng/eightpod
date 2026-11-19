@@ -50,8 +50,10 @@ router.get('/autopilot/nights/export', (req: Request, res: Response) => {
   res.json(getNightsExport(days));
 });
 
-const isDate = (text: string) => !Number.isNaN(Date.parse(text));
-const DateText = z.string().refine(isDate, 'Not a date and time');
+// A time has to say its zone ("Z", or an offset such as -08:00): without one it would be read
+// in the Pod's own clock zone, which is not the sleeper's
+const isDate = (text: string) => !Number.isNaN(Date.parse(text)) && /(Z|[+-]\d{2}:?\d{2})$/.test(text.trim());
+const DateText = z.string().refine(isDate, 'Not a date and time with its zone, such as 2026-11-18T23:12:00-08:00');
 
 // A worn tracker's account of a sleep: either the two times, or the health app's raw samples.
 // `side` narrows it to one side's stays; without it the stays of both sides are looked at.

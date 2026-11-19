@@ -2,10 +2,10 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
-  HEART_RATE_WINDOW_SECONDS, PIEZO_SAMPLES_PER_SECOND, countMovementSeconds, estimateHeartRate, measureSwing,
+  HEART_RATE_WINDOW_SECONDS, PIEZO_SAMPLES_PER_SECOND, countMovementSeconds, estimateHeartRate, findQuietSwing, measureSwing,
 } from '../server/src/autopilot/heartRate.ts';
 import {
-  MAX_OFFSET_F, NO_LEARNED_OFFSETS, curveOffsetF, learnFromCorrection, nightPartAt, planTemperature, roomOffsetF, stepToward,
+  MAX_OFFSET_F, NO_LEARNED_OFFSETS, curveOffsetF, learnFromCorrection, nightPartAt, planTemperature, roomOffsetF,
 } from '../server/src/autopilot/nightPlan.ts';
 import {
   findScheduledTemperatureF, findUsualSleep, isNightExpected, isWithinScheduledNight, kindOfSleep,
@@ -57,6 +57,18 @@ test('seconds with a swing far above the usual count as movement', () => {
   assert.equal(countMovementSeconds([...still, 9_000_000, 12_000_000, 2_000_000, 1_400_000, 8_000_000]), 3);
   assert.equal(countMovementSeconds(still), 0);
   assert.equal(measureSwing([-5, 3, 10, -2]), 15);
+});
+
+test('a whole minute of fidgeting is movement when judged against the quiet level before it', () => {
+  const fidgeting = new Array(60).fill(9_000_000);
+  // Judged against itself, a minute that is all movement looks like the normal
+  assert.equal(countMovementSeconds(fidgeting), 0);
+  // Judged against the sleeper's quiet level, every second of it counts
+  const quietLevel = findQuietSwing(new Array(15).fill(1_500_000));
+  assert.equal(quietLevel, 1_500_000);
+  assert.equal(countMovementSeconds(fidgeting, quietLevel), 60);
+  assert.equal(countMovementSeconds(new Array(60).fill(1_600_000), quietLevel), 0);
+  assert.equal(countMovementSeconds([], quietLevel), 0);
 });
 
 // Feeds a tracker the same minute `count` times and returns the last state
@@ -163,6 +175,21 @@ test('when the default rules already fit, calibration leaves them alone', () => 
   assert.deepEqual(calibrated.rules, DEFAULT_SLEEP_RULES);
   assert.equal(calibrated.isTuned, false);
   assert.ok(calibrated.agreementPercent >= 99);
+});
+
+test('where the default rules agree on every minute, nothing is tuned', () => {
+  // Each night replays to exactly what the tracker said under the default rules
+  const makePerfectNight = (asleepMinutes) => {
+    const minutes = makeStay({ restlessMinutes: 25, asleepMinutes });
+    const asleep = replaySleep(minutes, DEFAULT_SLEEP_RULES);
+    return makeTrackedNight(minutes, index => asleep[index]);
+  };
+  const nights = [400, 380, 420, 390, 410, 405].map(makePerfectNight);
+  assert.equal(countDisagreements(nights[0], DEFAULT_SLEEP_RULES), 0);
+  const calibrated = calibrateSleepRules(nights);
+  assert.equal(calibrated.isTuned, false);
+  assert.deepEqual(calibrated.rules, DEFAULT_SLEEP_RULES);
+  assert.equal(calibrated.agreementPercent, 100);
 });
 
 test('rules that only fit the nights they were made from are not taken', () => {
@@ -425,11 +452,18 @@ test('when the parts add up to more than the limit, what the sleeper taught it i
   assert.equal(mixed.isLimited, false);
 });
 
-test('the autopilot moves the bed one degree at a time toward what it wants', () => {
-  assert.equal(stepToward(80, 77), 79);
-  assert.equal(stepToward(79, 77), 78);
-  assert.equal(stepToward(77, 77), 77);
-  assert.equal(stepToward(74, 78), 75);
+test('one large change by hand teaches no more than the autopilot could itself move', () => {
+  // Turned up by fifteen degrees: counted as four, so a little over one is learned
+  assert.ok(Math.abs(learnFromCorrection(NO_LEARNED_OFFSETS, 'early', 15).early - 1.2) < 1e-9);
+  assert.ok(Math.abs(learnFromCorrection(NO_LEARNED_OFFSETS, 'early', -15).early + 1.2) < 1e-9);
+});
+
+test('the plan keeps to the range the bed can be set to when given one', () => {
+  const plan = planTemperature({
+    baseTemperatureF: 52, progress: 0.3, minutesSinceSleepOnset: 45, learned: NO_LEARNED_OFFSETS, minTemperatureF: 50, maxTemperatureF: 108,
+  });
+  assert.equal(plan.targetTemperatureF, 50);
+  assert.equal(planTemperature({ baseTemperatureF: 108, progress: 1, learned: NO_LEARNED_OFFSETS, minTemperatureF: 50, maxTemperatureF: 108 }).targetTemperatureF, 108);
 });
 
 test('the base is the bed-on temperature until a scheduled change comes up, across midnight', () => {

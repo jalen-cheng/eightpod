@@ -6,7 +6,7 @@
 // from the rest: the night plan assumes deep sleep by the clock instead.
 // Keep this file free of runtime imports so tests can load it without a Pod environment.
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="b89085f7-6ee3-50b2-b452-82ca6ba1b51d")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="51b6ef17-9016-58ee-a321-df0acf72c973")}catch(e){}}();
 export const DEFAULT_SLEEP_RULES = { stillMinutesToSleep: 15, restlessSecondsToWake: 12 };
 // A minute with this many moving seconds or fewer counts as lying still
 const STILL_MINUTE_MAX_MOVEMENT_SECONDS = 3;
@@ -70,7 +70,7 @@ export function createSleepTracker(getRules = () => DEFAULT_SLEEP_RULES) {
 // Fewer nights than this and the rules are left alone
 export const MIN_NIGHTS_TO_CALIBRATE = 5;
 // Fitted rules are only taken up if, tried on each night after being fitted to the others, they
-// disagree with the tracker on at most this fraction of the minutes the default rules do. A
+// disagree with the tracker on fewer than this fraction of the minutes the default rules do. A
 // fit that only looks good on the nights it was made from is not taken.
 const HELD_OUT_SHARE_TO_BEAT = 0.9;
 const STILL_MINUTES_CANDIDATES = [5, 8, 10, 15, 20, 30];
@@ -124,7 +124,8 @@ export function calibrateSleepRules(nights) {
     };
     if (nights.length < MIN_NIGHTS_TO_CALIBRATE)
         return untuned;
-    const candidates = [];
+    // The default rules come first, so that a candidate has to do strictly better to be chosen
+    const candidates = [DEFAULT_SLEEP_RULES];
     for (const stillMinutesToSleep of STILL_MINUTES_CANDIDATES) {
         for (const restlessSecondsToWake of RESTLESS_SECONDS_CANDIDATES) {
             for (const maxBreathingSpread of BREATHING_SPREAD_CANDIDATES) {
@@ -140,9 +141,11 @@ export function calibrateSleepRules(nights) {
         return totals.indexOf(Math.min(...totals));
     };
     const heldOutDisagreements = sum(nights.map((_night, nightIndex) => disagreements[findBest(nightIndex)][nightIndex]));
-    if (heldOutDisagreements > sum(defaultDisagreements) * HELD_OUT_SHARE_TO_BEAT)
+    const chosen = findBest();
+    // Nothing to gain where the default already agrees, and no gain is taken on a tie
+    if (chosen === 0 || heldOutDisagreements >= sum(defaultDisagreements) * HELD_OUT_SHARE_TO_BEAT)
         return untuned;
-    return { rules: candidates[findBest()], nights: nights.length, agreementPercent: agreementOf(heldOutDisagreements), isTuned: true };
+    return { rules: candidates[chosen], nights: nights.length, agreementPercent: agreementOf(heldOutDisagreements), isTuned: true };
 }
 // Health apps record a night as many short samples, some of them "awake" or "in bed"
 const NOT_ASLEEP = /awake|in ?bed/i;
@@ -219,4 +222,4 @@ export function readHealthExportSleep(body) {
     });
 }
 //# sourceMappingURL=sleepTracker.js.map
-//# debugId=b89085f7-6ee3-50b2-b452-82ca6ba1b51d
+//# debugId=51b6ef17-9016-58ee-a321-df0acf72c973

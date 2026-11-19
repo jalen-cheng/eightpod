@@ -10,14 +10,15 @@
 // Raised when the way the temperature is decided changes, and saved with each night, so nights
 // under different rules are not compared as if they were the same
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="6f7ab91e-08f6-5b11-ba8d-d8ca0395519e")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="63b459f3-79e1-514c-9135-463395aeb076")}catch(e){}}();
 export const POLICY_VERSION = 2;
 // The offset never goes further than this from the base temperature, whatever adds up
 export const MAX_OFFSET_F = 4;
 // One change by the autopilot moves the bed at most this far
 export const MAX_STEP_F = 1;
-const MIN_TEMPERATURE_F = 55;
-const MAX_TEMPERATURE_F = 110;
+// Used when the caller does not give the range the bed can be set to
+const DEFAULT_MIN_TEMPERATURE_F = 55;
+const DEFAULT_MAX_TEMPERATURE_F = 110;
 const clamp = (value, limit) => Math.min(limit, Math.max(-limit, value));
 // ---------------------------------------------------------------------------------------------
 // The curve. `progress` runs from 0 (fell asleep) to 1 (wake time): cooler through the first
@@ -66,9 +67,12 @@ const LEARNING_RATE = 0.3;
 const MAX_LEARNED_OFFSET_F = 3;
 export const nightPartAt = (progress) => (progress < 1 / 3 ? 'early' : progress < 2 / 3 ? 'middle' : 'late');
 // The learned offsets after the sleeper set the temperature `correctionF` away from what the
-// autopilot wanted, during `part` of the night
+// autopilot wanted, during `part` of the night. A correction counts for no more than the
+// autopilot's own limit, so one large change (turning the bed right up to dry it, say) cannot
+// teach it more than a little over a degree.
 export function learnFromCorrection(learned, part, correctionF) {
-    return { ...learned, [part]: clamp(learned[part] + correctionF * LEARNING_RATE, MAX_LEARNED_OFFSET_F) };
+    const countedF = clamp(correctionF, MAX_OFFSET_F);
+    return { ...learned, [part]: clamp(learned[part] + countedF * LEARNING_RATE, MAX_LEARNED_OFFSET_F) };
 }
 // ---------------------------------------------------------------------------------------------
 // The room. The air temperature is compared with what it was at sleep onset: a room that warms
@@ -106,13 +110,10 @@ export function planTemperature(input) {
     const isLimited = parts.learnedF !== wanted.learnedF || parts.curveF !== wanted.curveF || parts.deepF !== wanted.deepF
         || parts.roomF !== wanted.roomF;
     const baseF = Math.round(input.baseTemperatureF);
-    const targetTemperatureF = Math.min(MAX_TEMPERATURE_F, Math.max(MIN_TEMPERATURE_F, baseF + Math.round(total)));
+    const minTemperatureF = input.minTemperatureF ?? DEFAULT_MIN_TEMPERATURE_F;
+    const maxTemperatureF = input.maxTemperatureF ?? DEFAULT_MAX_TEMPERATURE_F;
+    const targetTemperatureF = Math.min(maxTemperatureF, Math.max(minTemperatureF, baseF + Math.round(total)));
     return { targetTemperatureF, offsetF: targetTemperatureF - baseF, parts, isLimited };
 }
-// The next temperature on the way from where the bed is set to where the plan wants it, moving
-// no more than one step
-export function stepToward(currentTemperatureF, wantedTemperatureF) {
-    return currentTemperatureF + clamp(wantedTemperatureF - currentTemperatureF, MAX_STEP_F);
-}
 //# sourceMappingURL=nightPlan.js.map
-//# debugId=6f7ab91e-08f6-5b11-ba8d-d8ca0395519e
+//# debugId=63b459f3-79e1-514c-9135-463395aeb076

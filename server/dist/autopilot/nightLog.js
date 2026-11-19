@@ -1,9 +1,9 @@
 // Saves each stay in bed as a small file on the Pod and reads them back. A night is a few
-// hundred short rows (about 30 KB), and only the newest are kept, so the folder stays in the
+// hundred short rows (about 50 KB), and only the newest are kept, so the folder stays in the
 // low megabytes. Kept beside the settings folder, not in it, so writing a night does not make
 // the job scheduler rebuild every job.
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="72085679-80e9-5e49-a185-3996ab05f211")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="d25f82d1-31b7-582b-9c30-66d84cd37977")}catch(e){}}();
 import { mkdirSync, readFileSync, readdirSync, unlinkSync, writeFileSync } from 'fs';
 import config from '../config.js';
 import logger from '../logger.js';
@@ -38,9 +38,17 @@ export function deleteNight(record) {
         // It was never saved
     }
 }
-// Saved nights, newest first, for one side or both
-export function listNights(side, limit = MAX_FILES_KEPT) {
-    const names = listFileNames().filter(name => !side || name.endsWith(`_${side}.json`)).reverse().slice(0, limit);
+// When a file's stay began, read from its name
+const startTimeOf = (name) => Date.UTC(Number(name.slice(0, 4)), Number(name.slice(4, 6)) - 1, Number(name.slice(6, 8)), Number(name.slice(9, 11)), Number(name.slice(11, 13)));
+// Saved nights, newest first. Each is a file to read and parse, so the filter is applied to
+// the file names first and only the files that are wanted are opened.
+export function listNights(filter = {}) {
+    const { side, limit = MAX_FILES_KEPT, startedFromMs = -Infinity, startedUntilMs = Infinity } = filter;
+    const names = listFileNames()
+        .filter(name => !side || name.endsWith(`_${side}.json`))
+        .filter(name => startTimeOf(name) >= startedFromMs && startTimeOf(name) <= startedUntilMs)
+        .reverse()
+        .slice(0, limit);
     return names.flatMap((name) => {
         try {
             return [JSON.parse(readFileSync(`${NIGHTS_FOLDER}${name}`, 'utf8'))];
@@ -63,4 +71,4 @@ export function pruneNights() {
     }
 }
 //# sourceMappingURL=nightLog.js.map
-//# debugId=72085679-80e9-5e49-a185-3996ab05f211
+//# debugId=d25f82d1-31b7-582b-9c30-66d84cd37977

@@ -134,7 +134,7 @@ export type Calibration = {
 // Fewer nights than this and the rules are left alone
 export const MIN_NIGHTS_TO_CALIBRATE = 5;
 // Fitted rules are only taken up if, tried on each night after being fitted to the others, they
-// disagree with the tracker on at most this fraction of the minutes the default rules do. A
+// disagree with the tracker on fewer than this fraction of the minutes the default rules do. A
 // fit that only looks good on the nights it was made from is not taken.
 const HELD_OUT_SHARE_TO_BEAT = 0.9;
 const STILL_MINUTES_CANDIDATES = [5, 8, 10, 15, 20, 30];
@@ -189,7 +189,8 @@ export function calibrateSleepRules(nights: CalibrationNight[]): Calibration {
   };
   if (nights.length < MIN_NIGHTS_TO_CALIBRATE) return untuned;
 
-  const candidates: SleepRules[] = [];
+  // The default rules come first, so that a candidate has to do strictly better to be chosen
+  const candidates: SleepRules[] = [DEFAULT_SLEEP_RULES];
   for (const stillMinutesToSleep of STILL_MINUTES_CANDIDATES) {
     for (const restlessSecondsToWake of RESTLESS_SECONDS_CANDIDATES) {
       for (const maxBreathingSpread of BREATHING_SPREAD_CANDIDATES) {
@@ -205,8 +206,10 @@ export function calibrateSleepRules(nights: CalibrationNight[]): Calibration {
     return totals.indexOf(Math.min(...totals));
   };
   const heldOutDisagreements = sum(nights.map((_night, nightIndex) => disagreements[findBest(nightIndex)][nightIndex]));
-  if (heldOutDisagreements > sum(defaultDisagreements) * HELD_OUT_SHARE_TO_BEAT) return untuned;
-  return { rules: candidates[findBest()], nights: nights.length, agreementPercent: agreementOf(heldOutDisagreements), isTuned: true };
+  const chosen = findBest();
+  // Nothing to gain where the default already agrees, and no gain is taken on a tie
+  if (chosen === 0 || heldOutDisagreements >= sum(defaultDisagreements) * HELD_OUT_SHARE_TO_BEAT) return untuned;
+  return { rules: candidates[chosen], nights: nights.length, agreementPercent: agreementOf(heldOutDisagreements), isTuned: true };
 }
 
 // ---------------------------------------------------------------------------------------------
