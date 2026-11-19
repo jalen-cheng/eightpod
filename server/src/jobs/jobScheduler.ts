@@ -10,6 +10,7 @@ import serverStatus from '../serverStatus.js';
 import settingsDB from '../db/settings.js';
 import { DayOfWeek, Side } from '../db/schedulesSchema.js';
 import { isSystemDateValid } from './isSystemDateValid.js';
+import { findOverdueJob } from './overdueJobs.js';
 import { scheduleAlarm, scheduleAlarmOverride, scheduleAlarmPreWarm } from './alarmScheduler.js';
 import { schedulePowerOffAndSleepAnalysis, schedulePowerOn } from './powerScheduler.js';
 import { schedulePrimingRebootAndCalibration } from './primeScheduler.js';
@@ -122,3 +123,25 @@ chokidar.watch(config.lowDbFolder).on('change', (changedPath) => {
 
 // Initial job setup
 waitForValidDateAndSetupJobs();
+
+// How often the jobs are looked over for one that should have run, and the least time between
+// two rebuilds made for that reason
+const OVERDUE_CHECK_MS = 60_000;
+const MIN_OVERDUE_REBUILD_GAP_MS = 5 * 60_000;
+let lastOverdueRebuildMs = 0;
+
+// Builds every job again when one is found stuck (overdueJobs.ts). A missed job is not run
+// late; this only makes sure the ones still to come do run.
+const overdueTimer = setInterval(() => {
+  if (serverStatus.status.jobs.status !== 'healthy') return;
+  const nowMs = Date.now();
+  if (nowMs - lastOverdueRebuildMs < MIN_OVERDUE_REBUILD_GAP_MS) return;
+  const waitingJobs = Object.entries(schedule.scheduledJobs).map(([name, job]) => ({ name, nextRunMs: job.nextInvocation()?.getTime() }));
+  const overdueJob = findOverdueJob(waitingJobs, nowMs);
+  if (!overdueJob) return;
+  lastOverdueRebuildMs = nowMs;
+  logger.warn(`The job "${overdueJob}" should have run by now and has not. Building every job again.`);
+  void setupJobs();
+}, OVERDUE_CHECK_MS);
+// The check alone should not keep the server running
+overdueTimer.unref();

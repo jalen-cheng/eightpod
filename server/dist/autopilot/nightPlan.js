@@ -10,7 +10,7 @@
 // Raised when the way the temperature is decided changes, and saved with each night, so nights
 // under different rules are not compared as if they were the same
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="9769efd3-d968-5905-8e2c-7c413b16919c")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="7889b60e-085b-553a-b287-402053f7da7d")}catch(e){}}();
 export const POLICY_VERSION = 3;
 // The offset never goes further than this from the base temperature, whatever adds up
 export const MAX_OFFSET_F = 4;
@@ -88,15 +88,6 @@ export function roomOffsetF(roomAtSleepOnsetF, roomNowF) {
     // `|| 0` turns -0 into 0
     return clamp(-(roomNowF - roomAtSleepOnsetF) * ROOM_GAIN, MAX_ROOM_OFFSET_F) || 0;
 }
-// ---------------------------------------------------------------------------------------------
-// A rehearsal plays a whole night's plan in a few minutes, so what the autopilot does to the
-// bed can be watched without sleeping through it. Only its clock differs from a night's.
-// ---------------------------------------------------------------------------------------------
-export const REHEARSAL_MINUTES = 20;
-export const REHEARSAL_NIGHT_HOURS = 8;
-const REHEARSAL_SPEED = REHEARSAL_NIGHT_HOURS * 60 / REHEARSAL_MINUTES;
-// Where a rehearsal that began at `startedAtMs` has got to on the clock of the night it plays
-export const rehearsalClockMs = (startedAtMs, nowMs) => startedAtMs + (nowMs - startedAtMs) * REHEARSAL_SPEED;
 // The temperature the autopilot wants at this point of a night under way. Once a night has
 // begun it runs by the clock: a restless few minutes does not send the bed back to the base
 // and down again.
@@ -129,4 +120,4 @@ export function planTemperature(input) {
     return { targetTemperatureF, offsetF: targetTemperatureF - baseF, parts, isLimited };
 }
 //# sourceMappingURL=nightPlan.js.map
-//# debugId=9769efd3-d968-5905-8e2c-7c413b16919c
+//# debugId=7889b60e-085b-553a-b287-402053f7da7d

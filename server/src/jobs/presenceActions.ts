@@ -53,6 +53,9 @@ export type ActionContext = {
   isPresentNow: boolean;
   // Whether the side (any side, when linked) is already on
   isOn: boolean;
+  // Whether the weekly schedule has the bed on at this hour. Such a bed is the schedule's to
+  // turn off, whoever turned it on first.
+  isScheduledOn?: boolean;
 };
 
 // The actions a stay has earned and not yet had. Marks them as done on the session.
@@ -60,10 +63,12 @@ export function takeDueActions(session: BedSession, presenceSettings: PresenceSe
   const dueActions: PresenceAction[] = [];
   const { wakeAfterHours, turnOnWhenInBed } = presenceSettings;
 
-  // A stay that turned the bed on "until I get out of bed" has ended
+  // A stay that turned the bed on "until I get out of bed" has ended. If the schedule's night
+  // has begun since, the bed stays on: someone who got in before bedtime and is out of bed
+  // for a while in the night would otherwise come back to a bed that is off until tomorrow.
   if (session.isTurnOffDue) {
     session.isTurnOffDue = false;
-    if (context.isOn) dueActions.push('turnOff');
+    if (context.isOn && !context.isScheduledOn) dueActions.push('turnOff');
   }
   if (session.inBedSinceMs === undefined) return dueActions;
 

@@ -7,22 +7,43 @@ turns on").
 
 ## Ready-made Shortcuts
 
-Open a link on the iPhone, tap the download in Safari, then **Add Shortcut**. Each asks once
-for the Pod's address: `http://sevensleep.local` at home, or `http://sevensleep:3000` if the
-phone reaches the Pod over Tailscale (see the next section).
+Open a link on the iPhone, tap the download in Safari, then **Add Shortcut**. Each asks once for
+what differs from one home to the next, so there is nothing to edit.
 
-| Shortcut | What it does |
-|---|---|
-| [Bed temperature](https://github.com/jalen-cheng/sevensleep/raw/main/docs/shortcuts/Bed%20temperature.shortcut) | Asks for a number from -10 to 10, turns the bed on and sets it (section 1) |
-| [Bed alarm](https://github.com/jalen-cheng/sevensleep/raw/main/docs/shortcuts/Bed%20alarm.shortcut) | Asks for a time and sets a one-time alarm (section 2) |
-| [Bed status](https://github.com/jalen-cheng/sevensleep/raw/main/docs/shortcuts/Bed%20status.shortcut) | Shows what the bed is set to and has reached (section 3) |
-| [Bed off](https://github.com/jalen-cheng/sevensleep/raw/main/docs/shortcuts/Bed%20off.shortcut) | Turns both sides off |
-| [Send sleep to SevenSleep](https://github.com/jalen-cheng/sevensleep/raw/main/docs/shortcuts/Send%20sleep%20to%20SevenSleep.shortcut) | Sends last night's sleep from Apple Health, for the autopilot ([Connections](CONNECTIONS.md#link-apple-health)) |
+They come in two kinds:
 
-They are made by `scripts/build_shortcuts.py` and signed with `shortcuts sign` on a Mac. Each
-was added and run in Xcode's iPhone simulator (iOS 27.2) against a stand-in for the Pod, and
-sent the request it should; none has been run on a real phone against a real Pod yet. The
-sections below build the same things by hand.
+- **At home.** Talks to the Pod at its home address (`http://sevensleep.local`). Needs nothing
+  else, and only works on your home network.
+- **Anywhere, through Tailscale.** Connects Tailscale first, waits two seconds, then uses the
+  Pod's Tailscale address (`http://sevensleep:3000`; over Tailscale the port is needed). Works at
+  home too. Needs Tailscale set up on the Pod and the phone ([REMOTE_ACCESS.md](REMOTE_ACCESS.md)).
+  If Tailscale is already connected, the first step changes nothing.
+
+| What it does | At home | Through Tailscale |
+|---|---|---|
+| Asks for a number from -10 to 10, turns the bed on and sets it (section 1) | [Download](https://github.com/jalen-cheng/sevensleep/raw/main/docs/shortcuts/Bed%20temperature.shortcut) | [Download](https://github.com/jalen-cheng/sevensleep/raw/main/docs/shortcuts/Bed%20temperature%20via%20Tailscale.shortcut) |
+| Asks for a time and sets a one-time alarm (section 2) | [Download](https://github.com/jalen-cheng/sevensleep/raw/main/docs/shortcuts/Bed%20alarm.shortcut) | [Download](https://github.com/jalen-cheng/sevensleep/raw/main/docs/shortcuts/Bed%20alarm%20via%20Tailscale.shortcut) |
+| Shows what the bed is set to and has reached (section 3) | [Download](https://github.com/jalen-cheng/sevensleep/raw/main/docs/shortcuts/Bed%20status.shortcut) | [Download](https://github.com/jalen-cheng/sevensleep/raw/main/docs/shortcuts/Bed%20status%20via%20Tailscale.shortcut) |
+| Turns both sides off | [Download](https://github.com/jalen-cheng/sevensleep/raw/main/docs/shortcuts/Bed%20off.shortcut) | [Download](https://github.com/jalen-cheng/sevensleep/raw/main/docs/shortcuts/Bed%20off%20via%20Tailscale.shortcut) |
+| Stops the schedule and alarms on both sides, for when nobody is home | [Download](https://github.com/jalen-cheng/sevensleep/raw/main/docs/shortcuts/Away%20mode%20on.shortcut) | [Download](https://github.com/jalen-cheng/sevensleep/raw/main/docs/shortcuts/Away%20mode%20on%20via%20Tailscale.shortcut) |
+| Starts them again | [Download](https://github.com/jalen-cheng/sevensleep/raw/main/docs/shortcuts/Away%20mode%20off.shortcut) | [Download](https://github.com/jalen-cheng/sevensleep/raw/main/docs/shortcuts/Away%20mode%20off%20via%20Tailscale.shortcut) |
+
+Two more:
+
+- **[Open SevenSleep](https://github.com/jalen-cheng/sevensleep/raw/main/docs/shortcuts/Open%20SevenSleep.shortcut)** opens the app from one icon: straight away on your home Wi-Fi, and
+  after connecting Tailscale anywhere else. It asks for both addresses and your home Wi-Fi's name.
+- **[Send sleep to SevenSleep](https://github.com/jalen-cheng/sevensleep/raw/main/docs/shortcuts/Send%20sleep%20to%20SevenSleep.shortcut)** sends last night's sleep from Apple Health, for the
+  autopilot. It runs only on your home Wi-Fi, so an automation can run it every day
+  ([Connections](CONNECTIONS.md#link-apple-health)).
+
+They are made by `scripts/build_shortcuts.py` and signed with `shortcuts sign` on a Mac.
+The home kind was added and run in Xcode's iPhone simulator (iOS 27.2) against a stand-in for
+the Pod, and sent the requests it should; none has been run on a real phone against a real Pod.
+**The Tailscale kind has not been run with Tailscale present.** Its first step is written from
+Tailscale's published list of Shortcuts actions, and the simulator cannot install Tailscale
+(there the step shows as "Unknown Action"). If it shows that way on your phone, delete it and
+add Tailscale's own **Connect** in its place. The check of the Wi-Fi's name in Open SevenSleep
+could not run in the simulator either. The sections below build the same things by hand.
 
 ## Which address to put in a shortcut
 

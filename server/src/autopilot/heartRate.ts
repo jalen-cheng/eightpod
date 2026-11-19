@@ -126,6 +126,23 @@ export function estimateHeartRate(samples: ArrayLike<number>): HeartRateEstimate
   return { beatsPerMinute: WORKING_SAMPLES_PER_SECOND * 60 / chosen.lag, confidence: Math.min(1, chosen.score) };
 }
 
+// What the firmware writes in place of a reading it lost. They come in runs (26 in a row on
+// both sides at once, on the test Pod), and left in they make a quiet second look like the
+// largest movement there could be.
+export const LOST_SAMPLE = 2147483647;
+
+// A second of signal with each lost reading replaced by the last good one before it (or the
+// first good one, at the start). Empty when the whole second was lost.
+export function fillLostSamples(samples: number[]): number[] {
+  if (!samples.includes(LOST_SAMPLE)) return samples;
+  let lastGood = samples.find(sample => sample !== LOST_SAMPLE);
+  if (lastGood === undefined) return [];
+  return samples.map((sample) => {
+    if (sample !== LOST_SAMPLE) lastGood = sample;
+    return lastGood as number;
+  });
+}
+
 // The spread between the highest and lowest sample of one second of signal. Lying still it is
 // small and steady; turning over makes it many times larger.
 export function measureSwing(secondOfSamples: ArrayLike<number>): number {

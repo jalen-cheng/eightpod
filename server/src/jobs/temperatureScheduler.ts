@@ -9,6 +9,7 @@ import serverStatus from '../serverStatus.js';
 import logger from '../logger.js';
 import { isPreWarmActive } from './preWarmState.js';
 import { isManualHoldActive } from './manualHold.js';
+import { doesAutopilotKeepOwnBase } from './autopilotBase.js';
 
 
 const scheduleAdjustment = (timeZone: TimeZone, side: Side, day: DayOfWeek, time: Time, temperature: number, powerOnTime: Time) => {
@@ -32,6 +33,10 @@ const scheduleAdjustment = (timeZone: TimeZone, side: Side, day: DayOfWeek, time
       }
       if (isPreWarmActive(side)) {
         logJob('Skipping temperature adjustment job, warming up for the alarm', side, day, dayOfWeekIndex, time);
+        return;
+      }
+      if (doesAutopilotKeepOwnBase()) {
+        logJob('Skipping temperature adjustment job, the autopilot is keeping its own base tonight', side, day, dayOfWeekIndex, time);
         return;
       }
       logJob('Executing temperature adjustment job', side, day, dayOfWeekIndex, time);

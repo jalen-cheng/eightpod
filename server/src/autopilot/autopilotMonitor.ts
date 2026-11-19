@@ -11,12 +11,11 @@
 //   - a side that is off, in away mode, or under wake-up heat is left alone
 //   - a temperature set by hand is held exactly until the schedule's next change or the end of
 //     that third of the night, whichever comes first
-//   - otherwise the schedule's temperature (or one the sleeper set before falling asleep),
-//     plus the autopilot's offset, approached one setting at a time
+//   - otherwise the night's base temperature plus the autopilot's offset, approached one
+//     setting at a time. The base is the autopilot's own, when one is set in Settings (the
+//     schedule's temperature changes then wait until the night is over); if not, the
+//     schedule's temperature, or one the sleeper set before falling asleep
 // When a night ends, or the autopilot is switched off, it takes its offset back out.
-//
-// A rehearsal is a night's plan played in a few minutes on the bed as it is set, started by
-// hand, for watching what the autopilot does. It goes through the same steps as a night.
 import { readFileSync, renameSync, writeFileSync } from 'fs';
 import moment from 'moment-timezone';
 import config from '../config.js';
@@ -26,8 +25,10 @@ import settingsDB from '../db/settings.js';
 import { Side } from '../db/schedulesSchema.js';
 import { MAX_TEMPERATURE_F, MIN_TEMPERATURE_F, stepTemperatureF, temperatureFToLevel } from '../db/temperatureCurve.js';
 import { connectFranken } from '../8sleep/frankenServer.js';
+import { setAutopilotKeepsOwnBase } from '../jobs/autopilotBase.js';
 import { isSomeoneInBed } from '../jobs/inBedCheck.js';
 import { isManualHoldActive } from '../jobs/manualHold.js';
+import { didOneOffAlarmFireWithin } from '../jobs/oneOffAlarmState.js';
 import { isPreWarmActive } from '../jobs/preWarmState.js';
 import { findNightDay } from '../jobs/scheduleTiming.js';
 import { updateDeviceStatus } from '../routes/deviceStatus/updateDeviceStatus.js';
@@ -35,13 +36,13 @@ import type { AutopilotSideSnapshot, AutopilotSnapshot, TrackerLink } from './au
 import { addEmptyMinute, findEmptySwing, isBodyFelt } from './bodySignal.js';
 import { BREATHING_WINDOW_SECONDS, estimateBreathingRate, measureBreathingSpread } from './breathingRate.js';
 import {
-  HEART_RATE_WINDOW_SECONDS, countMovementSeconds, estimateHeartRate, findQuietSwing, measureSwing,
+  HEART_RATE_WINDOW_SECONDS, countMovementSeconds, estimateHeartRate, fillLostSamples, findQuietSwing, measureSwing,
 } from './heartRate.js';
 import { registerManualChangeListener } from './manualChanges.js';
 import { deleteNight, listNights, pruneNights, saveNight } from './nightLog.js';
 import {
-  LearnedOffsets, MAX_OFFSET_F, MAX_STEP_F, NO_LEARNED_OFFSETS, NightPart, POLICY_VERSION, Plan, REHEARSAL_MINUTES, REHEARSAL_NIGHT_HOURS,
-  learnFromCorrection, nightPartAt, planTemperature, rehearsalClockMs,
+  LearnedOffsets, MAX_OFFSET_F, MAX_STEP_F, NO_LEARNED_OFFSETS, NightPart, POLICY_VERSION, Plan,
+  learnFromCorrection, nightPartAt, planTemperature,
 } from './nightPlan.js';
 import { NightDetail, NightMinute, NightRecord, NightSummary, countWakeUps, pickBedStays } from './nightRecord.js';
 import {
@@ -144,9 +145,6 @@ type Night = {
   hold?: ManualHold;
   // Set on a night found after a restart with nobody in bed: it only remains to be ended
   isEnding?: boolean;
-  // Set on a rehearsal, with when it ends. A rehearsal asks for nobody in bed, keeps to the
-  // temperature the bed had when it began instead of the schedule, and teaches nothing.
-  rehearsal?: { endsAtMs: number };
 };
 
 // What is sensed and saved for each side, whether or not the autopilot is on
@@ -245,11 +243,11 @@ const fresh = (reading: Reading | undefined, nowMs: number) => (
 );
 const readRoomF = (nowMs: number) => (room && nowMs - room.atMs < SURROUNDINGS_STALE_MS ? room.temperatureF : undefined);
 
-// The time a night goes by: the clock, or for a rehearsal its own fast one
-const nightClockMs = (night: Night, nowMs: number) => (night.rehearsal ? rehearsalClockMs(night.asleepSinceMs, nowMs) : nowMs);
+// The base temperature the autopilot has been given in Settings, when it has one
+const readOwnBaseF = (): number | undefined => settingsDB.data.autopilot.baseTemperatureF ?? undefined;
 // How far through a night is, from 0 at falling asleep to 1 at the wake time
 const nightProgress = (night: Night, nowMs: number) => (
-  Math.min(1, (nightClockMs(night, nowMs) - night.asleepSinceMs) / (night.wakeAtMs - night.asleepSinceMs))
+  Math.min(1, (nowMs - night.asleepSinceMs) / (night.wakeAtMs - night.asleepSinceMs))
 );
 
 const saveState = () => {
@@ -313,8 +311,11 @@ const estimateBreathingRateNow = (state: SideState) => {
 };
 
 // One second of a side's piezo signal, as the sensor bus delivers it
-export function recordPiezoSecond(side: Side, samples: number[]) {
+export function recordPiezoSecond(side: Side, sentSamples: number[]) {
   lastPiezoAtMs = Date.now();
+  // A second that was lost whole says nothing, and is not counted as heard
+  const samples = fillLostSamples(sentSamples);
+  if (samples.length === 0) return;
   const state = sides[side];
   state.recentSeconds.push(samples);
   if (state.recentSeconds.length > BREATHING_WINDOW_SECONDS) state.recentSeconds.shift();
@@ -354,7 +355,7 @@ export function getAutopilotSnapshot(nowMs: number = Date.now()): AutopilotSnaps
   const describe = (side: Side): AutopilotSideSnapshot => ({
     stage: sides[side].sleep.stage,
     sleepKind: sides[side].sleep.stage !== 'asleep' ? undefined
-      : (bed.night && !bed.night.rehearsal) || maySteer(sides[side]) ? 'night' : 'nap',
+      : bed.night || maySteer(sides[side]) ? 'night' : 'nap',
     heartRate: roundTo(sides[side].sleep.heartRate, 0),
     breathingRate: roundTo(sides[side].sleep.breathingRate, 0),
     minutesAsleep: sides[side].sleep.minutesAsleep,
@@ -370,9 +371,6 @@ export function getAutopilotSnapshot(nowMs: number = Date.now()): AutopilotSnaps
     available: nowMs - lastPiezoAtMs < SURROUNDINGS_STALE_MS,
     enabled: settingsDB.data.autopilot.enabled,
     room: roomF === undefined ? undefined : { temperatureF: Math.round(roomF), humidityPercent: room?.humidityPercent },
-    rehearsal: bed.night?.rehearsal && !bed.night.isEnding
-      ? { minutesLeft: Math.max(0, Math.ceil((bed.night.rehearsal.endsAtMs - nowMs) / MINUTE_MS)) }
-      : undefined,
     left: describe('left'),
     right: describe('right'),
   };
@@ -547,45 +545,6 @@ const findScheduledF = async (side: Side, nowMs: number): Promise<number | undef
   return isCovered ? findScheduledTemperatureF(scheduledNight, clock) : undefined;
 };
 
-// Starts a rehearsal on the bed as it is set now. Returns why not, when it cannot: it needs the
-// autopilot on (so the sides are linked), a side that is on and not away, and no night under way.
-export async function startRehearsal(nowMs: number = Date.now()): Promise<string | undefined> {
-  await settingsDB.read();
-  if (nowMs - lastPiezoAtMs >= SURROUNDINGS_STALE_MS) return 'The autopilot is not running on this Pod.';
-  if (!settingsDB.data.autopilot.enabled) return 'Switch the autopilot on first.';
-  if (bed.night?.rehearsal) return 'A test is already running.';
-  if (bed.night) return 'The autopilot is steering a night. Try again once the bed has been empty.';
-  let podStatus: PodStatus;
-  try {
-    podStatus = await readPodStatus();
-  } catch {
-    return 'The Pod could not be reached.';
-  }
-  const side = SIDES.find(candidate => podStatus[candidate].isOn && !settingsDB.data[candidate].awayMode);
-  if (!side) return 'Turn the bed on first.';
-  if (isPreWarmActive(side)) return 'The bed is warming up for the alarm.';
-  bed.night = {
-    side,
-    asleepSinceMs: nowMs,
-    wakeAtMs: nowMs + REHEARSAL_NIGHT_HOURS * HOUR_MS,
-    temperatureAtOnsetF: podStatus[side].targetTemperatureF,
-    scheduledAtOnsetF: await findScheduledF(side, nowMs),
-    rehearsal: { endsAtMs: nowMs + REHEARSAL_MINUTES * MINUTE_MS },
-  };
-  bed.lastChangeReason = `${formatClock(nowMs)}: test started from ${podStatus[side].targetTemperatureF}°F`;
-  saveState();
-  logger.debug(`Autopilot: rehearsal started on the ${side} side from ${podStatus[side].targetTemperatureF}°F`);
-  return undefined;
-}
-
-// Ends a rehearsal early. The bed goes back to where it began within a minute.
-export function stopRehearsal(): boolean {
-  if (!bed.night?.rehearsal) return false;
-  bed.night.isEnding = true;
-  saveState();
-  return true;
-}
-
 export class AutopilotMonitor {
   private minuteTimer?: ReturnType<typeof setInterval>;
   private hasCheckedLastRun = false;
@@ -646,7 +605,7 @@ export class AutopilotMonitor {
   private endHold(night: Night) {
     const hold = night.hold;
     if (!hold) return;
-    if (hold.correctionF !== 0 && !night.rehearsal) learned = learnFromCorrection(learned, hold.part, hold.correctionF);
+    if (hold.correctionF !== 0) learned = learnFromCorrection(learned, hold.part, hold.correctionF);
     night.hold = undefined;
     saveState();
   }
@@ -749,26 +708,29 @@ export class AutopilotMonitor {
     if (night) {
       // A night ends when the autopilot is switched off, when the whole bed has been empty for
       // longer than a trip out of it, and at the wake-up time, from when the bed is the
-      // schedule's and the alarm's again
-      const isOver = !isEnabled || (isBedEmpty && !night.rehearsal) || night.isEnding || nightClockMs(night, nowMs) >= night.wakeAtMs
+      // schedule's and the alarm's again. A one-time alarm that has gone off during the night
+      // is its wake-up time, however early.
+      const hasAlarmGoneOff = didOneOffAlarmFireWithin(night.side, nowMs - night.asleepSinceMs, nowMs);
+      const isOver = !isEnabled || isBedEmpty || night.isEnding || nowMs >= night.wakeAtMs || hasAlarmGoneOff
         || nowMs - night.asleepSinceMs > MAX_STAY_MINUTES * MINUTE_MS;
       if (isOver) {
         // The offset comes out before the night is let go of, so a Pod that cannot be reached
         // now is tried again next minute
         if (!podStatus) return;
         const backToF = await this.withdraw(night, podStatus, nowMs);
-        const whatEnded = night.rehearsal ? 'the test is over' : 'the night is over';
-        bed.lastChangeReason = `${formatClock(nowMs)}: ${whatEnded}${backToF === undefined ? '' : `, back to ${backToF}°F`}`;
+        bed.lastChangeReason = `${formatClock(nowMs)}: the night is over${backToF === undefined ? '' : `, back to ${backToF}°F`}`;
         this.release();
-        // After a rehearsal a night may begin as usual
-        bed.isDoneUntilEmpty = !isBedEmpty && !night.rehearsal;
+        bed.isDoneUntilEmpty = !isBedEmpty;
         return;
       }
     }
     if (!isEnabled || !podStatus) return;
     if (!bed.night && !bed.isDoneUntilEmpty) await this.beginNight(nowMs, podStatus);
+    // While a night is steered from the autopilot's own base, the schedule's temperature
+    // changes are told to wait (temperatureScheduler.ts asks before each one)
+    setAutopilotKeepsOwnBase(bed.night !== undefined && readOwnBaseF() !== undefined);
     const isSomeoneThere = SIDES.some(side => sides[side].sleep.stage !== 'out');
-    if (bed.night && (isSomeoneThere || bed.night.rehearsal)) await this.steer(bed.night, nowMs, podStatus);
+    if (bed.night && isSomeoneThere) await this.steer(bed.night, nowMs, podStatus);
   }
 
   // After a restart: a night that was being steered carries on if someone is still in bed, so
@@ -779,7 +741,7 @@ export class AutopilotMonitor {
     nightFromLastRun = undefined;
     if (!night) return;
     bed.night = night;
-    const canCarryOn = settingsDB.data.autopilot.enabled && SIDES.some(isSomeoneInBed) && !night.rehearsal;
+    const canCarryOn = settingsDB.data.autopilot.enabled && SIDES.some(isSomeoneInBed);
     if (canCarryOn) logger.debug('Autopilot: carrying on the night after a restart');
     else night.isEnding = true;
   }
@@ -864,18 +826,19 @@ export class AutopilotMonitor {
   // Lets go of the night: nothing more is steered. A hold still running is learned from.
   private release() {
     const night = bed.night;
-    if (night?.hold?.correctionF && !night.rehearsal) learned = learnFromCorrection(learned, night.hold.part, night.hold.correctionF);
+    if (night?.hold?.correctionF) learned = learnFromCorrection(learned, night.hold.part, night.hold.correctionF);
     bed.night = undefined;
+    setAutopilotKeepsOwnBase(false);
     bed.lastPlan = undefined;
-    // The wait between changes is counted on the night's own clock, so it does not carry over
     bed.lastChangeAtMs = undefined;
     saveState();
   }
 
-  // The temperature a night's offset is counted from (scheduledBase.ts has the rules). A
-  // rehearsal keeps to what the bed was set to when it began.
+  // The temperature a night's offset is counted from: the autopilot's own, when one is set in
+  // Settings; if not, what the schedule and the sleeper make it (scheduledBase.ts has the rules)
   private async findNightBase(night: Night, nowMs: number): Promise<number> {
-    if (night.rehearsal) return night.temperatureAtOnsetF;
+    const ownBaseF = readOwnBaseF();
+    if (ownBaseF !== undefined) return ownBaseF;
     return findNightBaseF({
       scheduledNowF: await findScheduledF(night.side, nowMs),
       scheduledAtOnsetF: night.scheduledAtOnsetF,
@@ -889,9 +852,12 @@ export class AutopilotMonitor {
   // temperature nobody chose. It only touches a side that is on and still set to what the
   // autopilot last set there: a temperature someone set since, or one being held, is theirs.
   // Returns the temperature the bed was put back to, if any side was.
+  // A night steered from the autopilot's own base kept the schedule's temperature changes
+  // waiting, so it ends by giving the bed what the schedule wants now, however far that is.
   private async withdraw(night: Night, podStatus: PodStatus, nowMs: number): Promise<number | undefined> {
     if (night.hold) return undefined;
-    const baseTemperatureF = Math.round(await this.findNightBase(night, nowMs));
+    const scheduledF = readOwnBaseF() === undefined ? undefined : await findScheduledF(night.side, nowMs);
+    const baseTemperatureF = Math.round(scheduledF ?? await this.findNightBase(night, nowMs));
     const sidesToPutBack = SIDES.filter((side) => {
       const appliedF = night.applied?.[side];
       const { isOn, targetTemperatureF } = podStatus[side];
@@ -899,7 +865,7 @@ export class AutopilotMonitor {
       // The offset is never larger than its limit, so a base further away than that is not
       // something the autopilot put there, and the side is left as it is
       return !isSameSetting(baseTemperatureF, targetTemperatureF)
-        && Math.abs(baseTemperatureF - targetTemperatureF) <= MAX_OFFSET_F + MAX_STEP_F;
+        && (scheduledF !== undefined || Math.abs(baseTemperatureF - targetTemperatureF) <= MAX_OFFSET_F + MAX_STEP_F);
     });
     if (sidesToPutBack.length === 0) return undefined;
     logger.debug(`Autopilot: the night is over; back to ${baseTemperatureF}°F`);
@@ -949,18 +915,11 @@ export class AutopilotMonitor {
     const { side } = night;
     if (settingsDB.data[side].awayMode || isPreWarmActive(side)) return;
     // A bed turned on by hand, with the schedule told to leave it alone, is left alone by a
-    // night too. A rehearsal was asked for on that very bed, so it goes ahead.
-    if (isManualHoldActive(side) && !night.rehearsal) return;
+    // night too
+    if (isManualHoldActive(side)) return;
     if (!podStatus[side].isOn) return;
-    // A rehearsal gives way to the schedule: when the schedule changes its temperature, or
-    // starts or stops covering the hour, the test ends and the bed is the schedule's
-    if (night.rehearsal && await findScheduledF(side, nowMs) !== night.scheduledAtOnsetF) {
-      night.isEnding = true;
-      return;
-    }
 
     const baseTemperatureF = await this.findNightBase(night, nowMs);
-    const clockMs = nightClockMs(night, nowMs);
     const progress = nightProgress(night, nowMs);
     // The room's part is left out. The air reading at the cover is saved with every minute, but
     // until a logged night shows that it follows the room and not the sleeper's own warmth, the
@@ -968,7 +927,7 @@ export class AutopilotMonitor {
     const plan = planTemperature({
       baseTemperatureF,
       progress,
-      minutesSinceSleepOnset: (clockMs - night.asleepSinceMs) / MINUTE_MS,
+      minutesSinceSleepOnset: (nowMs - night.asleepSinceMs) / MINUTE_MS,
       learned,
       minTemperatureF: MIN_TEMPERATURE_F,
       maxTemperatureF: MAX_TEMPERATURE_F,
@@ -991,6 +950,9 @@ export class AutopilotMonitor {
     // back in a step at a time.
     const steps = SIDES.flatMap((candidate): [Side, number][] => {
       if (!podStatus[candidate].isOn) return [];
+      // Each side is left alone for its own reasons too: away, warming up for its alarm, or
+      // turned on by hand with the schedule told to keep off
+      if (settingsDB.data[candidate].awayMode || isPreWarmActive(candidate) || isManualHoldActive(candidate)) return [];
       const currentF = podStatus[candidate].targetTemperatureF;
       const nextF = findNextStep(currentF, plan.targetTemperatureF);
       // The bed only takes certain temperatures; one that reads back as the present one is no change
@@ -998,11 +960,10 @@ export class AutopilotMonitor {
     });
     if (steps.length === 0) return;
     const targetTemperatureF = (steps.find(([steppedSide]) => steppedSide === side) ?? steps[0])[1];
-    // Counted on the night's clock, so a rehearsal keeps the same wait at its own speed
-    const minutesSinceChange = bed.lastChangeAtMs === undefined ? Infinity : (clockMs - bed.lastChangeAtMs) / MINUTE_MS;
+    const minutesSinceChange = bed.lastChangeAtMs === undefined ? Infinity : (nowMs - bed.lastChangeAtMs) / MINUTE_MS;
     if (minutesSinceChange < MIN_MINUTES_BETWEEN_CHANGES) return;
 
-    bed.lastChangeAtMs = clockMs;
+    bed.lastChangeAtMs = nowMs;
     bed.lastChangeReason = `${formatClock(nowMs)}: ${targetTemperatureF}°F, ${describePlan(plan)}`;
     logger.debug(`Autopilot: bed to ${targetTemperatureF}°F, ${describePlan(plan)}`);
     for (const sensedSide of SIDES) {

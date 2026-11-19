@@ -1,6 +1,6 @@
 import { PropsWithChildren, ReactElement } from 'react';
 import { Box, FormControlLabel } from '@mui/material';
-import InfoTip from '@components/InfoTip.tsx';
+import SettingLabel from './SettingLabel.tsx';
 
 type SettingToggleProps = PropsWithChildren<{
   label: string;
@@ -14,7 +14,7 @@ export default function SettingToggle({ label, control, info, children }: Settin
   return (
     <Box sx={ { minWidth: 0 } }>
       <FormControlLabel
-        label={ info ? <>{ label }{ ' ' }<InfoTip text={ info }/></> : label }
+        label={ <SettingLabel label={ label } info={ info }/> }
         labelPlacement="start"
         control={ control }
         sx={ {

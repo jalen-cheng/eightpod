@@ -272,7 +272,7 @@ Stored in `settingsDB.json`. The values below are the defaults, except `id` (a r
   },
   "right": { "name": "Right", "awayMode": false, "scheduleOverrides": {}, "taps": {} },
   "manualOn": { "hours": 12, "overridesSchedule": false },
-  "autopilot": { "enabled": false },
+  "autopilot": { "enabled": false, "baseTemperatureF": null },
   "presence": {
     "sensitivity": "medium",
     "wakeAfterHours": { "enabled": false, "hours": 9 },
@@ -299,6 +299,7 @@ Stored in `settingsDB.json`. The values below are the defaults, except `id` (a r
 | `manualOn.hours` | `3`, `6` or `12`: how long a side switched on by hand stays on. |
 | `manualOn.overridesSchedule` | When true, the schedule leaves a side switched on by hand alone until it turns off. Alarms still go off. |
 | `autopilot.enabled` | Lets the bed adjust a sleeping side's temperature (Pod 5, experimental). See [Autopilot](#autopilot). |
+| `autopilot.baseTemperatureF` | The temperature the autopilot's changes are counted from, 50 to 110. `null` (the default) follows the schedule. With a temperature set, scheduled temperature changes are skipped while a night is being steered |
 | `presence.sensitivity` | `low`, `medium` or `high` |
 | `presence.wakeAfterHours` | `enabled`, `hours` (integer 1-14): vibrate the alarm after this long in bed in one stay. |
 | `presence.turnOnWhenInBed` | `enabled`, `temperatureF` (50-110), `stayOn` (integer hours 1-12, or `"untilOutOfBed"`) |
@@ -641,7 +642,6 @@ on both sides.
   "available": true,
   "enabled": true,
   "room": { "temperatureF": 68, "humidityPercent": 46 },
-  "rehearsal": { "minutesLeft": 14 },
   "left": {
     "stage": "asleep",
     "sleepKind": "night",
@@ -669,7 +669,6 @@ on both sides.
 |---|---|
 | `available` | `false` when the piezo sensor has sent nothing in the last 2 minutes (other Pods) |
 | `room` | The air at the cover. Read as hundredths of a degree; not checked against a thermometer, and not acted on |
-| `rehearsal` | Present only while a 20-minute test is running, with the minutes it has left |
 | `stage` | `out`, `awake` or `asleep` |
 | `sleepKind` | While asleep: `night` when the autopilot is treating it as the night's sleep, `nap` when it is leaving it alone (it began at an hour that looks like a nap and has not yet lasted 3 hours) |
 | `heartRate`, `breathingRate` | Absent for now: neither is worked out until the estimates can be trusted |
@@ -678,16 +677,6 @@ on both sides.
 | `learned` | What your changes have taught it for each third of the night, in °F |
 | `rules` | The sleep rules in use: still minutes before "asleep", moving seconds that make a minute restless, and `maxBreathingSpread` when calibration has found that asking for steady breathing helps |
 | `tracker` | The last sleep tracker to report, the share of minutes the bed agrees with it on, and whether the rules have been fitted to it |
-
-### `POST /api/autopilot/rehearsal`
-
-Starts the 20-minute test: a whole night's plan played on the bed from the temperature it is
-set to now, a degree at a time, ending back where it began. No body. Returns `{ "minutes": 20 }`,
-or 409 with `{ "error": "…" }` saying why not: the autopilot is off, the bed is off or away, the
-bed is warming for the alarm, a night is being steered, or a test is already running.
-`DELETE /api/autopilot/rehearsal` stops it (`{ "stopped": true }`) and the bed returns to where
-it began within a minute. [docs/AUTOPILOT.md](../docs/AUTOPILOT.md#trying-it-without-a-night)
-says what to look for.
 
 ### `POST /api/autopilot/sleepTimes`
 

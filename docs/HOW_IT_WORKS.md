@@ -6,6 +6,11 @@ Written from the code on `main` on 17 Nov 2026. File references are for anyone w
 
 For how to use the app, see [USING.md](USING.md). For the list of changes and what was tested on a Pod, see [CHANGELOG.md](../CHANGELOG.md).
 
+The whole of it on one page: what can ask the bed for something, how a side is chosen, what can
+stop a change, and how sleep is followed. [Open it full size](diagrams/system-logic.svg).
+
+<a href="diagrams/system-logic.svg"><img src="diagrams/system-logic.svg" width="100%" alt="Flowchart of the whole system: the sources of a request, choosing a side, the layers that can stop a change, sleep and the autopilot, and known gaps"></a>
+
 - [1. The parts](#1-the-parts)
 - [2. Where things are stored](#2-where-things-are-stored)
 - [3. Temperature](#3-temperature)
@@ -107,7 +112,7 @@ temperature was converted to keep its *level*. The originals are in
 
 **Setting a temperature.** The server turns °F into the nearest level and sends it. Turning a side
 on by hand (app, shortcut or buttons) sets its timer to 3, 6 or 12 hours, chosen in Settings >
-Settings > General; 12 is the default. The Temperature page waits 0.7 seconds after your last tap before
+Other > Auto-off after; 12 is the default. The Temperature page waits 0.7 seconds after your last tap before
 sending, so several taps become one request, and it ignores the Pod's reported value while you are
 still tapping.
 
@@ -224,11 +229,6 @@ not switch the side off: it sets the side's timer to run out two minutes after t
 finish. When the alarm then goes off, the timer is set again, to 30 minutes. So the bed turns off
 30 minutes after a one-time alarm, and the two-minute figure only matters if the alarm never fires.
 
-### Testing an alarm
-
-Settings > Alarm > "Test for a minute" vibrates now with the saved vibration settings, on
-both sides when linked, whether or not the bed is on.
-
 ## 6. Pod 5 buttons and Pod 4 taps
 
 A **Pod 5** has three buttons per side: -, + and a middle button. The firmware does not report them
@@ -262,14 +262,23 @@ device. Left or Right unlinks them, and which of the two a device shows is remem
 | Buttons and taps | Control both |
 | Dismissing an alarm | Dismisses both |
 | Shortcuts (dial, alarm time) | Apply to both, even if the request names one side |
-| Alarm test | Both |
 
 Linking is applied by the app and by those server paths. A hand-written request to
 `/api/deviceStatus` or `/api/schedules` naming one side changes only that side.
 
-**Flip left and right** (Settings > General) swaps which physical side the app calls left
+**Flip left and right** (Settings > Other) swaps which physical side the app calls left
 and right. It is applied where SevenSleep meets the firmware (commands, status, buttons, sensors),
 so each side keeps its name, schedule and settings and simply drives the other half of the bed.
+What was learned about each half goes with the name, not the half: after flipping, press
+**Settings > In-bed detection > Bed is empty now** with the bed empty, so the in-bed baselines
+and the empty-bed piezo level are measured again.
+
+Where a side is chosen, copied and swapped, from a phone down to the firmware:
+
+<a href="diagrams/left-and-right.svg"><img src="diagrams/left-and-right.svg" width="640" alt="Flowchart of left and right: the side a device controls, who copies a change when the sides are linked, what is kept per side or for the whole bed, and where the flip is applied"></a>
+
+Linking does not merge schedules. The app saves a schedule to both sides while they are linked,
+but sides linked after their schedules were written keep their own, and each side's jobs run.
 
 **Away mode** (Settings > General) switches both sides away together. The API can still set it per side, which is for one person being away: that side's schedule, alarm and
 warm-up do not run, and its controls are hidden. While either side is away, every temperature or
@@ -371,19 +380,18 @@ an alarm vibrates, a dialog offers to dismiss it.
 
 **Data.** Sleep and logs. Sleep shows one day at a time from the bed's own record of each stay in bed (Pod 5): bedtime, wake time, duration and wake-ups, graphs of movement, pressure and the autopilot's temperature changes, the tuning in use, and an Export button. Where the biometrics service is switched on, its older page is listed as Biometrics.
 
-**Status** (opened from the "Status: Healthy" link, bottom right on a computer and beside the heading of Data and Settings on a phone; it has no tab). The Pod itself (the model, Wi-Fi, version and Update, daily reboot and Reboot), then each internal service with
+**Status** (opened from the "Status: Healthy" link, bottom right on a wide screen and beside the heading of Data and Settings on a phone; it has no tab). The Pod itself (the model, Wi-Fi, version and Update, daily reboot and Reboot), then each internal service with
 its state. Services that are jobs have a Run button. The biometrics and sleep-analysis rows are greyed and
 marked "Untested in this version".
 
 **Settings.** Sections that open with a tap; the page remembers which were open. General: the
 side this device controls, the temperature units and a Pod 5's − and + button step, the time
 zone (set this first, the schedule runs in it) and away mode for both sides. Then Autopilot
-(Pod 5: the switch, a 20-minute test, Link Apple Health, and the biometrics switch; on other
-Pods the section is Sleep tracking with biometrics alone), Alarm (one setting for every night
-and both sides: vibration, length, strength, a test), Tap gestures (Pod 4), Priming, In-bed
-detection, Other (flip left and right, the light on the hub, how long the bed stays on when
-turned on by hand and whether the schedule is paused meanwhile), and API, which opens a page of
-the common requests (`/api-guide`).
+(Pod 5 only: the switch, the base temperature and Link Apple Health), Alarm (one setting for
+every night and both sides: vibration, length, strength), Tap gestures (Pod 4), Priming, In-bed
+detection, and Other (flip left and right, the light on the hub, how long the bed stays on when
+turned on by hand and whether the schedule is paused meanwhile, and the biometrics switch).
+Under the last section, **Documentation** opens this site.
 
 ## 11. The API and phone shortcuts
 
@@ -468,6 +476,10 @@ The cases where one feature changes what another does:
 | A one-time alarm is due after the off time | The bed stays on for it, and turns off 30 minutes after it goes off |
 | Any night | The bed turns off 30 minutes after the wake-up time, with or without a vibrating alarm; "Bed off on dismiss" turns it off sooner |
 | A warm-up is running | Scheduled temperature changes are skipped until the alarm. Changes you make by hand are not |
+| The autopilot has a base temperature of its own and is steering a night | Scheduled temperature changes are skipped until the night is over, when the bed is given what the schedule wants at that hour |
+| A one-time alarm goes off during an autopilot night | The night ends there; the autopilot does not carry on to the scheduled wake-up time |
+| One side is away, warming up or paused by hand during an autopilot night | That side is left alone; the other is still moved |
+| "Turn on when I get into bed, until I get out" turned the bed on, and the schedule's night has begun since | Getting out no longer turns the bed off: it is the schedule's to turn off |
 | The night's schedule is switched off | Nothing runs that night: no power on or off, no temperature changes, no alarm, no warm-up |
 | The bed is off at the alarm time | A scheduled alarm does not vibrate, unless the bed's sensors say someone is on that side (Pod 5). A one-time alarm and a test always do |
 | Sides are linked and one side dismisses | Both stop |
@@ -488,7 +500,24 @@ Listed so nothing here is a surprise. [CHANGELOG.md](../CHANGELOG.md) keeps the 
 - **A time just before bedtime is treated as the next day.** With bedtime at 22:00, a change at
   21:55 fires the following evening.
 - **Two saves in quick succession** can leave the jobs built from the first; any later save fixes it.
-- **Priming and the daily reboot do not check whether the bed is in use.** Keep their time in the afternoon.
+- **Priming does not check whether the bed is in use.** Keep its time in the afternoon. The daily reboot is skipped
+  while a side is on or an alarm is going, but not for someone lying in a bed that is off.
+- **Linking or unlinking the sides can leave an old in-bed stay behind.** The stay kept for the other mode (each side's
+  own, or the one for both) is not cleared, and may act on its old times when the mode is switched back: an alarm
+  after a long time in bed, or turning the bed off.
+- **"Pause the schedule until it turns off" also starts from a Shortcut or from linking.** Both turn the bed on "by
+  hand", so with that setting on, setting the temperature from a Shortcut in the night pauses the schedule (bed off,
+  temperature changes, warm-up, the autopilot) for the rest of it.
+- **A night longer than 11.5 hours asks the bed for more than 12 hours on.** The firmware's longest on-time is taken to
+  be 12 hours, and its answers are not read, so whether it cuts such a night short is not known.
+- **Nothing checks the bed's answers.** A value the firmware refuses or rounds is not noticed.
+- **Jobs missed while SevenSleep is stopped are not caught up**: an update, a reboot, a restart. (Timers that
+  stop while it is running are another matter: once a minute the jobs are looked over, and if one should have run
+  more than 90 seconds ago every job is built again, `server/src/jobs/overdueJobs.ts`.)
+- **On a Pod 4, flipping the sides can set off up to three tap gestures once**, from the two halves' tap counts
+  being compared with each other.
+- **The older biometrics service does not know about the flip.** On a Pod 3 or 4 with the sides flipped, its heart
+  and sleep records land on the other side.
 - **Not run on a Pod 3 or Pod 4.** [POD_MODELS.md](POD_MODELS.md) has the per-model detail.
 - **Holding the middle button during an alarm** turns the bed off or on but does not dismiss the
   alarm; a short press does.

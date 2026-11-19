@@ -6,14 +6,15 @@ import { useState } from 'react';
 import { DeepPartial } from 'ts-essentials';
 import { postSchedules, useSchedules } from '@api/schedules.ts';
 import { AlarmSchedule, Schedules } from '@api/schedulesSchema.ts';
-import InfoTip from '@components/InfoTip.tsx';
 import { buildSidesPayload } from '@lib/sides.ts';
 import { Side, useAppStore } from '@state/appStore.tsx';
 import { LOWERCASE_DAYS } from '../SchedulePage/days.ts';
 import Section from './Section.tsx';
-import { CONTROL_WIDTH_PX } from './SettingRow.tsx';
+import SettingRow, { CONTROL_WIDTH_PX } from './SettingRow.tsx';
 
 const SIDES: Side[] = ['left', 'right'];
+// The choices sit closer together on a phone, so three of them fit beside the setting's name
+const choiceSx = { whiteSpace: 'nowrap', px: { xs: 1.5, sm: 2 } };
 const SECONDS_PER_MINUTE = 60;
 // An alarm keeps going until it is dismissed, up to this long
 const ALARM_LENGTH_MINUTES = [10, 15, 20, 30];
@@ -61,10 +62,7 @@ export default function AlarmSection() {
   return (
     <Section title="Alarm">
       <Box sx={ { display: 'flex', flexDirection: 'column', gap: 2 } }>
-        <Box sx={ { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2 } }>
-          <Typography variant="body2" sx={ { fontWeight: 500 } }>
-            Vibration <InfoTip text="Ramp up builds to full strength over 40 seconds. Pulses start at full strength."/>
-          </Typography>
+        <SettingRow label="Vibration" info="Ramp up builds to full strength over 40 seconds. Pulses start at full strength.">
           <ToggleButtonGroup
             exclusive
             size="small"
@@ -75,15 +73,12 @@ export default function AlarmSection() {
             } }
             aria-label="Vibration"
           >
-            <ToggleButton value="rise" sx={ { whiteSpace: 'nowrap', px: 2 } }>{ PATTERN_NAMES.rise }</ToggleButton>
-            <ToggleButton value="double" sx={ { whiteSpace: 'nowrap', px: 2 } }>{ PATTERN_NAMES.double }</ToggleButton>
+            <ToggleButton value="rise" sx={ choiceSx }>{ PATTERN_NAMES.rise }</ToggleButton>
+            <ToggleButton value="double" sx={ choiceSx }>{ PATTERN_NAMES.double }</ToggleButton>
           </ToggleButtonGroup>
-        </Box>
+        </SettingRow>
 
-        <Box sx={ { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2 } }>
-          <Typography variant="body2" sx={ { fontWeight: 500 } }>
-            Length <InfoTip text="How long it keeps going. It stops sooner if you dismiss it."/>
-          </Typography>
+        <SettingRow label="Length" info="How long it keeps going. It stops sooner if you dismiss it.">
           <TextField
             select
             size="small"
@@ -97,9 +92,8 @@ export default function AlarmSection() {
               <MenuItem key={ minutes } value={ minutes }>{ minutes < 1 ? 'Under 1 min' : `${minutes} min` }</MenuItem>
             )) }
           </TextField>
-        </Box>
-        <Box sx={ { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2 } }>
-          <Typography variant="body2" sx={ { fontWeight: 500 } }>Strength</Typography>
+        </SettingRow>
+        <SettingRow label="Strength">
           <ToggleButtonGroup
             exclusive
             size="small"
@@ -111,10 +105,10 @@ export default function AlarmSection() {
             aria-label="Vibration strength"
           >
             { STRENGTH_LEVELS.map(({ name, percent }) => (
-              <ToggleButton key={ percent } value={ percent } sx={ { whiteSpace: 'nowrap', px: 2 } }>{ name }</ToggleButton>
+              <ToggleButton key={ percent } value={ percent } sx={ choiceSx }>{ name }</ToggleButton>
             )) }
           </ToggleButtonGroup>
-        </Box>
+        </SettingRow>
         { hasSaveFailed && (
           <Typography variant="caption" color="error">That was not saved. Check the Pod is reachable and try again.</Typography>
         ) }

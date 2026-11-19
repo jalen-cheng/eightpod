@@ -1,11 +1,11 @@
 import { useEffect, useState, useRef } from 'react';
 import { baseURL } from '@api/api';
-import { Paper, Typography, Box, MenuItem, Select, FormControl, InputLabel } from '@mui/material';
+import { Paper, Typography, Box, MenuItem, Select } from '@mui/material';
 import PageContainer from '../../PageContainer.tsx';
 import { useTheme } from '@mui/material/styles';
 import axios from 'axios';
 import Header from '../Header.tsx';
-import TextSnippetIcon from '@mui/icons-material/TextSnippet';
+import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined';
 
 
 export default function LogsPage() {
@@ -69,21 +69,8 @@ export default function LogsPage() {
   }, [logs]);
 
   return (
-    <PageContainer
-      sx={ {
-        // height: '100%',
-        // maxHeight: '100%',
-        [theme.breakpoints.up('sm')]: {
-          width: '95%',
-          padding: 0,
-          paddingTop: 6,
-          paddingBottom: 6,
-          maxWidth: '100%',
-          height: '100%',
-        },
-      } }
-    >
-      <Header title="Logs" icon={ <TextSnippetIcon /> }/>
+    <PageContainer sx={ { mb: 15, mt: 2 } }>
+      <Header title="Logs" icon={ <ArticleOutlinedIcon/> }/>
 
       <Paper
         elevation={ 3 }
@@ -91,10 +78,9 @@ export default function LogsPage() {
           // height: '100%',
           // maxHeight: '100%',
           p: 2,
-          // mt: 2,
+          width: '100%',
           bgcolor: theme.palette.background.paper,
           color: '#fff',
-          borderRadius: 2,
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
@@ -103,22 +89,22 @@ export default function LogsPage() {
           },
         } }
       >
-        <FormControl sx={ { minWidth: 200, mb: 1 } }>
-          <InputLabel sx={ { color: theme.palette.grey[100] } }>Log file</InputLabel>
-          <Select
-            value={ selectedLog }
-            onChange={ (e) => {
-              setLogs([]);
-              setSelectedLog(e.target.value);
-            } }
-          >
-            { logFiles.map((file) => (
-              <MenuItem key={ file } value={ file }>
-                { file }
-              </MenuItem>
-            )) }
-          </Select>
-        </FormControl>
+        <Select
+          size="small"
+          value={ selectedLog }
+          inputProps={ { 'aria-label': 'Log file' } }
+          sx={ { alignSelf: 'flex-start', minWidth: 200, mb: 1.5 } }
+          onChange={ (e) => {
+            setLogs([]);
+            setSelectedLog(e.target.value);
+          } }
+        >
+          { logFiles.map((file) => (
+            <MenuItem key={ file } value={ file }>
+              { file }
+            </MenuItem>
+          )) }
+        </Select>
 
         <Typography
           variant="h6"
@@ -133,7 +119,7 @@ export default function LogsPage() {
             paddingBottom: 1,
           } }
         >
-          Live Server Logs
+          Live server logs
         </Typography>
 
         <Box

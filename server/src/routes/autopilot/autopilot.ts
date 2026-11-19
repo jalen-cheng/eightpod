@@ -1,9 +1,8 @@
 import express, { Request, Response } from 'express';
 import { z } from 'zod';
 import {
-  applyTrackerSleep, getAutopilotSnapshot, getNightSummaries, getNightsExport, getNightsOn, startRehearsal, stopRehearsal,
+  applyTrackerSleep, getAutopilotSnapshot, getNightSummaries, getNightsExport, getNightsOn,
 } from '../../autopilot/autopilotMonitor.js';
-import { REHEARSAL_MINUTES } from '../../autopilot/nightPlan.js';
 import { SleepPeriod, findSleepPeriods, parseSampleLines } from '../../autopilot/sleepTracker.js';
 
 const router = express.Router();
@@ -38,22 +37,6 @@ router.get('/autopilot/nights', (req: Request, res: Response) => {
   }
   const limit = Math.min(MAX_NIGHTS_LISTED, Math.max(1, Number(req.query.limit) || 14));
   res.json(getNightSummaries(limit));
-});
-
-// Plays a whole night's plan on the bed in a few minutes, from the temperature it is set to now,
-// so what the autopilot does can be watched. Refused with the reason when it cannot start.
-router.post('/autopilot/rehearsal', async (_req: Request, res: Response) => {
-  const refusal = await startRehearsal();
-  if (refusal) {
-    res.status(409).json({ error: refusal });
-    return;
-  }
-  res.json({ minutes: REHEARSAL_MINUTES });
-});
-
-// Ends a rehearsal early; the bed returns to where it began within a minute
-router.delete('/autopilot/rehearsal', (_req: Request, res: Response) => {
-  res.json({ stopped: stopRehearsal() });
 });
 
 // The lengths of time an export can cover, in days

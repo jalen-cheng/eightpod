@@ -7,6 +7,9 @@ import { ServerStatus } from '@api/serverStatusSchema.ts';
 import StatusTag, { StatusTone } from './StatusTag.tsx';
 
 export const STATUS_ROUTE = '/status';
+// From this width the link has a free corner at the bottom right of the window. Narrower, that
+// corner is over the page's own controls, so the link sits beside a page's heading instead.
+export const FLOATING_STATUS_QUERY = '@media (min-width: 1280px)';
 // The check reads the Pod's database, so it is not asked for often
 const SERVICE_CHECK_MS = 90_000;
 // Sleep analysis and its jobs are untested here and off by default, so they do not count

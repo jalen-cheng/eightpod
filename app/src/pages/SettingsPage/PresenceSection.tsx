@@ -2,6 +2,7 @@
 import { DeepPartial } from 'ts-essentials';
 import { PropsWithChildren } from 'react';
 import { Box, Button, Divider, MenuItem, Switch, TextField, Typography } from '@mui/material';
+import InfoTip from '@components/InfoTip.tsx';
 import StatusTag from '@components/StatusTag.tsx';
 import _ from 'lodash';
 import { Settings } from '@api/settingsSchema.ts';
@@ -28,9 +29,8 @@ const WAKE_INFO = 'Vibrates like that day\'s alarm once someone has been in bed 
   + 'than 15 minutes does not restart the count.';
 const TURN_ON_INFO = 'When someone gets into a bed that is off, it turns on at this temperature. It turns off again after '
   + 'the hours chosen, or 15 minutes after they get out.';
-const EMPTY_INFO = 'Press with nobody and nothing extra on the bed if a side shows "in bed" when it is empty, or never does. '
-  + 'Detection starts over from the bed as it is now.';
-const NOW_INFO = 'What the sensors under the cover say at this moment, for each side.';
+const EMPTY_INFO = 'What the sensors under the cover say right now. If a side shows "in bed" when it is empty, or never '
+  + 'does, press "Bed is empty now" with nobody and nothing extra on the bed: detection starts over from the bed as it is.';
 const UNTIL_OUT_OF_BED = 'untilOutOfBed';
 
 // The picked "stay on" choice as it is saved: a number of hours, or until out of bed
@@ -79,16 +79,34 @@ export default function PresenceSection({ settings, updateSettings }: PresenceSe
   return (
     <Section title="In-bed detection">
       <Box sx={ { display: 'flex', flexDirection: 'column', gap: 1.5 } }>
-        <SettingRow label="Right now" info={ NOW_INFO }>
-          <Box sx={ { display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-end', columnGap: 1.5 } } role="status">
-            { (['left', 'right'] as const).map(side => (
-              <StatusTag
-                key={ side }
-                tone={ sensors[side]?.present ? 'good' : 'neutral' }
-                label={ `${side === 'left' ? 'Left' : 'Right'} ${sensors[side]?.present ? 'in bed' : 'empty'}` }
-              />
-            )) }
-          </Box>
+        <SettingRow
+          // The two readings stand where a row's name does: side by side, or one above the other on a narrow phone
+          label={ (
+            <Box
+              component="span"
+              role="status"
+              sx={ { display: 'inline-flex', flexWrap: 'wrap', alignItems: 'center', columnGap: 1.5, verticalAlign: 'middle' } }
+            >
+              { (['left', 'right'] as const).map(side => (
+                <StatusTag
+                  key={ side }
+                  tone={ sensors[side]?.present ? 'good' : 'neutral' }
+                  label={ `${side === 'left' ? 'Left' : 'Right'} ${sensors[side]?.present ? 'in bed' : 'empty'}` }
+                />
+              )) }
+              <InfoTip text={ EMPTY_INFO }/>
+            </Box>
+          ) }
+        >
+          <Button
+            size="small"
+            variant="outlined"
+            disabled={ isUpdating }
+            onClick={ () => void postBedIsEmpty().then(() => refetchSensors()).catch(error => console.error(error)) }
+            sx={ { width: CONTROL_WIDTH_PX, whiteSpace: 'nowrap' } }
+          >
+            Bed is empty now
+          </Button>
         </SettingRow>
         <SettingRow label="Sensitivity" info={ SENSITIVITY_INFO }>
           <TextField
@@ -102,17 +120,6 @@ export default function PresenceSection({ settings, updateSettings }: PresenceSe
           >
             { Object.entries(SENSITIVITY_NAMES).map(([value, name]) => <MenuItem key={ value } value={ value }>{ name }</MenuItem>) }
           </TextField>
-        </SettingRow>
-        <SettingRow label="Wrong reading?" info={ EMPTY_INFO }>
-          <Button
-            size="small"
-            variant="outlined"
-            disabled={ isUpdating }
-            onClick={ () => void postBedIsEmpty().then(() => refetchSensors()).catch(error => console.error(error)) }
-            sx={ { width: CONTROL_WIDTH_PX, whiteSpace: 'nowrap' } }
-          >
-            Bed is empty now
-          </Button>
         </SettingRow>
 
         <Divider/>

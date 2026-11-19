@@ -15,57 +15,71 @@ an automation each morning.
 
 ### Add the ready-made Shortcut
 
-1. On the iPhone, open **[Send sleep to SevenSleep](https://github.com/jalen-cheng/sevensleep/raw/main/docs/shortcuts/Send%20sleep%20to%20SevenSleep.shortcut)**, tap the download in
-   Safari, and tap **Add Shortcut**.
-2. It asks for your Pod's address: `http://sevensleep.local` at home, or
-   `http://sevensleep:3000` if the phone reaches the Pod over Tailscale. Use your Pod's own
-   name if it has another.
-3. Tap the Shortcut once to run it. The first run asks to read Sleep from Health, to send the
-   health samples to your Pod, and to show notifications: allow each (**Always Allow** for
-   the samples, or it asks every morning).
+1. On the iPhone, open **[Send sleep to SevenSleep](https://github.com/jalen-cheng/sevensleep/raw/main/docs/shortcuts/Send%20sleep%20to%20SevenSleep.shortcut)**, tap the download in Safari, and
+   tap **Add Shortcut**.
+2. It asks two things: your Pod's address at home (leave `http://sevensleep.local` unless your
+   Pod has another name), and the name of your home Wi-Fi, exactly as the phone shows it.
+3. At home, tap the Shortcut once to run it. The first run asks to read Sleep from Health, to
+   send the health samples to your Pod, and to show notifications: allow each (**Always Allow**
+   for the samples, or it asks every time).
 4. A notification from SevenSleep says what happened, for example "1 sleep received from Apple
-   Health. Matched 1 stay in bed." **Settings > Autopilot** then shows "Apple Health, last
-   received" with today's date.
-5. In **Automation**, run it when your **Sleep Focus turns off**, or at a set time each
-   morning, with **Run Immediately**.
+   Health. Matched 1 stay in bed." **Data > Sleep** then shows the tracker's times on that night.
+
+**It only sends on your home Wi-Fi.** The Pod's home address works nowhere else, so on any other
+network the Shortcut sends nothing and says so ("Not on Home (this phone is on Cafe), so no
+sleep was sent."). That makes it safe to run every day without thinking about where you are.
+
+**Make it run by itself.** In **Shortcuts > Automation**, add both of these, each set to **Run
+Immediately** and running this Shortcut:
+
+- **Wi-Fi**: when the iPhone joins your home network. This sends the night whenever you come home.
+- **Time of Day**: once a day, at a time you are usually up and at home. This covers the days the
+  phone never leaves the house.
+
+Sending the same night twice changes nothing. An iPhone only lets a Shortcut read health data
+while it is unlocked, so a run that comes while the phone is locked waits until you next use it.
 
 It reads the Sleep samples that began in the last two days and sends each one's start, end and
-stage. Sending a night twice changes nothing.
+stage.
 
 | What you see | What it means |
 |---|---|
 | "No sleep found in what Apple Health sent" | The Shortcut reached the Pod, and Health has no sleep for the last two days. Look in **Health > Browse > Sleep**: if last night is not there, your tracker's app is not writing sleep to Apple Health |
-| "Could not connect to the server", or the address not found | The phone cannot reach the Pod. Be on the same Wi-Fi, allow Shortcuts under **Settings > Privacy & Security > Local Network**, or put the Pod's IP address in the Shortcut's first action |
+| "Not on …, so no sleep was sent" | The phone is not on the Wi-Fi named when the Shortcut was added. If it is, the name does not match: fix it in the Shortcut's second action |
+| "Could not connect to the server", or the address not found | The phone cannot reach the Pod. Allow Shortcuts under **Settings > Privacy & Security > Local Network**, or put the Pod's IP address in the Shortcut's first action |
 | "…received… No stay in bed saved on the Pod overlaps it" | The sleep arrived, but the Pod has no saved stay for those hours. It saves stays of 20 minutes or more, and only while a person is on the bed |
 | Nothing at all | Notifications for Shortcuts are off: **Settings > Notifications > Shortcuts** |
 
-The file is made by `scripts/build_shortcuts.py`, with every action written the
-way working exported shortcuts write it, and signed with `shortcuts sign` on a Mac. It was run
-in Xcode's iPhone simulator (iOS 27.2) with two sleep entries added in Health: every action
-came in complete, and it sent what the Pod expects. **It has not yet been run on a real phone
-with a tracker's data**, and the by-hand version below has not been run at all.
-
-Once set up it runs by itself, with one catch: an iPhone only lets a shortcut read health data
-while it is unlocked, so the night arrives when you first use the phone, not at a fixed minute.
-That is fine here: it is looked at after the fact.
+The file is made by `scripts/build_shortcuts.py`, with every action written the way working
+exported shortcuts write it, and signed with `shortcuts sign` on a Mac. It was added and run in
+Xcode's iPhone simulator (iOS 27.2) with two sleep entries in Health: every action came in
+complete, and both of its paths did what they should (sending what the Pod expects; saying so
+and sending nothing). One step could not run there: the simulator has no Wi-Fi, so reading the
+Wi-Fi's name was stood in for by hand. **That step has not yet run on a real phone.** The
+version before it, without the Wi-Fi check, has run on a real iPhone against a real Pod. The
+by-hand version below has not been run at all.
 
 ### Or build it by hand
 
-The same thirteen actions, in order:
+The same actions, in order:
 
-1. **Text**: `http://sevensleep.local` (or your Pod's address).
-2. **Find Health Samples** where **Type** is **Sleep** and **Start Date** is in the last 2 days.
-3. **Repeat with Each** over the Health Samples. Inside it:
+1. **Text**: `http://sevensleep.local` (or your Pod's address at home).
+2. **Text**: the name of your home Wi-Fi.
+3. **Get Network Details**, left on Wi-Fi and Network Name, then **If** Network Details **is**
+   the Text from step 2. Everything in steps 4 to 7 goes inside the If.
+4. **Find Health Samples** where **Type** is **Sleep** and **Start Date** is in the last 2 days.
+5. **Repeat with Each** over the Health Samples. Inside it:
    - **Get Details of Health Sample**: **Start Date** of Repeat Item, then **Format Date** on
      it with **ISO 8601** and **Include ISO 8601 Time** on.
    - The same two actions for **End Date**.
    - **Get Details of Health Sample**: **Value** of Repeat Item.
    - **Text**: the first Formatted Date, `|`, the second Formatted Date, `|`, the Value.
-4. After **End Repeat**, **Get Contents of URL**: the Text from step 1 followed by
+6. After **End Repeat**, **Get Contents of URL**: the Text from step 1 followed by
    `/api/autopilot/sleepTimes`, Method **POST**, Request Body **JSON** with two text fields,
    `source` = `Apple Health` and `samples` = **Repeat Results**.
-5. **Get Dictionary Value** for `message` in the Contents of URL, and **Show Notification**
+7. **Get Dictionary Value** for `message` in the Contents of URL, and **Show Notification**
    with it.
+8. Under **Otherwise**, a **Show Notification** saying nothing was sent.
 
 ## Without a tracker
 
@@ -75,9 +89,9 @@ same 5 nights. A tracker that reports the same night later replaces it.
 
 ## Other Shortcuts
 
-Ready-made, each asking for the Pod's address when added: [Bed temperature](https://github.com/jalen-cheng/sevensleep/raw/main/docs/shortcuts/Bed%20temperature.shortcut),
-[Bed alarm](https://github.com/jalen-cheng/sevensleep/raw/main/docs/shortcuts/Bed%20alarm.shortcut), [Bed status](https://github.com/jalen-cheng/sevensleep/raw/main/docs/shortcuts/Bed%20status.shortcut) and [Bed off](https://github.com/jalen-cheng/sevensleep/raw/main/docs/shortcuts/Bed%20off.shortcut). What each does is in
-[iPhone Shortcuts](IOS_SHORTCUTS.md#ready-made-shortcuts).
+Ready-made Shortcuts for the bed itself (its temperature, an alarm, its status, turning it off,
+away mode, opening the app) come in two kinds, for use at home and for use anywhere through
+Tailscale. They are listed in [iPhone Shortcuts](IOS_SHORTCUTS.md#ready-made-shortcuts).
 
 ## Other trackers, Android and scripts
 

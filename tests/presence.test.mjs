@@ -138,6 +138,13 @@ test('"until I get out of bed" turns the bed off when the stay ends, and only a 
   // Out for good
   trackBedSession(session, false, SESSION_GAP_MS + 1);
   assert.deepEqual(takeDueActions(session, settings, { nowMs: SESSION_GAP_MS + 1, isPresentNow: false, isOn: true }), ['turnOff']);
+  // The same stay ending inside the schedule's night leaves the bed on: it is the schedule's to turn off
+  const beforeBedtime = trackBedSession(createBedSession(), true, 0);
+  assert.deepEqual(takeDueActions(beforeBedtime, settings, { nowMs: 10_000, isPresentNow: true, isOn: false }), ['turnOn']);
+  trackBedSession(beforeBedtime, false, SESSION_GAP_MS + 1);
+  const inTheNight = { nowMs: SESSION_GAP_MS + 1, isPresentNow: false, isOn: true, isScheduledOn: true };
+  assert.deepEqual(takeDueActions(beforeBedtime, settings, inTheNight), []);
+  assert.deepEqual(takeDueActions(beforeBedtime, settings, { ...inTheNight, isScheduledOn: false }), []);
   assert.deepEqual(takeDueActions(session, settings, { nowMs: SESSION_GAP_MS + 2, isPresentNow: false, isOn: true }), []);
 
   // A bed that was already on when they got in is not turned off when they leave

@@ -11,6 +11,9 @@ spec = importlib.util.spec_from_file_location('build_shortcuts', script_path)
 builder = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(builder)
 
+TAILSCALE = builder.TAILSCALE_SUFFIX
+TAILSCALE_ACTION = 'io.tailscale.ipn.ios.ConnectIntent'
+
 
 def find_references(value):
     """Every reference to another action's output found anywhere inside a setting."""
@@ -28,6 +31,14 @@ def identifiers(actions):
     return [action['WFWorkflowActionIdentifier'].removeprefix('is.workflow.actions.') for action in actions]
 
 
+def actions_of(name):
+    return builder.build_shortcut(name)['WFWorkflowActions']
+
+
+def find_action(actions, identifier):
+    return next(action for action in actions if action['WFWorkflowActionIdentifier'].endswith(identifier))
+
+
 def json_fields(request):
     return request['WFWorkflowActionParameters']['WFJSONValues']['Value']['WFDictionaryFieldValueItems']
 
@@ -36,29 +47,37 @@ class EveryShortcutTests(unittest.TestCase):
     def test_every_variable_points_at_an_earlier_action(self):
         for name in builder.SHORTCUTS:
             produced = set()
-            for action in builder.build_shortcut(name)['WFWorkflowActions']:
+            for action in actions_of(name):
                 parameters = action['WFWorkflowActionParameters']
                 for reference in find_references(parameters):
                     self.assertIn(reference, produced, f"{name}: {action['WFWorkflowActionIdentifier']} uses an output not made yet")
                 if 'UUID' in parameters:
                     produced.add(parameters['UUID'])
 
-    def test_the_address_question_points_at_the_address(self):
+    def test_each_question_points_at_the_text_it_fills(self):
         for name in builder.SHORTCUTS:
             shortcut = builder.build_shortcut(name)
-            question, = shortcut['WFWorkflowImportQuestions']
-            asked = shortcut['WFWorkflowActions'][question['ActionIndex']]
-            self.assertEqual(asked['WFWorkflowActionIdentifier'], 'is.workflow.actions.gettext', name)
-            self.assertEqual(asked['WFWorkflowActionParameters'][question['ParameterKey']], question['DefaultValue'], name)
+            self.assertGreaterEqual(len(shortcut['WFWorkflowImportQuestions']), 1, name)
+            for question in shortcut['WFWorkflowImportQuestions']:
+                asked = shortcut['WFWorkflowActions'][question['ActionIndex']]
+                self.assertEqual(asked['WFWorkflowActionIdentifier'], 'is.workflow.actions.gettext', name)
+                self.assertEqual(asked['WFWorkflowActionParameters'][question['ParameterKey']], question['DefaultValue'], name)
 
     def test_every_request_goes_to_the_address_asked_for(self):
         for name in builder.SHORTCUTS:
-            requests = [action for action in builder.build_shortcut(name)['WFWorkflowActions']
-                        if action['WFWorkflowActionIdentifier'].endswith('downloadurl')]
-            self.assertEqual(len(requests), 1, name)
-            url = requests[0]['WFWorkflowActionParameters']['WFURL']['Value']
-            self.assertTrue(url['string'].startswith(f'{builder.VARIABLE_MARK}/api/'), name)
-            self.assertEqual(url['attachmentsByRange']['{0, 1}']['OutputName'], builder.ADDRESS_OUTPUT_NAME, name)
+            for request in [action for action in actions_of(name) if action['WFWorkflowActionIdentifier'].endswith('downloadurl')]:
+                url = request['WFWorkflowActionParameters']['WFURL']['Value']
+                self.assertTrue(url['string'].startswith(f'{builder.VARIABLE_MARK}/api/'), name)
+                self.assertEqual(url['attachmentsByRange']['{0, 1}']['OutputName'], builder.ADDRESS_OUTPUT_NAME, name)
+
+    def test_an_if_opens_and_closes_as_one_group(self):
+        for name in builder.SHORTCUTS:
+            parts = [action['WFWorkflowActionParameters'] for action in actions_of(name)
+                     if action['WFWorkflowActionIdentifier'].endswith('conditional')]
+            if not parts:
+                continue
+            self.assertEqual([part['WFControlFlowMode'] for part in parts], [0, 1, 2], name)
+            self.assertEqual(len({part['GroupingIdentifier'] for part in parts}), 1, name)
 
     def test_each_can_be_written_as_a_property_list(self):
         for name in builder.SHORTCUTS:
@@ -66,17 +85,59 @@ class EveryShortcutTests(unittest.TestCase):
             self.assertEqual(plistlib.loads(plistlib.dumps(shortcut, fmt=plistlib.FMT_BINARY)), shortcut, name)
 
 
+class HomeAndTailscaleTests(unittest.TestCase):
+    def test_each_bed_shortcut_comes_in_both_kinds(self):
+        for name in builder.TWO_KINDS:
+            self.assertIn(name, builder.SHORTCUTS)
+            self.assertIn(f'{name}{TAILSCALE}', builder.SHORTCUTS)
+
+    def test_the_home_kind_asks_for_the_home_address_and_has_no_tailscale_step(self):
+        for name in builder.TWO_KINDS:
+            shortcut = builder.build_shortcut(name)
+            question, = shortcut['WFWorkflowImportQuestions']
+            self.assertEqual(question['DefaultValue'], builder.HOME_ADDRESS, name)
+            self.assertNotIn(TAILSCALE_ACTION, [action['WFWorkflowActionIdentifier'] for action in shortcut['WFWorkflowActions']], name)
+
+    def test_the_tailscale_kind_connects_and_waits_before_its_request(self):
+        for name in builder.TWO_KINDS:
+            shortcut = builder.build_shortcut(f'{name}{TAILSCALE}')
+            question, = shortcut['WFWorkflowImportQuestions']
+            self.assertEqual(question['DefaultValue'], builder.TAILSCALE_ADDRESS, name)
+            self.assertEqual(question['Text'], builder.TAILSCALE_ADDRESS_QUESTION, name)
+            order = [action['WFWorkflowActionIdentifier'] for action in shortcut['WFWorkflowActions']]
+            connect = order.index(TAILSCALE_ACTION)
+            self.assertEqual(order[connect + 1], 'is.workflow.actions.delay', name)
+            self.assertLess(connect, order.index('is.workflow.actions.downloadurl'), name)
+
+
 class SendSleepTests(unittest.TestCase):
     def setUp(self):
-        self.actions = builder.build_shortcut('Send sleep to SevenSleep')['WFWorkflowActions']
+        self.actions = actions_of('Send sleep to SevenSleep')
 
     def test_actions_run_in_the_order_the_shortcut_needs(self):
         self.assertEqual(identifiers(self.actions), [
-            'gettext', 'filter.health.quantity', 'repeat.each',
+            'gettext', 'gettext', 'getwifi', 'conditional',
+            'filter.health.quantity', 'repeat.each',
             'properties.health.quantity', 'format.date', 'properties.health.quantity', 'format.date',
             'properties.health.quantity', 'gettext', 'repeat.each',
             'downloadurl', 'getvalueforkey', 'notification',
+            'conditional', 'notification', 'conditional',
         ])
+
+    def test_it_only_sends_on_the_home_wifi(self):
+        check = self.actions[3]['WFWorkflowActionParameters']
+        self.assertEqual(check['WFCondition'], builder.OPERATOR_IS)
+        self.assertEqual(check['WFInput']['Variable']['Value']['OutputName'], 'Network Details')
+        compared = check['WFConditionalActionString']['Value']['attachmentsByRange']['{0, 1}']
+        self.assertEqual(compared['OutputName'], builder.WIFI_OUTPUT_NAME)
+        # Everything that reads Health or reaches the Pod sits between the If and its Otherwise
+        otherwise = identifiers(self.actions).index('conditional', 4)
+        self.assertLess(identifiers(self.actions).index('downloadurl'), otherwise)
+        self.assertEqual(identifiers(self.actions)[otherwise + 1:], ['notification', 'conditional'])
+
+    def test_it_asks_for_the_address_and_the_wifi(self):
+        questions = builder.build_shortcut('Send sleep to SevenSleep')['WFWorkflowImportQuestions']
+        self.assertEqual([question['Text'] for question in questions], [builder.HOME_ADDRESS_QUESTION, builder.WIFI_QUESTION])
 
     def test_the_repeat_opens_and_closes_as_one_group(self):
         opening, closing = [action['WFWorkflowActionParameters'] for action in self.actions
@@ -88,14 +149,14 @@ class SendSleepTests(unittest.TestCase):
         self.assertIn('UUID', closing)
 
     def test_each_line_is_start_end_value(self):
-        line = self.actions[8]['WFWorkflowActionParameters']['WFTextActionText']['Value']
+        line = self.actions[11]['WFWorkflowActionParameters']['WFTextActionText']['Value']
         mark = builder.VARIABLE_MARK
         self.assertEqual(line['string'], f'{mark}|{mark}|{mark}')
         names = [line['attachmentsByRange'][position]['OutputName'] for position in ('{0, 1}', '{2, 1}', '{4, 1}')]
         self.assertEqual(names, ['Formatted Date', 'Formatted Date', 'Value'])
 
     def test_the_request_posts_source_and_samples_as_json(self):
-        request = self.actions[10]
+        request = find_action(self.actions, 'downloadurl')
         parameters = request['WFWorkflowActionParameters']
         self.assertEqual(parameters['WFURL']['Value']['string'], f'{builder.VARIABLE_MARK}/api/autopilot/sleepTimes')
         self.assertEqual((parameters['WFHTTPMethod'], parameters['WFHTTPBodyType']), ('POST', 'JSON'))
@@ -104,32 +165,49 @@ class SendSleepTests(unittest.TestCase):
 
 class BedShortcutTests(unittest.TestCase):
     def test_bed_temperature_asks_for_a_number_and_posts_it_as_one(self):
-        address, ask, request = builder.build_shortcut('Bed temperature')['WFWorkflowActions']
+        address, ask, request = actions_of('Bed temperature')
         self.assertEqual(ask['WFWorkflowActionParameters']['WFInputType'], 'Number')
         self.assertTrue(ask['WFWorkflowActionParameters']['WFAskActionAllowsNegativeNumbers'])
         dial, = json_fields(request)
         self.assertEqual((dial['WFKey']['Value']['string'], dial['WFItemType']), ('dial', builder.ITEM_TYPE_NUMBER))
 
     def test_bed_alarm_asks_for_a_time_and_posts_it_as_text(self):
-        address, ask, request = builder.build_shortcut('Bed alarm')['WFWorkflowActions']
+        address, ask, request = actions_of('Bed alarm')
         self.assertEqual(ask['WFWorkflowActionParameters']['WFInputType'], 'Time')
         time, = json_fields(request)
         self.assertEqual((time['WFKey']['Value']['string'], time['WFItemType']), ('time', builder.ITEM_TYPE_TEXT))
         self.assertTrue(request['WFWorkflowActionParameters']['WFURL']['Value']['string'].endswith('/api/alarm/time'))
 
     def test_bed_status_reads_without_changing_anything(self):
-        actions = builder.build_shortcut('Bed status')['WFWorkflowActions']
+        actions = actions_of('Bed status')
         self.assertEqual(identifiers(actions), ['gettext', 'downloadurl', 'getvalueforkey', 'showresult'])
         self.assertNotIn('WFHTTPMethod', actions[1]['WFWorkflowActionParameters'])
         self.assertEqual(actions[2]['WFWorkflowActionParameters']['WFDictionaryKey'], 'summary')
 
-    def test_bed_off_turns_both_sides_off(self):
-        address, request = builder.build_shortcut('Bed off')['WFWorkflowActions']
-        for side in json_fields(request):
-            self.assertEqual(side['WFItemType'], builder.ITEM_TYPE_DICTIONARY)
-            is_on, = side['WFValue']['Value']['WFDictionaryFieldValueItems']
-            self.assertEqual((is_on['WFKey']['Value']['string'], is_on['WFValue']['Value']), ('isOn', False))
-        self.assertEqual([side['WFKey']['Value']['string'] for side in json_fields(request)], ['left', 'right'])
+    def test_bed_off_and_away_mode_set_both_sides(self):
+        for name, key, wanted in (('Bed off', 'isOn', False), ('Away mode on', 'awayMode', True), ('Away mode off', 'awayMode', False)):
+            request = find_action(actions_of(name), 'downloadurl')
+            self.assertEqual([side['WFKey']['Value']['string'] for side in json_fields(request)], ['left', 'right'], name)
+            for side in json_fields(request):
+                self.assertEqual(side['WFItemType'], builder.ITEM_TYPE_DICTIONARY, name)
+                switch, = side['WFValue']['Value']['WFDictionaryFieldValueItems']
+                self.assertEqual((switch['WFKey']['Value']['string'], switch['WFValue']['Value']), (key, wanted), name)
+        away = find_action(actions_of('Away mode on'), 'downloadurl')
+        self.assertTrue(away['WFWorkflowActionParameters']['WFURL']['Value']['string'].endswith('/api/settings'))
+
+    def test_open_sevensleep_goes_straight_in_at_home_and_through_tailscale_elsewhere(self):
+        actions = actions_of('Open SevenSleep')
+        order = [action['WFWorkflowActionIdentifier'] for action in actions]
+        short = identifiers(actions)
+        self.assertEqual(short[:5], ['gettext', 'gettext', 'gettext', 'getwifi', 'conditional'])
+        first_open, second_open = [index for index, name in enumerate(short) if name == 'openurl']
+        otherwise = short.index('conditional', 5)
+        self.assertLess(first_open, otherwise)
+        self.assertLess(otherwise, order.index(TAILSCALE_ACTION))
+        self.assertLess(order.index(TAILSCALE_ACTION), second_open)
+        opened = [actions[index]['WFWorkflowActionParameters']['WFInput']['Value']['attachmentsByRange']['{0, 1}']['OutputName']
+                  for index in (first_open, second_open)]
+        self.assertEqual(opened, [builder.ADDRESS_OUTPUT_NAME, builder.AWAY_ADDRESS_OUTPUT_NAME])
 
 
 if __name__ == '__main__':

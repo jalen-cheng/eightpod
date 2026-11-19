@@ -3,6 +3,7 @@ import { Box, Divider, Switch } from '@mui/material';
 import { Settings } from '@api/settingsSchema.ts';
 import { useAppStore } from '@state/appStore.tsx';
 import { SENTRY_DSN } from '../../sentry.tsx';
+import BiometricsSetting from './BiometricsSetting.tsx';
 import LedSwitch from './DeviceSettingsSection/LedSwitch.tsx';
 import ManualOnSettings from './DeviceSettingsSection/ManualOnSettings.tsx';
 import Section from './Section.tsx';
@@ -18,7 +19,7 @@ type OtherSectionProps = {
 };
 
 // Settings that are set once and rarely looked at again: which way round the bed is, the hub's
-// light, and what turning the bed on by hand does
+// light, what turning the bed on by hand does, and the older biometrics service
 export default function OtherSection({ settings, updateSettings }: OtherSectionProps) {
   const { isUpdating } = useAppStore();
   const { services, updateServices } = useUpdateServices();
@@ -40,6 +41,8 @@ export default function OtherSection({ settings, updateSettings }: OtherSectionP
         <LedSwitch/>
         <Divider/>
         <ManualOnSettings settings={ settings } updateSettings={ updateSettings }/>
+        <Divider/>
+        <BiometricsSetting/>
         { /* Only offered in a build that has somewhere to send reports */ }
         { SENTRY_DSN && services && (
           <>

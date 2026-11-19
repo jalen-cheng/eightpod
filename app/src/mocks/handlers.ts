@@ -90,9 +90,6 @@ const buildDemoNight = (startedAtMs: number, asleepMinutes: number, variant: num
   };
 };
 
-// The demo's 20-minute autopilot test, when one is running
-const TEST_MINUTES = 20;
-let testEndsAtMs = 0;
 
 export const handlers = [
   http.post('/api/metrics/presence/sensors/empty', async () => {
@@ -121,30 +118,15 @@ export const handlers = [
       headers: { 'Content-Disposition': 'attachment; filename="sevensleep-nights-demo.json"' },
     });
   }),
-  // The 20-minute test run: started and stopped like on a Pod, and over when its time is up
-  http.post('/api/autopilot/rehearsal', async () => {
-    await delay(120);
-    if (!getSettings().autopilot.enabled) return HttpResponse.json({ error: 'Switch the autopilot on first.' }, { status: 409 });
-    testEndsAtMs = Date.now() + TEST_MINUTES * MINUTE_MS;
-    return HttpResponse.json({ minutes: TEST_MINUTES });
-  }),
-  http.delete('/api/autopilot/rehearsal', async () => {
-    await delay(120);
-    const stopped = testEndsAtMs > Date.now();
-    testEndsAtMs = 0;
-    return HttpResponse.json({ stopped });
-  }),
   // The autopilot early in the night: the left sleeper asleep, the right side empty
   http.get('/api/autopilot', async () => {
     await delay(60);
-    const testMinutesLeft = Math.ceil((testEndsAtMs - Date.now()) / MINUTE_MS);
     return HttpResponse.json({
       available: true,
       enabled: getSettings().autopilot.enabled,
       room: { temperatureF: 68, humidityPercent: 46 },
-      rehearsal: testMinutesLeft > 0 ? { minutesLeft: testMinutesLeft } : undefined,
       left: {
-        stage: 'asleep', heartRate: 54, breathingRate: 14, minutesAsleep: 62, offsetF: -3,
+        stage: 'asleep', minutesAsleep: 62, offsetF: -3,
         lastChange: '81°F, heading for 3°F cooler (time of night, first sleep cycle)', learned: { early: -0.5, middle: 0, late: 0 },
         sleepKind: 'night', rules: { stillMinutesToSleep: 10, restlessSecondsToWake: 20 },
         tracker: { source: 'Apple Health', syncedAt: new Date().toISOString(), nights: 6, agreementPercent: 94, isTuned: true },

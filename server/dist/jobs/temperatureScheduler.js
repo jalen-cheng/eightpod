@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="6215007b-d3bc-5dff-a3ce-604f22b7f63d")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="14d8fbf0-cdd3-536c-b7e0-a107907c2de9")}catch(e){}}();
 import schedule from 'node-schedule';
 import { getDayIndexForSchedule, logJob } from './utils.js';
 import { updateDeviceStatus } from '../routes/deviceStatus/updateDeviceStatus.js';
@@ -7,6 +7,7 @@ import serverStatus from '../serverStatus.js';
 import logger from '../logger.js';
 import { isPreWarmActive } from './preWarmState.js';
 import { isManualHoldActive } from './manualHold.js';
+import { doesAutopilotKeepOwnBase } from './autopilotBase.js';
 const scheduleAdjustment = (timeZone, side, day, time, temperature, powerOnTime) => {
     const onRule = new schedule.RecurrenceRule();
     const dayOfWeekIndex = getDayIndexForSchedule(day, time, powerOnTime);
@@ -24,6 +25,10 @@ const scheduleAdjustment = (timeZone, side, day, time, temperature, powerOnTime)
             }
             if (isPreWarmActive(side)) {
                 logJob('Skipping temperature adjustment job, warming up for the alarm', side, day, dayOfWeekIndex, time);
+                return;
+            }
+            if (doesAutopilotKeepOwnBase()) {
+                logJob('Skipping temperature adjustment job, the autopilot is keeping its own base tonight', side, day, dayOfWeekIndex, time);
                 return;
             }
             logJob('Executing temperature adjustment job', side, day, dayOfWeekIndex, time);
@@ -57,4 +62,4 @@ export const scheduleTemperatures = (settingsData, side, day, dailySchedule) => 
     });
 };
 //# sourceMappingURL=temperatureScheduler.js.map
-//# debugId=6215007b-d3bc-5dff-a3ce-604f22b7f63d
+//# debugId=14d8fbf0-cdd3-536c-b7e0-a107907c2de9

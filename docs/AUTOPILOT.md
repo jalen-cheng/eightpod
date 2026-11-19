@@ -1,11 +1,12 @@
 # Autopilot (Pod 5, experimental)
 
 Off by default. Switch it on in **Settings > Autopilot > Adjust the temperature while I sleep**.
-While someone is asleep, it moves the bed a few degrees around the temperature the schedule set.
+While someone is asleep, it moves the bed a few degrees around a base temperature: the
+schedule's, or one of its own that you give it.
 
 **Not yet run through a real night.** It is covered by tests and by made-up nights run against
-the built server. [Trying it without a night](#trying-it-without-a-night) has a 20-minute test
-you can run on the bed at any hour.
+the built server. [Trying it without a night](#trying-it-without-a-night) has the checks that
+take minutes.
 
 Where the sensors could be wrong, it is built to do little, not to guess: the rules below hold
 whatever the sensors say.
@@ -26,10 +27,17 @@ whatever the sensors say.
 - **What you set before falling asleep stays.** If you set the bed to something other than the
   schedule's temperature before you slept, that is what the night's offset is counted from,
   until the schedule's next change.
-- **It leaves alone** a side that is off (setting a temperature never switches one on), away
-  mode, the wake-up heat, and a manual temperature that is holding the schedule back.
-- **The night ends at the wake-up time.** From then the bed is the schedule's and the alarm's
-  again, and the autopilot does not start another night until the bed has been empty.
+- **Or give it a base of its own.** **Settings > Autopilot > Base temperature** is "The
+  schedule's" unless you pick a temperature. With one picked, every night is counted from it,
+  whatever the bed was set to when you fell asleep, and the schedule's temperature changes
+  wait until the night is over (bed on, bed off, the warm-up and the alarm still run). When
+  the night ends the bed is given what the schedule wants at that hour.
+- **It leaves alone**, side by side, a side that is off (setting a temperature never switches
+  one on), one in away mode, one warming up for its alarm, and one turned on by hand with the
+  schedule paused. The other side is still moved.
+- **The night ends at the wake-up time**, or when a one-time alarm goes off, however early.
+  From then the bed is the schedule's and the alarm's again, and the autopilot does not start
+  another night until the bed has been empty.
 - **It cleans up.** When a night ends (the wake-up time, the bed empty for 30 minutes, or the
   autopilot switched off), it takes its offset back out of each side still set to what it
   last put there. A temperature you have set since is left alone. If the Pod cannot be reached
@@ -200,24 +208,6 @@ is steered from the start. Any other is left alone, and if it is still going aft
 autopilot takes over from there.
 
 ## Trying it without a night
-
-**Settings > Autopilot > 20-minute test > Start** plays a whole night's plan on the bed in 20
-minutes, from the temperature it is set to now. The bed has to be on and the autopilot switched
-on; nobody needs to be in it. The same code that runs a night runs the test, on a clock 24
-times as fast, so what you watch is what a night would do to the bed's setting:
-
-- about a degree a minute down to 3°F cooler, back up through the set temperature, a degree
-  warm at the end, then back to where it started;
-- never more than 4°F from where it started, never more than one degree in a step;
-- change the temperature yourself part-way and it holds exactly what you set for a few minutes
-  (a third of the test), then walks back a degree at a time;
-- **Stop**, or switching the autopilot off, puts the bed back within a minute.
-
-The line under the button says how long is left and what it last did and why. The water takes
-longer than a minute to follow, so watch the target on the Temperature page, not the "Bed at"
-reading. A test learns nothing from what you change, a restart ends it, and it gives way to the
-schedule: if a scheduled temperature change, bed-on or bed-off time comes up while it runs, the
-test ends and the bed is the schedule's. `POST /api/autopilot/rehearsal` starts one and `DELETE` stops it.
 
 Sleep detection can be checked without the autopilot on, in about 20 minutes: lie down and
 keep still. Settings > Autopilot shows "Awake", then "Asleep" once
