@@ -10,8 +10,8 @@ it judges sleep. Controlling the bed from Shortcuts, Home Assistant or a script 
 **iPhone only.** Apple Watch and Whoop write sleep to Apple Health, and Fitbit devices
 (including the Fitbit Air) do through the Google Health app's Apple Health connection, which
 lists sleep sessions and stages among what it writes. Apple Health has no web address a Pod
-could ask: only something on the phone can read it. So the link is an iPhone Shortcut, run by
-an automation each morning.
+could ask: only something on the phone can read it. So the link is an iPhone Shortcut. One run
+sends the last two weeks of sleep, so it is tapped every week or so, not every day.
 
 ### Add the ready-made Shortcut
 
@@ -27,24 +27,24 @@ an automation each morning.
 
 **It only sends on your home Wi-Fi.** The Pod's home address works nowhere else, so on any other
 network the Shortcut sends nothing and says so ("Not on Home (this phone is on Cafe), so no
-sleep was sent."). That makes it safe to run every day without thinking about where you are.
+sleep was sent."). So it does no harm to run it anywhere.
 
-**Make it run by itself.** In **Shortcuts > Automation**, add both of these, each set to **Run
-Immediately** and running this Shortcut:
+**When to run it.** Every week or so, or whenever you want the Sleep page to show your tracker's
+times. Each run sends every night of the last two weeks at once, so a missed week costs nothing,
+and the 7 nights the sleep rules are fitted to can arrive in one tap. Sending a night twice
+changes nothing, and a night the Pod has no stay in bed for is passed over.
 
-- **Wi-Fi**: when the iPhone joins your home network. This sends the night whenever you come home.
-- **Time of Day**: once a day, at a time you are usually up and at home. This covers the days the
-  phone never leaves the house.
+If you would sooner not think about it, **Shortcuts > Automation** can run it for you (**Wi-Fi**:
+when the iPhone joins your home network, set to **Run Immediately**). An iPhone only lets a
+Shortcut read health data while it is unlocked, so a run that comes while the phone is locked
+waits until you next use it.
 
-Sending the same night twice changes nothing. An iPhone only lets a Shortcut read health data
-while it is unlocked, so a run that comes while the phone is locked waits until you next use it.
-
-It reads the Sleep samples that began in the last two days and sends each one's start, end and
+It reads the Sleep samples that began in the last two weeks and sends each one's start, end and
 stage.
 
 | What you see | What it means |
 |---|---|
-| "No sleep found in what Apple Health sent" | The Shortcut reached the Pod, and Health has no sleep for the last two days. Look in **Health > Browse > Sleep**: if last night is not there, your tracker's app is not writing sleep to Apple Health |
+| "No sleep found in what Apple Health sent" | The Shortcut reached the Pod, and Health has no sleep for the last two weeks. Look in **Health > Browse > Sleep**: if last night is not there, your tracker's app is not writing sleep to Apple Health |
 | "Not on …, so no sleep was sent" | The phone is not on the Wi-Fi named when the Shortcut was added. If it is, the name does not match: fix it in the Shortcut's second action |
 | "Could not connect to the server", or the address not found | The phone cannot reach the Pod. Allow Shortcuts under **Settings > Privacy & Security > Local Network**, or put the Pod's IP address in the Shortcut's first action |
 | "…received… No stay in bed saved on the Pod overlaps it" | The sleep arrived, but the Pod has no saved stay for those hours. It saves stays of 20 minutes or more, and only while a person is on the bed |

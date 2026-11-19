@@ -248,7 +248,7 @@ There is no separate control for either: the ordinary ones are the manual ones.
 ## Linking a sleep tracker
 
 A watch or band is a better judge of when you slept than the bed's own guesses, and its record
-can be sent each morning so the bed fits its sleep rules to it: 7 nights, and only a fit that
+can be sent, two weeks at a time, so the bed fits its sleep rules to it: 7 nights, and only a fit that
 does better on nights it was not fitted to is taken up. The link is an iPhone Shortcut that
 reads Apple Health (Apple Watch, Whoop and Fitbit all write there).
 [Connections](CONNECTIONS.md#link-apple-health) has the steps, and what is done with what is

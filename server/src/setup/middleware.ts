@@ -21,7 +21,8 @@ export default function (app: Express) {
     next();
   });
 
-  app.use(express.json());
+  // Room for two weeks of a tracker's sleep samples in one request (the default is 100 KB)
+  app.use(express.json({ limit: '1mb' }));
 
   // Allow local development
   app.use(
