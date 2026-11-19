@@ -9,8 +9,30 @@ differs, it says so; [POD_MODELS.md](POD_MODELS.md) has the detail.
 On a phone or computer on the same Wi-Fi as the Pod, open `http://<pod-ip>:3000`, for example
 `http://192.168.1.50:3000`. `http://sevensleep.local` also works where the installer could set the name up.
 
-To keep it on your phone's home screen: in Safari, tap Share, then **Add to Home Screen**. In
-Chrome on Android, open the three-dot menu, then **Add to Home screen**.
+### Install it as an app
+
+There is nothing to download from an app store: the app is the page, and a phone can keep it
+as an icon that opens full screen, without the browser's bars.
+
+**iPhone or iPad**
+
+1. Open `http://sevensleep.local` in **Safari** (other iPhone browsers cannot add it).
+2. Tap the **Share** button, the square with an arrow.
+3. Scroll down and tap **Add to Home Screen**, then **Add**.
+
+**Android**
+
+1. Open the app in **Chrome**. If `http://sevensleep.local` does not load, use
+   `http://<pod-ip>:3000`.
+2. Open the three-dot menu and tap **Add to Home screen**, then **Install** or **Add**.
+
+**Mac**: in Safari, **File > Add to Dock**. In Chrome or Edge on any computer, the install
+icon at the right of the address bar.
+
+The icon opens the address it was added from, so add it from the one you will keep using:
+`http://sevensleep.local` at home, or `http://sevensleep:3000` if you reach the Pod over
+Tailscale ([REMOTE_ACCESS.md](REMOTE_ACCESS.md)). It needs the Pod to be reachable; nothing
+works offline.
 
 The app has four tabs: **Temperature**, **Schedules**, **Data** and **Settings**. The **Status** page opens from the "Status: Healthy" link, at the bottom right on a computer and beside the heading of Data and Settings on a phone.
 There is no login. Anyone on your home network can open it.
