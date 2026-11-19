@@ -21,7 +21,7 @@ const describePreference = ({ learned }: AutopilotSnapshot['left']): string => {
   return parts.length > 0 ? parts.join(' · ') : 'None yet';
 };
 
-// The two things the autopilot has tuned for one side, each in a line
+// The two things the autopilot has tuned for the bed's sleeper, each in a line
 export default function TuningCard({ tuning }: TuningCardProps) {
   const facts = [
     ['Sleep detection', describeDetection(tuning)],

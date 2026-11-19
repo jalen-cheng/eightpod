@@ -21,7 +21,6 @@ import NightChart from './NightChart.tsx';
 import TuningCard from './TuningCard.tsx';
 
 const DATE_FORMAT = 'YYYY-MM-DD';
-const SIDES = ['left', 'right'] as const;
 // A night still being recorded gains a row a minute
 const TODAY_REFRESH_MS = 60_000;
 
@@ -73,12 +72,11 @@ const NightSummary = ({ night }: { night: NightDetail }) => {
 
 // One day at a time: last night by default, with arrows and a calendar to move to another.
 // A night belongs to the morning it ended on. These come from the bed's own log, so they are
-// here whether or not biometrics is on. The side shown is the one this device controls; with
-// the sides linked there is a choice, as each side's sensors keep their own log.
+// here whether or not biometrics is on. With the sides linked the bed is one sleeper's and is
+// shown as one, whichever side they lay on; otherwise it is the side this device controls.
 export default function NightsPage() {
   const { side, linkSides } = useAppStore();
-  const [pickedSide, setPickedSide] = useState(side);
-  const shownSide = linkSides ? pickedSide : side;
+  const shownSide = linkSides ? undefined : side;
   // Until a day is picked the page shows today, worked out afresh each time it draws: the app
   // keeps the clock in the Pod's time zone, and a page left open overnight moves on with it
   const [pickedDay, setPickedDay] = useState<Moment | undefined>(undefined);
@@ -93,10 +91,6 @@ export default function NightsPage() {
   const showDay = (nextDay: Moment) => {
     // Going back to today lets the page follow the clock again
     setPickedDay(nextDay.isSameOrAfter(today, 'day') ? undefined : nextDay.clone().startOf('day'));
-    setStayIndex(0);
-  };
-  const showSide = (nextSide: typeof side) => {
-    setPickedSide(nextSide);
     setStayIndex(0);
   };
 
@@ -122,37 +116,21 @@ export default function NightsPage() {
             <NavigateNextIcon/>
           </IconButton>
         </Box>
-        { (linkSides || (nights && nights.length > 1)) && (
-          <Box sx={ { display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 1, flexWrap: 'wrap' } }>
-            { linkSides && (
-              <ToggleButtonGroup
-                exclusive
-                size="small"
-                value={ shownSide }
-                onChange={ (_event, picked: typeof side | null) => picked && showSide(picked) }
-                aria-label="Side of the bed"
-              >
-                { SIDES.map(option => (
-                  <ToggleButton key={ option } value={ option } sx={ { px: 2 } }>{ option === 'left' ? 'Left' : 'Right' }</ToggleButton>
-                )) }
-              </ToggleButtonGroup>
-            ) }
-            { nights && nights.length > 1 && (
-              <ToggleButtonGroup
-                exclusive
-                size="small"
-                value={ Math.min(stayIndex, nights.length - 1) }
-                onChange={ (_event, picked: number | null) => picked !== null && setStayIndex(picked) }
-                aria-label="Which sleep of the day"
-              >
-                { nights.map((stay, index) => (
-                  <ToggleButton key={ stay.startedAtMs } value={ index } sx={ { px: 1.5 } }>
-                    { stay.kind === 'nap' ? 'Nap' : 'Night' } { formatClock(stay.asleepAtMs ?? stay.startedAtMs) }
-                  </ToggleButton>
-                )) }
-              </ToggleButtonGroup>
-            ) }
-          </Box>
+        { nights && nights.length > 1 && (
+          <ToggleButtonGroup
+            exclusive
+            size="small"
+            value={ Math.min(stayIndex, nights.length - 1) }
+            onChange={ (_event, picked: number | null) => picked !== null && setStayIndex(picked) }
+            aria-label="Which sleep of the day"
+            sx={ { alignSelf: 'flex-end' } }
+          >
+            { nights.map((stay, index) => (
+              <ToggleButton key={ `${stay.side}-${stay.startedAtMs}` } value={ index } sx={ { px: 1.5 } }>
+                { stay.kind === 'nap' ? 'Nap' : 'Night' } { formatClock(stay.asleepAtMs ?? stay.startedAtMs) }
+              </ToggleButton>
+            )) }
+          </ToggleButtonGroup>
         ) }
         { isPending && <Skeleton variant="rounded" height={ 180 }/> }
         { isError && <Alert severity="error">Unable to load this day from your Pod.</Alert> }
@@ -165,7 +143,7 @@ export default function NightsPage() {
             <NightChart night={ night }/>
           </>
         ) }
-        { autopilot?.available && <TuningCard tuning={ autopilot[shownSide] }/> }
+        { autopilot?.available && <TuningCard tuning={ autopilot.left }/> }
       </Box>
     </PageContainer>
   );

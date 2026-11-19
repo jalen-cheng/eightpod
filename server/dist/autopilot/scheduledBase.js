@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="a1ee3de9-39fc-5bf0-b776-eb28e5d33cb5")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="8ad694da-048d-514e-b842-edd56bbe429d")}catch(e){}}();
 const MINUTES_PER_DAY = 24 * 60;
 const toMinutes = (time) => Number(time.slice(0, 2)) * 60 + Number(time.slice(3, 5));
 // Minutes from bedtime to a time later that night (past midnight counts as later)
@@ -20,6 +20,18 @@ export function findScheduledTemperatureF(night, clock) {
         }
     }
     return temperatureF;
+}
+// The temperature a night's offset is counted from:
+//   - a temperature the sleeper set before falling asleep, for as long as the schedule still
+//     wants what it wanted then: the night does not undo their choice
+//   - otherwise what the schedule wants now
+//   - at an hour the schedule does not cover, whatever it was last, so the base never jumps
+//     back to an earlier temperature in the middle of a night
+export function findNightBaseF(input) {
+    if (input.scheduledNowF === undefined)
+        return input.lastBaseF ?? input.temperatureAtOnsetF;
+    const isScheduleUnchanged = input.scheduledAtOnsetF !== undefined && input.scheduledNowF === input.scheduledAtOnsetF;
+    return input.isOnsetTemperatureOwn && isScheduleUnchanged ? input.temperatureAtOnsetF : input.scheduledNowF;
 }
 // A sleep shorter than this is a nap
 export const NAP_UNDER_MINUTES = 3 * 60;
@@ -63,4 +75,4 @@ export function isNightExpected(onsetClock, usual, night) {
     return hour < NAP_HOURS_WITH_NOTHING_TO_GO_BY.from || hour >= NAP_HOURS_WITH_NOTHING_TO_GO_BY.until;
 }
 //# sourceMappingURL=scheduledBase.js.map
-//# debugId=a1ee3de9-39fc-5bf0-b776-eb28e5d33cb5
+//# debugId=8ad694da-048d-514e-b842-edd56bbe429d

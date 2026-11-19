@@ -5,12 +5,13 @@ import {
   HEART_RATE_WINDOW_SECONDS, PIEZO_SAMPLES_PER_SECOND, countMovementSeconds, estimateHeartRate, findQuietSwing, measureSwing,
 } from '../server/src/autopilot/heartRate.ts';
 import {
-  MAX_OFFSET_F, NO_LEARNED_OFFSETS, curveOffsetF, learnFromCorrection, nightPartAt, planTemperature, roomOffsetF,
+  MAX_OFFSET_F, NO_LEARNED_OFFSETS, REHEARSAL_MINUTES, REHEARSAL_NIGHT_HOURS, curveOffsetF, learnFromCorrection, nightPartAt,
+  planTemperature, rehearsalClockMs, roomOffsetF,
 } from '../server/src/autopilot/nightPlan.ts';
 import {
-  findScheduledTemperatureF, findUsualSleep, isNightExpected, isWithinScheduledNight, kindOfSleep,
+  findNightBaseF, findScheduledTemperatureF, findUsualSleep, isNightExpected, isWithinScheduledNight, kindOfSleep,
 } from '../server/src/autopilot/scheduledBase.ts';
-import { countWakeUps } from '../server/src/autopilot/nightRecord.ts';
+import { countWakeUps, pickBedStays } from '../server/src/autopilot/nightRecord.ts';
 import {
   BREATHING_SAMPLES_PER_SECOND, BREATHING_WINDOW_SECONDS, estimateBreathingRate, measureBreathingSpread,
 } from '../server/src/autopilot/breathingRate.ts';
@@ -469,4 +470,57 @@ test('wake-ups are the breaks in a night\'s sleep, not the time before it or aft
   assert.equal(countWakeUps(stages(['awake', 20], ['asleep', 200], ['awake', 10])), 0);
   assert.equal(countWakeUps(stages(['awake', 20], ['asleep', 100], ['awake', 6], ['asleep', 90], ['out', 12], ['awake', 4], ['asleep', 60])), 2);
   assert.equal(countWakeUps(stages(['awake', 40])), 0);
+});
+
+test('a temperature set before falling asleep is the night\'s base until the schedule moves on', () => {
+  const setByHand = { temperatureAtOnsetF: 75, scheduledAtOnsetF: 70, isOnsetTemperatureOwn: true };
+  // The schedule still wants what it wanted at bedtime: the sleeper's own setting stands
+  assert.equal(findNightBaseF({ ...setByHand, scheduledNowF: 70, lastBaseF: 75 }), 75);
+  // The schedule's next change is followed, as it would be without the autopilot
+  assert.equal(findNightBaseF({ ...setByHand, scheduledNowF: 68, lastBaseF: 75 }), 68);
+  // A bed the schedule set is counted from the schedule
+  assert.equal(findNightBaseF({ temperatureAtOnsetF: 70, scheduledAtOnsetF: 70, isOnsetTemperatureOwn: false, scheduledNowF: 70 }), 70);
+});
+
+test('the base never falls back to an earlier temperature when the schedule stops covering the hour', () => {
+  const night = { temperatureAtOnsetF: 68, scheduledAtOnsetF: 68, isOnsetTemperatureOwn: false };
+  // The schedule had warmed the bed to 82 by morning; past its off time the base stays there
+  assert.equal(findNightBaseF({ ...night, scheduledNowF: undefined, lastBaseF: 82 }), 82);
+  // With no schedule at all, the bed's own setting at sleep onset
+  assert.equal(findNightBaseF({ temperatureAtOnsetF: 77, isOnsetTemperatureOwn: false, scheduledNowF: undefined }), 77);
+});
+
+test('a rehearsal plays the whole night in its few minutes, never asking for more than a step a minute apart', () => {
+  const startedAtMs = Date.UTC(2026, 10, 18, 20, 0);
+  const nightMs = REHEARSAL_NIGHT_HOURS * 60 * 60_000;
+  assert.equal(rehearsalClockMs(startedAtMs, startedAtMs), startedAtMs);
+  assert.equal(rehearsalClockMs(startedAtMs, startedAtMs + REHEARSAL_MINUTES * 60_000), startedAtMs + nightMs);
+  // Minute by minute the plan it reads moves by small amounts, so stepping one degree a minute keeps up
+  let previousTargetF = 80;
+  const seen = new Set();
+  for (let minute = 1; minute <= REHEARSAL_MINUTES; minute++) {
+    const clockMs = rehearsalClockMs(startedAtMs, startedAtMs + minute * 60_000);
+    const plan = planTemperature({
+      baseTemperatureF: 80, progress: (clockMs - startedAtMs) / nightMs, minutesSinceSleepOnset: (clockMs - startedAtMs) / 60_000,
+      learned: NO_LEARNED_OFFSETS,
+    });
+    assert.ok(Math.abs(plan.targetTemperatureF - previousTargetF) <= 2, `minute ${minute} jumps ${plan.targetTemperatureF - previousTargetF}`);
+    assert.ok(Math.abs(plan.offsetF) <= MAX_OFFSET_F);
+    previousTargetF = plan.targetTemperatureF;
+    seen.add(plan.offsetF);
+  }
+  // It shows the cool first half and the warm end
+  assert.ok(seen.has(-3) && seen.has(1));
+});
+
+test('one sleeper seen by both sides is one sleep: the side with the most sleep is kept', () => {
+  const stay = (side, startedAtMs, asleep, awake = 0) => ({
+    side, startedAtMs, minutes: [...Array(asleep).fill({ stage: 'asleep' }), ...Array(awake).fill({ stage: 'awake' })],
+  });
+  const nightStartMs = Date.UTC(2026, 10, 18, 7, 0);
+  const left = stay('left', nightStartMs, 400, 30);
+  const rightSameHours = stay('right', nightStartMs + 20 * 60_000, 90, 300);
+  const napLater = stay('right', nightStartMs + 14 * 60 * 60_000, 40, 5);
+  const picked = pickBedStays([rightSameHours, napLater, left]);
+  assert.deepEqual(picked.map(night => [night.side, night.minutes.length]), [['left', 430], ['right', 45]]);
 });

@@ -10,7 +10,7 @@
 
 // Raised when the way the temperature is decided changes, and saved with each night, so nights
 // under different rules are not compared as if they were the same
-export const POLICY_VERSION = 2;
+export const POLICY_VERSION = 3;
 
 // The offset never goes further than this from the base temperature, whatever adds up
 export const MAX_OFFSET_F = 4;
@@ -100,6 +100,17 @@ export function roomOffsetF(roomAtSleepOnsetF: number | undefined, roomNowF: num
   // `|| 0` turns -0 into 0
   return clamp(-(roomNowF - roomAtSleepOnsetF) * ROOM_GAIN, MAX_ROOM_OFFSET_F) || 0;
 }
+
+// ---------------------------------------------------------------------------------------------
+// A rehearsal plays a whole night's plan in a few minutes, so what the autopilot does to the
+// bed can be watched without sleeping through it. Only its clock differs from a night's.
+// ---------------------------------------------------------------------------------------------
+export const REHEARSAL_MINUTES = 20;
+export const REHEARSAL_NIGHT_HOURS = 8;
+const REHEARSAL_SPEED = REHEARSAL_NIGHT_HOURS * 60 / REHEARSAL_MINUTES;
+
+// Where a rehearsal that began at `startedAtMs` has got to on the clock of the night it plays
+export const rehearsalClockMs = (startedAtMs: number, nowMs: number): number => startedAtMs + (nowMs - startedAtMs) * REHEARSAL_SPEED;
 
 // ---------------------------------------------------------------------------------------------
 // Putting it together

@@ -90,6 +90,10 @@ const buildDemoNight = (startedAtMs: number, asleepMinutes: number, variant: num
   };
 };
 
+// The demo's 20-minute autopilot test, when one is running
+const TEST_MINUTES = 20;
+let testEndsAtMs = 0;
+
 export const handlers = [
   http.post('/api/metrics/presence/sensors/empty', async () => {
     await delay(120);
@@ -101,7 +105,8 @@ export const handlers = [
     await delay(80);
     const query = new URL(request.url).searchParams;
     const date = query.get('date');
-    if (!date || query.get('side') !== 'left') return HttpResponse.json([]);
+    // The demo's sleeper lies on the left; asked for the bed as a whole, that is their record
+    if (!date || query.get('side') === 'right') return HttpResponse.json([]);
     const dayStartMs = new Date(`${date}T00:00:00`).getTime();
     const daysAgo = Math.round((new Date().setHours(0, 0, 0, 0) - dayStartMs) / DAY_MS);
     if (daysAgo < 0 || daysAgo > 13) return HttpResponse.json([]);
@@ -115,16 +120,31 @@ export const handlers = [
       headers: { 'Content-Disposition': 'attachment; filename="sevensleep-nights-demo.json"' },
     });
   }),
+  // The 20-minute test run: started and stopped like on a Pod, and over when its time is up
+  http.post('/api/autopilot/rehearsal', async () => {
+    await delay(120);
+    if (!getSettings().autopilot.enabled) return HttpResponse.json({ error: 'Switch the autopilot on first.' }, { status: 409 });
+    testEndsAtMs = Date.now() + TEST_MINUTES * MINUTE_MS;
+    return HttpResponse.json({ minutes: TEST_MINUTES });
+  }),
+  http.delete('/api/autopilot/rehearsal', async () => {
+    await delay(120);
+    const stopped = testEndsAtMs > Date.now();
+    testEndsAtMs = 0;
+    return HttpResponse.json({ stopped });
+  }),
   // The autopilot early in the night: the left sleeper asleep, the right side empty
   http.get('/api/autopilot', async () => {
     await delay(60);
+    const testMinutesLeft = Math.ceil((testEndsAtMs - Date.now()) / MINUTE_MS);
     return HttpResponse.json({
       available: true,
-      enabled: true,
+      enabled: getSettings().autopilot.enabled,
       room: { temperatureF: 68, humidityPercent: 46 },
+      rehearsal: testMinutesLeft > 0 ? { minutesLeft: testMinutesLeft } : undefined,
       left: {
         stage: 'asleep', heartRate: 54, breathingRate: 14, minutesAsleep: 62, offsetF: -3,
-        lastChange: '3°F cooler (time of night, first sleep cycle)', learned: { early: -0.5, middle: 0, late: 0 },
+        lastChange: '81°F, heading for 3°F cooler (time of night, first sleep cycle)', learned: { early: -0.5, middle: 0, late: 0 },
         sleepKind: 'night', rules: { stillMinutesToSleep: 10, restlessSecondsToWake: 20 },
         tracker: { source: 'Apple Health', syncedAt: new Date().toISOString(), nights: 6, agreementPercent: 94, isTuned: true },
       },

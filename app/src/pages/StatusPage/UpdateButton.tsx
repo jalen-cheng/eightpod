@@ -7,7 +7,7 @@ import DialogTitle from '@mui/material/DialogTitle';
 import Slide from '@mui/material/Slide';
 import { TransitionProps } from '@mui/material/transitions';
 import { useState, forwardRef, type ReactElement, type Ref } from 'react';
-import currentServerInfo from '../../../../../server/src/serverInfo.json';
+import currentServerInfo from '../../../../server/src/serverInfo.json';
 
 import { postJobs } from '@api/jobs.ts';
 import { getLatestVersion, useServerInfo } from '@api/serverInfo.ts';

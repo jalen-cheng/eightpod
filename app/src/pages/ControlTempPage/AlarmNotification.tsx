@@ -1,7 +1,7 @@
 import moment from 'moment-timezone';
 import AlarmIcon from '@mui/icons-material/Alarm';
 import AlarmOffIcon from '@mui/icons-material/AlarmOff';
-import { Box, Button, Menu, MenuItem, Typography } from '@mui/material';
+import { Box, Button, Menu, MenuItem } from '@mui/material';
 
 import { useAppStore } from '@state/appStore.tsx';
 import { useSchedules } from '@api/schedules.ts';
@@ -12,15 +12,13 @@ import AlarmOverride from './AlarmOverride.tsx';
 import AlarmDisabledDialog from './AlarmDisabledDialog.tsx';
 
 type AlarmNotificationProps = {
-  // When the bed turns off, said beside the alarm
-  offTimeLabel?: string;
   // Shown in place of the alarm when there is none to show
   fallback?: ReactNode;
 };
 
 // The next alarm, under the dial's figures: its time as a small button that opens the two things one can
-// do about it (change it for this once, or skip it), with the bed's off time beside it
-export default function AlarmNotification({ offTimeLabel, fallback = null }: AlarmNotificationProps) {
+// do about it (change it for this once, or skip it)
+export default function AlarmNotification({ fallback = null }: AlarmNotificationProps) {
   const { side } = useAppStore();
   const { data: schedules } = useSchedules();
   const { data: settings } = useSettings();
@@ -109,7 +107,6 @@ export default function AlarmNotification({ offTimeLabel, fallback = null }: Ala
       >
         { alarmDisabled ? 'Alarm off' : scheduledAlarmLabel }
       </Button>
-      { offTimeLabel && <Typography variant="caption" sx={ { color: 'text.secondary' } }>Off at { offTimeLabel }</Typography> }
       <Menu anchorEl={ menuAnchor } open={ menuAnchor !== null } onClose={ closeMenu } onClick={ event => event.stopPropagation() }>
         { !alarmDisabled && (
           <MenuItem

@@ -9,23 +9,25 @@ import {
 import PageContainer from '../PageContainer.tsx';
 import PageHeader from '@components/PageHeader.tsx';
 import StatusRow from './StatusRow.tsx';
-import WifiStrength from '@components/WifiStrength.tsx';
-import VersionStatus from '@components/VersionStatus.tsx';
+import DeviceInfo from './DeviceInfo.tsx';
+import Section from '../SettingsPage/Section.tsx';
+import ErrorBoundary from '@components/ErrorBoundary.tsx';
+import { useSettings } from '@api/settings.ts';
+import { useUpdateSettings } from '@lib/useUpdateSettings.ts';
 import { ServerStatusKey, StatusInfo } from '@api/serverStatusSchema.ts';
 
+// The Pod itself (what it is, its Wi-Fi, its software and updating it, restarting it) and the
+// state of each of its services
 export default function StatusPage() {
   const { data, isLoading, dataUpdatedAt } = useServerStatus(5_000);
+  const { data: settings } = useSettings();
+  const updateSettings = useUpdateSettings();
   const updatedAt = moment(dataUpdatedAt);
   const formatted = updatedAt.format('YYYY-MM-DD HH:mm:ss z');
   return (
     <PageContainer>
       <Box>
-        <PageHeader title="Status">
-          <Box sx={ { display: 'flex', flexWrap: 'wrap', gap: 0.75 } }>
-            <WifiStrength/>
-            <VersionStatus/>
-          </Box>
-        </PageHeader>
+        <PageHeader title="Status"/>
         <Typography
           variant="caption"
           sx={ {
@@ -38,6 +40,11 @@ export default function StatusPage() {
           Updated at: { formatted }
         </Typography>
       </Box>
+      <ErrorBoundary componentName="Device info">
+        <Section title="Pod">
+          <DeviceInfo settings={ settings } updateSettings={ updateSettings }/>
+        </Section>
+      </ErrorBoundary>
       { isLoading && <CircularProgress /> }
 
       {

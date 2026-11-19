@@ -3,25 +3,38 @@
 Off by default. Switch it on in **Settings > Autopilot > Adjust the temperature while I sleep**.
 While someone is asleep, it moves the bed a few degrees around the temperature the schedule set.
 
-**Not yet run through a night.** Everything here is covered by tests on made-up nights only.
+**Not yet run through a real night.** It is covered by tests and by made-up nights run against
+the built server. [Trying it without a night](#trying-it-without-a-night) has a 20-minute test
+you can run on the bed at any hour.
+
+Where the sensors could be wrong, it is built to do little, not to guess: the rules below hold
+whatever the sensors say.
 
 ## The rules it keeps
 
 - **One sleeper, whole bed.** It takes the bed to be one sleeper's. Switching it on links the
   two sides, and unlinking them switches it off. Each side is still sensed and saved on its own.
 - **Never more than 4°F** from the schedule's temperature, **one degree at a time**, at most one
-  change every 10 minutes. When the schedule itself changes the temperature, the offset moves
-  with it at once.
-- **Your hand wins.** A temperature you set (app, side buttons, a request to the API) is held
-  exactly as you set it, until the schedule's next change or the end of that third of the
-  night, whichever comes first. The autopilot then carries on, a degree at a time.
+  change every 10 minutes, with no exceptions. When the schedule changes its temperature, the
+  schedule moves the bed as it always does, and the autopilot walks its offset back in over the
+  next few steps. Each side moves from where it is, so sides that were set apart meet a degree
+  at a time and never jump.
+- **Your hand wins.** A temperature you set (app, side buttons, a request to the API), on
+  either side, is held exactly as you set it, until the schedule's next change or the end of
+  that third of the night, whichever comes first. The autopilot then carries on, a degree at
+  a time.
+- **What you set before falling asleep stays.** If you set the bed to something other than the
+  schedule's temperature before you slept, that is what the night's offset is counted from,
+  until the schedule's next change.
 - **It leaves alone** a side that is off (setting a temperature never switches one on), away
   mode, the wake-up heat, and a manual temperature that is holding the schedule back.
 - **The night ends at the wake-up time.** From then the bed is the schedule's and the alarm's
   again, and the autopilot does not start another night until the bed has been empty.
 - **It cleans up.** When a night ends (the wake-up time, the bed empty for 30 minutes, or the
-  autopilot switched off), it takes its offset back out, unless you have set the temperature
-  since. If the Pod cannot be reached at that moment it tries again the next minute.
+  autopilot switched off), it takes its offset back out of each side still set to what it
+  last put there. A temperature you have set since is left alone. If the Pod cannot be reached
+  at that moment it tries again the next minute, and after a restart it does so even if the
+  sensors are silent.
 - **It only asks for temperatures the bed has.** The bed takes about two hundred settings, not
   every whole degree; near its coldest, the next setting down is nine degrees away, and the
   autopilot stays where it is before it goes past what it wants.
@@ -37,21 +50,29 @@ While someone is asleep, it moves the bed a few degrees around the temperature t
 | Your changes | How far a temperature you set was from what the autopilot wanted is partly remembered for that third of the night | 0.3 of it each time, up to ±3°F |
 | Night curve | Cooler from falling asleep through the first half of the night, back to the set temperature by about 85% of the way to the wake time, then a little warm | -2°F, then 0, then +1°F |
 | First sleep cycle | A little cooler from 20 to 90 minutes after falling asleep. Deep sleep itself is not detected | -1°F |
-| The room | The air at the cover against what it was when you fell asleep: a room that warms cools the bed | half a degree per degree, ±2°F at most |
 
 When these add up to more than 4°F, they are cut from the bottom of the table up, so what you
 taught it is the last to go.
+
+**The room is not acted on yet.** The code can cool the bed as the room warms (half a degree
+per degree, ±2°F), but the only air reading is at the cover, which may warm with the sleeper
+as much as with the room. Acting on it could cool the bed every night for no reason, so it is
+saved with each minute and left out of the offset until logged nights show what it follows.
 
 **Learning.** At 0.3, a one-degree change takes two nights that agree before it shows. A change
 is counted once per hold, not once per button press, and for no more than 4°F however large it
 was, so one odd night teaches it a little over a degree at most. What it has learned stays
 until you correct it the other way. Any request that
-sets the temperature counts as yours, including one from an automation of your own.
+sets the temperature counts as yours, including one from an automation of your own. The one
+exception is the bed turning itself on when you get in (In-bed detection): that temperature is
+held like any other but teaches nothing, since it is a rule and not tonight's choice.
 
 The night runs from falling asleep to that night's wake-up time (8 hours if the night has no
 schedule). The base temperature is the schedule's: the bed-on temperature, then each scheduled
-change as it comes up. At an hour the schedule does not cover, it is the temperature the bed
-was at when you fell asleep.
+change as it comes up. If you had set the bed yourself before falling asleep, yours is the
+base until the schedule's next change. At an hour the schedule does not cover, the base stays
+what it last was (the bed's own setting at sleep onset if the schedule never covered the
+night); it never falls back to an earlier temperature part-way through.
 
 **If your schedule already cools early and warms late,** the curve adds to that. Your own
 changes will pull it back over a few nights, but the simpler fix is a flat schedule.
@@ -73,11 +94,11 @@ So the curve is a starting guess to test against your own nights, and your corre
 part most likely to be right. Nothing here measures whether the autopilot improves sleep; the
 saved nights record whether it steered, so nights with and without it can be compared later.
 
-**The room reading is unproven too.** It comes from the sensor at the cover, which may read the
-sleeper as well as the room. Each saved minute also has the air temperature at the hub on the
-floor and the mattress surface, so a few nights will show which one follows the room. The
-mattress surface is deliberately not acted on: it follows the water, so the autopilot would be
-answering its own changes.
+**The room reading is unproven, so it is not used.** It comes from the sensor at the cover,
+which may read the sleeper as well as the room. Each saved minute has it, the air temperature
+at the hub on the floor and the mattress surface, so a few nights will show which one follows
+the room. The mattress surface is deliberately never acted on: it follows the water, so the
+autopilot would be answering its own changes.
 
 ## How it tells you are asleep
 
@@ -140,69 +161,39 @@ A sleep that begins up to 3 hours before your usual time, or any time until your
 is steered from the start. Any other is left alone, and if it is still going after 3 hours the
 autopilot takes over from there.
 
+## Trying it without a night
+
+**Settings > Autopilot > 20-minute test > Start** plays a whole night's plan on the bed in 20
+minutes, from the temperature it is set to now. The bed has to be on and the autopilot switched
+on; nobody needs to be in it. The same code that runs a night runs the test, on a clock 24
+times as fast, so what you watch is what a night would do to the bed's setting:
+
+- about a degree a minute down to 3°F cooler, back up through the set temperature, a degree
+  warm at the end, then back to where it started;
+- never more than 4°F from where it started, never more than one degree in a step;
+- change the temperature yourself part-way and it holds exactly what you set for a few minutes
+  (a third of the test), then walks back a degree at a time;
+- **Stop**, or switching the autopilot off, puts the bed back within a minute.
+
+The line under the button says how long is left and what it last did and why. The water takes
+longer than a minute to follow, so watch the target on the Temperature page, not the "Bed at"
+reading. A test learns nothing from what you change, a restart ends it, and it gives way to the
+schedule: if a scheduled temperature change, bed-on or bed-off time comes up while it runs, the
+test ends and the bed is the schedule's. `POST /api/autopilot/rehearsal` starts one and `DELETE` stops it.
+
+Sleep detection can be checked without the autopilot on, in about 20 minutes: lie down and
+keep still. Settings > Autopilot shows "Awake" with your breathing rate, then "Asleep" once
+you have been still for 15 minutes (lying awake and still reads as asleep, as said above), and
+after 20 minutes in bed the stay is saved and shows under **Data > Sleep** as a nap.
+
 ## Linking a sleep tracker
 
-The bed's numbers (15 still minutes, 12 moving seconds, breathing not asked for) are guesses.
-A watch or band is the better judge of when you slept, so its record can be sent each morning
-and the bed fits its numbers to it.
-
-**iPhone only.** Apple Watch and Whoop write sleep to Apple Health, and Fitbit devices
-(including the Fitbit Air) do through the Google Health app's Apple Health connection, which
-lists sleep sessions and stages among what it writes. Apple Health has no web address a Pod
-could ask: only something on the phone can read it. So the link is an iPhone Shortcut, run by
-an automation:
-
-1. In **Shortcuts**, tap **+** and add **Find Health Samples**: Type is **Sleep**, Start Date is
-   in the last 1 day.
-2. Add **Repeat with Each** over the samples. Inside it add a **Text** action holding
-   `{"start":"Start Date","end":"End Date","value":"Value"}`, picking each from **Repeat Item**,
-   with the two dates set to **ISO 8601**.
-3. After the repeat, add **Combine Text** on the Repeat Results, with a comma as the separator.
-4. Add a **Text** action holding `{"source":"Apple Health","samples":[Combined Text]}`, with
-   Combined Text picked from the step before.
-5. Add **Get Contents of URL** with `http://sevensleep.local/api/autopilot/sleepTimes`, Method
-   **POST**, a header `Content-Type: application/json`, Request Body **File**, and that Text as
-   the file.
-6. In **Automation**, run it when your **Sleep Focus turns off**, or at a set time each morning.
-
-**Settings > Autopilot > Sleep tracker > Link** opens these steps. In step 5 use your own Pod's
-address, the one the app opens at, if it is not `sevensleep.local`. Once set up it runs by itself, with one catch: an iPhone only lets a shortcut read
-health data while it is unlocked, so the night arrives when you first use the phone, not at a
-fixed minute. That is fine here: it is looked at after the fact.
-
-**Android is not supported.** Health Connect has no route built here. Apps that post Health
-Connect data to an address exist (HC Webhook, HCGateway), but the bed does not read their
-formats. Any script that sends this request works, from any device:
-
-```bash
-curl -X POST http://sevensleep.local/api/autopilot/sleepTimes -H 'Content-Type: application/json' \
-  -d '{"source":"Whoop","asleepAt":"2026-11-18T23:12:00-08:00","awakeAt":"2026-11-19T06:48:00-08:00"}'
-```
-
-Times have to say their zone (`-08:00`, or `Z`); one without is refused.
-
-**What is done with it.** Each sleep is filed with every saved stay in bed it overlaps (a night
-split in two by a restart gets both halves). Sending the same night again, or a corrected
-version of it, replaces what was there. Sleeps in the future, older than 100 days or longer
-than 18 hours are refused.
-
-**Fitting.** When the tracker's record says when you were awake in the night, that is used,
-not only when you fell asleep and woke: the bed's saved minutes are replayed under each
-candidate set of numbers and scored on how many minutes they disagree with the tracker. That is
-what lets it learn about lying awake at 3 am. It needs 5 nights. A fitted set is only taken up
-if, fitted to all the nights but one and tried on that one, it does at least a tenth better
-than the default; otherwise the default stays. **Data > Sleep** shows the result: "Tuned to
-Apple Health: 94% match over 6 nights", or "Default, checked against…" while it is not.
-
-Naps are filed but not used for fitting, and sleep stages are not used at all. A wrist tracker
-is treated here as the reference. It is not a sleep lab: in comparisons with one, wrist devices
-find sleep well and miss some quiet waking (Fitbit Sense and Charge 5: about 93% of sleep and
-48% of waking found; no such test of the Fitbit Air was found).
-
-There is no direct Whoop or Fitbit link: their data is on their servers, and the phone already
-has it.
-
-Not yet run with a real tracker or phone.
+A watch or band is a better judge of when you slept than the bed's own guesses, and its record
+can be sent each morning so the bed fits its sleep rules to it: 5 nights, and only a fit that
+does better on nights it was not fitted to is taken up. The link is an iPhone Shortcut that
+reads Apple Health (Apple Watch, Whoop and Fitbit all write there).
+[Connections](CONNECTIONS.md#link-apple-health) has the steps, and what is done with what is
+sent.
 
 ## Where nights are kept
 
@@ -221,6 +212,8 @@ that, and starts a new file.
 **Data > Sleep** shows one day at a time, last night first, with arrows and a calendar to move:
 bedtime, wake time, duration and wake-ups, then breathing rate, pressure on the bed and the
 autopilot's temperature changes against the clock. A night belongs to the morning it ended on.
+With the sides linked the bed is shown as one sleeper's, whichever side they lay on (where both
+sides saw the same hours, the one with the most sleep); otherwise the side this device controls.
 **Export** downloads the nights of the last week, two weeks, one, two or three months as one
 JSON file. `GET /api/autopilot/nights` and `GET /api/autopilot/nights/export` return the same.
 The biometrics service keeps its own sleep records in its database; these files are separate
@@ -238,7 +231,8 @@ file and restart SevenSleep to forget it.
 
 `server/src/autopilot/`: `heartRate.ts` and `breathingRate.ts` (the estimates), `sleepTracker.ts`
 (the sleep rules, and fitting them to a tracker), `nightPlan.ts` (curve, learning, room, limits,
-steps), `scheduledBase.ts` (the schedule's temperature at a time; night or nap), `nightLog.ts`
+steps, the test's clock), `scheduledBase.ts` (the schedule's temperature at a time, what a
+night's offset is counted from, night or nap), `nightLog.ts`
 (the saved nights), `autopilotMonitor.ts` (state, and the only file that touches the Pod). The
 first five are pure and tested in `tests/autopilot.test.mjs`.
 

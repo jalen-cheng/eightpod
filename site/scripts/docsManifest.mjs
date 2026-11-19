@@ -21,6 +21,7 @@ export const sidebarGroups = [
     pages: [
       { slug: 'using', title: 'Using the app', source: 'docs/USING.md' },
       { slug: 'autopilot', title: 'Autopilot', source: 'docs/AUTOPILOT.md' },
+      { slug: 'connections', title: 'Connections', source: 'docs/CONNECTIONS.md' },
       { slug: 'ios-shortcuts', title: 'iPhone Shortcuts', source: 'docs/IOS_SHORTCUTS.md' },
       { slug: 'remote-access', title: 'Remote access', source: 'docs/REMOTE_ACCESS.md' },
     ],

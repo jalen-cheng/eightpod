@@ -371,17 +371,19 @@ an alarm vibrates, a dialog offers to dismiss it.
 
 **Data.** Sleep and logs. Sleep shows one day at a time from the bed's own record of each stay in bed (Pod 5): bedtime, wake time, duration and wake-ups, graphs of breathing rate, pressure and the autopilot's temperature changes, the tuning in use, and an Export button. Where the biometrics service is switched on, its older page is listed as Biometrics.
 
-**Status** (opened from the "Status: Healthy" link, bottom right on a computer and beside the heading of Data and Settings on a phone; it has no tab). Wi-Fi strength and whether SevenSleep is up to date, then each internal service with
+**Status** (opened from the "Status: Healthy" link, bottom right on a computer and beside the heading of Data and Settings on a phone; it has no tab). The Pod itself (the model, Wi-Fi, version and Update, daily reboot and Reboot), then each internal service with
 its state. Services that are jobs have a Run button. The biometrics and sleep-analysis rows are greyed and
 marked "Untested in this version".
 
-**Settings.** General: the temperature units and a Pod 5's − and + button step; the time zone
-(set this first, the schedule runs in it); away mode for both sides, flip left and right, and
-the light on the hub; how long the bed stays on when turned on by hand and whether the schedule
-is paused meanwhile. Then Autopilot (Pod 5), Alarm (one setting for every night and both sides: vibration,
-length, strength, a test), Tap gestures (Pod 4), Priming, In-bed detection (its state shows
-beside the heading), Sleep tracking (biometrics), Pod (the model, Wi-Fi, version and Update,
-reboot), and API, which opens a page of the common requests (`/api-guide`).
+**Settings.** Sections that open with a tap; the page remembers which were open. General: the
+side this device controls, the temperature units and a Pod 5's − and + button step, the time
+zone (set this first, the schedule runs in it) and away mode for both sides. Then Autopilot
+(Pod 5: the switch, a 20-minute test, Link Apple Health, and the biometrics switch; on other
+Pods the section is Sleep tracking with biometrics alone), Alarm (one setting for every night
+and both sides: vibration, length, strength, a test), Tap gestures (Pod 4), Priming, In-bed
+detection, Other (flip left and right, the light on the hub, how long the bed stays on when
+turned on by hand and whether the schedule is paused meanwhile), and API, which opens a page of
+the common requests (`/api-guide`).
 
 ## 11. The API and phone shortcuts
 

@@ -35,8 +35,8 @@ type NextSwitchProps = {
 };
 
 // What the bed does next, for the open bottom of the dial. While it is on: the next alarm, to
-// change or skip, with the off time beside it (only the off time when there is no alarm to
-// show). While it is off: when it switches on. Nothing without a schedule for the day.
+// change or skip, or when there is no alarm to show, when it turns off. While it is off: when
+// it switches on. Nothing without a schedule for the day.
 export default function NextSwitch({ isOn }: NextSwitchProps) {
   const { side } = useAppStore();
   const { data: schedules } = useSchedules();
@@ -57,10 +57,7 @@ export default function NextSwitch({ isOn }: NextSwitchProps) {
   const offTimeLabel = formatClock(findOffTime(power.off, settings[side].scheduleOverrides.alarm, settings.timeZone));
   return (
     <ErrorBoundary componentName="Alarm">
-      <AlarmNotification
-        offTimeLabel={ offTimeLabel }
-        fallback={ <Typography variant="caption" sx={ switchTimeSx }>Turns off at { offTimeLabel }</Typography> }
-      />
+      <AlarmNotification fallback={ <Typography variant="caption" sx={ switchTimeSx }>Turns off at { offTimeLabel }</Typography> }/>
     </ErrorBoundary>
   );
 }
