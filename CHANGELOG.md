@@ -20,6 +20,7 @@ version. Anything older is in the [git history](https://github.com/jalen-cheng/s
 - The installer confirms the running boot slot, so the hub does not fall back to its stock slot after a few boots; the install guide checks it first and says to block the Pod at the router too.
 
 ### 3.24.4
+- Docs: how to read the hub's flash wear, what happens as it runs out, and how little SevenSleep writes.
 - A night the autopilot is steering runs to a one-time alarm set for it. It used to end at the scheduled alarm the one-time alarm replaced, and the bed went back to the schedule's temperature while the sleeper slept on.
 
 ## 3.23
