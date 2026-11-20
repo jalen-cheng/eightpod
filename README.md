@@ -106,6 +106,7 @@ No Pod yet? **[sevensleep.vercel.app](https://sevensleep.vercel.app)** is the ap
 
 - **The Eight Sleep app's controls, on your own network:** temperature for each side, a schedule for every night, vibration alarms, wake-up heat, priming and away mode.
 - **A local API:** every control is a documented request to the Pod, so Shortcuts, Home Assistant, scripts and AI assistants can drive the bed with the internet down. See [API reference](https://jalen-cheng.github.io/sevensleep/api).
+- **Tools for AI agents:** an [MCP server](mcp/README.md) gives Claude or another agent twelve tools for the bed, reading and changing it, over your own network.
 - **Access away from home:** optional Tailscale on the Pod, with the Pod still blocked from the internet.
 - **In-bed detection (Pod 5):** the bed can turn on when you get in and off after you get out, and tells a body from a thing left on it.
 - **Autopilot (Pod 5, experimental):** cooler early in the night, warmer toward morning, one degree at a time. It holds a temperature you set and learns from it. Off by default. See [Autopilot guide](https://jalen-cheng.github.io/sevensleep/autopilot).

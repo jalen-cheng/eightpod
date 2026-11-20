@@ -8,6 +8,7 @@
 ## Top-Level Layout
 - `app/`: Vite React frontend using MUI, Zustand, React Query, and Axios.
 - `server/`: Express TypeScript backend, LowDB JSON settings/schedules, Prisma SQLite metrics, node-schedule jobs, and Franken socket control.
+- `mcp/`: an MCP server for AI agents, run on a person's computer. `tools.mjs` says what each tool sends to the Pod's API (no imports, tested in `tests/mcp.test.mjs`); `server.mjs` wires them to the MCP SDK.
 - `biometrics/`: Python stream processing, sleep detection, vitals calculation, and SQLite writes for biometrics.
 - `scripts/`: Pod install/update/reset/service helper scripts (`boot_slot.sh` reads and confirms the hub's boot slot, `setup_watchdog.sh` the two watchdogs), and `build_shortcuts.py`, which writes the iPhone Shortcuts in `docs/shortcuts/` (sign each with `shortcuts sign` on a Mac).
 - `docs/`: user guides, screenshots and hardware teardown photos. `DEVELOPING.md` covers setup, checks and releases.

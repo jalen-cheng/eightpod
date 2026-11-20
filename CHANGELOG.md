@@ -16,6 +16,7 @@ version. Anything older is in the [git history](https://github.com/jalen-cheng/s
 - Minor UI changes: the Temperature dial is framed by an outline with no grey fill, and a press anywhere beside the navigation turns an off side on.
 
 ### 3.24.3
+- An MCP server in `mcp/` gives AI agents twelve tools for the bed. It runs on your computer, so the Pod needs no update for it.
 - The installer confirms the running boot slot, so the hub does not fall back to its stock slot after a few boots; the install guide checks it first and says to block the Pod at the router too.
 
 ## 3.23
