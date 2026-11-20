@@ -12,6 +12,9 @@ version. Anything older is in the [git history](https://github.com/jalen-cheng/s
 ### 3.24.1
 - Send sleep to SevenSleep sends the last two weeks in one run, so it is tapped now and then and needs no daily automation.
 
+### 3.24.2
+- Minor UI changes: the Temperature dial is framed by an outline with no grey fill, and a press anywhere beside the navigation turns an off side on.
+
 ## 3.23
 - Wi-Fi and hardware watchdogs for the Pod, off until switched on.
 - The SevenSleep lettering is the logo in the app and on the docs site.
