@@ -396,6 +396,10 @@ sh /home/dac/free-sleep/scripts/setup_local_name.sh auto || echo "WARNING: could
 # If Tailscale was set up on the Pod, keep its root-owned script copies in step with this version
 sh /home/dac/free-sleep/scripts/setup_tailscale.sh sync-scripts || echo "WARNING: could not refresh the Tailscale scripts"
 
+# A boot slot left unconfirmed runs out of boots and hands over to the other slot, which is
+# Eight Sleep's own system. The service that would confirm it is switched off, so do it here.
+bash /home/dac/free-sleep/scripts/boot_slot.sh confirm || echo "WARNING: the boot slot is not confirmed. See the install guide, step 9."
+
 # --------------------------------------------------------------------------------
 # Finish
 echo "This is your dac.sock path (if it doesn't end in dac.sock, open an issue at https://github.com/jalen-cheng/sevensleep/issues):"

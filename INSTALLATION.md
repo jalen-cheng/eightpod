@@ -262,6 +262,22 @@ Pod 5 it may already know your Wi-Fi from the Eight Sleep app, and step 7 reboot
 Sleep's services running, so it can be online before you get here. Some lines will say a service
 was not loaded or does not exist. That is expected.
 
+**First, look at the boot slot.** The hub has two copies of its system, slot a and slot b, and
+SevenSleep goes into the one that is running. The other keeps Eight Sleep's system, with
+updates on and no internet block. A slot that has not been confirmed as good gets a few more
+boots and then the hub starts the other one, and the service that confirms a slot is one of
+those switched off below. So check before you switch anything off:
+
+```
+fw_printenv current_slot boot_a_success boot_b_success
+```
+
+The running slot's line should end in `=1` (`boot_a_success=1` when `current_slot=a`). If it
+ends in `=0`, the slot is waiting to be confirmed, which is how a firmware update leaves it.
+Carry on: the installer in step 12 confirms the running slot itself and says so. This was
+found by people running the original project and has been read on one Pod 5, where the slot
+was already confirmed; the confirming itself has not been needed on a Pod yet.
+
 1. Stop and disable the services:
    ```
    for unit in swupdate-progress swupdate defibrillator eight-kernel telegraf vector frankenfirmware dac swupdate.socket; do systemctl disable --now "$unit"; done
@@ -434,6 +450,12 @@ block ever cuts the Pod off from your network, the serial cable is the only way 
 
 Optional, but recommended. With the block on, the Pod cannot reach Eight Sleep or anything else
 outside your home network.
+
+The block lives in the slot SevenSleep is installed in. The hub's other slot is Eight Sleep's
+own system and has no block, so if the hub ever started from it, it would be online again.
+Once the install is finished, blocking the Pod's internet access at your router as well covers
+both slots. `sh /home/dac/free-sleep/scripts/boot_slot.sh status` says which slot is running
+and whether it is confirmed.
 
 > **Pod 3 and Pod 4:** the block and the updater lock-out were tested on a Pod 5 only. Do
 > [step 17](#17-check-the-block-then-close-the-hub) with care before closing the hub.

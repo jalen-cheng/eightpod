@@ -15,6 +15,9 @@ version. Anything older is in the [git history](https://github.com/jalen-cheng/s
 ### 3.24.2
 - Minor UI changes: the Temperature dial is framed by an outline with no grey fill, and a press anywhere beside the navigation turns an off side on.
 
+### 3.24.3
+- The installer confirms the running boot slot, so the hub does not fall back to its stock slot after a few boots; the install guide checks it first and says to block the Pod at the router too.
+
 ## 3.23
 - Wi-Fi and hardware watchdogs for the Pod, off until switched on.
 - The SevenSleep lettering is the logo in the app and on the docs site.

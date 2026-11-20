@@ -502,6 +502,10 @@ Listed so nothing here is a surprise.
 - **Two saves in quick succession** can leave the jobs built from the first; any later save fixes it.
 - **Priming does not check whether the bed is in use.** Keep its time in the afternoon. The daily reboot is skipped
   while a side is on or an alarm is going, but not for someone lying in a bed that is off.
+- **The hub's other boot slot is still Eight Sleep's system.** SevenSleep and the internet block are in one slot. If
+  the hub ever started from the other, it would run stock firmware with updates on and nothing blocked. The installer
+  confirms the running slot so it does not run out of boots (`scripts/boot_slot.sh`); blocking the Pod at the router
+  covers the rest.
 - **A night longer than 11.5 hours asks the bed for more than 12 hours on.** Whether the firmware cuts such a night
   short is not known; its answer to the request is in the log.
 - **Nothing acts on the bed's answers.** What the firmware says to each command is written to the log ("Firmware
