@@ -87,6 +87,18 @@ The same actions, in order:
 the stay shown. It is filed the way a tracker's record is, under "You", and counts toward the
 same 7 nights. A tracker that reports the same night later replaces it.
 
+## AI agents (MCP)
+
+An agent that speaks the Model Context Protocol (Claude Code, Claude Desktop, Cursor and others)
+can read and control the bed through the MCP server in the repository's `mcp/` folder. It runs
+on your computer and talks to the Pod over your network: four tools that read (status,
+schedule, recent sleep, autopilot) and eight that change the bed (temperature, power, alarms,
+a night's schedule, the autopilot, away mode). `SEVENSLEEP_READ_ONLY=1` leaves the changing
+ones out.
+[mcp/README.md](https://github.com/jalen-cheng/sevensleep/blob/main/mcp/README.md) has the
+setup. An agent that can make web requests needs none of it: [the API](../server/API.md) is
+enough.
+
 ## Other trackers, Android and scripts
 
 There is no direct Whoop or Fitbit link: their data is on their servers, and the phone already

@@ -1,0 +1,14 @@
+{
+  "name": "sevensleep-mcp",
+  "version": "1.0.0",
+  "description": "An MCP server that lets an AI agent read and control an Eight Sleep Pod running SevenSleep, over your own network.",
+  "type": "module",
+  "bin": { "sevensleep-mcp": "server.mjs" },
+  "files": ["server.mjs", "tools.mjs", "README.md"],
+  "license": "MIT",
+  "engines": { "node": ">=20" },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "zod": "^3.25.0"
+  }
+}
