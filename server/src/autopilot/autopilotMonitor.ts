@@ -26,6 +26,7 @@ import settingsDB from '../db/settings.js';
 import { Side } from '../db/schedulesSchema.js';
 import { MAX_TEMPERATURE_F, MIN_TEMPERATURE_F, stepTemperatureF, temperatureFToLevel } from '../db/temperatureCurve.js';
 import { connectFranken } from '../8sleep/frankenServer.js';
+import { getPendingOneOffAlarm } from '../jobs/alarmScheduler.js';
 import { setAutopilotSteering } from '../jobs/autopilotSteering.js';
 import { isSomeoneInBed } from '../jobs/inBedCheck.js';
 import { isManualHoldActive } from '../jobs/manualHold.js';
@@ -237,6 +238,17 @@ const fresh = (reading: Reading | undefined, nowMs: number) => (
 );
 const readRoomF = (nowMs: number) => (room && nowMs - room.atMs < SURROUNDINGS_STALE_MS ? room.temperatureF : undefined);
 
+// A wake time further off than this is not this night's
+const MAX_HOURS_TO_WAKE = 14;
+
+// When a one-time alarm is waiting for this side, the moment it goes off: it stands in for the
+// night's scheduled alarm, so it is the night's wake time too
+const findOneOffWakeMs = (side: Side, nowMs: number): number | undefined => {
+  const now = moment.tz(nowMs, settingsDB.data.timeZone);
+  const firesAt = getPendingOneOffAlarm(settingsDB.data, side, now);
+  return firesAt && firesAt.diff(now, 'hours') <= MAX_HOURS_TO_WAKE ? firesAt.valueOf() : undefined;
+};
+
 // The base temperature the autopilot has been given in Settings, when it has one
 const readOwnBaseF = (): number | undefined => settingsDB.data.autopilot.baseTemperatureF ?? undefined;
 // How far through a night is, from 0 at falling asleep to 1 at the wake time
@@ -253,6 +265,16 @@ const saveState = () => {
   } catch (error: unknown) {
     logger.warn(`Autopilot could not save its state: ${String(error)}`);
   }
+};
+
+// A night under way runs to a one-time alarm set for it, also one set after the sleeper dropped
+// off. Without this the night ended at the scheduled alarm it replaced, and the bed went back
+// to the schedule's temperature hours before the sleeper was due to wake.
+const followOneOffAlarm = (night: Night, nowMs: number) => {
+  const oneOffWakeMs = findOneOffWakeMs(night.side, nowMs);
+  if (oneOffWakeMs === undefined || oneOffWakeMs === night.wakeAtMs) return;
+  night.wakeAtMs = oneOffWakeMs;
+  saveState();
 };
 
 // Until a side has its empty level, takes each minute with nothing on the bed toward it. Once
@@ -709,6 +731,7 @@ export class AutopilotMonitor {
       // longer than a trip out of it, and at the wake-up time, from when the bed is the
       // schedule's and the alarm's again. A one-time alarm that has gone off during the night
       // is its wake-up time, however early.
+      followOneOffAlarm(night, nowMs);
       const hasAlarmGoneOff = didOneOffAlarmFireWithin(night.side, nowMs - night.asleepSinceMs, nowMs);
       const isOver = !isEnabled || isBedEmpty || night.isEnding || nowMs >= night.wakeAtMs || hasAlarmGoneOff
         || nowMs - night.asleepSinceMs > MAX_STAY_MINUTES * MINUTE_MS;
@@ -883,8 +906,9 @@ export class AutopilotMonitor {
       const wakeAt = now.clone().hour(hour).minute(minute).second(0);
       if (!wakeAt.isAfter(now)) wakeAt.add(1, 'day');
       // A wake time most of a day away is not this night's
-      if (wakeAt.diff(now, 'hours') <= 14) wakeAtMs = wakeAt.valueOf();
+      if (wakeAt.diff(now, 'hours') <= MAX_HOURS_TO_WAKE) wakeAtMs = wakeAt.valueOf();
     }
+    wakeAtMs = findOneOffWakeMs(side, nowMs) ?? wakeAtMs;
     const stay = sides[side].stay;
     bed.night = {
       side,

@@ -18,7 +18,7 @@
 // ends, or the autopilot is switched off, the bed is given what the schedule wants at that
 // hour, or failing that its base.
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="eef636a0-818b-5135-bbd2-28c5b030d0ea")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="3fcecd11-a7d9-5e24-9311-0999b6ac1826")}catch(e){}}();
 import { readFileSync, renameSync, writeFileSync } from 'fs';
 import moment from 'moment-timezone';
 import config from '../config.js';
@@ -27,6 +27,7 @@ import schedulesDB from '../db/schedules.js';
 import settingsDB from '../db/settings.js';
 import { MAX_TEMPERATURE_F, MIN_TEMPERATURE_F, stepTemperatureF, temperatureFToLevel } from '../db/temperatureCurve.js';
 import { connectFranken } from '../8sleep/frankenServer.js';
+import { getPendingOneOffAlarm } from '../jobs/alarmScheduler.js';
 import { setAutopilotSteering } from '../jobs/autopilotSteering.js';
 import { isSomeoneInBed } from '../jobs/inBedCheck.js';
 import { isManualHoldActive } from '../jobs/manualHold.js';
@@ -140,6 +141,15 @@ const roundTo = (value, places) => (value === undefined ? undefined : Math.round
 // A reading's value while it is fresh
 const fresh = (reading, nowMs) => (reading && nowMs - reading.atMs < SURROUNDINGS_STALE_MS ? reading.value : undefined);
 const readRoomF = (nowMs) => (room && nowMs - room.atMs < SURROUNDINGS_STALE_MS ? room.temperatureF : undefined);
+// A wake time further off than this is not this night's
+const MAX_HOURS_TO_WAKE = 14;
+// When a one-time alarm is waiting for this side, the moment it goes off: it stands in for the
+// night's scheduled alarm, so it is the night's wake time too
+const findOneOffWakeMs = (side, nowMs) => {
+    const now = moment.tz(nowMs, settingsDB.data.timeZone);
+    const firesAt = getPendingOneOffAlarm(settingsDB.data, side, now);
+    return firesAt && firesAt.diff(now, 'hours') <= MAX_HOURS_TO_WAKE ? firesAt.valueOf() : undefined;
+};
 // The base temperature the autopilot has been given in Settings, when it has one
 const readOwnBaseF = () => settingsDB.data.autopilot.baseTemperatureF ?? undefined;
 // How far through a night is, from 0 at falling asleep to 1 at the wake time
@@ -154,6 +164,16 @@ const saveState = () => {
     catch (error) {
         logger.warn(`Autopilot could not save its state: ${String(error)}`);
     }
+};
+// A night under way runs to a one-time alarm set for it, also one set after the sleeper dropped
+// off. Without this the night ended at the scheduled alarm it replaced, and the bed went back
+// to the schedule's temperature hours before the sleeper was due to wake.
+const followOneOffAlarm = (night, nowMs) => {
+    const oneOffWakeMs = findOneOffWakeMs(night.side, nowMs);
+    if (oneOffWakeMs === undefined || oneOffWakeMs === night.wakeAtMs)
+        return;
+    night.wakeAtMs = oneOffWakeMs;
+    saveState();
 };
 // Until a side has its empty level, takes each minute with nothing on the bed toward it. Once
 // enough minutes agree on a level an empty bed can read, it is set and kept.
@@ -598,6 +618,7 @@ export class AutopilotMonitor {
             // longer than a trip out of it, and at the wake-up time, from when the bed is the
             // schedule's and the alarm's again. A one-time alarm that has gone off during the night
             // is its wake-up time, however early.
+            followOneOffAlarm(night, nowMs);
             const hasAlarmGoneOff = didOneOffAlarmFireWithin(night.side, nowMs - night.asleepSinceMs, nowMs);
             const isOver = !isEnabled || isBedEmpty || night.isEnding || nowMs >= night.wakeAtMs || hasAlarmGoneOff
                 || nowMs - night.asleepSinceMs > MAX_STAY_MINUTES * MINUTE_MS;
@@ -785,9 +806,10 @@ export class AutopilotMonitor {
             if (!wakeAt.isAfter(now))
                 wakeAt.add(1, 'day');
             // A wake time most of a day away is not this night's
-            if (wakeAt.diff(now, 'hours') <= 14)
+            if (wakeAt.diff(now, 'hours') <= MAX_HOURS_TO_WAKE)
                 wakeAtMs = wakeAt.valueOf();
         }
+        wakeAtMs = findOneOffWakeMs(side, nowMs) ?? wakeAtMs;
         const stay = sides[side].stay;
         bed.night = {
             side,
@@ -870,4 +892,4 @@ export class AutopilotMonitor {
     }
 }
 //# sourceMappingURL=autopilotMonitor.js.map
-//# debugId=eef636a0-818b-5135-bbd2-28c5b030d0ea
+//# debugId=3fcecd11-a7d9-5e24-9311-0999b6ac1826

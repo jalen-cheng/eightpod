@@ -82,7 +82,7 @@ exception is the bed turning itself on when you get in (In-bed detection): that 
 held like any other but teaches nothing, since it is a rule and not tonight's choice.
 
 The night runs from falling asleep to that night's wake-up time (8 hours if the night has no
-schedule). The base does not move during it: scheduled temperature changes are skipped while
+schedule), or to a one-time alarm when one is set for that morning. The base does not move during it: scheduled temperature changes are skipped while
 the night is steered, so the curve is the only thing shaping the night.
 
 **If your schedule cools early and warms late,** that no longer adds to the curve: only the
