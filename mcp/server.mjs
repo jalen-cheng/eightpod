@@ -48,7 +48,7 @@ const askPod = async ({ method, path, body }) => {
   return answer;
 };
 
-const server = new McpServer({ name: 'sevensleep', version: '1.0.0' });
+const server = new McpServer({ name: 'sevensleep', version: '1.0.1' });
 
 for (const tool of TOOLS) {
   if (IS_READ_ONLY && tool.changesTheBed) continue;

@@ -1,14 +1,34 @@
 {
   "name": "sevensleep-mcp",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "An MCP server that lets an AI agent read and control an Eight Sleep Pod running SevenSleep, over your own network.",
   "type": "module",
-  "bin": { "sevensleep-mcp": "server.mjs" },
-  "files": ["server.mjs", "tools.mjs", "README.md"],
+  "bin": {
+    "sevensleep-mcp": "server.mjs"
+  },
+  "files": [
+    "server.mjs",
+    "tools.mjs",
+    "README.md"
+  ],
   "license": "MIT",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.32.2",
     "zod": "^3.25.0"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jalen-cheng/sevensleep.git",
+    "directory": "mcp"
+  },
+  "homepage": "https://github.com/jalen-cheng/sevensleep/tree/main/mcp",
+  "keywords": [
+    "mcp",
+    "eight-sleep",
+    "sevensleep",
+    "model-context-protocol"
+  ]
 }
