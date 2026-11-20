@@ -14,15 +14,10 @@ reading tools only, set `SEVENSLEEP_READ_ONLY=1`.
 You need Node 20 or later, and the computer on the same network as the Pod (or on Tailscale
 with it).
 
-```bash
-git clone https://github.com/jalen-cheng/sevensleep.git
-cd sevensleep/mcp && npm install
-```
-
-Then add it to your client. For Claude Code:
+Add it to your client; `npx` fetches it the first time. For Claude Code:
 
 ```bash
-claude mcp add sevensleep -- node /full/path/to/sevensleep/mcp/server.mjs
+claude mcp add sevensleep -- npx -y sevensleep-mcp
 ```
 
 For a client configured with a JSON file (Claude Desktop, Cursor and others):
@@ -31,13 +26,16 @@ For a client configured with a JSON file (Claude Desktop, Cursor and others):
 {
   "mcpServers": {
     "sevensleep": {
-      "command": "node",
-      "args": ["/full/path/to/sevensleep/mcp/server.mjs"],
+      "command": "npx",
+      "args": ["-y", "sevensleep-mcp"],
       "env": { "SEVENSLEEP_URL": "http://sevensleep.local" }
     }
   }
 }
 ```
+
+To run it from a clone of the repository instead, `npm install` in `mcp/` and point the client at
+`node /full/path/to/sevensleep/mcp/server.mjs`.
 
 | Setting | What it is | When unset |
 |---|---|---|
