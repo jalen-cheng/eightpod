@@ -25,7 +25,8 @@ stop a change, and how sleep is followed. [Open it full size](diagrams/system-lo
 - [12. Network: the internet block, the name, Tailscale](#12-network-the-internet-block-the-name-tailscale)
 - [13. Installing and updating](#13-installing-and-updating)
 - [14. How features interact](#14-how-features-interact)
-- [15. Known rough edges](#15-known-rough-edges)
+- [15. Flash wear](#15-flash-wear)
+- [16. Known rough edges](#16-known-rough-edges)
 
 ## 1. The parts
 
@@ -492,7 +493,56 @@ The cases where one feature changes what another does:
 | An update is running | Nothing scheduled fires for about four minutes |
 | Tailscale is down | Only remote access is affected |
 
-## 15. Known rough edges
+## 15. Flash wear
+
+The hub's storage is an eMMC chip soldered to its board. Flash wears out by being written, and
+the chip keeps its own estimate of how far along it is. Eight Sleep's stock firmware has been
+reported to write several gigabytes a day, mostly logs, and hubs have been reported failing with
+the estimate at 80 to 90%. So it is worth reading on any Pod, before and after installing.
+
+**Reading it,** over SSH:
+
+```
+cat /sys/block/mmcblk0/device/life_time /sys/block/mmcblk0/device/pre_eol_info
+```
+
+| Output | Meaning |
+|---|---|
+| `life_time`, first number | Wear in tenths: `0x01` is 0 to 10% of rated life used, `0x07` is 60 to 70%, `0x0a` is 90 to 100%, `0x0b` is past it |
+| `pre_eol_info` `0x01` | Normal: spare blocks in hand |
+| `pre_eol_info` `0x02` | Warning: 80% of the spare blocks are used |
+| `pre_eol_info` `0x03` | Urgent: 90% used. Writes will start to fail |
+
+**What happens as it runs out.** Nothing at a fixed number: the estimate is an average, and a chip
+can outlive 100% or fail before it. As spare blocks run out, writes begin to fail, the chip may
+turn read-only, and a hub that cannot write, or can no longer read its boot loader, does not
+start. The chip cannot be swapped without soldering. `pre_eol_info` leaving `0x01` is the sign
+to act on: that is the time to ask Eight Sleep for a hub while this one still runs.
+
+**What SevenSleep writes,** measured on one Pod 5 (n=1):
+
+| | A day |
+|---|---|
+| SevenSleep's own log file and its lines in the system journal | Under 1 MB |
+| A night's saved stay, rewritten every 10 minutes while someone is in bed | About 3 MB a side |
+| Everything the hub writes, bed empty, Eight Sleep's remaining services included | 70 to 240 MB |
+| One update of SevenSleep | 100 to 300 MB, once |
+
+At that rate a year is a few tens of gigabytes, a small share of what such a chip is rated for,
+so wear nearly stops where the stock firmware left it. The install switches off the stock log
+shippers (`vector`, `telegraf`); the journal's largest writers after that are Eight Sleep services
+the bed still needs.
+
+**Slowing it further:**
+
+- **Update when there is something you want,** not every time one is offered. An update is the
+  largest single write SevenSleep causes.
+- **Leave Biometrics (legacy) off** unless you use it: it records raw sensor data.
+- **Avoid restart loops.** A hub that reboots over and over writes far more than one that runs.
+- **Read the estimate now and then.** It moves in steps of 10%, so a step in a few months means
+  something is writing heavily.
+
+## 16. Known rough edges
 
 Listed so nothing here is a surprise.
 

@@ -646,6 +646,12 @@ this a switch in place. Going back is one command; see "Going back to the origin
 Every SevenSleep update runs this installer over an existing install, and that is tested on a Pod
 5. Starting from the original Free Sleep itself has not been tested, on any Pod.
 
+## Check the flash's wear
+
+The hub's storage wears with use, and stock firmware has worn some hubs heavily. Read it once
+after installing, so you know where yours stands:
+[How it works, Flash wear](docs/HOW_IT_WORKS.md#15-flash-wear) says how and what the numbers mean.
+
 ## Optional: watchdogs
 
 Two guards against a Pod that stops answering. Both are off until you switch them on, over SSH:
