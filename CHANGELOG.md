@@ -19,6 +19,9 @@ version. Anything older is in the [git history](https://github.com/jalen-cheng/s
 - An MCP server in `mcp/` gives AI agents twelve tools for the bed. It runs on your computer, so the Pod needs no update for it.
 - The installer confirms the running boot slot, so the hub does not fall back to its stock slot after a few boots; the install guide checks it first and says to block the Pod at the router too.
 
+### 3.24.4
+- A night the autopilot is steering runs to a one-time alarm set for it. It used to end at the scheduled alarm the one-time alarm replaced, and the bed went back to the schedule's temperature while the sleeper slept on.
+
 ## 3.23
 - Wi-Fi and hardware watchdogs for the Pod, off until switched on.
 - The SevenSleep lettering is the logo in the app and on the docs site.
