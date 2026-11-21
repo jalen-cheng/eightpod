@@ -64,6 +64,8 @@ I am happy to lend them out :) Open an [issue](https://github.com/jalen-cheng/se
 
 ### Already running Free Sleep
 
+[SevenSleep compared with Free Sleep](docs/COMPARED_WITH_FREE_SLEEP.md) says what is different, what is unproven here, and how to go back.
+
 No cable and no opening the hub. Over SSH, lift the internet block, run the same installer, and
 block again. Settings and schedules are kept, and going back is one command:
 
@@ -285,6 +287,7 @@ Yes. One command over SSH reinstalls it and keeps your schedules; see
 | Goal | Start here |
 |---|---|
 | Read all of this as a website | [jalen-cheng.github.io/sevensleep](https://jalen-cheng.github.io/sevensleep/) |
+| Decide between this and Free Sleep | [Compared with Free Sleep](https://jalen-cheng.github.io/sevensleep/compared-with-free-sleep) |
 | Install it on a Pod | [Install guide](https://jalen-cheng.github.io/sevensleep/install) |
 | Usage: a night, alarms, settings | [Using the app](https://jalen-cheng.github.io/sevensleep/using) |
 | Know what works on a Pod 3 or Pod 4 | [Compatibility guide](https://jalen-cheng.github.io/sevensleep/pod-models) |
