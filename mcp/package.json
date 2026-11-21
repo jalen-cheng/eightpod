@@ -1,6 +1,6 @@
 {
   "name": "sevensleep-mcp",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "An MCP server that lets an AI agent read and control an Eight Sleep Pod running SevenSleep, over your own network.",
   "type": "module",
   "bin": {

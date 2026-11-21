@@ -7,7 +7,7 @@
 // without those subjects, simply never produces a reading: presence stays "not available", no
 // measured temperature is shown, and nothing else is affected.
 import {
-  forgetEmptySwing, recordHubRoom, recordPiezoSecond, recordPressure, recordSurroundings,
+  findAsleepSinceMs, forgetEmptySwing, recordHubRoom, recordPiezoSecond, recordPressure, recordSurroundings,
 } from '../autopilot/autopilotMonitor.js';
 import { readFileSync, writeFileSync } from 'fs';
 import { registerInBedCheck } from '../jobs/inBedCheck.js';
@@ -292,7 +292,8 @@ export class BedSensorMonitor {
         const mayChangePower = session.isTurnOffDue || (turnOnWhenInBed.enabled && !session.hasTurnedOn && isPresentNow);
         const isOn = mayChangePower ? await this.isAnySideOn(activeSides) : true;
         const isScheduledOn = session.isTurnOffDue ? await this.isScheduledOn(activeSides, nowMs) : false;
-        const dueActions = takeDueActions(session, settings.presence, { nowMs, isPresentNow, isOn, isScheduledOn });
+        const asleepSinceMs = findAsleepSinceMs(activeSides);
+        const dueActions = takeDueActions(session, settings.presence, { nowMs, isPresentNow, isOn, isScheduledOn, asleepSinceMs });
         for (const action of dueActions) await this.runAction(action, activeSides);
       }
     } catch (error: unknown) {

@@ -36,7 +36,10 @@ export default function ControlTempPage() {
   const turnOn = () => { if (!power.disabled) power.setPower(true); };
   // A press on the page, the dial included, turns the side on, unless it landed on a button or link of its own
   const turnOnFromPage = (event: MouseEvent<HTMLElement>) => {
-    if (!(event.target as HTMLElement).closest('button, a')) turnOn();
+    const pressed = event.target as HTMLElement;
+    // A dialog opened from this page is drawn elsewhere in the document but still reports its presses here
+    if (!event.currentTarget.contains(pressed)) return;
+    if (!pressed.closest('button, a')) turnOn();
   };
 
   useEffect(() => { refetch(); }, [side, refetch]);

@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="16bc2242-18e5-5d8b-add7-6ccb41333079")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="8e7c255b-ac3a-52f2-9487-7a6e7e59653f")}catch(e){}}();
 import schedule from 'node-schedule';
 import { updateDeviceStatus } from '../routes/deviceStatus/updateDeviceStatus.js';
 import { getDayIndexForSchedule, getDayOfWeekIndex, logJob } from './utils.js';
@@ -13,10 +13,39 @@ import { findLateAlarmEnd } from './alarmScheduler.js';
 import { didOneOffAlarmFireWithin } from './oneOffAlarmState.js';
 import { OFF_AFTER_ALARM_MINUTES } from '../db/automaticOffTime.js';
 import { isManualHoldActive } from './manualHold.js';
-import { getScheduledOnSeconds } from './scheduleTiming.js';
+import { findNightDay, getScheduledOnSeconds } from './scheduleTiming.js';
+import { isWithinScheduledNight } from '../autopilot/scheduledBase.js';
 import { connectFranken } from '../8sleep/frankenServer.js';
 // How long the bed stays on after an alarm that was later than the schedule's off time
 const SECONDS_ON_AFTER_LATE_ALARM = 120;
+// The firmware turns a side off when its timer runs out, and the timer is set when the schedule
+// turns the side on. If the night's off time is moved later after that, the timer would end
+// before the new off time and the bed would be off for its own alarm. So whenever the jobs are
+// rebuilt, a side that is on inside its scheduled night gets the time its night now needs. The
+// timer is only ever made longer here.
+export async function extendNightTimers(settingsData, schedulesData) {
+    if (settingsData.timeZone === null)
+        return;
+    const now = moment.tz(settingsData.timeZone);
+    const sidesInTheirNight = ['left', 'right'].filter((side) => {
+        const night = schedulesData[side][findNightDay(now, schedulesData[side])];
+        return night.power.enabled && !settingsData[side].awayMode && isWithinScheduledNight(night, now.format('HH:mm'));
+    });
+    if (sidesInTheirNight.length === 0)
+        return;
+    const deviceStatus = await (await connectFranken()).getDeviceStatus();
+    for (const side of sidesInTheirNight) {
+        const night = schedulesData[side][findNightDay(now, schedulesData[side])];
+        const secondsNeeded = getScheduledOnSeconds(night.power.on, night.power.off, now);
+        // A side kept on by hand with the schedule told to stay away keeps the time it was given
+        if (isManualHoldActive(side))
+            continue;
+        if (!deviceStatus[side].isOn || deviceStatus[side].secondsRemaining >= secondsNeeded)
+            continue;
+        logger.debug(`Keeping the ${side} side on until its night's off time: ${secondsNeeded} seconds`);
+        await updateDeviceStatus({ [side]: { secondsRemaining: secondsNeeded } });
+    }
+}
 export const schedulePowerOn = (settingsData, side, day, power) => {
     if (!power.enabled)
         return;
@@ -146,4 +175,4 @@ export const schedulePowerOffAndSleepAnalysis = (settingsData, side, day, power)
     });
 };
 //# sourceMappingURL=powerScheduler.js.map
-//# debugId=16bc2242-18e5-5d8b-add7-6ccb41333079
+//# debugId=8e7c255b-ac3a-52f2-9487-7a6e7e59653f

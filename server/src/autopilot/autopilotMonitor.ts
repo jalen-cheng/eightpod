@@ -132,6 +132,8 @@ type Night = {
   side: Side;
   asleepSinceMs: number;
   wakeAtMs: number;
+  // The wake time the schedule gave the night, to go back to when a one-time alarm is cancelled
+  scheduledWakeAtMs?: number;
   // The temperature the bed was set to when sleep began, by the schedule or by hand: the
   // night's base, unless the autopilot has been given one of its own
   temperatureAtOnsetF: number;
@@ -271,9 +273,9 @@ const saveState = () => {
 // off. Without this the night ended at the scheduled alarm it replaced, and the bed went back
 // to the schedule's temperature hours before the sleeper was due to wake.
 const followOneOffAlarm = (night: Night, nowMs: number) => {
-  const oneOffWakeMs = findOneOffWakeMs(night.side, nowMs);
-  if (oneOffWakeMs === undefined || oneOffWakeMs === night.wakeAtMs) return;
-  night.wakeAtMs = oneOffWakeMs;
+  const wakeAtMs = findOneOffWakeMs(night.side, nowMs) ?? night.scheduledWakeAtMs ?? night.wakeAtMs;
+  if (wakeAtMs === night.wakeAtMs) return;
+  night.wakeAtMs = wakeAtMs;
   saveState();
 };
 
@@ -367,6 +369,16 @@ export function recordHubRoom(temperatureF: number) {
 const maySteer = (state: SideState): boolean => state.isNightExpected || (state.sleep.minutesAsleep ?? 0) >= NAP_UNDER_MINUTES;
 
 // What each side senses, with what the autopilot is doing for the bed repeated on both
+// When the sleeper on any of these sides fell asleep in the stay they are in now, by the bed's
+// own judgement: the earliest, where more than one side has seen sleep. Undefined until one has.
+export function findAsleepSinceMs(chosenSides: Side[]): number | undefined {
+  const onsets = chosenSides.flatMap((side) => {
+    const asleepAtMs = sides[side].stay?.asleepAtMs;
+    return asleepAtMs === undefined ? [] : [asleepAtMs];
+  });
+  return onsets.length > 0 ? Math.min(...onsets) : undefined;
+}
+
 export function getAutopilotSnapshot(nowMs: number = Date.now()): AutopilotSnapshot {
   const describe = (side: Side): AutopilotSideSnapshot => ({
     stage: sides[side].sleep.stage,
@@ -908,6 +920,7 @@ export class AutopilotMonitor {
       // A wake time most of a day away is not this night's
       if (wakeAt.diff(now, 'hours') <= MAX_HOURS_TO_WAKE) wakeAtMs = wakeAt.valueOf();
     }
+    const scheduledWakeAtMs = wakeAtMs;
     wakeAtMs = findOneOffWakeMs(side, nowMs) ?? wakeAtMs;
     const stay = sides[side].stay;
     bed.night = {
@@ -915,6 +928,7 @@ export class AutopilotMonitor {
       // The night's clock starts when the stillness did, which is when sleep is taken to have begun
       asleepSinceMs: stay?.stillSinceMs ?? stay?.asleepAtMs ?? nowMs,
       wakeAtMs,
+      scheduledWakeAtMs,
       temperatureAtOnsetF: podStatus[side].targetTemperatureF,
       roomAtOnsetF: readRoomF(nowMs),
     };

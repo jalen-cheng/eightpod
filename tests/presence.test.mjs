@@ -107,9 +107,25 @@ test('each action runs once per stay, and only when its conditions hold', () => 
 
   assert.deepEqual(takeDueActions(session, settings, at(10_000)), ['turnOn']);
   assert.deepEqual(takeDueActions(session, settings, at(20_000)), []);
-  assert.deepEqual(takeDueActions(session, settings, at(9 * HOUR_MS - 1, { isOn: true })), []);
-  assert.deepEqual(takeDueActions(session, settings, at(9 * HOUR_MS, { isOn: true })), ['wake']);
-  assert.deepEqual(takeDueActions(session, settings, at(10 * HOUR_MS, { isOn: true })), []);
+  // The alarm counts from falling asleep: nine hours in bed with no sleep seen sets nothing off,
+  // and an hour awake in bed first puts it an hour later
+  assert.deepEqual(takeDueActions(session, settings, at(9 * HOUR_MS, { isOn: true })), []);
+  const asleepSinceMs = HOUR_MS;
+  assert.deepEqual(takeDueActions(session, settings, at(10 * HOUR_MS - 1, { isOn: true, asleepSinceMs })), []);
+  assert.deepEqual(takeDueActions(session, settings, at(10 * HOUR_MS, { isOn: true, asleepSinceMs })), ['wake']);
+  assert.deepEqual(takeDueActions(session, settings, at(11 * HOUR_MS, { isOn: true, asleepSinceMs })), []);
+
+  // Up for twenty minutes and back: a new stay, but the bed still reports the same sleep, and
+  // the alarm that has gone off for it stays quiet
+  trackBedSession(session, false, 11 * HOUR_MS + 1);
+  trackBedSession(session, false, 11 * HOUR_MS + SESSION_GAP_MS + 1);
+  trackBedSession(session, true, 11 * HOUR_MS + 20 * 60_000);
+  assert.deepEqual(takeDueActions(session, settings, at(11 * HOUR_MS + 20 * 60_000, { isOn: true, asleepSinceMs })), []);
+
+  // After a restart in the night the bed sees sleep begin again, later. The stay remembers the first time.
+  const restarted = trackBedSession(createBedSession(), true, 0);
+  takeDueActions(restarted, settings, at(HOUR_MS, { isOn: true, asleepSinceMs: HOUR_MS }));
+  assert.deepEqual(takeDueActions(restarted, settings, at(10 * HOUR_MS, { isOn: true, asleepSinceMs: 5 * HOUR_MS })), ['wake']);
 
   // A bed that is already on is left alone
   const alreadyOn = trackBedSession(createBedSession(), true, 0);

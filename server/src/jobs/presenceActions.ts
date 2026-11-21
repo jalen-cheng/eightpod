@@ -17,6 +17,13 @@ export type BedSession = {
   inBedSinceMs?: number;
   // The last moment someone was detected, to bridge short gaps
   lastPresentMs?: number;
+  // When the bed judged the sleeper of this stay fell asleep: the earliest it has been told.
+  // Kept here because it is saved with the stay, so a restart in the night does not move it.
+  asleepSinceMs?: number;
+  // The sleep the alarm has already gone off for. Not cleared when a stay ends: the bed goes on
+  // reporting the same sleep for a while after someone gets up, and sitting back down must not
+  // set the alarm off again.
+  wokenForSleepSinceMs?: number;
   // Each action runs once per stay
   hasWoken: boolean;
   hasTurnedOn: boolean;
@@ -38,6 +45,7 @@ export function trackBedSession(session: BedSession, present: boolean, nowMs: nu
     session.isTurnOffDue = session.turnsOffWhenOut;
     session.inBedSinceMs = undefined;
     session.lastPresentMs = undefined;
+    session.asleepSinceMs = undefined;
     session.hasWoken = false;
     session.hasTurnedOn = false;
     session.turnsOffWhenOut = false;
@@ -53,6 +61,8 @@ export type ActionContext = {
   isPresentNow: boolean;
   // Whether the side (any side, when linked) is already on
   isOn: boolean;
+  // When the bed judged the sleeper fell asleep in this stay. Unset until it has seen sleep.
+  asleepSinceMs?: number;
   // Whether the weekly schedule has the bed on at this hour. Such a bed is the schedule's to
   // turn off, whoever turned it on first.
   isScheduledOn?: boolean;
@@ -81,9 +91,15 @@ export function takeDueActions(session: BedSession, presenceSettings: PresenceSe
     }
   }
 
-  if (wakeAfterHours.enabled && !session.hasWoken && context.isPresentNow
-    && context.nowMs - session.inBedSinceMs >= wakeAfterHours.hours * MS_PER_HOUR) {
+  // The alarm after a long sleep counts from falling asleep, not from getting into bed: hours
+  // spent awake in bed first are not sleep. A stay in which no sleep was seen has no alarm.
+  if (context.asleepSinceMs !== undefined) session.asleepSinceMs = Math.min(session.asleepSinceMs ?? Infinity, context.asleepSinceMs);
+  const asleepSinceMs = session.asleepSinceMs;
+  if (wakeAfterHours.enabled && !session.hasWoken && context.isPresentNow && asleepSinceMs !== undefined
+    && asleepSinceMs !== session.wokenForSleepSinceMs
+    && context.nowMs - asleepSinceMs >= wakeAfterHours.hours * MS_PER_HOUR) {
     session.hasWoken = true;
+    session.wokenForSleepSinceMs = asleepSinceMs;
     dueActions.push('wake');
   }
   return dueActions;

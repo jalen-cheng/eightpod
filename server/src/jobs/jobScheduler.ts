@@ -12,7 +12,7 @@ import { DayOfWeek, Side } from '../db/schedulesSchema.js';
 import { isSystemDateValid } from './isSystemDateValid.js';
 import { findOverdueJob } from './overdueJobs.js';
 import { scheduleAlarm, scheduleAlarmOverride, scheduleAlarmPreWarm } from './alarmScheduler.js';
-import { schedulePowerOffAndSleepAnalysis, schedulePowerOn } from './powerScheduler.js';
+import { extendNightTimers, schedulePowerOffAndSleepAnalysis, schedulePowerOn } from './powerScheduler.js';
 import { schedulePrimingRebootAndCalibration } from './primeScheduler.js';
 import { scheduleTemperatures } from './temperatureScheduler.js';
 
@@ -59,6 +59,9 @@ async function setupJobs() {
       });
     });
     schedulePrimingRebootAndCalibration(settingsData);
+    // A night's off time may have just been moved; a bed that cannot be reached is tried again at the next change
+    // Not waited for: reaching the bed can take a while at start-up, and the jobs are set either way
+    void extendNightTimers(settingsData, schedulesData).catch(error => logger.debug(`Could not check the night's timers: ${String(error)}`));
 
     logger.info('Done scheduling jobs!');
     serverStatus.status.alarmSchedule.status = 'healthy';

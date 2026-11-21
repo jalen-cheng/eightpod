@@ -7,8 +7,8 @@
 // without those subjects, simply never produces a reading: presence stays "not available", no
 // measured temperature is shown, and nothing else is affected.
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="bca8bf9f-8b1c-5623-8f8c-d6ad33557769")}catch(e){}}();
-import { forgetEmptySwing, recordHubRoom, recordPiezoSecond, recordPressure, recordSurroundings, } from '../autopilot/autopilotMonitor.js';
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="333f3b01-5258-5edc-88b7-616ea69686c6")}catch(e){}}();
+import { findAsleepSinceMs, forgetEmptySwing, recordHubRoom, recordPiezoSecond, recordPressure, recordSurroundings, } from '../autopilot/autopilotMonitor.js';
 import { readFileSync, writeFileSync } from 'fs';
 import { registerInBedCheck } from '../jobs/inBedCheck.js';
 import cbor from 'cbor';
@@ -273,7 +273,8 @@ export class BedSensorMonitor {
                 const mayChangePower = session.isTurnOffDue || (turnOnWhenInBed.enabled && !session.hasTurnedOn && isPresentNow);
                 const isOn = mayChangePower ? await this.isAnySideOn(activeSides) : true;
                 const isScheduledOn = session.isTurnOffDue ? await this.isScheduledOn(activeSides, nowMs) : false;
-                const dueActions = takeDueActions(session, settings.presence, { nowMs, isPresentNow, isOn, isScheduledOn });
+                const asleepSinceMs = findAsleepSinceMs(activeSides);
+                const dueActions = takeDueActions(session, settings.presence, { nowMs, isPresentNow, isOn, isScheduledOn, asleepSinceMs });
                 for (const action of dueActions)
                     await this.runAction(action, activeSides);
             }
@@ -322,4 +323,4 @@ export class BedSensorMonitor {
     }
 }
 //# sourceMappingURL=bedSensorMonitor.js.map
-//# debugId=bca8bf9f-8b1c-5623-8f8c-d6ad33557769
+//# debugId=333f3b01-5258-5edc-88b7-616ea69686c6

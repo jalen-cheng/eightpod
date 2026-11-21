@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="96d219b8-aa7c-5b33-a821-fcd73683b0ff")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="d0d84671-b483-5330-8214-321a37ffff65")}catch(e){}}();
 import path from 'path';
 import chokidar from 'chokidar';
 import moment from 'moment-timezone';
@@ -12,7 +12,7 @@ import settingsDB from '../db/settings.js';
 import { isSystemDateValid } from './isSystemDateValid.js';
 import { findOverdueJob } from './overdueJobs.js';
 import { scheduleAlarm, scheduleAlarmOverride, scheduleAlarmPreWarm } from './alarmScheduler.js';
-import { schedulePowerOffAndSleepAnalysis, schedulePowerOn } from './powerScheduler.js';
+import { extendNightTimers, schedulePowerOffAndSleepAnalysis, schedulePowerOn } from './powerScheduler.js';
 import { schedulePrimingRebootAndCalibration } from './primeScheduler.js';
 import { scheduleTemperatures } from './temperatureScheduler.js';
 // Set when a change arrives while the jobs are being rebuilt, so that change is not lost
@@ -50,6 +50,9 @@ async function setupJobs() {
             });
         });
         schedulePrimingRebootAndCalibration(settingsData);
+        // A night's off time may have just been moved; a bed that cannot be reached is tried again at the next change
+        // Not waited for: reaching the bed can take a while at start-up, and the jobs are set either way
+        void extendNightTimers(settingsData, schedulesData).catch(error => logger.debug(`Could not check the night's timers: ${String(error)}`));
         logger.info('Done scheduling jobs!');
         serverStatus.status.alarmSchedule.status = 'healthy';
         serverStatus.status.jobs.status = 'healthy';
@@ -135,4 +138,4 @@ const overdueTimer = setInterval(() => {
 // The check alone should not keep the server running
 overdueTimer.unref();
 //# sourceMappingURL=jobScheduler.js.map
-//# debugId=96d219b8-aa7c-5b33-a821-fcd73683b0ff
+//# debugId=d0d84671-b483-5330-8214-321a37ffff65

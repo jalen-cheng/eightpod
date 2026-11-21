@@ -24,8 +24,9 @@ find_running_slot() {
   sed -n 's/.*root=PARTLABEL=rootfs_\([ab]\).*/\1/p' /proc/cmdline
 }
 
+# Prints one of the boot loader's settings, or nothing when it is missing or cannot be read
 read_setting() {
-  fw_printenv -n "$1" 2>/dev/null
+  fw_printenv -n "$1" 2>/dev/null || true
 }
 
 show_status() {
@@ -44,7 +45,13 @@ show_status() {
     echo "Boot slot: running slot $slot, confirmed. It will keep booting from here."
     return 0
   fi
-  echo "Boot slot: running slot $slot, NOT confirmed (boot_${slot}_success=${confirmed:-unset}, ${retries:-?} boots left)."
+  # Only a plain 0 means "not confirmed". Anything else (the setting missing, or the boot loader's
+  # settings unreadable) is not understood, and nothing is written on the strength of it.
+  if [ "$confirmed" != "0" ]; then
+    echo "Boot slot: running slot $slot, but boot_${slot}_success reads '${confirmed:-nothing}'. Not understood, so left alone."
+    return 2
+  fi
+  echo "Boot slot: running slot $slot, NOT confirmed (${retries:-?} boots left)."
   echo "When the boots run out the Pod starts its other slot, which is Eight Sleep's own system."
   return 1
 }

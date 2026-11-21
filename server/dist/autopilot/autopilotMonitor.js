@@ -18,7 +18,7 @@
 // ends, or the autopilot is switched off, the bed is given what the schedule wants at that
 // hour, or failing that its base.
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="3fcecd11-a7d9-5e24-9311-0999b6ac1826")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="46486e51-75c3-57bc-86b8-abba9ca78bce")}catch(e){}}();
 import { readFileSync, renameSync, writeFileSync } from 'fs';
 import moment from 'moment-timezone';
 import config from '../config.js';
@@ -169,10 +169,10 @@ const saveState = () => {
 // off. Without this the night ended at the scheduled alarm it replaced, and the bed went back
 // to the schedule's temperature hours before the sleeper was due to wake.
 const followOneOffAlarm = (night, nowMs) => {
-    const oneOffWakeMs = findOneOffWakeMs(night.side, nowMs);
-    if (oneOffWakeMs === undefined || oneOffWakeMs === night.wakeAtMs)
+    const wakeAtMs = findOneOffWakeMs(night.side, nowMs) ?? night.scheduledWakeAtMs ?? night.wakeAtMs;
+    if (wakeAtMs === night.wakeAtMs)
         return;
-    night.wakeAtMs = oneOffWakeMs;
+    night.wakeAtMs = wakeAtMs;
     saveState();
 };
 // Until a side has its empty level, takes each minute with nothing on the bed toward it. Once
@@ -269,6 +269,15 @@ export function recordHubRoom(temperatureF) {
 // otherwise only once it has lasted too long to be a nap
 const maySteer = (state) => state.isNightExpected || (state.sleep.minutesAsleep ?? 0) >= NAP_UNDER_MINUTES;
 // What each side senses, with what the autopilot is doing for the bed repeated on both
+// When the sleeper on any of these sides fell asleep in the stay they are in now, by the bed's
+// own judgement: the earliest, where more than one side has seen sleep. Undefined until one has.
+export function findAsleepSinceMs(chosenSides) {
+    const onsets = chosenSides.flatMap((side) => {
+        const asleepAtMs = sides[side].stay?.asleepAtMs;
+        return asleepAtMs === undefined ? [] : [asleepAtMs];
+    });
+    return onsets.length > 0 ? Math.min(...onsets) : undefined;
+}
 export function getAutopilotSnapshot(nowMs = Date.now()) {
     const describe = (side) => ({
         stage: sides[side].sleep.stage,
@@ -809,6 +818,7 @@ export class AutopilotMonitor {
             if (wakeAt.diff(now, 'hours') <= MAX_HOURS_TO_WAKE)
                 wakeAtMs = wakeAt.valueOf();
         }
+        const scheduledWakeAtMs = wakeAtMs;
         wakeAtMs = findOneOffWakeMs(side, nowMs) ?? wakeAtMs;
         const stay = sides[side].stay;
         bed.night = {
@@ -816,6 +826,7 @@ export class AutopilotMonitor {
             // The night's clock starts when the stillness did, which is when sleep is taken to have begun
             asleepSinceMs: stay?.stillSinceMs ?? stay?.asleepAtMs ?? nowMs,
             wakeAtMs,
+            scheduledWakeAtMs,
             temperatureAtOnsetF: podStatus[side].targetTemperatureF,
             roomAtOnsetF: readRoomF(nowMs),
         };
@@ -892,4 +903,4 @@ export class AutopilotMonitor {
     }
 }
 //# sourceMappingURL=autopilotMonitor.js.map
-//# debugId=3fcecd11-a7d9-5e24-9311-0999b6ac1826
+//# debugId=46486e51-75c3-57bc-86b8-abba9ca78bce

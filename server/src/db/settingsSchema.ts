@@ -82,7 +82,7 @@ export const SettingsSchema = z.object({
   presence: z.object({
     // How easily a rise in the sensors counts as someone in bed
     sensitivity: z.enum(['low', 'medium', 'high']),
-    // Vibrate the alarm once someone has been in bed this many hours in one stay
+    // Vibrate the alarm this many hours after the bed judged the sleeper fell asleep, in one stay
     wakeAfterHours: z.object({ enabled: z.boolean(), hours: z.number().int().min(1).max(14) }),
     // Turn the bed on when someone gets in: at this temperature (°F), and for this many hours or
     // until they get out again
