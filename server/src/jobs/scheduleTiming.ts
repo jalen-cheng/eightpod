@@ -62,7 +62,8 @@ const ON_MARGIN_MINUTES = 30;
 export function getScheduledOnSeconds(onTime: string, offTime: string, now?: moment.Moment): number {
   const toMinutes = (time: string) => Number(time.slice(0, 2)) * 60 + Number(time.slice(3, 5));
   if (now) {
-    const offAt = now.clone().startOf('day').add(toMinutes(offTime), 'minutes');
+    // Set as a clock time, not as minutes after midnight: on the night the clocks change the two differ
+    const offAt = now.clone().hour(Number(offTime.slice(0, 2))).minute(Number(offTime.slice(3, 5))).second(0).millisecond(0);
     if (!offAt.isAfter(now)) offAt.add(1, 'day');
     return offAt.diff(now, 'seconds') + ON_MARGIN_MINUTES * 60;
   }

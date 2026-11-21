@@ -273,6 +273,9 @@ test('the Pod is told to stay on until the night\'s off time and half an hour ov
   // The night the clocks go back is an hour longer than its clock times say
   const clocksGoBack = moment.tz('2026-10-31 22:00', 'America/Los_Angeles');
   assert.equal(getScheduledOnSeconds('22:00', '07:30', clocksGoBack), 11 * HOUR);
+  // Turned on after midnight that same night, once the clocks have gone back at 2: off is still at 07:30 on the clock
+  const afterMidnight = moment.tz('2026-11-01 00:30', 'America/Los_Angeles');
+  assert.equal(getScheduledOnSeconds('00:30', '07:30', afterMidnight), 8.5 * HOUR);
 });
 
 test('a one-off alarm keeps a skipped alarm skipped', () => {

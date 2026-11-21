@@ -1,7 +1,7 @@
 // The MCP tools: each one's request to the Pod, and what is given back to the agent
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { TOOLS, describeResult } from '../mcp/tools.mjs';
+import { TOOLS, applyLinkedSides, describeResult } from '../mcp/tools.mjs';
 
 const toolNamed = name => TOOLS.find(tool => tool.name === name);
 
@@ -24,9 +24,21 @@ test('a temperature for both sides is one request naming each side', () => {
   assert.deepEqual(toolNamed('dismiss_alarm').request({ side: 'right' }).body, { right: { isAlarmVibrating: false } });
 });
 
-test('temperatures are kept to what the Pod takes', () => {
+test('temperatures are whole degrees within what the Pod takes', () => {
   const { temperatureF } = toolNamed('set_temperature').input;
-  assert.deepEqual([temperatureF.min, temperatureF.max], [50, 110]);
+  assert.deepEqual([temperatureF.min, temperatureF.max, temperatureF.integer], [50, 110, true]);
+  assert.equal(toolNamed('set_night_schedule').input.bedOnTemperatureF.integer, true);
+});
+
+test('with the sides linked, a change to power, temperature or the schedule for one side goes to both', () => {
+  const linked = { linkSides: true };
+  for (const name of ['set_temperature', 'set_power', 'set_night_schedule']) {
+    assert.equal(applyLinkedSides(toolNamed(name), { side: 'left' }, linked).side, 'both', name);
+    assert.equal(applyLinkedSides(toolNamed(name), { side: 'left' }, { linkSides: false }).side, 'left', name);
+  }
+  // The Pod links alarms itself, and away mode is one side's own
+  assert.equal(applyLinkedSides(toolNamed('set_one_time_alarm'), { side: 'left' }, linked).side, 'left');
+  assert.equal(applyLinkedSides(toolNamed('set_away_mode'), { side: 'left' }, linked).side, 'left');
 });
 
 test('a one-time alarm names a side only when one was picked', () => {

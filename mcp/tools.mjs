@@ -12,7 +12,7 @@ const CLOCK_PATTERN = '^([01]\\d|2[0-3]):[0-5]\\d$';
 const side = { type: 'enum', values: SIDES, description: 'Which side of the bed: left, right or both.' };
 const oneSide = { type: 'enum', values: ['left', 'right'], description: 'Which side of the bed.' };
 const clock = description => ({ type: 'string', pattern: CLOCK_PATTERN, description: `${description} 24-hour HH:mm, in the Pod's time zone.` });
-const temperature = description => ({ type: 'number', min: MIN_TEMPERATURE_F, max: MAX_TEMPERATURE_F, description: `${description} In °F, ${MIN_TEMPERATURE_F} to ${MAX_TEMPERATURE_F}.` });
+const temperature = description => ({ type: 'number', min: MIN_TEMPERATURE_F, max: MAX_TEMPERATURE_F, integer: true, description: `${description} In whole °F, ${MIN_TEMPERATURE_F} to ${MAX_TEMPERATURE_F}.` });
 
 // The sides a request names, as the API wants them written
 const sidesOf = chosen => (chosen === 'both' ? ['left', 'right'] : [chosen]);
@@ -72,6 +72,7 @@ export const TOOLS = [
   },
   {
     name: 'set_temperature',
+    followsLinkedSides: true,
     title: 'Set the temperature',
     description: 'Sets the temperature a side is aiming for. It does not turn the side on. During a night the autopilot is steering, it holds a temperature set this way for a while and learns from it, so only set one the person asked for.',
     changesTheBed: true,
@@ -81,6 +82,7 @@ export const TOOLS = [
   },
   {
     name: 'set_power',
+    followsLinkedSides: true,
     title: 'Turn a side on or off',
     description: 'Turns a side of the bed on or off. A side turned on this way turns itself off after the hours chosen in Settings.',
     changesTheBed: true,
@@ -115,6 +117,7 @@ export const TOOLS = [
   },
   {
     name: 'set_night_schedule',
+    followsLinkedSides: true,
     title: 'Change a night in the schedule',
     description: 'Changes one night of the weekly schedule for a side: the time the bed turns on, the temperature it starts at, the wake-up time, and whether the alarm vibrates. Only what is given changes. The bed turns off 30 minutes after the wake-up time. The wake-up time must be 1 to 23 hours after the bed-on time.',
     changesTheBed: true,
@@ -158,6 +161,14 @@ export const TOOLS = [
     present: settings => ({ leftAway: settings.left.awayMode, rightAway: settings.right.awayMode }),
   },
 ];
+
+// The Pod applies linked sides itself for alarms, but not for power, temperature or the schedule:
+// there the app sends both sides. A tool marked followsLinkedSides does the same, so with the
+// sides linked a change asked for one side goes to the whole bed, as it would from the app.
+export function applyLinkedSides(tool, args, settings) {
+  if (!tool.followsLinkedSides || !settings?.linkSides || args.side === 'both') return args;
+  return { ...args, side: 'both' };
+}
 
 // What a tool call comes back with as text: the Pod's answer, trimmed where a tool says how;
 // for a change that answers with nothing, a line saying what was done

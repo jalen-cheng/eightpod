@@ -6,7 +6,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
-import { TOOLS, describeResult } from './tools.mjs';
+import { TOOLS, applyLinkedSides, describeResult } from './tools.mjs';
 
 const POD_URL = (process.env.SEVENSLEEP_URL ?? 'http://sevensleep.local').replace(/\/+$/, '');
 const IS_READ_ONLY = ['1', 'true'].includes(process.env.SEVENSLEEP_READ_ONLY ?? '');
@@ -48,7 +48,7 @@ const askPod = async ({ method, path, body }) => {
   return answer;
 };
 
-const server = new McpServer({ name: 'sevensleep', version: '1.0.1' });
+const server = new McpServer({ name: 'sevensleep', version: '1.0.2' });
 
 for (const tool of TOOLS) {
   if (IS_READ_ONLY && tool.changesTheBed) continue;
@@ -61,10 +61,13 @@ for (const tool of TOOLS) {
       // Clients use these to decide what to ask the person about before running
       annotations: { readOnlyHint: !tool.changesTheBed, destructiveHint: false, idempotentHint: true, openWorldHint: false },
     },
-    async (args) => {
+    async (given) => {
       try {
+        const settings = tool.followsLinkedSides && given.side !== 'both' ? await askPod({ method: 'GET', path: '/api/settings' }) : undefined;
+        const args = applyLinkedSides(tool, given, settings);
         const answer = await askPod(tool.request(args));
-        return { content: [{ type: 'text', text: describeResult(tool, args, answer) }] };
+        const note = args.side !== given.side ? ' The sides are linked, so it went to both.' : '';
+        return { content: [{ type: 'text', text: `${describeResult(tool, args, answer)}${note}` }] };
       } catch (error) {
         const reason = error instanceof Error ? error.message : String(error);
         const hint = error?.name === 'TimeoutError' || error?.cause ? ` Could not reach the Pod at ${POD_URL}: is this computer on the same network?` : '';

@@ -146,7 +146,7 @@ linked sides, shortcuts, the internet block, the `.local` name, Tailscale on the
 on cellular), in-bed detection and the bed turning on when someone gets in, the body check, and a night's sleep
 recorded and compared with a watch. The autopilot's evidence is one sleeper (n=1).
 
-Not yet seen working on a Pod: the bed turning off after someone gets out, the long-stay alarm,
+Not yet seen working on a Pod: the bed turning off after someone gets out,
 "ignore the schedule" after turning on by hand, and flipping left and right. Nothing has been run
 on a Pod 3 or Pod 4.
 

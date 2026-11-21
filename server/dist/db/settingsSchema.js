@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="4357dbd8-be14-5d90-8b02-571b412b43c7")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="cb4910a6-4e91-550e-9b7f-aae3dc654127")}catch(e){}}();
 import { z } from 'zod';
 import { TIME_ZONES } from './timeZones.js';
 import { TimeSchema } from './schedulesSchema.js';
@@ -76,7 +76,7 @@ export const SettingsSchema = z.object({
     presence: z.object({
         // How easily a rise in the sensors counts as someone in bed
         sensitivity: z.enum(['low', 'medium', 'high']),
-        // Vibrate the alarm once someone has been in bed this many hours in one stay
+        // Vibrate the alarm this many hours after the bed judged the sleeper fell asleep, in one stay
         wakeAfterHours: z.object({ enabled: z.boolean(), hours: z.number().int().min(1).max(14) }),
         // Turn the bed on when someone gets in: at this temperature (°F), and for this many hours or
         // until they get out again
@@ -89,4 +89,4 @@ export const SettingsSchema = z.object({
 }).strict();
 export const MANUAL_ON_HOUR_CHOICES = [3, 6, 12];
 //# sourceMappingURL=settingsSchema.js.map
-//# debugId=4357dbd8-be14-5d90-8b02-571b412b43c7
+//# debugId=cb4910a6-4e91-550e-9b7f-aae3dc654127

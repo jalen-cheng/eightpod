@@ -25,8 +25,9 @@ const SENSITIVITY_NAMES: Record<Settings['presence']['sensitivity'], string> = {
 
 const SENSITIVITY_INFO = 'How easily the sensors count someone as in bed. Raise it if you are not detected; lower it if an '
   + 'empty bed shows as occupied.';
-const WAKE_INFO = 'Vibrates like that day\'s alarm once someone has been in bed this long in one stay. Getting up for less '
-  + 'than 15 minutes does not restart the count.';
+const WAKE_INFO = 'Vibrates like that day\'s alarm this many hours after the bed judges you fell asleep. Time awake in bed '
+  + 'before that does not count, and getting up for less than 15 minutes does not restart it. If the bed never sees you '
+  + 'fall asleep, it does not go off.';
 const TURN_ON_INFO = 'When someone gets into a bed that is off, it turns on at this temperature. It turns off again after '
   + 'the hours chosen, or 15 minutes after they get out.';
 const EMPTY_INFO = 'What the sensors under the cover say right now. If a side shows "in bed" when it is empty, or never '
@@ -164,7 +165,7 @@ export default function PresenceSection({ settings, updateSettings }: PresenceSe
         </SettingToggle>
 
         <SettingToggle
-          label="Alarm after a long time in bed"
+          label="Alarm after a long sleep"
           info={ WAKE_INFO }
           control={
             <Switch
@@ -178,7 +179,7 @@ export default function PresenceSection({ settings, updateSettings }: PresenceSe
             <SettingDetail>
               <Typography variant="body2" sx={ { color: 'text.secondary' } }>After</Typography>
               <HoursSelect
-                label="Hours in bed before the alarm"
+                label="Hours asleep before the alarm"
                 value={ wakeAfterHours.hours }
                 choices={ WAKE_HOUR_CHOICES }
                 onChange={ (hours) => updatePresence({ wakeAfterHours: { hours } }) }

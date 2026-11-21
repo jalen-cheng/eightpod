@@ -1,6 +1,6 @@
 // Getting up for a few minutes does not end a night in bed; being out this long does
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="98f39c04-9e92-58c3-9fd9-bf951b34ff82")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="afeed01f-ce26-5432-a833-3877b03d683c")}catch(e){}}();
 export const SESSION_GAP_MS = 15 * 60_000;
 // The "stay on" choice that means: until the person gets out of bed
 export const UNTIL_OUT_OF_BED = 'untilOutOfBed';
@@ -17,6 +17,7 @@ export function trackBedSession(session, present, nowMs) {
         session.isTurnOffDue = session.turnsOffWhenOut;
         session.inBedSinceMs = undefined;
         session.lastPresentMs = undefined;
+        session.asleepSinceMs = undefined;
         session.hasWoken = false;
         session.hasTurnedOn = false;
         session.turnsOffWhenOut = false;
@@ -45,12 +46,19 @@ export function takeDueActions(session, presenceSettings, context) {
             dueActions.push('turnOn');
         }
     }
-    if (wakeAfterHours.enabled && !session.hasWoken && context.isPresentNow
-        && context.nowMs - session.inBedSinceMs >= wakeAfterHours.hours * MS_PER_HOUR) {
+    // The alarm after a long sleep counts from falling asleep, not from getting into bed: hours
+    // spent awake in bed first are not sleep. A stay in which no sleep was seen has no alarm.
+    if (context.asleepSinceMs !== undefined)
+        session.asleepSinceMs = Math.min(session.asleepSinceMs ?? Infinity, context.asleepSinceMs);
+    const asleepSinceMs = session.asleepSinceMs;
+    if (wakeAfterHours.enabled && !session.hasWoken && context.isPresentNow && asleepSinceMs !== undefined
+        && asleepSinceMs !== session.wokenForSleepSinceMs
+        && context.nowMs - asleepSinceMs >= wakeAfterHours.hours * MS_PER_HOUR) {
         session.hasWoken = true;
+        session.wokenForSleepSinceMs = asleepSinceMs;
         dueActions.push('wake');
     }
     return dueActions;
 }
 //# sourceMappingURL=presenceActions.js.map
-//# debugId=98f39c04-9e92-58c3-9fd9-bf951b34ff82
+//# debugId=afeed01f-ce26-5432-a833-3877b03d683c

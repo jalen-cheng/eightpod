@@ -1,5 +1,5 @@
 
-!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="da20f477-7b7a-552b-b22c-29b47aac1dfc")}catch(e){}}();
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="189e4348-fd5f-5657-bbd4-ada4fa403010")}catch(e){}}();
 import moment from 'moment-timezone';
 export const DAYS_OF_WEEK = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 const MINUTES_PER_DAY = 24 * 60;
@@ -58,7 +58,8 @@ const ON_MARGIN_MINUTES = 30;
 export function getScheduledOnSeconds(onTime, offTime, now) {
     const toMinutes = (time) => Number(time.slice(0, 2)) * 60 + Number(time.slice(3, 5));
     if (now) {
-        const offAt = now.clone().startOf('day').add(toMinutes(offTime), 'minutes');
+        // Set as a clock time, not as minutes after midnight: on the night the clocks change the two differ
+        const offAt = now.clone().hour(Number(offTime.slice(0, 2))).minute(Number(offTime.slice(3, 5))).second(0).millisecond(0);
         if (!offAt.isAfter(now))
             offAt.add(1, 'day');
         return offAt.diff(now, 'seconds') + ON_MARGIN_MINUTES * 60;
@@ -127,4 +128,4 @@ export function minutesAlarmIsAfterOff(alarmTime, power) {
     return minutesAfterBedtime(alarmTime, power.on) - minutesAfterBedtime(power.off, power.on);
 }
 //# sourceMappingURL=scheduleTiming.js.map
-//# debugId=da20f477-7b7a-552b-b22c-29b47aac1dfc
+//# debugId=189e4348-fd5f-5657-bbd4-ada4fa403010

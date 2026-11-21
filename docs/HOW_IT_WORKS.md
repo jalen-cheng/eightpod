@@ -321,7 +321,7 @@ Two optional actions, both off by default, each run once per stay:
 | Setting | What it does |
 |---|---|
 | Turn on when I get into bed | If the bed is off and someone gets in, it turns on at the chosen temperature. It turns off after the chosen hours, or with "until I get out of bed", 15 minutes after they leave. A bed that was already on is left alone both ways |
-| Alarm after a long time in bed | After the chosen hours in one stay, vibrates like that day's alarm |
+| Alarm after a long sleep | The chosen hours after the bed judged you fell asleep, vibrates like that day's alarm. A stay with no sleep seen has none |
 
 With the sides linked, someone on either side counts for the whole bed and both sides act. A side
 in away mode is ignored.
@@ -334,7 +334,7 @@ minute of lying down. A lighter person, a thick topper or a different Pod may ne
 sensitivity. `GET /api/metrics/presence/sensors` returns the live signal and empty level.
 
 **Seen on the Pod:** "Turn on when I get into bed" turned both linked sides on when someone got in. Not yet
-seen: it turning off after they got out, and the long-stay alarm.
+seen: it turning off after they got out. The alarm after a long sleep has gone off on a Pod, when it still counted from getting into bed.
 
 **Autopilot.** The same sensor bus carries the piezo signal and the room temperature. SevenSleep follows movement and breathing from it and saves each stay in bed, whether or not the autopilot is on. With Settings > Autopilot on, it judges sleep from stillness and
 moves the whole bed a few degrees around the schedule's temperature for one sleeper. It is experimental; [AUTOPILOT.md](AUTOPILOT.md) has the rules, the evidence and the limits.
