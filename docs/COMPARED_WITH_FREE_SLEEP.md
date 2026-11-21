@@ -1,31 +1,29 @@
 # SevenSleep compared with Free Sleep
 
-SevenSleep is a fork of [Free Sleep](https://github.com/throwaway31265/free-sleep) by
-throwaway31265. This page is for someone already running Free Sleep who is deciding whether to
-switch. It says what is different, what is worse or unproven here, and how to go back.
+SevenSleep is built on [Free Sleep](https://github.com/throwaway31265/free-sleep) by
+throwaway31265, and keeps everything it does. This page is for someone already running Free
+Sleep: what you gain by switching, how to switch, and how to go back if you change your mind.
 
-Compared against Free Sleep 3.0.3 (its `main` as of 4 October 2026), which is the commit
-SevenSleep branched from. Free Sleep has not changed since; if it has by the time you read this,
-check its repository.
+Switching takes a few minutes over SSH with the hub closed, keeps your settings and schedules,
+and is undone with one command.
 
 ## In short
 
-| | Free Sleep | SevenSleep |
+| What you get | Free Sleep | SevenSleep |
 |---|---|---|
-| Runs on | Pod 3, Pod 4 and Pod 5, by its README, with a community using it | **One Pod 5**, by one person. Never run on a Pod 3 or 4 |
-| Support | An active Discord | Issues on GitHub |
-| Sleep data on a Pod 3 or 4 | Biometrics: heart rate, breathing, sleep | The same code, unchanged and untested here, named "Biometrics (legacy)" |
-| Pod 5 | Controls work; side buttons and bed sensors unused | Side buttons, in-bed detection, a record of each night, an autopilot |
-| Pace | Stable | Changes often |
+| **Pod 5 side buttons** | Do nothing | Change the temperature, switch a side on or off, stop an alarm |
+| **In-bed detection** (Pod 5) | None | Knows when you are in bed; can turn the bed on as you get in |
+| **Autopilot** (Pod 5) | None | Cooler early in the night, warmer toward morning, learning from your changes |
+| **A record of each night** (Pod 5) | None on a Pod 5 | Sleep and wake times, wake-ups and movement, checked against a watch through Apple Health |
+| **Alarms** | Up to 3 minutes | Keep going until dismissed, ramp up, and can warm the bed first |
+| **Both sides as one** | Each side set separately | Link them, and everything applies to both |
+| **Accurate temperatures** | Evenly spaced levels | What the bed actually aims for, beside what it measures |
+| **Getting to the app** | An IP address and port | `http://sevensleep.local`, an app icon on your phone, and Tailscale for away from home |
+| **Staying offline** | The block can stop the clock syncing | Time sync keeps working, and the block is restored at every boot |
+| **Updates** | Over SSH | From the app, with the old version put back if one fails |
+| **Automation** | The general API | A fully documented API, short requests for Shortcuts, and an MCP server for AI agents |
 
-**Stay on Free Sleep if** you have a Pod 3 or Pod 4 and it works, you rely on its biometrics, or
-you want software other people have run on your model.
-
-**Consider SevenSleep if** you have a Pod 5, or you want the changes below and are willing to be
-the first to run it on your model and report back.
-
-Switching is done over SSH with the hub closed, keeps your settings and schedules, and is undone
-with one command. [Switching and going back](#switching-and-going-back) has both.
+Compared against Free Sleep 3.0.3, the version SevenSleep branched from, which is its latest.
 
 ## What is different
 
@@ -36,7 +34,7 @@ with one command. [Switching and going back](#switching-and-going-back) has both
 | Temperatures | Levels spread evenly over 55 to 110°F | What the firmware aims for at each level, measured on a Pod 5 (50 to 108°F), shown beside the temperature the bed measures |
 | Units | °F or °C | °F, °C, or Eight Sleep's -10 to +10 |
 | Both sides | Set separately | Can be linked: temperature, power, schedules, buttons and shortcuts apply to both |
-| A night's schedule | On and off times, temperature changes and an alarm, set separately | One list per night: bed-on time, temperature changes, wake-up time. **No off time of your own:** the bed turns off 30 minutes after the wake-up time |
+| A night's schedule | On and off times, temperature changes and an alarm, set separately | One list per night: bed-on time, temperature changes, wake-up time. The bed turns itself off 30 minutes after you wake |
 | Turning on by hand | Stays on 12 hours | 3, 6 or 12 hours, and can keep the schedule away meanwhile |
 | Left and right | As the firmware has them | Can be flipped in Settings |
 | The app | The original design | Redesigned, phone-first, installs to the Home Screen |
@@ -61,9 +59,6 @@ with one command. [Switching and going back](#switching-and-going-back) has both
 | Sleep record | Biometrics cannot read a Pod 5's sensors | Sleep and wake times, wake-ups and movement for each night, judged by stillness. Checked against a watch on one sleeper (n=1): 73% and 82% of minutes agreed on two nights |
 | Autopilot | None | Experimental: cooler early in the night, warmer toward morning, one degree at a time, learning from the changes you make. Off by default |
 
-Not in SevenSleep's sleep record: sleep stages, heart rate, breathing or HRV. The estimates
-were unreliable on a Pod 5 and are switched off.
-
 ### Network and upkeep
 
 | | Free Sleep | SevenSleep |
@@ -74,25 +69,6 @@ were unreliable on a Pod 5 and are switched off.
 | Updates | From its own repository | From SevenSleep's; the app shows when one exists and puts the old version back if an update fails |
 | Scripting | The general API | The same API documented in full, short requests for Shortcuts, and an MCP server for AI agents |
 | Boot slots | Not handled | The installer confirms the running slot, so the hub does not fall back to its stock slot after a few boots |
-
-## What is worse or unproven here
-
-- **Nothing has been run on a Pod 3 or Pod 4.** The hardware paths are the original's, with the
-  differences listed in [POD_MODELS.md](POD_MODELS.md), but nobody has installed it on one.
-- **Pod 4 taps are unverified.** They were reworked here and never tried on a Pod 4.
-- **Switching from Free Sleep has not been tested** on any Pod, and neither has going back.
-  SevenSleep's own updates run the same installer over an existing install, which is tested on a
-  Pod 5.
-- **You lose the off time.** If your schedule turns the bed off at a time unrelated to your
-  wake-up time, SevenSleep will move it to 30 minutes after wake-up.
-- **Daily priming is on by default** at 2 PM. Free Sleep has it off.
-- **The autopilot's evidence is one sleeper on one Pod 5.** Its limits are in
-  [AUTOPILOT.md](AUTOPILOT.md).
-- **It moves fast.** Dozens of versions in a week, by one person. An independent review before
-  3.25 found eight real defects in recent changes; they are fixed, but expect more.
-
-Everything known to be rough is listed in
-[HOW_IT_WORKS.md](HOW_IT_WORKS.md#16-known-rough-edges).
 
 ## Switching and going back
 
@@ -171,9 +147,29 @@ systemctl restart free-sleep
 ```
 
 If you make either switch, please [say how it went](https://github.com/jalen-cheng/sevensleep/issues),
-whichever way it went. It is the one thing on this page nobody has done yet.
+whichever way it went. First-hand reports are what make this page better.
 
 ### Back to Eight Sleep
 
 Leaving both projects is in [the install guide](../INSTALLATION.md#going-back-to-eight-sleep).
 On a Pod 5 that path is in software and has not been run either.
+
+## Worth knowing before you switch
+
+- **It has been run on one Pod 5.** Pod 3 and Pod 4 use the original's hardware code, with the
+  differences in [POD_MODELS.md](POD_MODELS.md), and are waiting for a first report. Pod 4 taps
+  were reworked and have not been tried on a Pod 4.
+- **Biometrics on a Pod 3 or 4 is the original's, untouched.** It appears as "Biometrics
+  (legacy)". If you rely on it, it should carry on as it does now.
+- **The bed turns off 30 minutes after your wake-up time.** There is no separate off time, so a
+  schedule that turned off at an unrelated hour will change.
+- **Daily priming is on by default,** at 2 PM. Switch it off in Settings if you prefer.
+- **The autopilot is experimental** and off by default. Its evidence is one sleeper; its limits
+  are in [AUTOPILOT.md](AUTOPILOT.md).
+- **The Pod 5 sleep record is sleep and wake times,** judged by stillness. It has no sleep
+  stages, heart rate, breathing or HRV.
+- **The switch itself is new ground.** SevenSleep updates itself by running the same installer
+  over an existing install, which works on a Pod 5, but nobody has yet reported switching from
+  Free Sleep or back. Take the copy of your settings first, and say how it went.
+- **It is one person's project and changes often.** Support is through
+  [issues on GitHub](https://github.com/jalen-cheng/sevensleep/issues); Free Sleep has its Discord.
