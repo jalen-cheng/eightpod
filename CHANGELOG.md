@@ -4,6 +4,7 @@ What changed in each version of SevenSleep, newest first. Patches are listed und
 version. Anything older is in the [git history](https://github.com/jalen-cheng/sevensleep/commits/main).
 
 ## 3.25
+- Docs: SevenSleep compared with Free Sleep, with how to switch and how to go back.
 - The in-bed alarm counts hours from falling asleep, not from getting into bed, and is named "Alarm after a long sleep".
 - A wake time moved later during the night keeps the bed on for it, and a cancelled one-time alarm gives the night its own wake time back.
 - Fixes from a review of everything since 3.20: the firmware timer on the night the clocks change, a press inside a dialog turning the bed on, and a more careful boot-slot check.

@@ -14,6 +14,7 @@ export const sidebarGroups = [
       { slug: 'getting-started', title: 'Getting started' },
       { slug: 'install', title: 'Install', source: 'INSTALLATION.md' },
       { slug: 'pod-models', title: 'Compatibility', source: 'docs/POD_MODELS.md' },
+      { slug: 'compared-with-free-sleep', title: 'Compared with Free Sleep', source: 'docs/COMPARED_WITH_FREE_SLEEP.md' },
     ],
   },
   {
